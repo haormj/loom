@@ -321,7 +321,7 @@ pub fn code_stack_signals_from_baseline(stack: &Value) -> Vec<CodeStackSignal> {
     if let Some(tracks) = stack.get("tracks").and_then(Value::as_object) {
         for (track, value) in tracks {
             if let Some(selection) = stack_track_selection(value) {
-                signals.push(signal_from_selection(
+                signals.push(crate::matchers::evaluate_signal(
                     track,
                     &format!("stack.tracks.{track}.selection"),
                     &selection,
@@ -345,7 +345,7 @@ pub fn code_stack_signals_from_baseline(stack: &Value) -> Vec<CodeStackSignal> {
         "migrationTool",
     ] {
         if let Some(selection) = stack.get(key).and_then(compact_stack_value) {
-            signals.push(signal_from_selection(
+            signals.push(crate::matchers::evaluate_signal(
                 key,
                 &format!("stack.{key}"),
                 &selection,

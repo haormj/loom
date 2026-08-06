@@ -1,0 +1,340 @@
+# Builtin Loom Playbook — default stack matchers
+#
+# Data-driven stack identification, byte-equivalent with the prior hardcoded
+# `signal_from_selection` function in contracts/code_quality.rs:397.
+#
+# The engine normalizes the raw selection text (lowercase, replace /,-,_ with
+# spaces, pad with spaces), then evaluates an ordered language chain (first
+# match wins). Within each matched language, framework and role rules fire.
+# After the chain, cross-cutting rules may add roles regardless of language.
+#
+# Enterprise playbooks (mode: extend) may add language entries or framework
+# groups to recognise internal frameworks — without touching Rust.
+
+schema_version: 1
+playbook: default
+mode: base
+
+# ──────────────────────────────────────────────────────────────────────────
+# Track-based initial roles — derived from the track name, not the selection
+# text. Replaces `role_from_track` (code_quality.rs:672).
+# ──────────────────────────────────────────────────────────────────────────
+track_roles:
+  - keywords: [web, frontend, app]
+    role: frontend
+  - keywords: [backend, api, server]
+    role: backend
+  - keywords: [persistence, database, dataaccess, orm]
+    role: persistence
+
+# ──────────────────────────────────────────────────────────────────────────
+# Reusable framework keyword groups — invoked by `group: <name>` in language
+# entries. Replaces `push_frontend_frameworks_from_haystack` and
+# `push_spring_frameworks_from_haystack`.
+#
+# Each entry pushes `name` onto the frameworks list if `if_any` matches the
+# haystack. `unless_any` excludes (e.g. skip "react" when "react native"
+# matched). `requires_any` adds an additional AND condition (e.g. "bloc" only
+# if a flutter-family keyword is also present).
+# ──────────────────────────────────────────────────────────────────────────
+framework_groups:
+  frontend:
+    - name: reactnative
+      if_any: ["react native", "reactnative", "expo", "expo router"]
+    - name: expo
+      if_any: ["expo", "expo router"]
+    - name: flutter
+      if_any: ["flutter", "riverpod", "go router", "gorouter"]
+    - name: riverpod
+      if_any: ["riverpod"]
+    - name: bloc
+      if_any: [" bloc ", "cubit"]
+      requires_any: ["flutter", "riverpod", "go router", "gorouter"]
+    - name: gorouter
+      if_any: ["go router", "gorouter"]
+    - name: nextjs
+      if_any: ["next", "nextjs", "next js", "app router"]
+    - name: app_router
+      if_any: ["app router"]
+    - name: react
+      if_any: ["react", "next", "nextjs", "next js"]
+      unless_any: ["react native", "reactnative", "expo", "expo router"]
+    - name: react19
+      if_any: ["react 19", "react19"]
+    - name: react_server_components
+      if_any: ["react server component", "server components", " rsc ", "app router"]
+    - name: vue
+      if_any: ["vue", "nuxt"]
+    - name: nuxt
+      if_any: ["nuxt"]
+    - name: quasar
+      if_any: ["quasar"]
+    - name: capacitor
+      if_any: ["capacitor"]
+    - name: pwa
+      if_any: ["progressive web app", " pwa ", "pwa+", "+pwa"]
+    - name: angular
+      if_any: ["angular", "ngrx"]
+    - name: ngrx
+      if_any: ["ngrx"]
+    - name: svelte
+      if_any: ["svelte"]
+
+  spring:
+    - name: spring_framework
+      if_any: ["spring"]
+    - name: spring_boot
+      if_any: ["spring boot", "springboot"]
+    - name: spring_cloud
+      if_any: ["spring cloud", "cloud gateway", "spring cloud gateway", "config server", "spring cloud config", "eureka"]
+    - name: spring_data_jpa
+      if_any: ["spring data jpa", "spring-data-jpa"]
+    - name: mybatis_plus
+      if_any: ["mybatis plus", "mybatis-plus", "mybatisplus", "com.baomidou.mybatisplus"]
+    - name: jpa_orm
+      if_any: ["jpa", "hibernate", "eclipselink"]
+    - name: spring_webflux
+      if_any: ["spring webflux", "webflux"]
+    - name: project_reactor
+      if_any: ["project reactor", "reactor"]
+    - name: r2dbc
+      if_any: ["r2dbc"]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Frontend framework detection keywords — used by `if_frontend_mentioned`
+# role rules. Replaces `selection_mentions_frontend_framework`.
+# ──────────────────────────────────────────────────────────────────────────
+frontend_keywords:
+  - "react"
+  - "next"
+  - "nextjs"
+  - "next js"
+  - "app router"
+  - "vue"
+  - "nuxt"
+  - "svelte"
+  - "angular"
+  - "ngrx"
+  - "react native"
+  - "reactnative"
+  - "expo"
+  - "expo router"
+  - "flutter"
+  - "riverpod"
+  - "go router"
+  - "gorouter"
+
+# ──────────────────────────────────────────────────────────────────────────
+# Ordered language matchers — first match wins (equivalent to the
+# if/else-if chain in signal_from_selection).
+#
+# Fields:
+#   language      — set signal.language (null/absent = no language)
+#   any           — match if haystack contains any of these keywords
+#   unless        — skip if haystack contains any of these keywords
+#   flutter       — match if selection_mentions_flutter_framework (shorthand)
+#   frontend      — match if selection_mentions_frontend_framework (shorthand)
+#   frameworks    — ordered list of framework push rules / group references
+#   dialects      — ordered list of dialect push rules
+#   roles         — ordered list of role push rules
+# ──────────────────────────────────────────────────────────────────────────
+languages:
+  # 1. TypeScript
+  - language: typescript
+    any: ["typescript", "type script", " ts ", "tsx"]
+    frameworks:
+      - group: frontend
+      - name: node
+        if_any: ["node"]
+      - name: nestjs
+        if_any: ["nestjs", "nest js"]
+    roles:
+      - name: frontend
+        if_frontend_mentioned: true
+      - name: backend
+        if_any: ["node", "express", "nestjs", "nest js", "fastify"]
+
+  # 2. JavaScript
+  - language: javascript
+    any: ["javascript", " js ", "node", "express", "nestjs", "fastify"]
+    frameworks:
+      - name: node
+        if_any: ["node"]
+      - name: express
+        if_any: ["express"]
+      - name: nestjs
+        if_any: ["nestjs", "nest js"]
+      - group: frontend
+    roles:
+      - name: frontend
+        if_frontend_mentioned: true
+      - name: backend
+        if_any: ["node", "express", "nestjs", "nest js", "fastify"]
+
+  # 3. Java (excludes Kotlin/Ktor/Android/KMP/Mybatis Flex)
+  - language: java
+    any: ["java", "spring", "jpa", "hibernate", "mybatis plus", "mybatisplus", "com.baomidou.mybatisplus"]
+    unless: ["kotlin", "ktor", "android", "kmp", "mybatis flex"]
+    frameworks:
+      - group: spring
+    roles:
+      - backend_unless_persistence: true
+
+  # 4. C#
+  - language: csharp
+    any: ["csharp", "c#", ".net", "dotnet", "asp.net", "ef core", "entity framework"]
+    frameworks:
+      - name: aspnet_core
+        if_any: ["asp.net", "aspnet", "aspnet core", "asp.net core", "minimal api"]
+      - name: minimal_api
+        if_any: ["minimal api", "minimal-api"]
+      - name: entity_framework
+        if_any: ["entity framework", "ef core"]
+      - name: blazor
+        if_any: ["blazor"]
+    roles:
+      - backend_unless_persistence: true
+      - name: frontend
+        if_any: ["blazor"]
+
+  # 5. Go
+  - language: go
+    any: ["golang", " go ", "gin", "gofiber", "fiber", "grpc"]
+    frameworks:
+      - name: gin
+        if_any: ["gin"]
+      - name: fiber
+        if_any: ["fiber"]
+      - name: grpc
+        if_any: ["grpc"]
+    roles:
+      - name: backend
+
+  # 6. Python
+  - language: python
+    any: ["python", "fastapi", "django", "drf", "flask", "sqlalchemy", "pydantic"]
+    frameworks:
+      - name: fastapi
+        if_any: ["fastapi"]
+      - name: django
+        if_any: ["django"]
+      - name: django_rest_framework
+        if_any: ["django rest framework", "drf"]
+      - name: pydantic
+        if_any: ["pydantic"]
+      - name: sqlalchemy
+        if_any: ["sqlalchemy", "sql alchemy"]
+      - name: flask
+        if_any: ["flask"]
+    roles:
+      - backend_unless_persistence: true
+
+  # 7. Rust
+  - language: rust
+    any: ["rust", "cargo", "tokio", "axum", "actix"]
+    frameworks:
+      - name: tokio
+        if_any: ["tokio"]
+      - name: axum
+        if_any: ["axum"]
+      - name: actix
+        if_any: ["actix"]
+    roles:
+      - backend_unless_persistence: true
+
+  # 8. Flutter-only (no language set)
+  - language: null
+    flutter: true
+    frameworks:
+      - group: frontend
+    roles:
+      - name: frontend
+
+  # 9. Kotlin
+  - language: kotlin
+    any: ["kotlin", "ktor", "android", "compose", "kmp"]
+    frameworks:
+      - name: ktor_client
+        if_any: ["ktor client", "ktor-client"]
+      - name: ktor
+        if_any: ["ktor"]
+        unless_any: ["ktor client", "ktor-client"]
+      - name: compose
+        if_any: ["compose"]
+      - name: kmp
+        if_any: ["kmp", "multiplatform"]
+      - group: spring
+    roles:
+      - backend_unless_persistence: true
+        if_frameworks_any: [spring_boot, spring_framework, spring_cloud, spring_data_jpa, jpa_orm, spring_webflux, project_reactor, r2dbc]
+
+  # 10. PHP
+  - language: php
+    any: ["php", "laravel", "symfony"]
+    frameworks:
+      - name: laravel
+        if_any: ["laravel"]
+      - name: symfony
+        if_any: ["symfony"]
+      - name: swoole
+        if_any: ["swoole"]
+      - name: reactphp
+        if_any: ["reactphp", "react php"]
+      - name: amphp
+        if_any: ["amphp", "amp php"]
+      - name: fibers
+        if_any: ["fiber", "fibers"]
+    roles:
+      - name: backend
+
+  # 11. Swift
+  - language: swift
+    any: ["swift", "swiftui", "vapor"]
+    frameworks:
+      - name: swiftui
+        if_any: ["swiftui"]
+      - name: vapor
+        if_any: ["vapor"]
+
+  # 12. C++
+  - language: cpp
+    any: ["c++", "cpp", "cmake", "clang", "gcc"]
+    frameworks:
+      - name: cmake
+        if_any: ["cmake"]
+
+  # 13. Frontend-only (no language set)
+  - language: null
+    frontend: true
+    frameworks:
+      - group: frontend
+    roles:
+      - name: frontend
+
+  # 14. SQL (database dialects)
+  - language: sql
+    any: ["postgres", "postgresql", "mysql", "sqlite", "mariadb", "sql server", "mssql", "oracle", "cockroach"]
+    dialects:
+      - name: postgresql
+        if_any: ["postgres", "postgresql"]
+      - name: mysql
+        if_any: ["mysql"]
+      - name: mariadb
+        if_any: ["mariadb"]
+      - name: sqlite
+        if_any: ["sqlite"]
+      - name: sql_server
+        if_any: ["sql server", "mssql"]
+      - name: oracle
+        if_any: ["oracle"]
+    roles:
+      - name: database
+
+# ──────────────────────────────────────────────────────────────────────────
+# Cross-cutting rules — fire after the language chain regardless of which
+# branch matched. Replaces the trailing persistence-role block in
+# signal_from_selection (code_quality.rs:627-642).
+# ──────────────────────────────────────────────────────────────────────────
+cross_cutting:
+  - push_roles: [persistence]
+    if_any: ["jpa", "hibernate", "entity framework", "ef core", "sqlalchemy", "database", "postgres", "mysql", "sqlite"]

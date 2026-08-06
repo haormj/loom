@@ -6,6 +6,7 @@ pub mod code_quality;
 pub mod deploy;
 pub mod engine;
 pub mod execution;
+pub mod matchers;
 pub mod planning;
 pub mod playbook;
 pub mod review;
