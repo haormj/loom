@@ -40,17 +40,30 @@ sources:
     timeoutSecs: 15
 ```
 
-### 第二步：设置 API Key 环境变量
+### 第二步：配置 API Key（环境变量优先，或直接写明文）
 
-`apiKeyEnv` 字段指定环境变量名称，loom 运行时从中读取实际的 API Key：
+OpenViking 的 API Key 有两种配置方式，解析时遵循以下优先级：
+
+1. **`apiKeyEnv`（推荐）**：指向环境变量名，loom 运行时从中读取实际 token。环境变量未设置或为空时回退到方式 2。
+2. **`apiKey`（明文，回退）**：直接在配置文件中写入明文密钥。仅当 `apiKeyEnv` 未配置或其环境变量未设置/为空时生效。
 
 ```bash
-# 在 shell 配置文件（~/.bashrc / ~/.zshrc）中添加
+# 方式 1（推荐）：在 shell 配置文件（~/.bashrc / ~/.zshrc）中添加
 export CONFLUENCE_OV_KEY="your-openviking-api-key-here"
 export WIKI_OV_KEY="another-api-key"
 ```
 
-> **注意**：API Key 只存环境变量，不写入配置文件，避免泄露。
+```yaml
+# 方式 2：直接在 providers.yaml 中写明文（适用于不便设置环境变量的场景）
+sources:
+  - name: confluence-kb
+    endpoint: http://confluence-openviking.internal:1933
+    apiKey: your-openviking-api-key-here
+    account: acme
+    targetUri: viking://resources/confluence/
+```
+
+> **安全提示**：`apiKey` 明文字段标注了 `skip_serializing`，永不写入 `registry.json`、也永不回传到 `loom_knowledgeList` / `loom_knowledgeStatus` 响应，避免泄露。生产环境仍推荐使用 `apiKeyEnv`；`apiKey` 主要用于本地开发或不便管理环境变量的场景。两者同时配置时，环境变量始终优先。
 
 ### 配置字段说明
 
@@ -58,7 +71,8 @@ export WIKI_OV_KEY="another-api-key"
 |------|------|--------|------|
 | `name` | 是 | — | 知识源名称（2-80 字符，仅含字母、数字、`.`、`_`、`-`） |
 | `endpoint` | 是 | — | OpenViking 服务地址（含协议和端口） |
-| `apiKeyEnv` | 否 | 无 | API Key 所在环境变量名 |
+| `apiKeyEnv` | 否 | 无 | API Key 所在环境变量名（优先于 `apiKey`） |
+| `apiKey` | 否 | 无 | 明文 API Key，仅在 `apiKeyEnv` 未配置或其环境变量未设置/为空时作为回退；永不序列化到响应或 registry |
 | `account` | 否 | 无 | 多租户账户名，映射为 `X-OpenViking-Account` 头 |
 | `user` | 否 | 无 | 用户标识，映射为 `X-OpenViking-User` 头 |
 | `targetUri` | 否 | `viking://resources/` | 搜索目标 URI，指定 OpenViking 中的资源范围 |

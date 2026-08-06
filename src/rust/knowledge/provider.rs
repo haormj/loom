@@ -45,25 +45,35 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
             }))
         }
         KnowledgeProviderConfig::OpenViking(config) => {
-            let api_key = config
-                .api_key_env
-                .as_ref()
-                .and_then(|env| std::env::var(env).ok())
-                .filter(|value| !value.is_empty());
-            match (&config.api_key_env, &api_key) {
-                (Some(env_name), Some(_)) => debug!(
+            let (api_key, key_source) = resolve_api_key(config);
+            match key_source {
+                ApiKeySource::Env(env_name) => debug!(
                     "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} -> resolved)",
                     source.name, config.endpoint, env_name
                 ),
-                (Some(env_name), None) => warn!(
-                    "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} -> env var NOT SET, requests will be unauthenticated)",
-                    source.name, config.endpoint, env_name
-                ),
-                (None, None) => debug!(
-                    "create_provider: source '{}' -> OpenViking (endpoint={}, no apiKeyEnv configured)",
+                ApiKeySource::EnvUnset(env_name) => {
+                    if config.api_key.is_some() {
+                        debug!(
+                            "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} \
+                             -> env var NOT SET, falling back to configured apiKey)",
+                            source.name, config.endpoint, env_name
+                        );
+                    } else {
+                        warn!(
+                            "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} \
+                             -> env var NOT SET, requests will be unauthenticated)",
+                            source.name, config.endpoint, env_name
+                        );
+                    }
+                }
+                ApiKeySource::Config => debug!(
+                    "create_provider: source '{}' -> OpenViking (endpoint={}, apiKey from config -> resolved)",
                     source.name, config.endpoint
                 ),
-                _ => unreachable!(),
+                ApiKeySource::None => debug!(
+                    "create_provider: source '{}' -> OpenViking (endpoint={}, no apiKey configured)",
+                    source.name, config.endpoint
+                ),
             }
             Ok(Box::new(OpenVikingProvider::new(
                 source.source_id.clone(),
@@ -73,6 +83,44 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
             )))
         }
     }
+}
+
+/// 解析 OpenViking provider 的 API Key。
+///
+/// 优先级：`api_key_env` 指向的环境变量（非空） > 配置中的明文 `api_key`（非空） > 无认证。
+/// 返回解析所得密钥与来源标签，便于日志区分与单测断言。
+fn resolve_api_key(config: &OpenVikingProviderConfig) -> (Option<String>, ApiKeySource) {
+    if let Some(env_name) = config.api_key_env.as_deref() {
+        if let Ok(value) = std::env::var(env_name) {
+            if !value.is_empty() {
+                return (Some(value), ApiKeySource::Env(env_name.to_string()));
+            }
+        }
+        // 环境变量未设置或为空，回退到明文配置
+        if let Some(key) = config.api_key.as_ref().filter(|v| !v.is_empty()) {
+            return (
+                Some(key.clone()),
+                ApiKeySource::EnvUnset(env_name.to_string()),
+            );
+        }
+        return (None, ApiKeySource::EnvUnset(env_name.to_string()));
+    }
+    if let Some(key) = config.api_key.as_ref().filter(|v| !v.is_empty()) {
+        return (Some(key.clone()), ApiKeySource::Config);
+    }
+    (None, ApiKeySource::None)
+}
+
+/// `resolve_api_key` 的来源标签。
+enum ApiKeySource {
+    /// 环境变量已成功解析。
+    Env(String),
+    /// `api_key_env` 已配置但环境变量未设置/为空；可能回退到了明文 `api_key`。
+    EnvUnset(String),
+    /// 未配置 `api_key_env`，使用明文 `api_key`。
+    Config,
+    /// 既无环境变量也无明文密钥，请求将以无认证方式进行。
+    None,
 }
 
 pub fn is_local_provider(source: &KnowledgeSource) -> bool {
@@ -400,6 +448,7 @@ mod tests {
             OpenVikingProviderConfig {
                 endpoint: "http://127.0.0.1:1933/".to_string(),
                 api_key_env: None,
+                api_key: None,
                 account: None,
                 user: None,
                 target_uri: "viking://resources/".to_string(),
@@ -419,6 +468,7 @@ mod tests {
             OpenVikingProviderConfig {
                 endpoint: "http://127.0.0.1:1933".to_string(),
                 api_key_env: None,
+                api_key: None,
                 account: None,
                 user: None,
                 target_uri: "viking://resources/".to_string(),
@@ -438,6 +488,7 @@ mod tests {
             OpenVikingProviderConfig {
                 endpoint: "http://127.0.0.1:1933/".to_string(),
                 api_key_env: None,
+                api_key: None,
                 account: None,
                 user: None,
                 target_uri: "viking://resources/".to_string(),
@@ -459,6 +510,7 @@ mod tests {
             OpenVikingProviderConfig {
                 endpoint: "http://127.0.0.1:1933".to_string(),
                 api_key_env: None,
+                api_key: None,
                 account: None,
                 user: None,
                 target_uri: "viking://resources/".to_string(),
@@ -478,6 +530,7 @@ mod tests {
             OpenVikingProviderConfig {
                 endpoint: "http://127.0.0.1:1933".to_string(),
                 api_key_env: None,
+                api_key: None,
                 account: None,
                 user: None,
                 target_uri: "viking://resources/".to_string(),
@@ -550,5 +603,86 @@ mod tests {
         let mut filtered = cards;
         filtered.retain(|card| card.score >= min_score);
         assert!(filtered.is_empty(), "all-low results yield empty set");
+    }
+
+    fn config_with(api_key_env: Option<&str>, api_key: Option<&str>) -> OpenVikingProviderConfig {
+        OpenVikingProviderConfig {
+            endpoint: "http://127.0.0.1:1933".to_string(),
+            api_key_env: api_key_env.map(str::to_string),
+            api_key: api_key.map(str::to_string),
+            account: None,
+            user: None,
+            target_uri: "viking://resources/".to_string(),
+            timeout_secs: None,
+            min_score: None,
+        }
+    }
+
+    #[test]
+    fn resolve_api_key_env_takes_precedence_over_config() {
+        let env_name = "LOOM_TEST_API_KEY_ENV_PRECEDENCE";
+        std::env::set_var(env_name, "from-env");
+        let (key, source) = resolve_api_key(&config_with(
+            Some(env_name),
+            Some("from-config"),
+        ));
+        std::env::remove_var(env_name);
+        assert_eq!(key.as_deref(), Some("from-env"), "env var must win");
+        assert!(matches!(source, ApiKeySource::Env(n) if n == env_name));
+    }
+
+    #[test]
+    fn resolve_api_key_falls_back_to_config_when_env_unset() {
+        let env_name = "LOOM_TEST_API_KEY_ENV_UNSET_FALLBACK";
+        std::env::remove_var(env_name);
+        let (key, source) = resolve_api_key(&config_with(
+            Some(env_name),
+            Some("from-config"),
+        ));
+        assert_eq!(key.as_deref(), Some("from-config"), "config fallback");
+        assert!(matches!(source, ApiKeySource::EnvUnset(n) if n == env_name));
+    }
+
+    #[test]
+    fn resolve_api_key_falls_back_to_config_when_env_empty() {
+        let env_name = "LOOM_TEST_API_KEY_ENV_EMPTY_FALLBACK";
+        std::env::set_var(env_name, "");
+        let (key, source) = resolve_api_key(&config_with(
+            Some(env_name),
+            Some("from-config"),
+        ));
+        std::env::remove_var(env_name);
+        assert_eq!(key.as_deref(), Some("from-config"), "empty env should fall back");
+        assert!(matches!(source, ApiKeySource::EnvUnset(n) if n == env_name));
+    }
+
+    #[test]
+    fn resolve_api_key_env_configured_but_unset_and_no_config_yields_none() {
+        let env_name = "LOOM_TEST_API_KEY_ENV_UNSET_NONE";
+        std::env::remove_var(env_name);
+        let (key, source) = resolve_api_key(&config_with(Some(env_name), None));
+        assert!(key.is_none(), "no key should resolve");
+        assert!(matches!(source, ApiKeySource::EnvUnset(n) if n == env_name));
+    }
+
+    #[test]
+    fn resolve_api_key_config_only_when_no_env() {
+        let (key, source) = resolve_api_key(&config_with(None, Some("from-config")));
+        assert_eq!(key.as_deref(), Some("from-config"));
+        assert!(matches!(source, ApiKeySource::Config));
+    }
+
+    #[test]
+    fn resolve_api_key_none_when_neither_configured() {
+        let (key, source) = resolve_api_key(&config_with(None, None));
+        assert!(key.is_none());
+        assert!(matches!(source, ApiKeySource::None));
+    }
+
+    #[test]
+    fn resolve_api_key_ignores_empty_config_value() {
+        let (key, source) = resolve_api_key(&config_with(None, Some("")));
+        assert!(key.is_none(), "empty config value should be ignored");
+        assert!(matches!(source, ApiKeySource::None));
     }
 }

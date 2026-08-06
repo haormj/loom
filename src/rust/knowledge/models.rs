@@ -531,6 +531,10 @@ pub struct OpenVikingProviderConfig {
     pub endpoint: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_key_env: Option<String>,
+    /// 明文 API Key。仅在 `api_key_env` 未配置或对应环境变量未设置/为空时作为回退使用。
+    /// 标注 `skip_serializing` 以确保该字段永不序列化到 MCP 响应或 registry.json，避免明文泄露。
+    #[serde(default, skip_serializing)]
+    pub api_key: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub account: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -548,6 +552,7 @@ impl Default for OpenVikingProviderConfig {
         Self {
             endpoint: String::new(),
             api_key_env: None,
+            api_key: None,
             account: None,
             user: None,
             target_uri: "viking://resources/".to_string(),
