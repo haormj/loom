@@ -6,6 +6,7 @@ pub mod code_quality;
 pub mod deploy;
 pub mod execution;
 pub mod planning;
+pub mod playbook;
 pub mod review;
 pub mod ui_quality;
 
@@ -17,6 +18,7 @@ pub use code_quality::*;
 pub use deploy::*;
 pub use execution::*;
 pub use planning::*;
+pub use playbook::*;
 pub use review::*;
 pub use ui_quality::*;
 

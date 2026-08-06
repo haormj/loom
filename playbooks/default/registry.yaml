@@ -1,0 +1,263 @@
+# Builtin Loom Playbook — default registry
+#
+# Single source of truth for reference id -> file path mapping.
+# Byte-equivalent with the prior hardcoded reference_load_plan_item logic in
+# contracts/code_quality.rs. Editing this file changes what Loom installs,
+# selects, and reads — without touching Rust.
+#
+# Lookup key for code references is (group_key, group). Each entry carries the
+# stable ref_id, the repository-relative content path, and the human reason.
+# Enterprise playbooks (mode: extend) may add or override entries; mode: base
+# replaces this table wholesale.
+
+schema_version: 1
+playbook: default
+mode: base
+
+# Always-prepended common code-quality reference (code_reference_load_plan
+# emits this once when any code reference group is active).
+code_common:
+  ref_id: tech.code.common
+  path: tech/code/common.md
+  reason: "Common Loom code quality rules for repository adaptation, delivery evidence, and verification."
+
+# (group_key, group) -> { ref_id, path, reason }
+code_refs:
+  common:
+    observability:
+      ref_id: tech.code.observability
+      path: tech/code/observability.md
+      reason: "Selected the task-owned cross-stack observability implementation reference."
+
+  # --- backend frameworks: ref_id {prefix}.{group}, path tech/backend/{pathgroup}/{group}.md ---
+  springboot:
+    web:        { ref_id: bk.spring.web,        path: tech/backend/springboot/web.md,        reason: "Selected Spring Boot web framework quality reference for this task." }
+    data:       { ref_id: bk.spring.data,       path: tech/backend/springboot/data.md,       reason: "Selected Spring Boot data framework quality reference for this task." }
+    security:   { ref_id: bk.spring.security,   path: tech/backend/springboot/security.md,   reason: "Selected Spring Boot security framework quality reference for this task." }
+    testing:    { ref_id: bk.spring.testing,    path: tech/backend/springboot/testing.md,    reason: "Selected Spring Boot testing framework quality reference for this task." }
+    runtime:    { ref_id: bk.spring.runtime,    path: tech/backend/springboot/runtime.md,    reason: "Selected Spring Boot runtime framework quality reference for this task." }
+    async:      { ref_id: bk.spring.async,      path: tech/backend/springboot/async.md,      reason: "Selected Spring Boot async framework quality reference for this task." }
+    cache:      { ref_id: bk.spring.cache,      path: tech/backend/springboot/cache.md,      reason: "Selected Spring Boot cache framework quality reference for this task." }
+    integration: { ref_id: bk.spring.integration, path: tech/backend/springboot/integration.md, reason: "Selected Spring Boot integration framework quality reference for this task." }
+    resilience: { ref_id: bk.spring.resilience, path: tech/backend/springboot/resilience.md, reason: "Selected Spring Boot resilience framework quality reference for this task." }
+    cloud:      { ref_id: bk.spring.cloud,      path: tech/backend/springboot/cloud.md,      reason: "Selected Spring Boot cloud framework quality reference for this task." }
+    observability: { ref_id: bk.spring.observability, path: tech/backend/springboot/observability.md, reason: "Selected Spring Boot observability framework quality reference for this task." }
+    logging:    { ref_id: bk.spring.logging,    path: tech/backend/springboot/logging.md,    reason: "Selected Spring Boot logging framework quality reference for this task." }
+
+  mybatisplus:
+    configuration: { ref_id: bk.spring.mybatisplus.configuration, path: tech/backend/springboot/mybatis-plus/configuration.md, reason: "Selected MyBatis-Plus configuration reference for this task-owned persistence capability." }
+    mapping:       { ref_id: bk.spring.mybatisplus.mapping,       path: tech/backend/springboot/mybatis-plus/mapping.md,       reason: "Selected MyBatis-Plus mapping reference for this task-owned persistence capability." }
+    crud:          { ref_id: bk.spring.mybatisplus.crud,          path: tech/backend/springboot/mybatis-plus/crud.md,          reason: "Selected MyBatis-Plus crud reference for this task-owned persistence capability." }
+    wrappers:      { ref_id: bk.spring.mybatisplus.wrappers,      path: tech/backend/springboot/mybatis-plus/wrappers.md,      reason: "Selected MyBatis-Plus wrappers reference for this task-owned persistence capability." }
+    plugins:       { ref_id: bk.spring.mybatisplus.plugins,       path: tech/backend/springboot/mybatis-plus/plugins.md,       reason: "Selected MyBatis-Plus plugins reference for this task-owned persistence capability." }
+    security:      { ref_id: bk.spring.mybatisplus.security,      path: tech/backend/springboot/mybatis-plus/security.md,      reason: "Selected MyBatis-Plus security reference for this task-owned persistence capability." }
+    extensions:    { ref_id: bk.spring.mybatisplus.extensions,    path: tech/backend/springboot/mybatis-plus/extensions.md,    reason: "Selected MyBatis-Plus extensions reference for this task-owned persistence capability." }
+
+  django:
+    models:      { ref_id: bk.django.models,      path: tech/backend/django/models.md,      reason: "Selected Django models framework quality reference for this task." }
+    serializers: { ref_id: bk.django.serializers, path: tech/backend/django/serializers.md, reason: "Selected Django serializers framework quality reference for this task." }
+    views:       { ref_id: bk.django.views,       path: tech/backend/django/views.md,       reason: "Selected Django views framework quality reference for this task." }
+    security:    { ref_id: bk.django.security,    path: tech/backend/django/security.md,    reason: "Selected Django security framework quality reference for this task." }
+    testing:     { ref_id: bk.django.testing,     path: tech/backend/django/testing.md,     reason: "Selected Django testing framework quality reference for this task." }
+    logging:     { ref_id: bk.django.logging,     path: tech/backend/django/logging.md,     reason: "Selected Django logging framework quality reference for this task." }
+
+  fastapi:
+    schemas:   { ref_id: bk.fastapi.schemas,   path: tech/backend/fastapi/schemas.md,   reason: "Selected FastAPI schemas framework quality reference for this task." }
+    data:      { ref_id: bk.fastapi.data,      path: tech/backend/fastapi/data.md,      reason: "Selected FastAPI data framework quality reference for this task." }
+    routing:   { ref_id: bk.fastapi.routing,   path: tech/backend/fastapi/routing.md,   reason: "Selected FastAPI routing framework quality reference for this task." }
+    security:  { ref_id: bk.fastapi.security,  path: tech/backend/fastapi/security.md,  reason: "Selected FastAPI security framework quality reference for this task." }
+    testing:   { ref_id: bk.fastapi.testing,   path: tech/backend/fastapi/testing.md,   reason: "Selected FastAPI testing framework quality reference for this task." }
+    migration: { ref_id: bk.fastapi.migration, path: tech/backend/fastapi/migration.md, reason: "Selected FastAPI migration framework quality reference for this task." }
+    logging:   { ref_id: bk.fastapi.logging,   path: tech/backend/fastapi/logging.md,   reason: "Selected FastAPI logging framework quality reference for this task." }
+
+  aspnetcore:
+    minimal:      { ref_id: bk.aspnet.minimal,      path: tech/backend/aspnetcore/minimal.md,      reason: "Selected ASP.NET Core minimal framework quality reference for this task." }
+    architecture: { ref_id: bk.aspnet.architecture, path: tech/backend/aspnetcore/architecture.md, reason: "Selected ASP.NET Core architecture framework quality reference for this task." }
+    data:         { ref_id: bk.aspnet.data,         path: tech/backend/aspnetcore/data.md,         reason: "Selected ASP.NET Core data framework quality reference for this task." }
+    security:     { ref_id: bk.aspnet.security,     path: tech/backend/aspnetcore/security.md,     reason: "Selected ASP.NET Core security framework quality reference for this task." }
+    testing:      { ref_id: bk.aspnet.testing,      path: tech/backend/aspnetcore/testing.md,      reason: "Selected ASP.NET Core testing framework quality reference for this task." }
+    runtime:      { ref_id: bk.aspnet.runtime,      path: tech/backend/aspnetcore/runtime.md,      reason: "Selected ASP.NET Core runtime framework quality reference for this task." }
+    logging:      { ref_id: bk.aspnet.logging,      path: tech/backend/aspnetcore/logging.md,      reason: "Selected ASP.NET Core logging framework quality reference for this task." }
+
+  nestjs:
+    controllers: { ref_id: bk.nest.controllers, path: tech/backend/nestjs/controllers.md, reason: "Selected NestJS controllers framework quality reference for this task." }
+    dtos:        { ref_id: bk.nest.dtos,        path: tech/backend/nestjs/dtos.md,        reason: "Selected NestJS dtos framework quality reference for this task." }
+    services:    { ref_id: bk.nest.services,    path: tech/backend/nestjs/services.md,    reason: "Selected NestJS services framework quality reference for this task." }
+    security:    { ref_id: bk.nest.security,    path: tech/backend/nestjs/security.md,    reason: "Selected NestJS security framework quality reference for this task." }
+    testing:     { ref_id: bk.nest.testing,     path: tech/backend/nestjs/testing.md,     reason: "Selected NestJS testing framework quality reference for this task." }
+    migration:   { ref_id: bk.nest.migration,   path: tech/backend/nestjs/migration.md,   reason: "Selected NestJS migration framework quality reference for this task." }
+    logging:     { ref_id: bk.nest.logging,     path: tech/backend/nestjs/logging.md,     reason: "Selected NestJS logging framework quality reference for this task." }
+
+  # --- frontend frameworks: ref_id {prefix}.{group}, path tech/frontend/{pathgroup}/{group}.md ---
+  react:
+    core:              { ref_id: fe.react.core,              path: tech/frontend/react/core.md,              reason: "Selected React core frontend framework quality reference for this task." }
+    hooks:             { ref_id: fe.react.hooks,             path: tech/frontend/react/hooks.md,             reason: "Selected React hooks frontend framework quality reference for this task." }
+    state:             { ref_id: fe.react.state,             path: tech/frontend/react/state.md,             reason: "Selected React state frontend framework quality reference for this task." }
+    performance:       { ref_id: fe.react.performance,       path: tech/frontend/react/performance.md,       reason: "Selected React performance frontend framework quality reference for this task." }
+    testing:           { ref_id: fe.react.testing,           path: tech/frontend/react/testing.md,           reason: "Selected React testing frontend framework quality reference for this task." }
+    server-components: { ref_id: fe.react.server-components, path: tech/frontend/react/server-components.md, reason: "Selected React server-components frontend framework quality reference for this task." }
+    react19:           { ref_id: fe.react.react19,           path: tech/frontend/react/react19.md,           reason: "Selected React react19 frontend framework quality reference for this task." }
+    migration:         { ref_id: fe.react.migration,         path: tech/frontend/react/migration.md,         reason: "Selected React migration frontend framework quality reference for this task." }
+
+  nextjs:
+    core:              { ref_id: fe.next.core,              path: tech/frontend/nextjs/core.md,              reason: "Selected Next.js core frontend framework quality reference for this task." }
+    app-router:        { ref_id: fe.next.app-router,        path: tech/frontend/nextjs/app-router.md,        reason: "Selected Next.js app-router frontend framework quality reference for this task." }
+    data:              { ref_id: fe.next.data,              path: tech/frontend/nextjs/data.md,              reason: "Selected Next.js data frontend framework quality reference for this task." }
+    actions:           { ref_id: fe.next.actions,           path: tech/frontend/nextjs/actions.md,           reason: "Selected Next.js actions frontend framework quality reference for this task." }
+    server-components: { ref_id: fe.next.server-components, path: tech/frontend/nextjs/server-components.md, reason: "Selected Next.js server-components frontend framework quality reference for this task." }
+    runtime:           { ref_id: fe.next.runtime,           path: tech/frontend/nextjs/runtime.md,           reason: "Selected Next.js runtime frontend framework quality reference for this task." }
+    testing:           { ref_id: fe.next.testing,           path: tech/frontend/nextjs/testing.md,           reason: "Selected Next.js testing frontend framework quality reference for this task." }
+
+  vue:
+    core:      { ref_id: fe.vue.core,      path: tech/frontend/vue/core.md,      reason: "Selected Vue core frontend framework quality reference for this task." }
+    components: { ref_id: fe.vue.components, path: tech/frontend/vue/components.md, reason: "Selected Vue components frontend framework quality reference for this task." }
+    state:     { ref_id: fe.vue.state,     path: tech/frontend/vue/state.md,     reason: "Selected Vue state frontend framework quality reference for this task." }
+    typescript: { ref_id: fe.vue.typescript, path: tech/frontend/vue/typescript.md, reason: "Selected Vue typescript frontend framework quality reference for this task." }
+    nuxt:      { ref_id: fe.vue.nuxt,      path: tech/frontend/vue/nuxt.md,      reason: "Selected Vue nuxt frontend framework quality reference for this task." }
+    build:     { ref_id: fe.vue.build,     path: tech/frontend/vue/build.md,     reason: "Selected Vue build frontend framework quality reference for this task." }
+    mobile:    { ref_id: fe.vue.mobile,    path: tech/frontend/vue/mobile.md,    reason: "Selected Vue mobile frontend framework quality reference for this task." }
+    testing:   { ref_id: fe.vue.testing,   path: tech/frontend/vue/testing.md,   reason: "Selected Vue testing frontend framework quality reference for this task." }
+
+  angular:
+    core:       { ref_id: fe.angular.core,       path: tech/frontend/angular/core.md,       reason: "Selected Angular core frontend framework quality reference for this task." }
+    components: { ref_id: fe.angular.components,  path: tech/frontend/angular/components.md, reason: "Selected Angular components frontend framework quality reference for this task." }
+    routing:    { ref_id: fe.angular.routing,    path: tech/frontend/angular/routing.md,    reason: "Selected Angular routing frontend framework quality reference for this task." }
+    rxjs:       { ref_id: fe.angular.rxjs,       path: tech/frontend/angular/rxjs.md,       reason: "Selected Angular rxjs frontend framework quality reference for this task." }
+    ngrx:       { ref_id: fe.angular.ngrx,       path: tech/frontend/angular/ngrx.md,       reason: "Selected Angular ngrx frontend framework quality reference for this task." }
+    testing:    { ref_id: fe.angular.testing,    path: tech/frontend/angular/testing.md,    reason: "Selected Angular testing frontend framework quality reference for this task." }
+
+  reactnative:
+    core:        { ref_id: fe.rn.core,        path: tech/frontend/react-native/core.md,        reason: "Selected React Native core frontend framework quality reference for this task." }
+    structure:   { ref_id: fe.rn.structure,   path: tech/frontend/react-native/structure.md,   reason: "Selected React Native structure frontend framework quality reference for this task." }
+    navigation:  { ref_id: fe.rn.navigation,  path: tech/frontend/react-native/navigation.md,  reason: "Selected React Native navigation frontend framework quality reference for this task." }
+    platform:    { ref_id: fe.rn.platform,    path: tech/frontend/react-native/platform.md,    reason: "Selected React Native platform frontend framework quality reference for this task." }
+    lists:       { ref_id: fe.rn.lists,       path: tech/frontend/react-native/lists.md,       reason: "Selected React Native lists frontend framework quality reference for this task." }
+    storage:     { ref_id: fe.rn.storage,     path: tech/frontend/react-native/storage.md,     reason: "Selected React Native storage frontend framework quality reference for this task." }
+    testing:     { ref_id: fe.rn.testing,     path: tech/frontend/react-native/testing.md,     reason: "Selected React Native testing frontend framework quality reference for this task." }
+
+  flutter:
+    core:        { ref_id: fe.flutter.core,        path: tech/frontend/flutter/core.md,        reason: "Selected Flutter core frontend framework quality reference for this task." }
+    structure:   { ref_id: fe.flutter.structure,   path: tech/frontend/flutter/structure.md,   reason: "Selected Flutter structure frontend framework quality reference for this task." }
+    widgets:     { ref_id: fe.flutter.widgets,     path: tech/frontend/flutter/widgets.md,     reason: "Selected Flutter widgets frontend framework quality reference for this task." }
+    navigation:  { ref_id: fe.flutter.navigation,  path: tech/frontend/flutter/navigation.md,  reason: "Selected Flutter navigation frontend framework quality reference for this task." }
+    riverpod:    { ref_id: fe.flutter.riverpod,    path: tech/frontend/flutter/riverpod.md,    reason: "Selected Flutter riverpod frontend framework quality reference for this task." }
+    bloc:        { ref_id: fe.flutter.bloc,        path: tech/frontend/flutter/bloc.md,        reason: "Selected Flutter bloc frontend framework quality reference for this task." }
+    performance: { ref_id: fe.flutter.performance, path: tech/frontend/flutter/performance.md, reason: "Selected Flutter performance frontend framework quality reference for this task." }
+    testing:     { ref_id: fe.flutter.testing,     path: tech/frontend/flutter/testing.md,     reason: "Selected Flutter testing frontend framework quality reference for this task." }
+
+  # --- sql: dialect entries are tech.code.sql.{provider}.{subject}; generic entries follow the fallback pattern ---
+  sql:
+    schema:       { ref_id: tech.code.sql.schema,       path: tech/code/sql/schema.md,       reason: "Selected sql.schema implementation quality reference for this task." }
+    queries:      { ref_id: tech.code.sql.queries,      path: tech/code/sql/queries.md,      reason: "Selected sql.queries implementation quality reference for this task." }
+    dialects:     { ref_id: tech.code.sql.dialects,     path: tech/code/sql/dialects.md,     reason: "Selected sql.dialects implementation quality reference for this task." }
+    optimization: { ref_id: tech.code.sql.optimization, path: tech/code/sql/optimization.md, reason: "Selected sql.optimization implementation quality reference for this task." }
+    windows:      { ref_id: tech.code.sql.windows,      path: tech/code/sql/windows.md,      reason: "Selected sql.windows implementation quality reference for this task." }
+    "mysql.schema":       { ref_id: tech.code.sql.mysql.schema,       path: tech/code/sql/mysql/schema.md,       reason: "Selected MySQL schema dialect reference for this persistence task." }
+    "mysql.queries":      { ref_id: tech.code.sql.mysql.queries,      path: tech/code/sql/mysql/queries.md,      reason: "Selected MySQL queries dialect reference for this persistence task." }
+    "mysql.transactions": { ref_id: tech.code.sql.mysql.transactions, path: tech/code/sql/mysql/transactions.md, reason: "Selected MySQL transactions dialect reference for this persistence task." }
+    "postgresql.schema":       { ref_id: tech.code.sql.postgresql.schema,       path: tech/code/sql/postgresql/schema.md,       reason: "Selected PostgreSQL schema dialect reference for this persistence task." }
+    "postgresql.queries":      { ref_id: tech.code.sql.postgresql.queries,      path: tech/code/sql/postgresql/queries.md,      reason: "Selected PostgreSQL queries dialect reference for this persistence task." }
+    "postgresql.transactions": { ref_id: tech.code.sql.postgresql.transactions, path: tech/code/sql/postgresql/transactions.md, reason: "Selected PostgreSQL transactions dialect reference for this persistence task." }
+    "sqlserver.schema":       { ref_id: tech.code.sql.sqlserver.schema,       path: tech/code/sql/sqlserver/schema.md,       reason: "Selected SQL Server schema dialect reference for this persistence task." }
+    "sqlserver.queries":      { ref_id: tech.code.sql.sqlserver.queries,      path: tech/code/sql/sqlserver/queries.md,      reason: "Selected SQL Server queries dialect reference for this persistence task." }
+    "sqlserver.transactions": { ref_id: tech.code.sql.sqlserver.transactions, path: tech/code/sql/sqlserver/transactions.md, reason: "Selected SQL Server transactions dialect reference for this persistence task." }
+    "oracle.schema":       { ref_id: tech.code.sql.oracle.schema,       path: tech/code/sql/oracle/schema.md,       reason: "Selected Oracle schema dialect reference for this persistence task." }
+    "oracle.queries":      { ref_id: tech.code.sql.oracle.queries,      path: tech/code/sql/oracle/queries.md,      reason: "Selected Oracle queries dialect reference for this persistence task." }
+    "oracle.transactions": { ref_id: tech.code.sql.oracle.transactions, path: tech/code/sql/oracle/transactions.md, reason: "Selected Oracle transactions dialect reference for this persistence task." }
+
+  redis:
+    core:        { ref_id: tech.code.redis.core,        path: tech/code/redis/core.md,        reason: "Selected Redis core reference for this task-owned capability." }
+    cache:       { ref_id: tech.code.redis.cache,       path: tech/code/redis/cache.md,       reason: "Selected Redis cache reference for this task-owned capability." }
+    session:     { ref_id: tech.code.redis.session,     path: tech/code/redis/session.md,     reason: "Selected Redis session reference for this task-owned capability." }
+    atomicity:   { ref_id: tech.code.redis.atomicity,   path: tech/code/redis/atomicity.md,   reason: "Selected Redis atomicity reference for this task-owned capability." }
+    messaging:   { ref_id: tech.code.redis.messaging,   path: tech/code/redis/messaging.md,   reason: "Selected Redis messaging reference for this task-owned capability." }
+
+  # --- plain languages: fallback pattern tech.code.{group_key}.{group} / tech/code/{group_key}/{group}.md ---
+  java:
+    core:        { ref_id: tech.code.java.core,        path: tech/code/java/core.md,        reason: "Selected java.core implementation quality reference for this task." }
+    spring:      { ref_id: tech.code.java.spring,      path: tech/code/java/spring.md,      reason: "Selected java.spring implementation quality reference for this task." }
+    persistence: { ref_id: tech.code.java.persistence, path: tech/code/java/persistence.md, reason: "Selected java.persistence implementation quality reference for this task." }
+    security:    { ref_id: tech.code.java.security,    path: tech/code/java/security.md,    reason: "Selected java.security implementation quality reference for this task." }
+    reactive:    { ref_id: tech.code.java.reactive,    path: tech/code/java/reactive.md,    reason: "Selected java.reactive implementation quality reference for this task." }
+    testing:     { ref_id: tech.code.java.testing,     path: tech/code/java/testing.md,     reason: "Selected java.testing implementation quality reference for this task." }
+
+  typescript:
+    core:     { ref_id: tech.code.typescript.core,     path: tech/code/typescript/core.md,     reason: "Selected typescript.core implementation quality reference for this task." }
+    types:    { ref_id: tech.code.typescript.types,    path: tech/code/typescript/types.md,    reason: "Selected typescript.types implementation quality reference for this task." }
+    guards:   { ref_id: tech.code.typescript.guards,   path: tech/code/typescript/guards.md,   reason: "Selected typescript.guards implementation quality reference for this task." }
+    config:   { ref_id: tech.code.typescript.config,   path: tech/code/typescript/config.md,   reason: "Selected typescript.config implementation quality reference for this task." }
+    patterns: { ref_id: tech.code.typescript.patterns, path: tech/code/typescript/patterns.md, reason: "Selected typescript.patterns implementation quality reference for this task." }
+    testing:  { ref_id: tech.code.typescript.testing,  path: tech/code/typescript/testing.md,  reason: "Selected typescript.testing implementation quality reference for this task." }
+
+  javascript:
+    core:    { ref_id: tech.code.javascript.core,    path: tech/code/javascript/core.md,    reason: "Selected javascript.core implementation quality reference for this task." }
+    async:   { ref_id: tech.code.javascript.async,   path: tech/code/javascript/async.md,   reason: "Selected javascript.async implementation quality reference for this task." }
+    modules: { ref_id: tech.code.javascript.modules, path: tech/code/javascript/modules.md, reason: "Selected javascript.modules implementation quality reference for this task." }
+    node:    { ref_id: tech.code.javascript.node,    path: tech/code/javascript/node.md,    reason: "Selected javascript.node implementation quality reference for this task." }
+    browser: { ref_id: tech.code.javascript.browser, path: tech/code/javascript/browser.md, reason: "Selected javascript.browser implementation quality reference for this task." }
+    testing: { ref_id: tech.code.javascript.testing, path: tech/code/javascript/testing.md, reason: "Selected javascript.testing implementation quality reference for this task." }
+
+  python:
+    core:      { ref_id: tech.code.python.core,      path: tech/code/python/core.md,      reason: "Selected python.core implementation quality reference for this task." }
+    typing:    { ref_id: tech.code.python.typing,    path: tech/code/python/typing.md,    reason: "Selected python.typing implementation quality reference for this task." }
+    async:     { ref_id: tech.code.python.async,     path: tech/code/python/async.md,     reason: "Selected python.async implementation quality reference for this task." }
+    packaging: { ref_id: tech.code.python.packaging, path: tech/code/python/packaging.md, reason: "Selected python.packaging implementation quality reference for this task." }
+    testing:   { ref_id: tech.code.python.testing,   path: tech/code/python/testing.md,   reason: "Selected python.testing implementation quality reference for this task." }
+
+  go:
+    core:        { ref_id: tech.code.go.core,        path: tech/code/go/core.md,        reason: "Selected go.core implementation quality reference for this task." }
+    concurrency: { ref_id: tech.code.go.concurrency, path: tech/code/go/concurrency.md, reason: "Selected go.concurrency implementation quality reference for this task." }
+    interfaces:  { ref_id: tech.code.go.interfaces,  path: tech/code/go/interfaces.md,  reason: "Selected go.interfaces implementation quality reference for this task." }
+    structure:   { ref_id: tech.code.go.structure,   path: tech/code/go/structure.md,   reason: "Selected go.structure implementation quality reference for this task." }
+    generics:    { ref_id: tech.code.go.generics,    path: tech/code/go/generics.md,    reason: "Selected go.generics implementation quality reference for this task." }
+    testing:     { ref_id: tech.code.go.testing,     path: tech/code/go/testing.md,     reason: "Selected go.testing implementation quality reference for this task." }
+
+  csharp:
+    core:        { ref_id: tech.code.csharp.core,        path: tech/code/csharp/core.md,        reason: "Selected csharp.core implementation quality reference for this task." }
+    modern:      { ref_id: tech.code.csharp.modern,      path: tech/code/csharp/modern.md,      reason: "Selected csharp.modern implementation quality reference for this task." }
+    persistence: { ref_id: tech.code.csharp.persistence, path: tech/code/csharp/persistence.md, reason: "Selected csharp.persistence implementation quality reference for this task." }
+    blazor:      { ref_id: tech.code.csharp.blazor,      path: tech/code/csharp/blazor.md,      reason: "Selected csharp.blazor implementation quality reference for this task." }
+    performance: { ref_id: tech.code.csharp.performance, path: tech/code/csharp/performance.md, reason: "Selected csharp.performance implementation quality reference for this task." }
+    testing:     { ref_id: tech.code.csharp.testing,     path: tech/code/csharp/testing.md,     reason: "Selected csharp.testing implementation quality reference for this task." }
+
+  cpp:
+    core:        { ref_id: tech.code.cpp.core,        path: tech/code/cpp/core.md,        reason: "Selected cpp.core implementation quality reference for this task." }
+    modern:      { ref_id: tech.code.cpp.modern,      path: tech/code/cpp/modern.md,      reason: "Selected cpp.modern implementation quality reference for this task." }
+    templates:   { ref_id: tech.code.cpp.templates,   path: tech/code/cpp/templates.md,   reason: "Selected cpp.templates implementation quality reference for this task." }
+    performance: { ref_id: tech.code.cpp.performance, path: tech/code/cpp/performance.md, reason: "Selected cpp.performance implementation quality reference for this task." }
+    concurrency: { ref_id: tech.code.cpp.concurrency, path: tech/code/cpp/concurrency.md, reason: "Selected cpp.concurrency implementation quality reference for this task." }
+    build:       { ref_id: tech.code.cpp.build,       path: tech/code/cpp/build.md,       reason: "Selected cpp.build implementation quality reference for this task." }
+    testing:     { ref_id: tech.code.cpp.testing,     path: tech/code/cpp/testing.md,     reason: "Selected cpp.testing implementation quality reference for this task." }
+
+  kotlin:
+    core:          { ref_id: tech.code.kotlin.core,          path: tech/code/kotlin/core.md,          reason: "Selected kotlin.core implementation quality reference for this task." }
+    coroutines:    { ref_id: tech.code.kotlin.coroutines,    path: tech/code/kotlin/coroutines.md,    reason: "Selected kotlin.coroutines implementation quality reference for this task." }
+    ktor:          { ref_id: tech.code.kotlin.ktor,          path: tech/code/kotlin/ktor.md,          reason: "Selected kotlin.ktor implementation quality reference for this task." }
+    compose:       { ref_id: tech.code.kotlin.compose,       path: tech/code/kotlin/compose.md,       reason: "Selected kotlin.compose implementation quality reference for this task." }
+    multiplatform: { ref_id: tech.code.kotlin.multiplatform, path: tech/code/kotlin/multiplatform.md, reason: "Selected kotlin.multiplatform implementation quality reference for this task." }
+    dsl:           { ref_id: tech.code.kotlin.dsl,           path: tech/code/kotlin/dsl.md,           reason: "Selected kotlin.dsl implementation quality reference for this task." }
+    testing:       { ref_id: tech.code.kotlin.testing,       path: tech/code/kotlin/testing.md,       reason: "Selected kotlin.testing implementation quality reference for this task." }
+
+  php:
+    core:    { ref_id: tech.code.php.core,    path: tech/code/php/core.md,    reason: "Selected php.core implementation quality reference for this task." }
+    modern:  { ref_id: tech.code.php.modern,  path: tech/code/php/modern.md,  reason: "Selected php.modern implementation quality reference for this task." }
+    laravel: { ref_id: tech.code.php.laravel, path: tech/code/php/laravel.md, reason: "Selected php.laravel implementation quality reference for this task." }
+    symfony: { ref_id: tech.code.php.symfony, path: tech/code/php/symfony.md, reason: "Selected php.symfony implementation quality reference for this task." }
+    async:   { ref_id: tech.code.php.async,   path: tech/code/php/async.md,   reason: "Selected php.async implementation quality reference for this task." }
+    testing: { ref_id: tech.code.php.testing, path: tech/code/php/testing.md, reason: "Selected php.testing implementation quality reference for this task." }
+
+  rust:
+    core:      { ref_id: tech.code.rust.core,      path: tech/code/rust/core.md,      reason: "Selected rust.core implementation quality reference for this task." }
+    ownership: { ref_id: tech.code.rust.ownership, path: tech/code/rust/ownership.md, reason: "Selected rust.ownership implementation quality reference for this task." }
+    traits:    { ref_id: tech.code.rust.traits,    path: tech/code/rust/traits.md,    reason: "Selected rust.traits implementation quality reference for this task." }
+    errors:    { ref_id: tech.code.rust.errors,    path: tech/code/rust/errors.md,    reason: "Selected rust.errors implementation quality reference for this task." }
+    async:     { ref_id: tech.code.rust.async,     path: tech/code/rust/async.md,     reason: "Selected rust.async implementation quality reference for this task." }
+    testing:   { ref_id: tech.code.rust.testing,   path: tech/code/rust/testing.md,   reason: "Selected rust.testing implementation quality reference for this task." }
+
+  swift:
+    core:        { ref_id: tech.code.swift.core,        path: tech/code/swift/core.md,        reason: "Selected swift.core implementation quality reference for this task." }
+    swiftui:     { ref_id: tech.code.swift.swiftui,     path: tech/code/swift/swiftui.md,     reason: "Selected swift.swiftui implementation quality reference for this task." }
+    concurrency: { ref_id: tech.code.swift.concurrency, path: tech/code/swift/concurrency.md, reason: "Selected swift.concurrency implementation quality reference for this task." }
+    protocols:   { ref_id: tech.code.swift.protocols,   path: tech/code/swift/protocols.md,   reason: "Selected swift.protocols implementation quality reference for this task." }
+    memory:      { ref_id: tech.code.swift.memory,      path: tech/code/swift/memory.md,      reason: "Selected swift.memory implementation quality reference for this task." }
+    testing:     { ref_id: tech.code.swift.testing,     path: tech/code/swift/testing.md,     reason: "Selected swift.testing implementation quality reference for this task." }

@@ -278,10 +278,11 @@ pub fn code_reference_load_plan(
 ) -> Vec<ReferenceLoadPlanItem> {
     let mut load_plan = Vec::new();
     if !reference_groups.is_empty() {
+        let common = crate::playbook::code_common();
         load_plan.push(ReferenceLoadPlanItem {
-            ref_id: "tech.code.common".to_string(),
-            path: "tech/code/common.md".to_string(),
-            reason: "Common Loom code quality rules for repository adaptation, delivery evidence, and verification.".to_string(),
+            ref_id: common.ref_id.clone(),
+            path: common.path.clone(),
+            reason: common.reason.clone(),
         });
     }
     load_plan.extend(reference_groups.iter().flat_map(|(group_key, groups)| {
@@ -2225,6 +2226,13 @@ fn frontend_reference_items_for_signal(
 }
 
 fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanItem {
+    if let Some(entry) = crate::playbook::code_ref(group_key, group) {
+        return ReferenceLoadPlanItem {
+            ref_id: entry.ref_id.clone(),
+            path: entry.path.clone(),
+            reason: entry.reason.clone(),
+        };
+    }
     if group_key == "mybatisplus"
         && matches!(
             group,
