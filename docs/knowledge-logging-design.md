@@ -20,10 +20,16 @@
 
 | 项 | 说明 |
 |----|------|
-| **输出流** | stderr（标准错误流） |
-| **原因** | MCP 服务器通过 stdio 传输协议消息，stdout 被 MCP 协议占用，日志必须输出到 stderr 避免干扰 |
-| **格式** | `[timestamp] LEVEL module] message` |
+| **输出方式** | 直接写入文件 |
+| **日志文件路径** | `$LOOM_HOME/log/loom-mcp.log`（默认 `~/.loom/log/loom-mcp.log`） |
+| **原因** | MCP 服务器通过 stdio 传输协议消息，stdout/stderr 不便查看；直接写入文件方便用户随时 `tail -f` 查看和排查问题 |
+| **写入模式** | 追加（append），多次启动不会覆盖历史日志 |
+| **格式** | `[timestamp LEVEL module] message` |
 | **时间戳** | 毫秒精度，ISO 8601 格式（如 `2026-08-06T08:15:23.456Z`） |
+
+`LOOM_HOME` 解析规则（与知识模块 `paths.rs` 一致）：
+1. 优先使用环境变量 `LOOM_HOME`
+2. 未设置时回退到 `~/.loom`（`$HOME` 或 `$USERPROFILE`）
 
 ### 3.2 日志级别
 
@@ -57,13 +63,38 @@ export RUST_LOG="warn"
 `env_logger` 初始化代码位于 `mcp-server/main.rs`：
 
 ```rust
-env_logger::Builder::from_env(
-    env_logger::Env::default().default_filter_or("loom=info,knowledge=info"),
-)
-.format_timestamp_millis()
-.target(env_logger::Target::Stderr)
-.init();
+fn init_logging() -> anyhow::Result<()> {
+    let log_dir = loom_log_dir();
+    std::fs::create_dir_all(&log_dir)?;
+    let log_file = log_dir.join("loom-mcp.log");
+
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file)?;
+
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or("loom=info,knowledge=info"),
+    )
+    .format_timestamp_millis()
+    .target(env_logger::Target::Pipe(Box::new(file)))
+    .format(|buf, record| {
+        writeln!(
+            buf,
+            "[{} {} {}] {}",
+            buf.timestamp_millis(),
+            record.level(),
+            record.target(),
+            record.args()
+        )
+    })
+    .init();
+
+    Ok(())
+}
 ```
+
+`loom_log_dir()` 按 `LOOM_HOME` → `~/.loom` 的优先级解析日志目录（与 `paths.rs` 一致），返回 `<loom_home>/log`。
 
 ## 4. 关键路径日志覆盖
 
@@ -158,44 +189,45 @@ env_logger::Builder::from_env(
 
 ## 6. 日志保存策略
 
-### 6.1 当前策略：stderr 直输
+### 6.1 当前策略：直接写入文件
 
-loom MCP 服务器作为 stdio 进程运行，日志直接输出到 stderr。日志的收集和持久化由**调用方**（如 AI Agent IDE、CI runner、systemd 服务）负责：
+loom MCP 服务器作为 stdio 进程运行，stdout/stderr 用于 MCP 协议传输，不便查看日志。因此日志直接写入文件 `$LOOM_HOME/log/loom-mcp.log`（默认 `~/.loom/log/loom-mcp.log`），用户可随时 `tail -f` 查看。
 
-| 运行场景 | 收集方式 |
-|----------|----------|
-| IDE 集成（Cursor/Claude Code 等） | IDE 的进程管理器捕获 stderr，写入日志面板或文件 |
-| CI/CD | CI runner 自动捕获 stderr，随构建日志持久化 |
-| systemd 服务 | 配置 `StandardError=journal` 或 `StandardError=append:/var/log/loom-mcp.log` |
-| 手动运行 | `loom-mcp-server 2>loom.log` 重定向到文件 |
+| 项 | 说明 |
+|----|------|
+| **日志文件路径** | `$LOOM_HOME/log/loom-mcp.log` |
+| **写入模式** | 追加（append），多次启动不会覆盖历史日志 |
+| **目录创建** | 启动时自动创建 `log/` 目录（`create_dir_all`） |
+| **文件创建** | 不存在时自动创建（`OpenOptions::create`） |
 
-### 6.2 推荐的日志收集配置
-
-#### systemd 服务
-
-```ini
-[Service]
-ExecStart=/usr/local/bin/loom-mcp-server
-StandardOutput=stdio
-StandardError=journal
-# 或写入文件：
-# StandardError=append:/var/log/loom/loom-mcp.log
-```
-
-#### 手动运行
+### 6.2 查看日志
 
 ```bash
-# 输出到文件
-RUST_LOG="knowledge=debug" loom-mcp-server 2>/var/log/loom/loom.log
+# 实时查看
+tail -f ~/.loom/log/loom-mcp.log
 
-# 同时输出到终端和文件
-RUST_LOG="knowledge=debug" loom-mcp-server 2>&1 | tee /var/log/loom/loom.log
+# 查看最近 100 行
+tail -n 100 ~/.loom/log/loom-mcp.log
+
+# 过滤搜索请求
+grep "knowledgeSearch" ~/.loom/log/loom-mcp.log
+
+# 过滤 provider 错误
+grep "WARN" ~/.loom/log/loom-mcp.log
 ```
+
+### 6.3 日志轮转
+
+**设计决策**：不在 Rust 代码中实现日志文件轮转。原因：
+
+1. `env_logger` 本身不提供文件轮转功能，引入 `tracing-appender` 等会增加复杂度
+2. 日志轮转是运维层面关注点，应由基础设施处理
+3. 追加模式下单次会话日志量有限（INFO 级别约 2-4 条/请求），长期积累可手动清理或配合 logrotate
 
 #### logrotate 配置（可选）
 
 ```
-/var/log/loom/loom.log {
+~/.loom/log/loom-mcp.log {
     daily
     rotate 7
     compress
@@ -206,15 +238,6 @@ RUST_LOG="knowledge=debug" loom-mcp-server 2>&1 | tee /var/log/loom/loom.log
 }
 ```
 
-### 6.3 不在代码中做日志轮转
-
-**设计决策**：不在 Rust 代码中实现日志文件轮转和持久化。原因：
-
-1. MCP 服务器是 stdio 进程，生命周期由调用方控制，不适合管理文件
-2. 日志轮转是运维层面关注点，应由基础设施处理（systemd journald、logrotate、Docker logging driver 等）
-3. `env_logger` 本身不提供文件轮转功能，引入 `tracing-appender` 等会增加复杂度
-4. 保持日志输出到 stderr，让调用方决定如何收集和存储，符合 Unix 哲学
-
 ## 7. 性能影响
 
 | 项 | 说明 |
@@ -223,7 +246,7 @@ RUST_LOG="knowledge=debug" loom-mcp-server 2>&1 | tee /var/log/loom/loom.log
 | 默认级别（info） | 仅 INFO 及以上输出，单次搜索约 2-4 条日志，可忽略 |
 | DEBUG 级别 | 单次搜索约 8-15 条日志，含 HTTP 请求详情，适用于调试场景 |
 | 格式化开销 | 仅在日志级别启用时才格式化字符串参数 |
-| I/O 阻塞 | stderr 写入是同步阻塞的，但单条日志 < 1KB，开销可忽略 |
+| I/O 阻塞 | 文件写入是同步阻塞的（append 模式），但单条日志 < 1KB，开销可忽略 |
 
 ## 8. 依赖变更
 
@@ -238,7 +261,7 @@ RUST_LOG="knowledge=debug" loom-mcp-server 2>&1 | tee /var/log/loom/loom.log
 |------|------|
 | `src/rust/Cargo.toml` | workspace 新增 `log`、`env_logger` 依赖 |
 | `src/rust/mcp-server/Cargo.toml` | 新增 `env_logger` 依赖 |
-| `src/rust/mcp-server/main.rs` | 初始化 `env_logger`（stderr、毫秒时间戳、默认级别） |
+| `src/rust/mcp-server/main.rs` | 初始化 `env_logger`，写入文件 `$LOOM_HOME/log/loom-mcp.log`（append 模式、毫秒时间戳、默认级别） |
 | `src/rust/knowledge/Cargo.toml` | 新增 `log` 依赖 |
 | `src/rust/knowledge/search.rs` | 搜索路径日志（info/debug/warn） |
 | `src/rust/knowledge/provider.rs` | provider 调度与 HTTP 请求日志（debug/warn） |
