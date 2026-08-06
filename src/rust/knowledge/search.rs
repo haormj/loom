@@ -327,6 +327,7 @@ fn search_local_sources(
             summary: candidate.chunk.summary.clone(),
             matched_labels: semantic.matched_labels,
             score: round_score(score),
+            source_kind: crate::mcp_models::KnowledgeSourceKind::Local,
         });
     }
     Ok(candidates)
@@ -475,6 +476,12 @@ fn repeat_field(value: &str, times: usize) -> String {
         .join("\n")
 }
 
+fn has_label_metadata(cards: &[KnowledgeChunkCard]) -> bool {
+    cards
+        .iter()
+        .any(|card| card.source_kind == crate::mcp_models::KnowledgeSourceKind::Local)
+}
+
 fn aggregate_sources(
     cards: &[KnowledgeChunkCard],
     semantic_focus: &[String],
@@ -537,7 +544,10 @@ fn aggregate_sources(
     });
     if total_chunk_limit == usize::MAX {
         if require_focus_match {
-            sources.retain(|source| source.matched_focus_coverage >= MIN_CONTEXT_FOCUS_COVERAGE);
+            sources.retain(|source| {
+                !has_label_metadata(&source.top_chunks)
+                    || source.matched_focus_coverage >= MIN_CONTEXT_FOCUS_COVERAGE
+            });
         }
         return sources;
     }
@@ -545,7 +555,10 @@ fn aggregate_sources(
     let mut selected = Vec::new();
     let mut remaining = total_chunk_limit;
     for mut source in sources {
-        if require_focus_match && source.matched_focus_coverage < MIN_CONTEXT_FOCUS_COVERAGE {
+        if require_focus_match
+            && has_label_metadata(&source.top_chunks)
+            && source.matched_focus_coverage < MIN_CONTEXT_FOCUS_COVERAGE
+        {
             continue;
         }
         if selected.len() >= DEFAULT_CONTEXT_SOURCE_LIMIT || remaining == 0 {
@@ -1379,5 +1392,75 @@ impl SemanticChunkMatch {
             completeness: 0.0,
             matched_labels: vec![],
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::mcp_models::{KnowledgeChunkCard, KnowledgeMatchedLabel};
+
+    fn provider_card(source_name: &str, score: f64) -> KnowledgeChunkCard {
+        KnowledgeChunkCard {
+            source_id: format!("src-{source_name}"),
+            source_name: source_name.to_string(),
+            build_id: "build-1".to_string(),
+            chunk_id: format!("chunk-{source_name}"),
+            document_title: format!("doc-{source_name}"),
+            heading_path: vec![],
+            summary: None,
+            matched_labels: vec![],
+            score,
+            source_kind: crate::mcp_models::KnowledgeSourceKind::Provider,
+        }
+    }
+
+    fn local_card(source_name: &str, score: f64) -> KnowledgeChunkCard {
+        KnowledgeChunkCard {
+            source_id: format!("local-{source_name}"),
+            source_name: source_name.to_string(),
+            build_id: "build-1".to_string(),
+            chunk_id: format!("local-chunk-{source_name}"),
+            document_title: format!("local-doc-{source_name}"),
+            heading_path: vec![],
+            summary: None,
+            matched_labels: vec![KnowledgeMatchedLabel {
+                kind: "object".to_string(),
+                text: "unrelated_thing".to_string(),
+                match_source: "semantic".to_string(),
+            }],
+            score,
+            source_kind: crate::mcp_models::KnowledgeSourceKind::Local,
+        }
+    }
+
+    #[test]
+    fn aggregate_sources_keeps_provider_cards_with_empty_labels_and_typed_focus() {
+        let cards = vec![provider_card("confluence-kb", 0.9)];
+        let semantic_focus = vec!["object:openviking".to_string()];
+        let sources = aggregate_sources(&cards, &semantic_focus, 5, 5);
+        assert_eq!(sources.len(), 1, "provider source should not be dropped");
+        assert_eq!(sources[0].source_name, "confluence-kb");
+        assert!(!sources[0].top_chunks.is_empty());
+    }
+
+    #[test]
+    fn aggregate_sources_drops_local_cards_when_focus_coverage_below_threshold() {
+        let cards = vec![local_card("page-paths", 0.9)];
+        let semantic_focus = vec!["object:openviking".to_string()];
+        let sources = aggregate_sources(&cards, &semantic_focus, 5, 5);
+        assert_eq!(
+            sources.len(),
+            0,
+            "local source with labels but no focus coverage should be dropped"
+        );
+    }
+
+    #[test]
+    fn aggregate_sources_keeps_provider_cards_in_max_limit_branch() {
+        let cards = vec![provider_card("confluence-kb", 0.9)];
+        let semantic_focus = vec!["object:openviking".to_string()];
+        let sources = aggregate_sources(&cards, &semantic_focus, 5, usize::MAX);
+        assert_eq!(sources.len(), 1, "provider source should survive MAX branch");
     }
 }

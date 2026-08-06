@@ -114,11 +114,15 @@ fn init_logging() -> anyhow::Result<()> {
 | 日志点 | 级别 | 内容 |
 |--------|------|------|
 | `create_provider` 分发 | DEBUG | 知识源名称 → provider 类型（Local/OpenViking）+ 关键配置 |
-| OpenViking 搜索请求 | DEBUG | HTTP 方法、URL、查询参数、target_uri |
-| OpenViking 搜索响应 | DEBUG | resources/memories/skills 各类返回数 |
-| OpenViking 检视请求 | DEBUG | HTTP 方法、URL、chunk_id |
+| OpenViking 搜索请求 | INFO | 知识源名称、查询（截断至 100 字符）、focus 数量、limit、min_score |
+| OpenViking 搜索结果 | INFO | 返回总数（resources/memories/skills 分类）、过滤数、保留数、min_score |
+| OpenViking 检视请求 | DEBUG | 知识源名称、chunk_id（viking:// URI） |
 | HTTP 错误响应 | WARN | HTTP 状态码、响应体 |
 | 传输层错误 | WARN | 传输错误详情 |
+
+> **业务关键信息提升至 INFO**：OpenViking 搜索的入参与结果（含过滤数）在 INFO 级别即可见，无需开启 DEBUG。这样默认日志级别下用户即可看到每次查询的完整链路：请求入参 → provider 返回/过滤 → 最终返回卡片数。
+>
+> **ureq 日志抑制**：`init_logging` 通过 `filter_module("ureq", Warn)` 屏蔽 ureq 内部 DEBUG 日志（HTTP prelude、请求头、响应行），避免每次调用打印完整 HTTP 报文。HTTP 错误已由 `map_ureq_error` 转为结构化 WARN 日志。
 
 ### 4.3 构建路径（`builder.rs`）
 
@@ -169,10 +173,10 @@ fn init_logging() -> anyhow::Result<()> {
 [2026-08-06T08:15:30.125Z DEBUG knowledge::provider] create_provider: source 'confluence-kb' -> OpenViking (endpoint=http://openviking.internal:1933)
 [2026-08-06T08:15:30.125Z DEBUG knowledge::search] search_cards: 1 enabled sources (local=0, provider=1)
 [2026-08-06T08:15:30.126Z DEBUG knowledge::search] search_cards: querying provider 'confluence-kb'
-[2026-08-06T08:15:30.127Z DEBUG knowledge::provider] openviking[confluence-kb]: search POST http://openviking.internal:1933/api/v1/search/find, query="用户认证配置", target_uri=viking://resources/
-[2026-08-06T08:15:30.341Z DEBUG knowledge::provider] openviking[confluence-kb]: search returned 5 resources, 0 memories, 0 skills
-[2026-08-06T08:15:30.342Z DEBUG knowledge::search] search_cards: provider 'confluence-kb' returned 5 cards
-[2026-08-06T08:15:30.342Z INFO  knowledge::search] knowledgeSearch: returning 5 cards
+[2026-08-06T08:15:30.127Z INFO  knowledge::provider] openviking[confluence-kb]: search query="用户认证配置" focus=0 limit=20 min_score=0.2
+[2026-08-06T08:15:30.341Z INFO  knowledge::provider] openviking[confluence-kb]: result 5 returned (resources=5, memories=0, skills=0), 2 filtered by min_score=0.2, 3 kept
+[2026-08-06T08:15:30.342Z DEBUG knowledge::search] search_cards: provider 'confluence-kb' returned 3 cards
+[2026-08-06T08:15:30.342Z INFO  knowledge::search] knowledgeSearch: returning 3 cards
 ```
 
 ### Provider 故障场景
@@ -181,7 +185,7 @@ fn init_logging() -> anyhow::Result<()> {
 [2026-08-06T08:16:10.000Z INFO  knowledge::search] knowledgeSearch: query="部署指南", sources=[], focus=[], block=None, limit=20
 [2026-08-06T08:16:10.001Z DEBUG knowledge::search] search_cards: 2 enabled sources (local=1, provider=1)
 [2026-08-06T08:16:10.002Z DEBUG knowledge::search] search_cards: querying provider 'confluence-kb'
-[2026-08-06T08:16:10.003Z DEBUG knowledge::provider] openviking[confluence-kb]: search POST http://openviking.internal:1933/api/v1/search/find, query="部署指南", target_uri=viking://resources/
+[2026-08-06T08:16:10.003Z INFO  knowledge::provider] openviking[confluence-kb]: search query="部署指南" focus=0 limit=20 min_score=0.2
 [2026-08-06T08:16:10.005Z WARN  knowledge::provider] openviking[confluence-kb]: transport error: Connection refused
 [2026-08-06T08:16:10.005Z WARN  knowledge::search] search_cards: provider 'confluence-kb' failed: OpenViking source 'confluence-kb' unreachable: Connection refused
 [2026-08-06T08:16:10.100Z INFO  knowledge::search] knowledgeSearch: returning 3 cards
