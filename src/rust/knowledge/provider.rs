@@ -287,7 +287,7 @@ fn parse_viking_uri(uri: &str) -> (String, Vec<String>) {
     let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     let relevant: Vec<&str> = segments
         .iter()
-        .skip_while(|s| matches!(***s, "resources" | "user" | "memories" | "skills"))
+        .skip_while(|s| matches!(**s, "resources" | "user" | "memories" | "skills"))
         .copied()
         .collect();
     let file_name = relevant
