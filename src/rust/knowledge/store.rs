@@ -178,6 +178,8 @@ struct ProvidersYamlSource {
     #[serde(default)]
     api_key_env: Option<String>,
     #[serde(default)]
+    api_key: Option<String>,
+    #[serde(default)]
     account: Option<String>,
     #[serde(default)]
     user: Option<String>,
@@ -203,6 +205,7 @@ fn yaml_source_to_knowledge_source(entry: ProvidersYamlSource, now: &str) -> Kno
         provider: KnowledgeProviderConfig::OpenViking(OpenVikingProviderConfig {
             endpoint: entry.endpoint,
             api_key_env: entry.api_key_env,
+            api_key: entry.api_key,
             account: entry.account,
             user: entry.user,
             target_uri: entry
@@ -386,6 +389,7 @@ sources:
                 enabled: source.enabled,
                 endpoint: source.endpoint.clone(),
                 api_key_env: source.api_key_env.clone(),
+                api_key: source.api_key.clone(),
                 account: source.account.clone(),
                 user: source.user.clone(),
                 target_uri: source.target_uri.clone(),
@@ -419,6 +423,7 @@ sources:
                 enabled: source.enabled,
                 endpoint: source.endpoint.clone(),
                 api_key_env: source.api_key_env.clone(),
+                api_key: source.api_key.clone(),
                 account: source.account.clone(),
                 user: source.user.clone(),
                 target_uri: source.target_uri.clone(),
@@ -429,6 +434,40 @@ sources:
         );
         if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
             assert_eq!(cfg.min_score, Some(0.5));
+        } else {
+            panic!("expected OpenViking provider");
+        }
+    }
+
+    #[test]
+    fn providers_yaml_api_key_plaintext_is_parsed_and_passed_through() {
+        let yaml = r#"
+sources:
+  - name: plaintext-kb
+    endpoint: http://localhost:1933
+    apiKey: literal-token-from-config
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        let source = &file.sources[0];
+        assert_eq!(source.api_key.as_deref(), Some("literal-token-from-config"));
+        assert_eq!(source.api_key_env, None, "apiKeyEnv should be absent");
+        let ks = yaml_source_to_knowledge_source(
+            ProvidersYamlSource {
+                name: source.name.clone(),
+                enabled: source.enabled,
+                endpoint: source.endpoint.clone(),
+                api_key_env: source.api_key_env.clone(),
+                api_key: source.api_key.clone(),
+                account: source.account.clone(),
+                user: source.user.clone(),
+                target_uri: source.target_uri.clone(),
+                timeout_secs: source.timeout_secs,
+                min_score: source.min_score,
+            },
+            "2026-01-01T00:00:00Z",
+        );
+        if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
+            assert_eq!(cfg.api_key.as_deref(), Some("literal-token-from-config"));
         } else {
             panic!("expected OpenViking provider");
         }

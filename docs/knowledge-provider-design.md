@@ -58,7 +58,7 @@ pub trait KnowledgeProvider: Send + Sync {
 
 | 配置字段 | HTTP 头 |
 |---------|---------|
-| `api_key_env`（环境变量名） | `Authorization: Bearer {key}` + `X-API-Key: {key}` |
+| `api_key_env`（环境变量名，优先）/ `api_key`（明文，回退） | `Authorization: Bearer {key}` + `X-API-Key: {key}` |
 | `account` | `X-OpenViking-Account` |
 | `user` | `X-OpenViking-User` |
 
@@ -95,7 +95,8 @@ pub enum KnowledgeProviderConfig {
 
 pub struct OpenVikingProviderConfig {
     pub endpoint: String,               // OpenViking 服务地址
-    pub api_key_env: Option<String>,    // API Key 所在环境变量名
+    pub api_key_env: Option<String>,    // API Key 所在环境变量名（优先）
+    pub api_key: Option<String>,        // 明文 API Key（环境变量未设置时回退；永不序列化）
     pub account: Option<String>,        // X-OpenViking-Account 头
     pub user: Option<String>,           // X-OpenViking-User 头
     pub target_uri: String,             // 搜索目标 URI，默认 "viking://resources/"
@@ -104,7 +105,7 @@ pub struct OpenVikingProviderConfig {
 }
 ```
 
-**安全设计**：`api_key_env` 只存环境变量名，不存明文密钥。运行时从环境变量读取实际 token。
+**安全设计**：API Key 解析遵循「环境变量优先，明文配置回退」策略——`create_provider` 先读取 `api_key_env` 指向的环境变量，仅当该环境变量未设置或为空时才回退到配置中的明文 `api_key`；二者皆无则请求以无认证方式发出并打印告警。`api_key` 字段标注 `skip_serializing`，确保其永不写入 `registry.json`、也永不回传到 `loom_knowledgeList` / `loom_knowledgeStatus` 等 MCP 响应，避免明文泄露。生产环境仍推荐仅使用 `api_key_env`。
 
 ### Provider 工厂
 
