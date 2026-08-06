@@ -223,10 +223,17 @@ fn search_cards(
         .copied()
         .collect();
     let mut candidates = if local_sources.is_empty() {
+        debug!("search_cards: no local sources, skipping local search");
         Vec::new()
     } else {
         match search_local_sources(&local_sources, query, &parsed_focus, block, limit) {
-            Ok(cards) => cards,
+            Ok(cards) => {
+                debug!(
+                    "search_cards: local search returned {} cards",
+                    cards.len()
+                );
+                cards
+            }
             Err(error) => {
                 warn!(
                     "search_cards: local source search failed, continuing with provider cards only: {}",
@@ -237,8 +244,18 @@ fn search_cards(
         }
     };
 
+    let provider_count = provider_cards.len();
     candidates.extend(provider_cards);
-    Ok(rank_chunk_cards(candidates, &parsed_focus, limit))
+    debug!(
+        "search_cards: {} total candidates (provider={}, local={}), ranking with limit={}",
+        candidates.len(),
+        provider_count,
+        candidates.len() - provider_count,
+        limit
+    );
+    let ranked = rank_chunk_cards(candidates, &parsed_focus, limit);
+    debug!("search_cards: {} cards after ranking", ranked.len());
+    Ok(ranked)
 }
 
 fn search_local_sources(
