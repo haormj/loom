@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use log::{debug, warn};
+use log::{debug, info, warn};
 use serde::Deserialize;
 
 use crate::{
@@ -11,6 +11,7 @@ use crate::{
 
 const OPENVIKING_BUILD_ID: &str = "openviking";
 const DEFAULT_TIMEOUT_SECS: u64 = 10;
+const DEFAULT_MIN_SCORE: f64 = 0.2;
 
 pub trait KnowledgeProvider: Send + Sync {
     fn provider_type(&self) -> &str;
@@ -130,6 +131,7 @@ pub struct OpenVikingProvider {
     user: Option<String>,
     target_uri: String,
     timeout: Duration,
+    min_score: f64,
 }
 
 impl OpenVikingProvider {
@@ -140,6 +142,7 @@ impl OpenVikingProvider {
         api_key: Option<String>,
     ) -> Self {
         let timeout = Duration::from_secs(config.timeout_secs.unwrap_or(DEFAULT_TIMEOUT_SECS));
+        let min_score = config.min_score.unwrap_or(DEFAULT_MIN_SCORE);
         Self {
             source_id,
             source_name,
@@ -149,6 +152,7 @@ impl OpenVikingProvider {
             user: config.user,
             target_uri: config.target_uri,
             timeout,
+            min_score,
         }
     }
 
@@ -193,9 +197,13 @@ impl KnowledgeProvider for OpenVikingProvider {
             "target_uri": self.target_uri,
             "limit": limit,
         });
-        debug!(
-            "openviking[{}]: search POST {}/api/v1/search/find, query={:?}, target_uri={}",
-            self.source_name, self.endpoint, full_query, self.target_uri
+        info!(
+            "openviking[{}]: search query={:?} focus={} limit={} min_score={}",
+            self.source_name,
+            truncate_for_log(query, 100),
+            semantic_focus.len(),
+            limit,
+            self.min_score
         );
         let response = self
             .build_request("POST", "/api/v1/search/find")
@@ -207,10 +215,6 @@ impl KnowledgeProvider for OpenVikingProvider {
         let resource_count = result.result.resources.len();
         let memory_count = result.result.memories.len();
         let skill_count = result.result.skills.len();
-        debug!(
-            "openviking[{}]: search returned {} resources, {} memories, {} skills",
-            self.source_name, resource_count, memory_count, skill_count
-        );
         let mut cards = Vec::new();
         for ctx in result.result.resources {
             cards.push(context_to_card(
@@ -233,13 +237,27 @@ impl KnowledgeProvider for OpenVikingProvider {
                 &self.source_name,
             ));
         }
+        let before = cards.len();
+        cards.retain(|card| card.score >= self.min_score);
+        let filtered = before - cards.len();
+        info!(
+            "openviking[{}]: result {} returned (resources={}, memories={}, skills={}), {} filtered by min_score={}, {} kept",
+            self.source_name,
+            before,
+            resource_count,
+            memory_count,
+            skill_count,
+            filtered,
+            self.min_score,
+            cards.len()
+        );
         Ok(cards)
     }
 
     fn inspect_chunk(&self, chunk_id: &str) -> KnowledgeResult<KnowledgeInspectChunkResult> {
         debug!(
-            "openviking[{}]: inspect_chunk GET {}/api/v1/content/read?uri={}",
-            self.source_name, self.endpoint, chunk_id
+            "openviking[{}]: inspect_chunk uri={}",
+            self.source_name, chunk_id
         );
         let encoded = urlencoding::encode(chunk_id);
         let path = format!("/api/v1/content/read?uri={encoded}");
@@ -314,7 +332,16 @@ fn context_to_card(
         summary,
         matched_labels: vec![],
         score: ctx.score,
+        source_kind: crate::mcp_models::KnowledgeSourceKind::Provider,
     }
+}
+
+fn truncate_for_log(s: &str, max: usize) -> String {
+    if s.chars().count() <= max {
+        return s.to_string();
+    }
+    let truncated: String = s.chars().take(max).collect();
+    format!("{truncated}...")
 }
 
 fn parse_viking_uri(uri: &str) -> (String, Vec<String>) {
@@ -377,6 +404,7 @@ mod tests {
                 user: None,
                 target_uri: "viking://resources/".to_string(),
                 timeout_secs: None,
+                min_score: None,
             },
             None,
         );
@@ -395,6 +423,7 @@ mod tests {
                 user: None,
                 target_uri: "viking://resources/".to_string(),
                 timeout_secs: None,
+                min_score: None,
             },
             None,
         );
@@ -413,11 +442,113 @@ mod tests {
                 user: None,
                 target_uri: "viking://resources/".to_string(),
                 timeout_secs: None,
+                min_score: None,
             },
             None,
         );
         let url = format!("{}{}", provider.endpoint, "/api/v1/search/find");
         assert_eq!(url, "http://127.0.0.1:1933/api/v1/search/find");
         assert!(!url.contains("//api"), "URL should not contain double slash before path");
+    }
+
+    #[test]
+    fn default_min_score_applied_when_not_configured() {
+        let provider = OpenVikingProvider::new(
+            "s1".to_string(),
+            "test".to_string(),
+            OpenVikingProviderConfig {
+                endpoint: "http://127.0.0.1:1933".to_string(),
+                api_key_env: None,
+                account: None,
+                user: None,
+                target_uri: "viking://resources/".to_string(),
+                timeout_secs: None,
+                min_score: None,
+            },
+            None,
+        );
+        assert!((provider.min_score - DEFAULT_MIN_SCORE).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn configured_min_score_overrides_default() {
+        let provider = OpenVikingProvider::new(
+            "s1".to_string(),
+            "test".to_string(),
+            OpenVikingProviderConfig {
+                endpoint: "http://127.0.0.1:1933".to_string(),
+                api_key_env: None,
+                account: None,
+                user: None,
+                target_uri: "viking://resources/".to_string(),
+                timeout_secs: None,
+                min_score: Some(0.5),
+            },
+            None,
+        );
+        assert!((provider.min_score - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn cards_below_min_score_are_filtered() {
+        let cards = vec![
+            context_to_card(
+                &OpenVikingMatchedContext {
+                    uri: "viking://resources/high.md".to_string(),
+                    abstract_text: Some("high".to_string()),
+                    abstract_field: None,
+                    level: 0,
+                    score: 0.9,
+                },
+                "s1",
+                "test",
+            ),
+            context_to_card(
+                &OpenVikingMatchedContext {
+                    uri: "viking://resources/low.md".to_string(),
+                    abstract_text: Some("low".to_string()),
+                    abstract_field: None,
+                    level: 0,
+                    score: 0.1,
+                },
+                "s1",
+                "test",
+            ),
+            context_to_card(
+                &OpenVikingMatchedContext {
+                    uri: "viking://resources/borderline.md".to_string(),
+                    abstract_text: Some("borderline".to_string()),
+                    abstract_field: None,
+                    level: 0,
+                    score: 0.2,
+                },
+                "s1",
+                "test",
+            ),
+        ];
+        let min_score = 0.2;
+        let mut filtered = cards;
+        filtered.retain(|card| card.score >= min_score);
+        assert_eq!(filtered.len(), 2, "cards at or above threshold are kept");
+        assert!(filtered.iter().all(|card| card.score >= min_score));
+    }
+
+    #[test]
+    fn all_cards_filtered_when_all_below_min_score() {
+        let cards = vec![context_to_card(
+            &OpenVikingMatchedContext {
+                uri: "viking://resources/low.md".to_string(),
+                abstract_text: Some("low".to_string()),
+                abstract_field: None,
+                level: 0,
+                score: 0.05,
+            },
+            "s1",
+            "test",
+        )];
+        let min_score = 0.2;
+        let mut filtered = cards;
+        filtered.retain(|card| card.score >= min_score);
+        assert!(filtered.is_empty(), "all-low results yield empty set");
     }
 }

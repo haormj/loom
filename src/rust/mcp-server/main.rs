@@ -20,6 +20,7 @@ fn init_logging() -> anyhow::Result<()> {
     env_logger::Builder::from_env(
         env_logger::Env::default().default_filter_or("loom=info,knowledge=info"),
     )
+    .filter_module("ureq", log::LevelFilter::Warn)
     .format_timestamp_millis()
     .target(env_logger::Target::Pipe(Box::new(file)))
     .format(|buf, record| {

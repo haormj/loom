@@ -539,6 +539,8 @@ pub struct OpenVikingProviderConfig {
     pub target_uri: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub timeout_secs: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub min_score: Option<f64>,
 }
 
 impl Default for OpenVikingProviderConfig {
@@ -550,6 +552,7 @@ impl Default for OpenVikingProviderConfig {
             user: None,
             target_uri: "viking://resources/".to_string(),
             timeout_secs: None,
+            min_score: None,
         }
     }
 }

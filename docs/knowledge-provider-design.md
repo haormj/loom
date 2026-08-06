@@ -79,6 +79,10 @@ OpenViking `MatchedContext` → loom `KnowledgeChunkCard`：
 
 搜索结果聚合三个类别的上下文：`resources`、`memories`、`skills`，全部映射为 `KnowledgeChunkCard`。
 
+### 分数过滤
+
+OpenViking 返回的每个 `MatchedContext` 携带 `score` 字段，直接映射为 `KnowledgeChunkCard.score`。provider 在返回卡片前按 `min_score` 阈值过滤：`score >= min_score` 的卡片保留，低于阈值的丢弃。`min_score` 通过 `OpenVikingProviderConfig.min_score` 配置，缺省时取默认值 `0.2`。全部卡片被过滤时返回空集，该源无贡献，搜索管线自动用其他知识源（含本地源）结果补位。
+
 ### Registry 模型扩展
 
 `KnowledgeSource` 新增 `provider` 字段（默认为 `Local`，向后兼容）：
@@ -96,6 +100,7 @@ pub struct OpenVikingProviderConfig {
     pub user: Option<String>,           // X-OpenViking-User 头
     pub target_uri: String,             // 搜索目标 URI，默认 "viking://resources/"
     pub timeout_secs: Option<u64>,      // 超时秒数，默认 10
+    pub min_score: Option<f64>,         // 最低相关性分数阈值，默认 0.2
 }
 ```
 

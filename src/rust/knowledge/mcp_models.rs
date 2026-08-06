@@ -159,6 +159,16 @@ pub struct KnowledgeChunkCard {
     #[serde(default)]
     pub matched_labels: Vec<KnowledgeMatchedLabel>,
     pub score: f64,
+    #[serde(skip)]
+    pub source_kind: KnowledgeSourceKind,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum KnowledgeSourceKind {
+    #[default]
+    Local,
+    Provider,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

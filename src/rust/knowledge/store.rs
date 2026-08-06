@@ -185,6 +185,8 @@ struct ProvidersYamlSource {
     target_uri: Option<String>,
     #[serde(default)]
     timeout_secs: Option<u64>,
+    #[serde(default)]
+    min_score: Option<f64>,
 }
 
 fn yaml_source_to_knowledge_source(entry: ProvidersYamlSource, now: &str) -> KnowledgeSource {
@@ -207,6 +209,7 @@ fn yaml_source_to_knowledge_source(entry: ProvidersYamlSource, now: &str) -> Kno
                 .target_uri
                 .unwrap_or_else(|| "viking://resources/".to_string()),
             timeout_secs: entry.timeout_secs,
+            min_score: entry.min_score,
         }),
     }
 }
@@ -387,11 +390,45 @@ sources:
                 user: source.user.clone(),
                 target_uri: source.target_uri.clone(),
                 timeout_secs: source.timeout_secs,
+                min_score: source.min_score,
             },
             "2026-01-01T00:00:00Z",
         );
         if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
             assert_eq!(cfg.target_uri, "viking://resources/");
+            assert_eq!(cfg.min_score, None, "absent min_score should be None");
+        } else {
+            panic!("expected OpenViking provider");
+        }
+    }
+
+    #[test]
+    fn providers_yaml_min_score_is_parsed_and_passed_through() {
+        let yaml = r#"
+sources:
+  - name: strict-kb
+    endpoint: http://localhost:1933
+    minScore: 0.5
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        let source = &file.sources[0];
+        assert_eq!(source.min_score, Some(0.5));
+        let ks = yaml_source_to_knowledge_source(
+            ProvidersYamlSource {
+                name: source.name.clone(),
+                enabled: source.enabled,
+                endpoint: source.endpoint.clone(),
+                api_key_env: source.api_key_env.clone(),
+                account: source.account.clone(),
+                user: source.user.clone(),
+                target_uri: source.target_uri.clone(),
+                timeout_secs: source.timeout_secs,
+                min_score: source.min_score,
+            },
+            "2026-01-01T00:00:00Z",
+        );
+        if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
+            assert_eq!(cfg.min_score, Some(0.5));
         } else {
             panic!("expected OpenViking provider");
         }

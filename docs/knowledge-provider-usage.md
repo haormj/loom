@@ -63,6 +63,7 @@ export WIKI_OV_KEY="another-api-key"
 | `user` | 否 | 无 | 用户标识，映射为 `X-OpenViking-User` 头 |
 | `targetUri` | 否 | `viking://resources/` | 搜索目标 URI，指定 OpenViking 中的资源范围 |
 | `timeoutSecs` | 否 | `10` | HTTP 请求超时秒数 |
+| `minScore` | 否 | `0.2` | 最低相关性分数阈值，低于此值的搜索结果会被过滤丢弃 |
 | `enabled` | 否 | `true` | 是否启用 |
 
 ## 使用方式
@@ -192,6 +193,7 @@ sources:
     user: dev-team
     targetUri: viking://resources/confluence/
     timeoutSecs: 10
+    minScore: 0.3
 
   # 内部 Wiki
   - name: internal-wiki
