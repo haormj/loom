@@ -931,7 +931,12 @@ fn knowledge_failure(
 }
 
 pub async fn run_stdio_server() -> anyhow::Result<()> {
-    let service = LoomMcpServer::from_env().serve(stdio()).await?;
+    let cfg = crate::trace::TraceConfig::from_env();
+    let (stdin, stdout) = stdio();
+    let sink = crate::trace::TraceSink::open(&cfg);
+    let stdin = crate::trace::TeeRead::new(stdin, sink.clone(), crate::trace::Dir::In);
+    let stdout = crate::trace::TeeWrite::new(stdout, sink, crate::trace::Dir::Out);
+    let service = LoomMcpServer::from_env().serve((stdin, stdout)).await?;
     service.waiting().await?;
     Ok(())
 }

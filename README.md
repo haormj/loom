@@ -280,6 +280,10 @@ Use `continue` whenever you want Loom to resume or advance the current delivery 
 
 Agent plugins set the Loom routing environment for you. Use the agent command surface for normal work; Loom's product runtime is the MCP server installed by `loom-setup`.
 
+### Debug MCP Traffic
+
+Set `LOOM_MCP_TRACE=1` to dump every MCP request and response (including the `initialize` handshake and notifications) to `$LOOM_HOME/log/loom-mcp-trace.log`. The file is human-readable and pretty-printed; use `tail -f` to watch it live while reproducing an issue. Set `LOOM_MCP_TRACE=/some/path.log` to write elsewhere. The toggle is off by default and adds no overhead when disabled.
+
 ## How It Works
 
 Loom runs as a local MCP delivery state machine. The agent does not decide the whole workflow from memory; it asks Loom for the next request, reads only the declared fields, writes the expected artifact, submits it back, and lets Loom validate and route the next step.

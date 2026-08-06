@@ -15,7 +15,9 @@ path = "main.rs"
 
 [dependencies]
 anyhow.workspace = true
+chrono.workspace = true
 env_logger.workspace = true
+log.workspace = true
 architecture = { path = "../architecture" }
 brainstorm = { path = "../brainstorm" }
 delivery-core = { path = "../core" }
@@ -58,3 +60,7 @@ path = "../../../tests/rust/mcp-server/knowledge_tools.rs"
 [[test]]
 name = "domain_dependency_boundaries"
 path = "../../../tests/rust/mcp-server/domain_dependency_boundaries.rs"
+
+[[test]]
+name = "mcp_trace_smoke"
+path = "../../../tests/rust/mcp-server/mcp_trace_smoke.rs"

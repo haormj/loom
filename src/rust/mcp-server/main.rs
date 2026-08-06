@@ -1,6 +1,5 @@
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::PathBuf;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -9,7 +8,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn init_logging() -> anyhow::Result<()> {
-    let log_dir = loom_log_dir();
+    let log_dir = mcp_server::trace::loom_log_dir();
     std::fs::create_dir_all(&log_dir)?;
     let log_file = log_dir.join("loom-mcp.log");
 
@@ -36,18 +35,4 @@ fn init_logging() -> anyhow::Result<()> {
     .init();
 
     Ok(())
-}
-
-fn loom_log_dir() -> PathBuf {
-    let loom_home = std::env::var("LOOM_HOME")
-        .ok()
-        .filter(|v| !v.trim().is_empty())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            let home = std::env::var("HOME")
-                .or_else(|_| std::env::var("USERPROFILE"))
-                .unwrap_or_else(|_| ".".to_string());
-            PathBuf::from(home).join(".loom")
-        });
-    loom_home.join("log")
 }
