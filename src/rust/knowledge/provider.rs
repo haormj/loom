@@ -132,7 +132,7 @@ impl OpenVikingProvider {
         Self {
             source_id,
             source_name,
-            endpoint: config.endpoint,
+            endpoint: config.endpoint.trim_end_matches('/').to_string(),
             api_key,
             account: config.account,
             user: config.user,
@@ -346,5 +346,67 @@ fn map_ureq_error(error: ureq::Error, source_name: &str) -> KnowledgeError {
                 "OpenViking source '{source_name}' unreachable: {transport}"
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::OpenVikingProviderConfig;
+
+    #[test]
+    fn endpoint_trailing_slash_is_stripped() {
+        let provider = OpenVikingProvider::new(
+            "s1".to_string(),
+            "test".to_string(),
+            OpenVikingProviderConfig {
+                endpoint: "http://127.0.0.1:1933/".to_string(),
+                api_key_env: None,
+                account: None,
+                user: None,
+                target_uri: "viking://resources/".to_string(),
+                timeout_secs: None,
+            },
+            None,
+        );
+        assert_eq!(provider.endpoint, "http://127.0.0.1:1933");
+    }
+
+    #[test]
+    fn endpoint_without_trailing_slash_is_unchanged() {
+        let provider = OpenVikingProvider::new(
+            "s1".to_string(),
+            "test".to_string(),
+            OpenVikingProviderConfig {
+                endpoint: "http://127.0.0.1:1933".to_string(),
+                api_key_env: None,
+                account: None,
+                user: None,
+                target_uri: "viking://resources/".to_string(),
+                timeout_secs: None,
+            },
+            None,
+        );
+        assert_eq!(provider.endpoint, "http://127.0.0.1:1933");
+    }
+
+    #[test]
+    fn build_request_url_has_no_double_slash() {
+        let provider = OpenVikingProvider::new(
+            "s1".to_string(),
+            "test".to_string(),
+            OpenVikingProviderConfig {
+                endpoint: "http://127.0.0.1:1933/".to_string(),
+                api_key_env: None,
+                account: None,
+                user: None,
+                target_uri: "viking://resources/".to_string(),
+                timeout_secs: None,
+            },
+            None,
+        );
+        let url = format!("{}{}", provider.endpoint, "/api/v1/search/find");
+        assert_eq!(url, "http://127.0.0.1:1933/api/v1/search/find");
+        assert!(!url.contains("//api"), "URL should not contain double slash before path");
     }
 }
