@@ -49,10 +49,21 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
                 .as_ref()
                 .and_then(|env| std::env::var(env).ok())
                 .filter(|value| !value.is_empty());
-            debug!(
-                "create_provider: source '{}' -> OpenViking (endpoint={})",
-                source.name, config.endpoint
-            );
+            match (&config.api_key_env, &api_key) {
+                (Some(env_name), Some(_)) => debug!(
+                    "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} -> resolved)",
+                    source.name, config.endpoint, env_name
+                ),
+                (Some(env_name), None) => warn!(
+                    "create_provider: source '{}' -> OpenViking (endpoint={}, apiKeyEnv={} -> env var NOT SET, requests will be unauthenticated)",
+                    source.name, config.endpoint, env_name
+                ),
+                (None, None) => debug!(
+                    "create_provider: source '{}' -> OpenViking (endpoint={}, no apiKeyEnv configured)",
+                    source.name, config.endpoint
+                ),
+                _ => unreachable!(),
+            }
             Ok(Box::new(OpenVikingProvider::new(
                 source.source_id.clone(),
                 source.name.clone(),
