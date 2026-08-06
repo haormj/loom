@@ -162,12 +162,14 @@ fn load_providers_yaml() -> KnowledgeResult<Vec<ProvidersYamlSource>> {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ProvidersYamlFile {
     #[serde(default)]
     sources: Vec<ProvidersYamlSource>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ProvidersYamlSource {
     name: String,
     #[serde(default)]
@@ -332,4 +334,66 @@ fn tmp_path(path: &Path) -> PathBuf {
         .and_then(|name| name.to_str())
         .unwrap_or("knowledge");
     path.with_file_name(format!("{file_name}.tmp-{}", now_millis()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn providers_yaml_parses_camel_case_keys() {
+        let yaml = r#"
+sources:
+  - name: confluence-kb
+    endpoint: http://openviking.internal:1933
+    apiKeyEnv: CONFLUENCE_OV_KEY
+    account: acme
+    user: alice
+    targetUri: viking://resources/confluence/
+    timeoutSecs: 15
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(file.sources.len(), 1);
+        let source = &file.sources[0];
+        assert_eq!(source.name, "confluence-kb");
+        assert_eq!(source.endpoint, "http://openviking.internal:1933");
+        assert_eq!(source.api_key_env.as_deref(), Some("CONFLUENCE_OV_KEY"));
+        assert_eq!(source.account.as_deref(), Some("acme"));
+        assert_eq!(source.user.as_deref(), Some("alice"));
+        assert_eq!(
+            source.target_uri.as_deref(),
+            Some("viking://resources/confluence/")
+        );
+        assert_eq!(source.timeout_secs, Some(15));
+    }
+
+    #[test]
+    fn providers_yaml_target_uri_defaults_when_absent() {
+        let yaml = r#"
+sources:
+  - name: default-kb
+    endpoint: http://localhost:1933
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        let source = &file.sources[0];
+        assert_eq!(source.target_uri, None);
+        let ks = yaml_source_to_knowledge_source(
+            ProvidersYamlSource {
+                name: source.name.clone(),
+                enabled: source.enabled,
+                endpoint: source.endpoint.clone(),
+                api_key_env: source.api_key_env.clone(),
+                account: source.account.clone(),
+                user: source.user.clone(),
+                target_uri: source.target_uri.clone(),
+                timeout_secs: source.timeout_secs,
+            },
+            "2026-01-01T00:00:00Z",
+        );
+        if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
+            assert_eq!(cfg.target_uri, "viking://resources/");
+        } else {
+            panic!("expected OpenViking provider");
+        }
+    }
 }
