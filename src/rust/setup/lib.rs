@@ -52,7 +52,11 @@ const REQUIRED_SHARED_SKILL_FILES: &[&str] = &[
     "plugins/shared/loom/skills/godot/reviewer/tilemap/SKILL.md",
     "plugins/shared/loom/skills/godot/reviewer/ui/SKILL.md",
 ];
-const REQUIRED_SHARED_REFERENCE_FILES: &[&str] = &[
+/// Non-code reference files (uix, arch, api, review, test, deploy) that are
+/// not part of the Playbook registry. Code reference files (`tech/code/**`,
+/// `tech/backend/**`, `tech/frontend/**`) are derived from the registry at
+/// runtime via `code_reference_file_list()`.
+const NON_CODE_REFERENCE_FILES: &[&str] = &[
     "plugins/shared/loom/references/uix/anti-patterns.md",
     "plugins/shared/loom/references/uix/content.md",
     "plugins/shared/loom/references/uix/core.md",
@@ -118,178 +122,8 @@ const REQUIRED_SHARED_REFERENCE_FILES: &[&str] = &[
     "plugins/shared/loom/references/tech/test/playwright/network.md",
     "plugins/shared/loom/references/tech/test/playwright/reliability.md",
     "plugins/shared/loom/references/tech/test/playwright/visual.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/architecture.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/data.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/logging.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/minimal.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/runtime.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/security.md",
-    "plugins/shared/loom/references/tech/backend/aspnetcore/testing.md",
-    "plugins/shared/loom/references/tech/backend/django/models.md",
-    "plugins/shared/loom/references/tech/backend/django/logging.md",
-    "plugins/shared/loom/references/tech/backend/django/security.md",
-    "plugins/shared/loom/references/tech/backend/django/serializers.md",
-    "plugins/shared/loom/references/tech/backend/django/testing.md",
-    "plugins/shared/loom/references/tech/backend/django/views.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/data.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/logging.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/migration.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/routing.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/schemas.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/security.md",
-    "plugins/shared/loom/references/tech/backend/fastapi/testing.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/controllers.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/dtos.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/logging.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/migration.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/security.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/services.md",
-    "plugins/shared/loom/references/tech/backend/nestjs/testing.md",
-    "plugins/shared/loom/references/tech/backend/springboot/cloud.md",
-    "plugins/shared/loom/references/tech/backend/springboot/data.md",
-    "plugins/shared/loom/references/tech/backend/springboot/logging.md",
-    "plugins/shared/loom/references/tech/backend/springboot/observability.md",
-    "plugins/shared/loom/references/tech/backend/springboot/runtime.md",
-    "plugins/shared/loom/references/tech/backend/springboot/security.md",
-    "plugins/shared/loom/references/tech/backend/springboot/testing.md",
-    "plugins/shared/loom/references/tech/backend/springboot/web.md",
+    // mybatis-plus/index.md is not in the registry (it's a directory index page)
     "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/index.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/configuration.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/mapping.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/crud.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/wrappers.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/plugins.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/security.md",
-    "plugins/shared/loom/references/tech/backend/springboot/mybatis-plus/extensions.md",
-    "plugins/shared/loom/references/tech/frontend/angular/components.md",
-    "plugins/shared/loom/references/tech/frontend/angular/core.md",
-    "plugins/shared/loom/references/tech/frontend/angular/ngrx.md",
-    "plugins/shared/loom/references/tech/frontend/angular/routing.md",
-    "plugins/shared/loom/references/tech/frontend/angular/rxjs.md",
-    "plugins/shared/loom/references/tech/frontend/angular/testing.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/bloc.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/core.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/navigation.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/performance.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/riverpod.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/structure.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/testing.md",
-    "plugins/shared/loom/references/tech/frontend/flutter/widgets.md",
-    "plugins/shared/loom/references/tech/frontend/react/core.md",
-    "plugins/shared/loom/references/tech/frontend/react/hooks.md",
-    "plugins/shared/loom/references/tech/frontend/react/migration.md",
-    "plugins/shared/loom/references/tech/frontend/react/performance.md",
-    "plugins/shared/loom/references/tech/frontend/react/react19.md",
-    "plugins/shared/loom/references/tech/frontend/react/server-components.md",
-    "plugins/shared/loom/references/tech/frontend/react/state.md",
-    "plugins/shared/loom/references/tech/frontend/react/testing.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/core.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/lists.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/navigation.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/platform.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/storage.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/structure.md",
-    "plugins/shared/loom/references/tech/frontend/react-native/testing.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/actions.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/app-router.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/core.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/data.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/runtime.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/server-components.md",
-    "plugins/shared/loom/references/tech/frontend/nextjs/testing.md",
-    "plugins/shared/loom/references/tech/frontend/vue/build.md",
-    "plugins/shared/loom/references/tech/frontend/vue/components.md",
-    "plugins/shared/loom/references/tech/frontend/vue/core.md",
-    "plugins/shared/loom/references/tech/frontend/vue/mobile.md",
-    "plugins/shared/loom/references/tech/frontend/vue/nuxt.md",
-    "plugins/shared/loom/references/tech/frontend/vue/state.md",
-    "plugins/shared/loom/references/tech/frontend/vue/testing.md",
-    "plugins/shared/loom/references/tech/frontend/vue/typescript.md",
-    "plugins/shared/loom/references/tech/code/common.md",
-    "plugins/shared/loom/references/tech/code/observability.md",
-    "plugins/shared/loom/references/tech/code/redis/core.md",
-    "plugins/shared/loom/references/tech/code/redis/cache.md",
-    "plugins/shared/loom/references/tech/code/redis/session.md",
-    "plugins/shared/loom/references/tech/code/redis/atomicity.md",
-    "plugins/shared/loom/references/tech/code/redis/messaging.md",
-    "plugins/shared/loom/references/tech/code/cpp/build.md",
-    "plugins/shared/loom/references/tech/code/cpp/concurrency.md",
-    "plugins/shared/loom/references/tech/code/cpp/core.md",
-    "plugins/shared/loom/references/tech/code/cpp/modern.md",
-    "plugins/shared/loom/references/tech/code/cpp/performance.md",
-    "plugins/shared/loom/references/tech/code/cpp/templates.md",
-    "plugins/shared/loom/references/tech/code/cpp/testing.md",
-    "plugins/shared/loom/references/tech/code/csharp/blazor.md",
-    "plugins/shared/loom/references/tech/code/csharp/core.md",
-    "plugins/shared/loom/references/tech/code/csharp/modern.md",
-    "plugins/shared/loom/references/tech/code/csharp/performance.md",
-    "plugins/shared/loom/references/tech/code/csharp/persistence.md",
-    "plugins/shared/loom/references/tech/code/csharp/testing.md",
-    "plugins/shared/loom/references/tech/code/go/concurrency.md",
-    "plugins/shared/loom/references/tech/code/go/core.md",
-    "plugins/shared/loom/references/tech/code/go/generics.md",
-    "plugins/shared/loom/references/tech/code/go/interfaces.md",
-    "plugins/shared/loom/references/tech/code/go/structure.md",
-    "plugins/shared/loom/references/tech/code/go/testing.md",
-    "plugins/shared/loom/references/tech/code/java/core.md",
-    "plugins/shared/loom/references/tech/code/java/persistence.md",
-    "plugins/shared/loom/references/tech/code/java/reactive.md",
-    "plugins/shared/loom/references/tech/code/java/security.md",
-    "plugins/shared/loom/references/tech/code/java/spring.md",
-    "plugins/shared/loom/references/tech/code/java/testing.md",
-    "plugins/shared/loom/references/tech/code/javascript/async.md",
-    "plugins/shared/loom/references/tech/code/javascript/browser.md",
-    "plugins/shared/loom/references/tech/code/javascript/core.md",
-    "plugins/shared/loom/references/tech/code/javascript/modules.md",
-    "plugins/shared/loom/references/tech/code/javascript/node.md",
-    "plugins/shared/loom/references/tech/code/javascript/testing.md",
-    "plugins/shared/loom/references/tech/code/kotlin/compose.md",
-    "plugins/shared/loom/references/tech/code/kotlin/core.md",
-    "plugins/shared/loom/references/tech/code/kotlin/coroutines.md",
-    "plugins/shared/loom/references/tech/code/kotlin/dsl.md",
-    "plugins/shared/loom/references/tech/code/kotlin/ktor.md",
-    "plugins/shared/loom/references/tech/code/kotlin/multiplatform.md",
-    "plugins/shared/loom/references/tech/code/kotlin/testing.md",
-    "plugins/shared/loom/references/tech/code/php/async.md",
-    "plugins/shared/loom/references/tech/code/php/core.md",
-    "plugins/shared/loom/references/tech/code/php/modern.md",
-    "plugins/shared/loom/references/tech/code/php/laravel.md",
-    "plugins/shared/loom/references/tech/code/php/symfony.md",
-    "plugins/shared/loom/references/tech/code/php/testing.md",
-    "plugins/shared/loom/references/tech/code/python/async.md",
-    "plugins/shared/loom/references/tech/code/python/core.md",
-    "plugins/shared/loom/references/tech/code/python/packaging.md",
-    "plugins/shared/loom/references/tech/code/python/testing.md",
-    "plugins/shared/loom/references/tech/code/python/typing.md",
-    "plugins/shared/loom/references/tech/code/rust/async.md",
-    "plugins/shared/loom/references/tech/code/rust/core.md",
-    "plugins/shared/loom/references/tech/code/rust/errors.md",
-    "plugins/shared/loom/references/tech/code/rust/ownership.md",
-    "plugins/shared/loom/references/tech/code/rust/testing.md",
-    "plugins/shared/loom/references/tech/code/rust/traits.md",
-    "plugins/shared/loom/references/tech/code/sql/dialects.md",
-    "plugins/shared/loom/references/tech/code/sql/optimization.md",
-    "plugins/shared/loom/references/tech/code/sql/queries.md",
-    "plugins/shared/loom/references/tech/code/sql/schema.md",
-    "plugins/shared/loom/references/tech/code/sql/windows.md",
-    "plugins/shared/loom/references/tech/code/sql/mysql/schema.md",
-    "plugins/shared/loom/references/tech/code/sql/mysql/queries.md",
-    "plugins/shared/loom/references/tech/code/sql/mysql/transactions.md",
-    "plugins/shared/loom/references/tech/code/sql/postgresql/schema.md",
-    "plugins/shared/loom/references/tech/code/sql/postgresql/queries.md",
-    "plugins/shared/loom/references/tech/code/sql/postgresql/transactions.md",
-    "plugins/shared/loom/references/tech/code/swift/concurrency.md",
-    "plugins/shared/loom/references/tech/code/swift/core.md",
-    "plugins/shared/loom/references/tech/code/swift/memory.md",
-    "plugins/shared/loom/references/tech/code/swift/protocols.md",
-    "plugins/shared/loom/references/tech/code/swift/swiftui.md",
-    "plugins/shared/loom/references/tech/code/swift/testing.md",
-    "plugins/shared/loom/references/tech/code/typescript/config.md",
-    "plugins/shared/loom/references/tech/code/typescript/core.md",
-    "plugins/shared/loom/references/tech/code/typescript/guards.md",
-    "plugins/shared/loom/references/tech/code/typescript/patterns.md",
-    "plugins/shared/loom/references/tech/code/typescript/testing.md",
-    "plugins/shared/loom/references/tech/code/typescript/types.md",
     "plugins/shared/loom-deploy/references/bootstrap.md",
     "plugins/shared/loom-deploy/references/compose.md",
     "plugins/shared/loom-deploy/references/dockerfile.md",
@@ -310,6 +144,18 @@ const REQUIRED_SHARED_REFERENCE_FILES: &[&str] = &[
     "plugins/shared/loom-deploy/references/topology.md",
     "plugins/shared/loom-deploy/references/workspaces.md",
 ];
+
+/// Returns the code reference files derived from the Playbook registry.
+/// Each path is prefixed with `SHARED_LOOM_REFERENCES` so the result can be
+/// validated alongside `NON_CODE_REFERENCE_FILES`. Adding or removing a ref
+/// in `playbooks/default/registry.yaml` automatically updates this list.
+fn code_reference_file_list() -> Vec<String> {
+    contracts::pack::registry_reference_paths()
+        .into_iter()
+        .map(|p| format!("{SHARED_LOOM_REFERENCES}/{p}"))
+        .collect()
+}
+
 const LEGACY_MARKERS: &[&str] = &[
     "~/.loom/bin/loom-cli",
     "/.loom/bin/loom-cli",
@@ -2201,8 +2047,14 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
             return Err(SetupError::MissingPackageEntry(path));
         }
     }
-    for relative in REQUIRED_SHARED_REFERENCE_FILES {
+    for relative in NON_CODE_REFERENCE_FILES {
         let path = package_root.join(relative);
+        if !path.is_file() {
+            return Err(SetupError::MissingPackageEntry(path));
+        }
+    }
+    for relative in code_reference_file_list() {
+        let path = package_root.join(&relative);
         if !path.is_file() {
             return Err(SetupError::MissingPackageEntry(path));
         }
@@ -3920,6 +3772,192 @@ fn path_string(path: impl AsRef<Path>) -> String {
 
 fn now_string() -> String {
     chrono::Utc::now().to_rfc3339()
+}
+
+// ---------------------------------------------------------------------------
+// Playbook pack tooling
+// ---------------------------------------------------------------------------
+
+/// `loom-setup playbook init <name> [--output-dir <dir>]`
+///
+/// Creates a skeleton enterprise playbook directory with stub manifest,
+/// registry, rules, and matchers files. The pack defaults to `mode: extend`
+/// so it overlays the builtin default.
+pub fn playbook_init(name: &str, output_dir: &Path) -> Result<PathBuf, SetupError> {
+    if name.is_empty() {
+        return Err(SetupError::InvalidArgument(
+            "playbook name must not be empty".into(),
+        ));
+    }
+    let pack_dir = output_dir.join(name);
+    if pack_dir.exists() {
+        return Err(SetupError::InvalidArgument(format!(
+            "playbook directory already exists: {}",
+            pack_dir.display()
+        )));
+    }
+    fs::create_dir_all(&pack_dir).map_err(|source| SetupError::Io {
+        path: pack_dir.clone(),
+        source,
+    })?;
+    let references_dir = pack_dir.join("references");
+    fs::create_dir_all(&references_dir).map_err(|source| SetupError::Io {
+        path: references_dir.clone(),
+        source,
+    })?;
+    write_text(
+        &pack_dir.join("manifest.toml"),
+        &format!(
+            "# Enterprise Playbook — {name}\n\
+             # mode = \"extend\" overlays the builtin default; mode = \"base\" replaces it.\n\n\
+             name = \"{name}\"\n\
+             loom_version_range = \">=0.2.0\"\n\
+             mode = \"extend\"\n"
+        ),
+    )?;
+    write_text(
+        &pack_dir.join("registry.yaml"),
+        "# Enterprise registry overlay.\n\
+         # In extend mode, entries here override builtin entries with the same\n\
+         # (group_key, group) key. Add new ref_ids for enterprise-specific references.\n\n\
+         schema_version: 1\n\
+         playbook: \"\"\n\
+         mode: extend\n\
+         code_common:\n\
+           ref_id: \"\"\n\
+           path: \"\"\n\
+           reason: \"\"\n\
+         code_refs: {}\n",
+    )?;
+    write_text(
+        &pack_dir.join("rules.yaml"),
+        "# Enterprise selection rules overlay.\n\
+         # Rules here are merged with builtin rules in extend mode.\n\n\
+         applicability: []\n\
+         language_rules: []\n\
+         backend_rules: []\n\
+         frontend_rules: []\n",
+    )?;
+    write_text(
+        &pack_dir.join("matchers.yaml"),
+        "# Enterprise stack matchers overlay.\n\
+         # Matchers here are merged with builtin matchers in extend mode.\n\n\
+         track_roles: {}\n\
+         framework_groups: {}\n\
+         frontend_keywords: []\n\
+         languages: []\n\
+         cross_cutting: []\n",
+    )?;
+    Ok(pack_dir)
+}
+
+/// `loom-setup playbook lint [--pack <dir>]`
+///
+/// Validates that a playbook pack is well-formed: manifest.toml parses,
+/// and registry/rules/matchers YAML files parse if present.
+pub fn playbook_lint(pack_dir: &Path) -> Result<serde_json::Value, SetupError> {
+    let manifest_path = pack_dir.join("manifest.toml");
+    if !manifest_path.is_file() {
+        return Err(SetupError::MissingPackageEntry(manifest_path));
+    }
+    let manifest_content = fs::read_to_string(&manifest_path).map_err(|source| SetupError::Io {
+        path: manifest_path.clone(),
+        source,
+    })?;
+    let manifest = contracts::pack::PackManifest::parse(&manifest_content).map_err(|err| {
+        SetupError::InvalidArgument(format!("manifest.toml: {err}"))
+    })?;
+
+    let mut files_checked = vec!["manifest.toml".to_string()];
+    let mut warnings: Vec<String> = Vec::new();
+
+    let registry_path = pack_dir.join("registry.yaml");
+    if registry_path.is_file() {
+        files_checked.push("registry.yaml".to_string());
+        let content = fs::read_to_string(&registry_path).map_err(|source| SetupError::Io {
+            path: registry_path.clone(),
+            source,
+        })?;
+        if let Err(err) = serde_yaml::from_str::<contracts::playbook::PlaybookRegistry>(&content) {
+            return Err(SetupError::InvalidArgument(format!(
+                "registry.yaml: {err}"
+            )));
+        }
+    } else if manifest.is_base() {
+        warnings.push("base mode pack has no registry.yaml — builtin registry will be empty".into());
+    }
+
+    let rules_path = pack_dir.join("rules.yaml");
+    if rules_path.is_file() {
+        files_checked.push("rules.yaml".to_string());
+        let content = fs::read_to_string(&rules_path).map_err(|source| SetupError::Io {
+            path: rules_path.clone(),
+            source,
+        })?;
+        if let Err(err) = serde_yaml::from_str::<contracts::engine::RulesFile>(&content) {
+            return Err(SetupError::InvalidArgument(format!(
+                "rules.yaml: {err}"
+            )));
+        }
+    }
+
+    let matchers_path = pack_dir.join("matchers.yaml");
+    if matchers_path.is_file() {
+        files_checked.push("matchers.yaml".to_string());
+        let content = fs::read_to_string(&matchers_path).map_err(|source| SetupError::Io {
+            path: matchers_path.clone(),
+            source,
+        })?;
+        if let Err(err) = serde_yaml::from_str::<contracts::matchers::MatchersFile>(&content) {
+            return Err(SetupError::InvalidArgument(format!(
+                "matchers.yaml: {err}"
+            )));
+        }
+    }
+
+    Ok(serde_json::json!({
+        "status": "ok",
+        "pack": manifest.name,
+        "mode": manifest.mode,
+        "files_checked": files_checked,
+        "warnings": warnings,
+    }))
+}
+
+/// `loom-setup playbook dry-run [--pack <dir>]`
+///
+/// Loads a playbook pack, merges it with the builtin default (extend) or
+/// replaces it (base), and prints the effective registry reference list.
+pub fn playbook_dry_run(pack_dir: &Path) -> Result<serde_json::Value, SetupError> {
+    let loaded = contracts::pack::load_enterprise_pack(pack_dir).ok_or_else(|| {
+        SetupError::MissingPackageEntry(pack_dir.join("manifest.toml"))
+    })?;
+    let builtin = contracts::playbook::builtin_registry();
+    let merged = contracts::pack::merge_registry(builtin, loaded.registry.as_ref());
+
+    let mut refs: Vec<serde_json::Value> = Vec::new();
+    refs.push(serde_json::json!({
+        "ref_id": merged.code_common.ref_id,
+        "path": merged.code_common.path,
+    }));
+    for (group_key, groups) in &merged.code_refs {
+        for (group, entry) in groups {
+            refs.push(serde_json::json!({
+                "group_key": group_key,
+                "group": group,
+                "ref_id": entry.ref_id,
+                "path": entry.path,
+            }));
+        }
+    }
+
+    Ok(serde_json::json!({
+        "status": "ok",
+        "pack": loaded.manifest.name,
+        "mode": loaded.manifest.mode,
+        "ref_count": refs.len(),
+        "refs": refs,
+    }))
 }
 
 #[cfg(all(test, unix))]

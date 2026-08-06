@@ -19,8 +19,10 @@ mcp-server = { path = "../mcp-server" }
 chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 sha2.workspace = true
 toml_edit.workspace = true
+contracts = { path = "../contracts" }
 zip.workspace = true
 
 [[test]]

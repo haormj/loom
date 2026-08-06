@@ -1,7 +1,8 @@
 use setup::{
-    archive_package_layout, doctor, install, parse_agent_selection, prepare_browser_runtime, purge,
-    release_artifact_file_names, uninstall, write_package_layout, BrowserRuntimePrepareOptions,
-    SetupEnvironment, SetupError, TargetPlatform, VERSION,
+    archive_package_layout, doctor, install, parse_agent_selection, playbook_dry_run,
+    playbook_init, playbook_lint, prepare_browser_runtime, purge, release_artifact_file_names,
+    uninstall, write_package_layout, BrowserRuntimePrepareOptions, SetupEnvironment, SetupError,
+    TargetPlatform, VERSION,
 };
 use std::path::PathBuf;
 
@@ -169,6 +170,46 @@ fn run() -> Result<serde_json::Value, SetupError> {
                 "archive": archive.display().to_string()
             }))
         }
+        "playbook" => {
+            let sub = args.get(1).map(String::as_str).ok_or_else(|| {
+                SetupError::InvalidArgument(
+                    "playbook requires a subcommand (init|lint|dry-run)".into(),
+                )
+            })?;
+            match sub {
+                "init" => {
+                    let name = args.get(2).map(String::as_str).ok_or_else(|| {
+                        SetupError::InvalidArgument("playbook init requires a name".into())
+                    })?;
+                    let options = CliOptions::parse(&args[3..])?;
+                    let output_dir = options.output_dir.unwrap_or_else(|| PathBuf::from("."));
+                    let pack_dir = playbook_init(name, &output_dir)?;
+                    Ok(serde_json::json!({
+                        "status": "ok",
+                        "pack": name,
+                        "path": pack_dir.display().to_string()
+                    }))
+                }
+                "lint" => {
+                    let options = CliOptions::parse(&args[2..])?;
+                    let pack_dir = options.pack_dir.ok_or_else(|| {
+                        SetupError::InvalidArgument("--pack <dir> is required for playbook lint".into())
+                    })?;
+                    playbook_lint(&pack_dir)
+                }
+                "dry-run" => {
+                    let options = CliOptions::parse(&args[2..])?;
+                    let pack_dir = options.pack_dir.ok_or_else(|| {
+                        SetupError::InvalidArgument("--pack <dir> is required for playbook dry-run".into())
+                    })?;
+                    playbook_dry_run(&pack_dir)
+                }
+                other => Err(SetupError::InvalidArgument(format!(
+                    "unknown playbook subcommand '{other}', expected init|lint|dry-run\n{}",
+                    usage()
+                ))),
+            }
+        }
         other => Err(SetupError::InvalidArgument(format!(
             "unknown command '{other}'\n{}",
             usage()
@@ -181,6 +222,7 @@ struct CliOptions {
     agent: Option<String>,
     package_root: Option<PathBuf>,
     output_dir: Option<PathBuf>,
+    pack_dir: Option<PathBuf>,
     platform: Option<String>,
     all: bool,
     playwright_versions: Vec<String>,
@@ -209,6 +251,11 @@ impl CliOptions {
                     index += 1;
                     options.output_dir =
                         Some(PathBuf::from(required_value(args, index, "--output-dir")?));
+                }
+                "--pack" => {
+                    index += 1;
+                    options.pack_dir =
+                        Some(PathBuf::from(required_value(args, index, "--pack")?));
                 }
                 "--platform" => {
                     index += 1;
@@ -257,5 +304,8 @@ fn usage() -> &'static str {
      loom-setup purge\n\
      loom-setup browser-runtime prepare [--playwright-version <registry-version-or-range>] [--browser chromium|firefox|webkit]\n\
      loom-setup package-layout --output-dir <dir> [--platform all|darwin-arm64|darwin-x64|linux-x64|linux-arm64|windows-x64]\n\
-     loom-setup package-archive --package-root <dir> --output-dir <dir> --platform <platform>"
+     loom-setup package-archive --package-root <dir> --output-dir <dir> --platform <platform>\n\
+     loom-setup playbook init <name> [--output-dir <dir>]\n\
+     loom-setup playbook lint --pack <dir>\n\
+     loom-setup playbook dry-run --pack <dir>"
 }

@@ -1171,10 +1171,12 @@ name = "setup"
 version = "0.2.7"
 dependencies = [
  "chrono",
+ "contracts",
  "delivery-core",
  "mcp-server",
  "serde",
  "serde_json",
+ "serde_yaml",
  "sha2",
  "toml_edit",
  "zip",

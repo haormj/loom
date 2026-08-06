@@ -1,0 +1,9 @@
+# Builtin Loom Playbook — default manifest
+#
+# This manifest describes the builtin default Playbook. It is always
+# available (embedded via include_str!); enterprise packs declare their
+# own manifest.toml with mode: base or extend.
+
+name = "default"
+loom_version_range = ">=0.2.0"
+mode = "base"

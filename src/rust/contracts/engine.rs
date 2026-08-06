@@ -26,8 +26,7 @@ use std::sync::OnceLock;
 use serde::Deserialize;
 
 use crate::{
-    CodeReferenceTaskContext, CodeStackSignal, ImplementationAction, TaskArtifactRefs,
-    TaskDefinition, TaskKind, TaskWriteBoundary,
+    CodeReferenceTaskContext, CodeStackSignal, ImplementationAction, TaskDefinition, TaskKind,
 };
 
 // ---------------------------------------------------------------------------
@@ -526,6 +525,7 @@ fn context_flag_is_true(context: &CodeReferenceTaskContext, name: &str) -> bool 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{TaskArtifactRefs, TaskWriteBoundary};
 
     fn test_signal(language: &str, frameworks: &[&str]) -> CodeStackSignal {
         CodeStackSignal {
