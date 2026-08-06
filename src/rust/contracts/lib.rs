@@ -4,6 +4,7 @@ pub mod brainstorm;
 pub mod browser_quality;
 pub mod code_quality;
 pub mod deploy;
+pub mod engine;
 pub mod execution;
 pub mod planning;
 pub mod playbook;

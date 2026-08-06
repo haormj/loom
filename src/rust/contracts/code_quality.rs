@@ -152,20 +152,43 @@ pub fn code_reference_selection_for_task_with_context(
     let mut unmapped_signals = Vec::new();
 
     for signal in signals {
-        if !signal_applies_to_task(&signal, &focus_tags) {
+        if !crate::engine::evaluate_signal_applicability(
+            &signal,
+            &focus_tags,
+            task,
+            &stack_frameworks,
+            context,
+        ) {
             if signal.language.is_none() {
                 unmapped_signals.push(signal);
             }
             continue;
         }
         let items = if signal.language.is_some() {
-            reference_items_for_signal(&signal, &focus_tags, task, &stack_frameworks)
+            crate::engine::evaluate_language_items(
+                &signal,
+                &focus_tags,
+                task,
+                &stack_frameworks,
+                context,
+            )
         } else {
             BTreeSet::new()
         };
-        let backend_items =
-            backend_reference_items_for_signal(&signal, &stack_frameworks, task, context);
-        let frontend_items = frontend_reference_items_for_signal(&signal, &focus_tags, task);
+        let backend_items = crate::engine::evaluate_backend_items(
+            &signal,
+            &focus_tags,
+            task,
+            &stack_frameworks,
+            context,
+        );
+        let frontend_items = crate::engine::evaluate_frontend_items(
+            &signal,
+            &focus_tags,
+            task,
+            &stack_frameworks,
+            context,
+        );
         if !items.is_empty() || !backend_items.is_empty() || !frontend_items.is_empty() {
             selected_signals.push(signal.clone());
             if let Some(language) = &signal.language {
@@ -1978,6 +2001,38 @@ fn task_has_action(task: &TaskDefinition, expected: ImplementationAction) -> boo
     task.implementation_actions
         .iter()
         .any(|action| *action == expected)
+}
+
+/// Resolves a named ownership predicate to its Rust function call. Used by
+/// the Playbook engine (`engine.rs`) to evaluate `owns`/`not_owns` conditions
+/// in `rules.yaml` without hardcoding predicate logic in the rule data.
+pub(crate) fn resolve_task_predicate(
+    name: &str,
+    task: &TaskDefinition,
+    context: &CodeReferenceTaskContext,
+) -> bool {
+    match name {
+        "persistence" => task_owns_persistence(task),
+        "test_implementation" => task_owns_test_implementation(task),
+        "frontend_task" => task_is_frontend_task(task),
+        "backend_task" => task_is_backend_task(task),
+        "frontend_implementation" => task_owns_frontend_implementation(task),
+        "frontend_surface" => task_owns_frontend_surface(task),
+        "api_contract" => task_owns_api_contract(task),
+        "api_client_binding" => task_uses_api_client_binding(task),
+        "logging_infrastructure" => task_owns_logging_infrastructure(task, context),
+        "typescript_type_modeling" => task_owns_typescript_type_modeling(task),
+        "typescript_configuration" => task_owns_typescript_configuration(task),
+        "typescript_pattern" => task_owns_typescript_pattern(task),
+        "nest_service_boundary" => task_owns_nest_service_boundary(task),
+        "sql_schema" => task_owns_sql_schema(task),
+        "sql_query" => task_owns_sql_query(task),
+        "sql_transaction" => task_owns_sql_transaction(task),
+        "sql_performance" => task_owns_sql_performance(task),
+        "sql_analytics" => task_owns_sql_analytics(task),
+        "sql_tests" => task_owns_sql_tests(task),
+        _ => false,
+    }
 }
 
 fn frontend_reference_items_for_signal(

@@ -1,0 +1,621 @@
+# Builtin Loom Playbook — default selection rules
+#
+# Data-driven reference selection rules, byte-equivalent with the prior
+# hardcoded match/if branches in code_quality.rs:
+#   - signal_applies_to_task        → applicability
+#   - reference_items_for_signal    → language_rules
+#   - backend_reference_items_for_signal → backend_rules
+#   - frontend_reference_items_for_signal → frontend_rules
+#
+# Named ownership predicates (task_owns_persistence, etc.) remain Rust
+# functions — rules reference them by name via `owns`/`not_owns`.
+# Focus tag derivation (task_focus_tags) also stays in Rust; rules
+# consume the pre-computed focus_tags via `focus`.
+
+schema_version: 1
+playbook: default
+mode: base
+
+# ──────────────────────────────────────────────────────────────────────────
+# Signal applicability — per-language condition determining if a signal
+# applies to the task. Special keys: "*" = Some(_) catch-all, "_none" = None.
+# ──────────────────────────────────────────────────────────────────────────
+applicability:
+  sql:
+    any:
+      - focus: [sql, persistence, performance, analytics]
+  typescript:
+    any:
+      - focus: [frontend, configuration, runtime, migration]
+      - all: [roles: [backend], focus: [api, backend, testing]]
+  javascript:
+    any:
+      - focus: [frontend]
+      - all: [roles: [backend], focus: [api, backend, testing]]
+  "*":
+    any:
+      - all: [roles: [frontend], focus: [frontend]]
+      - all: [roles: [backend], focus: [backend, api, persistence, security, configuration, runtime, integration, migration, architecture, testing]]
+      - all: [roles: [persistence], focus: [persistence]]
+      - all: [roles_empty: true, focus: [api, backend, persistence, security, configuration, runtime]]
+  _none:
+    all: [roles: [frontend], focus: [frontend]]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Language-level rules — select groups keyed by the signal's language.
+# ──────────────────────────────────────────────────────────────────────────
+language_rules:
+  # --- Java ---
+  - when: { language: java }
+    select: [core]
+  - when: { language: java, signal_frameworks: [spring_framework] }
+    select: [spring]
+  - when: { language: java, focus: [persistence], signal_frameworks: [jpa_orm] }
+    select: [persistence]
+  - when: { language: java, focus: [security] }
+    select: [security]
+  - when:
+      language: java
+      any:
+        - focus: [reactive]
+        - all: [focus: [api], signal_frameworks: [spring_webflux]]
+        - all: [focus: [api, persistence], signal_frameworks: [project_reactor, r2dbc]]
+    select: [reactive]
+  - when: { language: java, focus: [testing] }
+    select: [testing]
+
+  # --- TypeScript ---
+  - when: { language: typescript }
+    select: [core]
+  - when: { language: typescript, owns: [typescript_type_modeling] }
+    select: [types]
+  - when: { language: typescript, owns: [typescript_configuration] }
+    select: [config]
+  - when: { language: typescript, owns: [typescript_pattern] }
+    select: [patterns]
+  - when: { language: typescript, focus: [testing] }
+    select: [testing]
+  - when: { language: typescript, focus: [api, api_client] }
+    select: [guards]
+
+  # --- JavaScript ---
+  - when: { language: javascript }
+    select: [core, modules]
+  - when: { language: javascript, focus: [async] }
+    select: [async]
+  - when: { language: javascript, roles: [frontend] }
+    select: [browser]
+  - when: { language: javascript, not: { roles: [frontend] } }
+    select: [node]
+  - when: { language: javascript, focus: [testing] }
+    select: [testing]
+
+  # --- Python ---
+  - when: { language: python }
+    select: [core, typing]
+  - when:
+      language: python
+      any:
+        - task_kind: [configuration_support]
+        - actions: [implement_language_version_feature, refactor_module_structure]
+    select: [packaging]
+  - when: { language: python, focus: [testing] }
+    select: [testing]
+  - when: { language: python, actions: [implement_async_processing] }
+    select: [async]
+
+  # --- Go ---
+  - when:
+      language: go
+      task_kind: [feature_increment, data_model_increment, interface_increment, integration_increment, refactor_support]
+    select: [core]
+  - when: { language: go, owns: [test_implementation] }
+    select: [testing]
+  - when: { language: go, actions: [implement_async_processing] }
+    select: [concurrency]
+  - when: { language: go, actions: [implement_generic_type_abstraction] }
+    select: [generics]
+  - when: { language: go, actions: [implement_dependency_abstraction] }
+    select: [interfaces]
+  - when:
+      language: go
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, migrate_framework_implementation, refactor_module_structure]
+    select: [structure]
+
+  # --- C# ---
+  - when:
+      language: csharp
+      any:
+        - task_kind: [feature_increment, data_model_increment, interface_increment, integration_increment, refactor_support]
+        - all: [stack_frameworks: [blazor], owns: [frontend_implementation]]
+    select: [core]
+  - when: { language: csharp, actions: [implement_language_version_feature] }
+    select: [modern]
+  - when:
+      language: csharp
+      owns: [test_implementation]
+      any:
+        - not_stack_frameworks: [aspnet_core]
+        - owns: [frontend_task]
+    select: [testing]
+  - when:
+      language: csharp
+      owns: [persistence]
+      stack_frameworks: [entity_framework]
+      not_stack_frameworks: [aspnet_core]
+    select: [persistence]
+  - when: { language: csharp, stack_frameworks: [blazor], owns: [frontend_implementation] }
+    select: [blazor]
+  - when: { language: csharp, actions: [optimize_runtime_performance] }
+    select: [performance]
+
+  # --- C++ ---
+  - when:
+      language: cpp
+      task_kind: [feature_increment, data_model_increment, interface_increment, integration_increment, refactor_support]
+    select: [core]
+  - when: { language: cpp, actions: [implement_language_version_feature] }
+    select: [modern, build]
+  - when: { language: cpp, actions: [add_or_update_config, migrate_framework_implementation] }
+    select: [build]
+  - when: { language: cpp, owns: [test_implementation] }
+    select: [testing]
+  - when: { language: cpp, actions: [implement_generic_type_abstraction] }
+    select: [templates]
+  - when: { language: cpp, actions: [optimize_runtime_performance] }
+    select: [performance]
+  - when: { language: cpp, actions: [implement_async_processing] }
+    select: [concurrency]
+
+  # --- Kotlin ---
+  - when: { language: kotlin }
+    select: [core]
+  - when: { language: kotlin, focus: [testing] }
+    select: [testing]
+  - when: { language: kotlin, focus: [async] }
+    select: [coroutines]
+  - when: { language: kotlin, signal_frameworks: [ktor] }
+    select: [ktor]
+  - when: { language: kotlin, signal_frameworks: [compose] }
+    select: [compose]
+  - when: { language: kotlin, signal_frameworks: [kmp] }
+    select: [multiplatform]
+  - when: { language: kotlin, actions: [implement_generic_type_abstraction] }
+    select: [dsl]
+
+  # --- PHP ---
+  - when: { language: php }
+    select: [core]
+  - when: { language: php, actions: [implement_language_version_feature] }
+    select: [modern]
+  - when: { language: php, focus: [testing] }
+    select: [testing]
+  - when: { language: php, signal_frameworks: [laravel] }
+    select: [laravel]
+  - when: { language: php, signal_frameworks: [symfony] }
+    select: [symfony]
+  - when: { language: php, focus: [async] }
+    select: [async]
+
+  # --- Rust ---
+  - when: { language: rust }
+    select: [core]
+  - when: { language: rust, actions: [implement_dependency_abstraction, implement_generic_type_abstraction] }
+    select: [traits]
+  - when: { language: rust, actions: [implement_dependency_abstraction, implement_generic_type_abstraction, implement_async_processing, optimize_runtime_performance, refactor_module_structure] }
+    select: [ownership]
+  - when: { language: rust, actions: [create_or_update_interface, create_or_update_business_rule, implement_external_service_integration, implement_resilience_policy] }
+    select: [errors]
+  - when: { language: rust, focus: [testing] }
+    select: [testing]
+  - when: { language: rust, actions: [implement_async_processing] }
+    select: [async]
+
+  # --- Swift ---
+  - when: { language: swift }
+    select: [core]
+  - when: { language: swift, actions: [implement_dependency_abstraction, implement_generic_type_abstraction] }
+    select: [protocols]
+  - when: { language: swift, focus: [testing] }
+    select: [testing]
+  - when: { language: swift, actions: [implement_async_processing] }
+    select: [concurrency]
+  - when: { language: swift, actions: [optimize_runtime_performance] }
+    select: [memory]
+  - when: { language: swift, signal_frameworks: [swiftui] }
+    select: [swiftui]
+
+  # --- SQL ---
+  - when:
+      language: sql
+      any:
+        - owns: [sql_schema]
+        - all: [owns: [persistence], not_owns: [sql_schema, sql_query, sql_transaction, sql_tests]]
+    select: [schema]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests, sql_performance, sql_analytics]
+    select: [dialects]
+  - when:
+      language: sql
+      owns: [sql_query, sql_analytics, sql_tests]
+    select: [queries]
+  - when: { language: sql, owns: [sql_performance] }
+    select: [optimization]
+  - when: { language: sql, owns: [sql_analytics] }
+    select: [windows]
+  # SQL dialect rules — outer guard: owns any sql scope, then per-dialect per-subject
+  # MySQL
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [mysql]
+      all: [owns: [sql_schema, sql_tests]]
+    select: [mysql.schema]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [mysql]
+      all: [owns: [sql_query, sql_performance, sql_analytics, sql_tests]]
+    select: [mysql.queries]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [mysql]
+      all: [owns: [sql_transaction, sql_tests]]
+    select: [mysql.transactions]
+  # PostgreSQL
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [postgresql]
+      all: [owns: [sql_schema, sql_tests]]
+    select: [postgresql.schema]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [postgresql]
+      all: [owns: [sql_query, sql_performance, sql_analytics, sql_tests]]
+    select: [postgresql.queries]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [postgresql]
+      all: [owns: [sql_transaction, sql_tests]]
+    select: [postgresql.transactions]
+  # SQL Server
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [sql_server]
+      all: [owns: [sql_schema, sql_tests]]
+    select: [sqlserver.schema]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [sql_server]
+      all: [owns: [sql_query, sql_performance, sql_analytics, sql_tests]]
+    select: [sqlserver.queries]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [sql_server]
+      all: [owns: [sql_transaction, sql_tests]]
+    select: [sqlserver.transactions]
+  # Oracle
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [oracle]
+      all: [owns: [sql_schema, sql_tests]]
+    select: [oracle.schema]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [oracle]
+      all: [owns: [sql_query, sql_performance, sql_analytics, sql_tests]]
+    select: [oracle.queries]
+  - when:
+      language: sql
+      owns: [sql_schema, sql_query, sql_transaction, sql_tests]
+      dialects: [oracle]
+      all: [owns: [sql_transaction, sql_tests]]
+    select: [oracle.transactions]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Backend framework rules — select { group_key, group } pairs.
+# ──────────────────────────────────────────────────────────────────────────
+backend_rules:
+  # --- Spring Boot ---
+  - when: { signal_frameworks: [spring_boot], owns: [test_implementation] }
+    select: [{ group_key: springboot, group: testing }]
+  - when: { signal_frameworks: [spring_boot], owns: [api_contract] }
+    select: [{ group_key: springboot, group: web }]
+  - when: { signal_frameworks: [spring_boot], owns: [persistence], stack_frameworks: [spring_data_jpa] }
+    select: [{ group_key: springboot, group: data }]
+  - when:
+      signal_frameworks: [spring_boot]
+      any: [context_flags: [security], actions: [implement_authentication_or_authorization]]
+    select: [{ group_key: springboot, group: security }]
+  - when:
+      signal_frameworks: [spring_boot]
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, implement_runtime_delivery_contract]
+    select: [{ group_key: springboot, group: runtime }]
+  - when:
+      signal_frameworks: [spring_boot]
+      any: [context_flags: [async_processing], actions: [implement_async_processing]]
+    select: [{ group_key: springboot, group: async }]
+  - when: { signal_frameworks: [spring_boot], actions: [implement_cache_policy] }
+    select: [{ group_key: springboot, group: cache }]
+  - when:
+      signal_frameworks: [spring_boot]
+      any: [context_flags: [integration], actions: [implement_external_service_integration]]
+    select: [{ group_key: springboot, group: integration }]
+  - when:
+      signal_frameworks: [spring_boot]
+      any: [context_flags: [resilience], actions: [implement_resilience_policy]]
+    select: [{ group_key: springboot, group: resilience }]
+  - when: { signal_frameworks: [spring_boot], actions: [configure_service_routing_or_discovery], stack_frameworks: [spring_cloud] }
+    select: [{ group_key: springboot, group: cloud }]
+  - when: { signal_frameworks: [spring_boot], owns: [logging_infrastructure] }
+    select: [{ group_key: springboot, group: observability }, { group_key: springboot, group: logging }]
+
+  # --- MyBatis-Plus (guard: stack_frameworks contains mybatis_plus AND (language is java OR signal_frameworks contains mybatis_plus)) ---
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all:
+        - any:
+            - task_kind: [configuration_support]
+            - all: [owns: [persistence], actions: [add_or_update_config]]
+    select: [{ group_key: mybatisplus, group: configuration }, { group_key: mybatisplus, group: plugins }]
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all: [owns: [persistence], actions: [create_or_update_entity, create_or_update_persistence, create_entity_migration, implement_entity_lifecycle]]
+    select: [{ group_key: mybatisplus, group: mapping }]
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all: [actions: [create_entity_repository, create_entity_crud]]
+    select: [{ group_key: mybatisplus, group: crud }]
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all:
+        - any: [owns: [sql_query, sql_transaction], actions: [create_entity_crud]]
+    select: [{ group_key: mybatisplus, group: wrappers }]
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all: [owns: [sql_query, sql_transaction]]
+    select: [{ group_key: mybatisplus, group: security }]
+  - when:
+      stack_frameworks: [mybatis_plus]
+      any: [language: java, signal_frameworks: [mybatis_plus]]
+      all: [actions: [create_entity_migration, migrate_framework_implementation]]
+    select: [{ group_key: mybatisplus, group: extensions }]
+
+  # --- Django ---
+  - when: { signal_frameworks: [django], owns: [test_implementation] }
+    select: [{ group_key: django, group: testing }]
+  - when: { signal_frameworks: [django], owns: [api_contract], stack_frameworks: [django_rest_framework] }
+    select: [{ group_key: django, group: views }, { group_key: django, group: serializers }]
+  - when: { signal_frameworks: [django], owns: [persistence] }
+    select: [{ group_key: django, group: models }]
+  - when:
+      signal_frameworks: [django]
+      any: [context_flags: [security], actions: [implement_authentication_or_authorization]]
+    select: [{ group_key: django, group: security }]
+  - when: { signal_frameworks: [django], owns: [logging_infrastructure] }
+    select: [{ group_key: django, group: logging }]
+
+  # --- FastAPI ---
+  - when: { signal_frameworks: [fastapi], owns: [test_implementation] }
+    select: [{ group_key: fastapi, group: testing }]
+  - when: { signal_frameworks: [fastapi], owns: [api_contract] }
+    select: [{ group_key: fastapi, group: routing }, { group_key: fastapi, group: schemas }]
+  - when: { signal_frameworks: [fastapi], owns: [persistence], stack_frameworks: [sqlalchemy] }
+    select: [{ group_key: fastapi, group: data }]
+  - when:
+      signal_frameworks: [fastapi]
+      any: [context_flags: [security], actions: [implement_authentication_or_authorization]]
+    select: [{ group_key: fastapi, group: security }]
+  - when: { signal_frameworks: [fastapi], actions: [migrate_framework_implementation] }
+    select: [{ group_key: fastapi, group: migration }]
+  - when: { signal_frameworks: [fastapi], owns: [logging_infrastructure] }
+    select: [{ group_key: fastapi, group: logging }]
+
+  # --- ASP.NET Core ---
+  - when: { signal_frameworks: [aspnet_core], owns: [test_implementation], not_owns: [frontend_task] }
+    select: [{ group_key: aspnetcore, group: testing }]
+  - when: { signal_frameworks: [aspnet_core], owns: [api_contract], stack_frameworks: [minimal_api] }
+    select: [{ group_key: aspnetcore, group: minimal }]
+  - when: { signal_frameworks: [aspnet_core], context_flags: [application_architecture], owns: [backend_task] }
+    select: [{ group_key: aspnetcore, group: architecture }]
+  - when: { signal_frameworks: [aspnet_core], owns: [persistence], stack_frameworks: [entity_framework] }
+    select: [{ group_key: aspnetcore, group: data }]
+  - when:
+      signal_frameworks: [aspnet_core]
+      any: [context_flags: [security], actions: [implement_authentication_or_authorization]]
+    select: [{ group_key: aspnetcore, group: security }]
+  - when:
+      signal_frameworks: [aspnet_core]
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, implement_runtime_delivery_contract, implement_async_processing, implement_cache_policy, implement_external_service_integration, implement_resilience_policy, configure_service_routing_or_discovery, implement_observability]
+        - context_flags: [integration, resilience, observability, request_tracing]
+    select: [{ group_key: aspnetcore, group: runtime }]
+  - when: { signal_frameworks: [aspnet_core], owns: [logging_infrastructure] }
+    select: [{ group_key: aspnetcore, group: logging }]
+
+  # --- NestJS ---
+  - when: { signal_frameworks: [nestjs], owns: [test_implementation] }
+    select: [{ group_key: nestjs, group: testing }]
+  - when: { signal_frameworks: [nestjs], owns: [api_contract] }
+    select: [{ group_key: nestjs, group: controllers }, { group_key: nestjs, group: dtos }, { group_key: nestjs, group: services }]
+  - when: { signal_frameworks: [nestjs], owns: [nest_service_boundary] }
+    select: [{ group_key: nestjs, group: services }]
+  - when:
+      signal_frameworks: [nestjs]
+      any: [context_flags: [security], actions: [implement_authentication_or_authorization]]
+    select: [{ group_key: nestjs, group: security }]
+  - when: { signal_frameworks: [nestjs], actions: [migrate_framework_implementation] }
+    select: [{ group_key: nestjs, group: migration }]
+  - when: { signal_frameworks: [nestjs], owns: [logging_infrastructure] }
+    select: [{ group_key: nestjs, group: logging }]
+
+# ──────────────────────────────────────────────────────────────────────────
+# Frontend framework rules — all implicitly require focus: [frontend].
+# ──────────────────────────────────────────────────────────────────────────
+frontend_rules:
+  # --- Next.js ---
+  - when: { focus: [frontend], signal_frameworks: [nextjs], owns: [frontend_implementation] }
+    select: [{ group_key: nextjs, group: core }]
+  - when: { focus: [frontend], all_signal_frameworks: [nextjs, app_router], actions: [create_or_update_frontend_navigation] }
+    select: [{ group_key: nextjs, group: app-router }]
+  - when: { focus: [frontend], signal_frameworks: [nextjs], owns: [test_implementation] }
+    select: [{ group_key: nextjs, group: testing }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [nextjs]
+      any: [owns: [api_client_binding], owns: [persistence], actions: [implement_reactive_client_flow]]
+    select: [{ group_key: nextjs, group: data }]
+  - when: { focus: [frontend], all_signal_frameworks: [nextjs, app_router], actions: [implement_server_mutation] }
+    select: [{ group_key: nextjs, group: actions }]
+  - when: { focus: [frontend], all_signal_frameworks: [nextjs, app_router], actions: [implement_server_rendered_component] }
+    select: [{ group_key: nextjs, group: server-components }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [nextjs]
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, implement_runtime_delivery_contract, optimize_frontend_performance]
+    select: [{ group_key: nextjs, group: runtime }]
+
+  # --- React (guard: signal_frameworks contains react; many items exclude nextjs) ---
+  - when: { focus: [frontend], signal_frameworks: [react], owns: [frontend_implementation] }
+    select: [{ group_key: react, group: core }]
+  - when: { focus: [frontend], signal_frameworks: [react], actions: [implement_reactive_client_flow] }
+    select: [{ group_key: react, group: hooks }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [react]
+      any: [owns: [api_client_binding], actions: [implement_shared_client_state]]
+    select: [{ group_key: react, group: state }]
+  - when: { focus: [frontend], signal_frameworks: [react], owns: [test_implementation], not_signal_frameworks: [nextjs] }
+    select: [{ group_key: react, group: testing }]
+  - when: { focus: [frontend], signal_frameworks: [react], actions: [optimize_frontend_performance], not_signal_frameworks: [nextjs] }
+    select: [{ group_key: react, group: performance }]
+  - when: { focus: [frontend], all_signal_frameworks: [react, react_server_components], actions: [implement_server_rendered_component], not_signal_frameworks: [nextjs] }
+    select: [{ group_key: react, group: server-components }]
+  - when: { focus: [frontend], all_signal_frameworks: [react, react19], actions: [implement_frontend_framework_version_feature], not_signal_frameworks: [nextjs] }
+    select: [{ group_key: react, group: react19 }]
+  - when: { focus: [frontend], signal_frameworks: [react], actions: [migrate_framework_implementation] }
+    select: [{ group_key: react, group: migration }]
+
+  # --- Vue ---
+  - when:
+      focus: [frontend]
+      signal_frameworks: [vue]
+      any:
+        - owns: [frontend_surface]
+        - actions: [create_or_update_frontend_navigation, implement_reactive_client_flow, implement_shared_client_state, optimize_frontend_performance, implement_server_rendered_component, implement_frontend_framework_version_feature]
+    select: [{ group_key: vue, group: core }]
+  - when: { focus: [frontend], signal_frameworks: [vue], owns: [frontend_surface] }
+    select: [{ group_key: vue, group: components }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [vue]
+      any: [owns: [api_client_binding], actions: [implement_shared_client_state, implement_client_storage]]
+    select: [{ group_key: vue, group: state }]
+  - when: { focus: [frontend], signal_frameworks: [vue], owns: [test_implementation] }
+    select: [{ group_key: vue, group: testing }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [vue]
+      all: [language: typescript]
+      any:
+        - owns: [frontend_surface]
+        - actions: [create_or_update_frontend_navigation, implement_reactive_client_flow, implement_shared_client_state, optimize_frontend_performance, implement_server_rendered_component, implement_frontend_framework_version_feature]
+    select: [{ group_key: vue, group: typescript }]
+  - when:
+      focus: [frontend]
+      all_signal_frameworks: [vue, nuxt]
+      any:
+        - actions: [create_or_update_frontend_navigation, implement_server_rendered_component, implement_server_mutation, add_or_update_config, migrate_framework_implementation]
+    select: [{ group_key: vue, group: nuxt }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [vue]
+      any: [actions: [add_or_update_config, migrate_framework_implementation]]
+    select: [{ group_key: vue, group: build }]
+  - when:
+      focus: [frontend]
+      all_signal_frameworks: [vue]
+      signal_frameworks: [quasar, capacitor, pwa]
+      actions: [implement_mobile_platform_behavior]
+    select: [{ group_key: vue, group: mobile }]
+
+  # --- Angular ---
+  - when: { focus: [frontend], signal_frameworks: [angular], owns: [frontend_implementation] }
+    select: [{ group_key: angular, group: core }, { group_key: angular, group: components }]
+  - when: { focus: [frontend], signal_frameworks: [angular], owns: [test_implementation] }
+    select: [{ group_key: angular, group: testing }]
+  - when: { focus: [frontend], signal_frameworks: [angular], actions: [create_or_update_frontend_navigation] }
+    select: [{ group_key: angular, group: routing }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [angular]
+      any: [owns: [api_client_binding], actions: [implement_reactive_client_flow]]
+    select: [{ group_key: angular, group: rxjs }]
+  - when: { focus: [frontend], all_signal_frameworks: [angular, ngrx], actions: [implement_shared_client_state] }
+    select: [{ group_key: angular, group: ngrx }]
+
+  # --- React Native ---
+  - when: { focus: [frontend], signal_frameworks: [reactnative], owns: [frontend_implementation] }
+    select: [{ group_key: reactnative, group: core }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [reactnative]
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, migrate_framework_implementation, implement_frontend_experience_contract]
+    select: [{ group_key: reactnative, group: structure }]
+  - when: { focus: [frontend], signal_frameworks: [reactnative], owns: [test_implementation] }
+    select: [{ group_key: reactnative, group: testing }]
+  - when: { focus: [frontend], signal_frameworks: [reactnative], actions: [create_or_update_frontend_navigation] }
+    select: [{ group_key: reactnative, group: navigation }]
+  - when: { focus: [frontend], signal_frameworks: [reactnative], actions: [optimize_frontend_performance] }
+    select: [{ group_key: reactnative, group: lists }]
+  - when: { focus: [frontend], signal_frameworks: [reactnative], actions: [implement_mobile_platform_behavior] }
+    select: [{ group_key: reactnative, group: platform }]
+  - when: { focus: [frontend], signal_frameworks: [reactnative], actions: [implement_client_storage] }
+    select: [{ group_key: reactnative, group: storage }]
+
+  # --- Flutter ---
+  - when: { focus: [frontend], signal_frameworks: [flutter], owns: [frontend_implementation] }
+    select: [{ group_key: flutter, group: core }]
+  - when: { focus: [frontend], signal_frameworks: [flutter], owns: [frontend_surface] }
+    select: [{ group_key: flutter, group: widgets }]
+  - when:
+      focus: [frontend]
+      signal_frameworks: [flutter]
+      any:
+        - task_kind: [configuration_support]
+        - actions: [add_or_update_config, migrate_framework_implementation, implement_frontend_experience_contract]
+    select: [{ group_key: flutter, group: structure }]
+  - when: { focus: [frontend], signal_frameworks: [flutter], owns: [test_implementation] }
+    select: [{ group_key: flutter, group: testing }]
+  - when: { focus: [frontend], signal_frameworks: [flutter], actions: [create_or_update_frontend_navigation] }
+    select: [{ group_key: flutter, group: navigation }]
+  - when: { focus: [frontend], all_signal_frameworks: [flutter, riverpod], actions: [implement_shared_client_state] }
+    select: [{ group_key: flutter, group: riverpod }]
+  - when: { focus: [frontend], all_signal_frameworks: [flutter, bloc], actions: [implement_shared_client_state] }
+    select: [{ group_key: flutter, group: bloc }]
+  - when: { focus: [frontend], signal_frameworks: [flutter], actions: [optimize_frontend_performance] }
+    select: [{ group_key: flutter, group: performance }]
