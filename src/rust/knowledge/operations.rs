@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use log::info;
 use sha2::{Digest, Sha256};
 
 use crate::{
@@ -23,6 +24,7 @@ use crate::{
 };
 
 pub fn add_source(input: KnowledgeAddInput) -> KnowledgeResult<KnowledgeSummary> {
+    info!("knowledgeAdd: name='{}', {} paths", input.name, input.paths.len());
     validate_name(&input.name)?;
     if input.paths.is_empty() {
         return Err(KnowledgeError::invalid(

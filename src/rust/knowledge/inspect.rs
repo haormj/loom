@@ -1,5 +1,7 @@
 use std::fs;
 
+use log::info;
+
 use crate::{
     mcp_models::{KnowledgeInspectChunkInput, KnowledgeInspectChunkResult},
     models::{ChunksFile, KnowledgeSource},
@@ -11,6 +13,10 @@ use crate::{
 pub fn inspect_chunk(
     input: KnowledgeInspectChunkInput,
 ) -> KnowledgeResult<KnowledgeInspectChunkResult> {
+    info!(
+        "knowledgeInspectChunk: source='{}', build_id='{}', chunk_id='{}'",
+        input.source_name, input.build_id, input.chunk_id
+    );
     let source = resolve_source(&input)?;
     if !is_local_provider(&source) {
         let provider = create_provider(&source)?;

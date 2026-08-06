@@ -10,6 +10,7 @@ use delivery_core::{
     read_selectors_value_from_paths, KnowledgeChunkReadRef, LoomMcpActionResult,
     LoomMcpAutoRunnableResult, LoomMcpBlockedResult, LoomMcpDoneResult,
 };
+use log::{debug, info, warn};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
@@ -68,9 +69,11 @@ pub fn validate_candidate_paths(
 }
 
 pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpActionResult> {
+    info!("knowledgeBuild: source='{}', project_root='{}'", name, project_root);
     let mut registry = load_registry()?;
     let source = registry_source(&registry, name)?.clone();
     if !is_local_provider(&source) {
+        warn!("knowledgeBuild: source '{}' is not a local provider, refusing", source.name);
         return Err(KnowledgeError::invalid(format!(
             "knowledge source '{}' uses an external provider and cannot be built locally",
             source.name
@@ -84,8 +87,14 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
             "knowledge source has no document paths to build",
         ));
     }
+    debug!("knowledgeBuild: {} document paths to process", document_paths.len());
 
     let discovered = discover_documents(&document_paths)?;
+    debug!(
+        "knowledgeBuild: discovered {} files, {} skipped",
+        discovered.files.len(),
+        discovered.skipped.len()
+    );
     if discovered.files.is_empty() {
         return Err(KnowledgeError::invalid(
             "knowledge build found no supported readable documents",
@@ -147,6 +156,12 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
         },
     )?;
     rebuild_lexical_index(&source.source_id, &build_id, &chunks)?;
+    info!(
+        "knowledgeBuild: built source '{}' ({} chunks, build_id={})",
+        source.name,
+        chunks.len(),
+        build_id
+    );
 
     let semantic_state = create_semantic_state(
         project_root,

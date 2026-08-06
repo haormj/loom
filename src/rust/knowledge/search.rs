@@ -5,9 +5,9 @@ use std::{
 };
 
 use algorithm_client::AlgorithmClient;
+use log::{debug, info, warn};
 
-use crate::{
-    mcp_models::{
+use crate::{    mcp_models::{
         KnowledgeBrainstormContextInput, KnowledgeBrainstormContextResult, KnowledgeChunkCard,
         KnowledgeContextMatchedSource, KnowledgeMatchedLabel, KnowledgeMatchedSource,
         KnowledgeReadPlan, KnowledgeReadPlanChunk, KnowledgeSearchInput, KnowledgeSearchResult,
@@ -37,6 +37,14 @@ struct BrainstormKnowledgeStepRequirement {
 }
 
 pub fn search_knowledge(input: KnowledgeSearchInput) -> KnowledgeResult<KnowledgeSearchResult> {
+    info!(
+        "knowledgeSearch: query={:?}, sources={:?}, focus={:?}, block={:?}, limit={}",
+        input.natural_language_query,
+        input.source_names,
+        input.semantic_focus,
+        input.block,
+        input.limit.unwrap_or(DEFAULT_SEARCH_LIMIT)
+    );
     let cards = search_cards(
         &input.natural_language_query,
         &input.semantic_focus,
@@ -44,6 +52,7 @@ pub fn search_knowledge(input: KnowledgeSearchInput) -> KnowledgeResult<Knowledg
         input.block.as_deref(),
         input.limit.unwrap_or(DEFAULT_SEARCH_LIMIT),
     )?;
+    info!("knowledgeSearch: returning {} cards", cards.len());
     Ok(KnowledgeSearchResult {
         status: if cards.is_empty() {
             "empty".to_string()
@@ -178,16 +187,30 @@ fn search_cards(
         .filter(|source| source.enabled)
         .filter(|source| allowed_sources.is_empty() || allowed_sources.contains(&source.name))
         .collect();
+    debug!(
+        "search_cards: {} enabled sources (local={}, provider={})",
+        enabled_sources.len(),
+        enabled_sources.iter().filter(|s| is_local_provider(s)).count(),
+        enabled_sources.iter().filter(|s| !is_local_provider(s)).count()
+    );
 
     let mut provider_cards = Vec::<KnowledgeChunkCard>::new();
     for source in enabled_sources.iter().filter(|s| !is_local_provider(s)) {
+        debug!("search_cards: querying provider '{}'", source.name);
         match create_provider(source)
             .and_then(|provider| provider.search(query, semantic_focus, block, limit))
         {
-            Ok(cards) => provider_cards.extend(cards),
+            Ok(cards) => {
+                debug!(
+                    "search_cards: provider '{}' returned {} cards",
+                    source.name,
+                    cards.len()
+                );
+                provider_cards.extend(cards)
+            }
             Err(error) => {
-                eprintln!(
-                    "knowledge search: provider '{}' failed: {}",
+                warn!(
+                    "search_cards: provider '{}' failed: {}",
                     source.name, error
                 );
             }

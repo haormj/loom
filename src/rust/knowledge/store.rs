@@ -5,6 +5,7 @@ use std::{
 };
 
 use chrono::{DateTime, Local, TimeZone, Utc};
+use log::{debug, info};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -114,6 +115,11 @@ pub fn load_merged_registry() -> KnowledgeResult<KnowledgeRegistry> {
     if yaml_sources.is_empty() {
         return Ok(registry);
     }
+    info!(
+        "load_merged_registry: merging {} providers.yaml sources into {} registry sources",
+        yaml_sources.len(),
+        registry.sources.len()
+    );
     let now = now_string();
     for entry in yaml_sources {
         let yaml_source = yaml_source_to_knowledge_source(entry, &now);
@@ -121,9 +127,17 @@ pub fn load_merged_registry() -> KnowledgeResult<KnowledgeRegistry> {
             existing.source_id == yaml_source.source_id || existing.name == yaml_source.name
         }) {
             Some(existing) => {
+                debug!(
+                    "load_merged_registry: updating provider for existing source '{}'",
+                    existing.name
+                );
                 existing.provider = yaml_source.provider;
             }
             None => {
+                debug!(
+                    "load_merged_registry: adding new OpenViking source '{}'",
+                    yaml_source.name
+                );
                 registry.sources.push(yaml_source);
             }
         }
@@ -137,10 +151,13 @@ pub fn load_merged_registry() -> KnowledgeResult<KnowledgeRegistry> {
 fn load_providers_yaml() -> KnowledgeResult<Vec<ProvidersYamlSource>> {
     let path = paths::providers_yaml_file()?;
     if !path.exists() {
+        debug!("load_providers_yaml: {} not found", path.display());
         return Ok(vec![]);
     }
+    debug!("load_providers_yaml: loading from {}", path.display());
     let raw = fs::read_to_string(&path)?;
     let file: ProvidersYamlFile = serde_yaml::from_str(&raw)?;
+    debug!("load_providers_yaml: {} sources found", file.sources.len());
     Ok(file.sources)
 }
 

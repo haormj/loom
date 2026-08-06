@@ -41,3 +41,5 @@ pdf-extract = "0.9"
 toml_edit = "0.25"
 ureq = { version = "2.12", features = ["json"] }
 urlencoding = "2.1"
+log = "0.4"
+env_logger = "0.11"

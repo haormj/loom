@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use log::{debug, warn};
 use serde::Deserialize;
 
 use crate::{
@@ -32,6 +33,10 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
                     source.name
                 ))
             })?;
+            debug!(
+                "create_provider: source '{}' -> Local (build_id={})",
+                source.name, build_id
+            );
             Ok(Box::new(LocalKnowledgeProvider {
                 source_id: source.source_id.clone(),
                 source_name: source.name.clone(),
@@ -44,6 +49,10 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
                 .as_ref()
                 .and_then(|env| std::env::var(env).ok())
                 .filter(|value| !value.is_empty());
+            debug!(
+                "create_provider: source '{}' -> OpenViking (endpoint={})",
+                source.name, config.endpoint
+            );
             Ok(Box::new(OpenVikingProvider::new(
                 source.source_id.clone(),
                 source.name.clone(),
@@ -173,6 +182,10 @@ impl KnowledgeProvider for OpenVikingProvider {
             "target_uri": self.target_uri,
             "limit": limit,
         });
+        debug!(
+            "openviking[{}]: search POST {}/api/v1/search/find, query={:?}, target_uri={}",
+            self.source_name, self.endpoint, full_query, self.target_uri
+        );
         let response = self
             .build_request("POST", "/api/v1/search/find")
             .send_json(body)
@@ -180,6 +193,13 @@ impl KnowledgeProvider for OpenVikingProvider {
         let result: OpenVikingFindResponse = response
             .into_json()
             .map_err(|error| KnowledgeError::invalid(format!("invalid OpenViking response: {error}")))?;
+        let resource_count = result.result.resources.len();
+        let memory_count = result.result.memories.len();
+        let skill_count = result.result.skills.len();
+        debug!(
+            "openviking[{}]: search returned {} resources, {} memories, {} skills",
+            self.source_name, resource_count, memory_count, skill_count
+        );
         let mut cards = Vec::new();
         for ctx in result.result.resources {
             cards.push(context_to_card(
@@ -206,6 +226,10 @@ impl KnowledgeProvider for OpenVikingProvider {
     }
 
     fn inspect_chunk(&self, chunk_id: &str) -> KnowledgeResult<KnowledgeInspectChunkResult> {
+        debug!(
+            "openviking[{}]: inspect_chunk GET {}/api/v1/content/read?uri={}",
+            self.source_name, self.endpoint, chunk_id
+        );
         let encoded = urlencoding::encode(chunk_id);
         let path = format!("/api/v1/content/read?uri={encoded}");
         let response = self
@@ -305,12 +329,22 @@ fn map_ureq_error(error: ureq::Error, source_name: &str) -> KnowledgeError {
     match error {
         ureq::Error::Status(code, response) => {
             let body = response.into_string().unwrap_or_default();
+            warn!(
+                "openviking[{}]: HTTP {} response body: {}",
+                source_name, code, body
+            );
             KnowledgeError::invalid(format!(
                 "OpenViking source '{source_name}' returned HTTP {code}: {body}"
             ))
         }
-        ureq::Error::Transport(transport) => KnowledgeError::invalid(format!(
-            "OpenViking source '{source_name}' unreachable: {transport}"
-        )),
+        ureq::Error::Transport(transport) => {
+            warn!(
+                "openviking[{}]: transport error: {}",
+                source_name, transport
+            );
+            KnowledgeError::invalid(format!(
+                "OpenViking source '{source_name}' unreachable: {transport}"
+            ))
+        }
     }
 }
