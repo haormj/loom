@@ -31,6 +31,10 @@ Refresh a local integration after runtime or plugin changes with `./install.sh -
 
 Use Rust 2021 conventions and keep code `rustfmt`-clean. Name modules, functions, and files with `snake_case`; types and traits with `UpperCamelCase`; constants with `SCREAMING_SNAKE_CASE`. Python follows four-space indentation, `snake_case`, and `test_*.py` naming. Keep changes within existing domain boundaries and prefer structured Serde models over ad hoc JSON manipulation.
 
+## Documentation Language
+
+Write all documentation (specs, design docs, README sections, troubleshooting notes) in Chinese (简体中文), unless the user explicitly requests another language for a specific document. Code identifiers, commands, file paths, and JSON/protocol terms remain in English.
+
 ## Testing Guidelines
 
 Add focused regression coverage for behavioral changes. Rust integration tests belong in the matching `tests/rust/<domain>/` suite; local unit tests may remain beside implementation code. Python tests use `pytest`. Run the affected package or test target first, then both product test lanes before release-impacting changes. Fixes should reproduce the prior failure.

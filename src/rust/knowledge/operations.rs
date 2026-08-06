@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use log::info;
 use sha2::{Digest, Sha256};
 
 use crate::{
@@ -9,17 +10,21 @@ use crate::{
         KnowledgePendingInput, KnowledgeProjectInput, KnowledgeRemoveSummary,
         KnowledgeStatusSummary, KnowledgeSummary, KnowledgeUpdateInput,
     },
-    models::{KnowledgeSource, PendingOperation, PendingOperationKind, PendingQueue, SkippedFile},
+    models::{
+        KnowledgeProviderConfig, KnowledgeSource, PendingOperation, PendingOperationKind,
+        PendingQueue, SkippedFile,
+    },
     paths,
     store::{
-        list_pending_records, load_pending, load_pending_by_name, load_registry, local_time,
-        local_time_optional, local_time_zone, now_millis, now_string, remove_dir_if_exists,
-        remove_file_if_exists, remove_pending_by_name, save_pending, save_registry, KnowledgeError,
-        KnowledgeResult,
+        list_pending_records, load_merged_registry, load_pending, load_pending_by_name,
+        load_registry, local_time, local_time_optional, local_time_zone, now_millis, now_string,
+        remove_dir_if_exists, remove_file_if_exists, remove_pending_by_name, save_pending,
+        save_registry, KnowledgeError, KnowledgeResult,
     },
 };
 
 pub fn add_source(input: KnowledgeAddInput) -> KnowledgeResult<KnowledgeSummary> {
+    info!("knowledgeAdd: name='{}', {} paths", input.name, input.paths.len());
     validate_name(&input.name)?;
     if input.paths.is_empty() {
         return Err(KnowledgeError::invalid(
@@ -49,6 +54,7 @@ pub fn add_source(input: KnowledgeAddInput) -> KnowledgeResult<KnowledgeSummary>
         created_at: now.clone(),
         updated_at: now.clone(),
         last_built_at: None,
+        provider: KnowledgeProviderConfig::default(),
     };
     registry.sources.push(source.clone());
     registry
@@ -127,7 +133,7 @@ pub fn update_source(input: KnowledgeUpdateInput) -> KnowledgeResult<KnowledgeSu
 }
 
 pub fn pending_sources(input: KnowledgePendingInput) -> KnowledgeResult<KnowledgeList> {
-    let registry = load_registry()?;
+    let registry = load_merged_registry()?;
     if let Some(name) = input
         .name
         .as_deref()
@@ -204,7 +210,7 @@ pub fn discard_pending(input: KnowledgeNameInput) -> KnowledgeResult<KnowledgeDi
 }
 
 pub fn list_sources(_input: KnowledgeProjectInput) -> KnowledgeResult<KnowledgeList> {
-    let registry = load_registry()?;
+    let registry = load_merged_registry()?;
     let mut sources = Vec::new();
     let mut registry_source_ids = Vec::new();
     for source in registry.sources {
@@ -238,7 +244,7 @@ pub fn list_sources(_input: KnowledgeProjectInput) -> KnowledgeResult<KnowledgeL
 
 pub fn source_status(input: KnowledgeNameInput) -> KnowledgeResult<KnowledgeStatusSummary> {
     validate_name(&input.name)?;
-    let registry = load_registry()?;
+    let registry = load_merged_registry()?;
     let source = registry
         .sources
         .iter()
@@ -359,6 +365,7 @@ fn pending_only_source(queue: &PendingQueue) -> KnowledgeSource {
         created_at,
         updated_at,
         last_built_at: None,
+        provider: KnowledgeProviderConfig::default(),
     }
 }
 

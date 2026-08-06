@@ -18,6 +18,10 @@ pub fn registry_file() -> KnowledgeResult<PathBuf> {
     Ok(knowledge_root()?.join("registry.json"))
 }
 
+pub fn providers_yaml_file() -> KnowledgeResult<PathBuf> {
+    Ok(knowledge_root()?.join("providers.yaml"))
+}
+
 pub fn pending_dir() -> KnowledgeResult<PathBuf> {
     Ok(knowledge_root()?.join("pending"))
 }

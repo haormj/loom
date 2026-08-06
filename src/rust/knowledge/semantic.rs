@@ -5,6 +5,7 @@ use delivery_core::{
     LoomMcpAutoRunnableResult, LoomMcpDoneResult, LoomMcpNextAction, LoomMcpRepairableErrorResult,
     RepairIssue,
 };
+use log::info;
 use serde_json::{json, Value};
 
 use crate::{
@@ -140,6 +141,10 @@ pub fn submit_semantic_pack(
     project_root: &str,
     request_ref: &str,
 ) -> KnowledgeResult<LoomMcpActionResult> {
+    info!(
+        "knowledgeSemanticSubmitFile: request_ref='{}', project_root='{}'",
+        request_ref, project_root
+    );
     let authorized = match state::authorize_write_targets(
         &FileSubmitInput {
             project_root: project_root.to_string(),

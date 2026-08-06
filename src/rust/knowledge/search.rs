@@ -5,16 +5,17 @@ use std::{
 };
 
 use algorithm_client::AlgorithmClient;
+use log::{debug, info, warn};
 
-use crate::{
-    mcp_models::{
+use crate::{    mcp_models::{
         KnowledgeBrainstormContextInput, KnowledgeBrainstormContextResult, KnowledgeChunkCard,
         KnowledgeContextMatchedSource, KnowledgeMatchedLabel, KnowledgeMatchedSource,
         KnowledgeReadPlan, KnowledgeReadPlanChunk, KnowledgeSearchInput, KnowledgeSearchResult,
     },
-    models::{BlockAffinity, ChunksFile, KnowledgeChunk, LexicalIndex},
+    models::{BlockAffinity, ChunksFile, KnowledgeChunk, KnowledgeSource, LexicalIndex},
     paths,
-    store::{load_registry, read_json, KnowledgeError, KnowledgeResult},
+    provider::{create_provider, is_local_provider},
+    store::{load_merged_registry, read_json, KnowledgeError, KnowledgeResult},
 };
 
 const DEFAULT_SEARCH_LIMIT: usize = 8;
@@ -36,6 +37,14 @@ struct BrainstormKnowledgeStepRequirement {
 }
 
 pub fn search_knowledge(input: KnowledgeSearchInput) -> KnowledgeResult<KnowledgeSearchResult> {
+    info!(
+        "knowledgeSearch: query={:?}, sources={:?}, focus={:?}, block={:?}, limit={}",
+        input.natural_language_query,
+        input.source_names,
+        input.semantic_focus,
+        input.block,
+        input.limit.unwrap_or(DEFAULT_SEARCH_LIMIT)
+    );
     let cards = search_cards(
         &input.natural_language_query,
         &input.semantic_focus,
@@ -43,6 +52,7 @@ pub fn search_knowledge(input: KnowledgeSearchInput) -> KnowledgeResult<Knowledg
         input.block.as_deref(),
         input.limit.unwrap_or(DEFAULT_SEARCH_LIMIT),
     )?;
+    info!("knowledgeSearch: returning {} cards", cards.len());
     Ok(KnowledgeSearchResult {
         status: if cards.is_empty() {
             "empty".to_string()
@@ -168,17 +178,97 @@ fn search_cards(
     block: Option<&str>,
     limit: usize,
 ) -> KnowledgeResult<Vec<KnowledgeChunkCard>> {
-    let registry = load_registry()?;
-    let client = algorithm_client()?;
+    let registry = load_merged_registry()?;
     let allowed_sources = source_names.iter().cloned().collect::<BTreeSet<_>>();
-    let mut chunk_candidates = Vec::<SearchChunkCandidate>::new();
-    let mut bm25_documents = Vec::<serde_json::Value>::new();
-    for source in registry
+    let parsed_focus = parse_semantic_focuses(semantic_focus);
+    let enabled_sources: Vec<_> = registry
         .sources
         .iter()
         .filter(|source| source.enabled)
         .filter(|source| allowed_sources.is_empty() || allowed_sources.contains(&source.name))
-    {
+        .collect();
+    debug!(
+        "search_cards: {} enabled sources (local={}, provider={})",
+        enabled_sources.len(),
+        enabled_sources.iter().filter(|s| is_local_provider(s)).count(),
+        enabled_sources.iter().filter(|s| !is_local_provider(s)).count()
+    );
+
+    let mut provider_cards = Vec::<KnowledgeChunkCard>::new();
+    for source in enabled_sources.iter().filter(|s| !is_local_provider(s)) {
+        debug!("search_cards: querying provider '{}'", source.name);
+        match create_provider(source)
+            .and_then(|provider| provider.search(query, semantic_focus, block, limit))
+        {
+            Ok(cards) => {
+                debug!(
+                    "search_cards: provider '{}' returned {} cards",
+                    source.name,
+                    cards.len()
+                );
+                provider_cards.extend(cards)
+            }
+            Err(error) => {
+                warn!(
+                    "search_cards: provider '{}' failed: {}",
+                    source.name, error
+                );
+            }
+        }
+    }
+
+    let local_sources: Vec<_> = enabled_sources
+        .iter()
+        .filter(|s| is_local_provider(s))
+        .copied()
+        .collect();
+    let mut candidates = if local_sources.is_empty() {
+        debug!("search_cards: no local sources, skipping local search");
+        Vec::new()
+    } else {
+        match search_local_sources(&local_sources, query, &parsed_focus, block, limit) {
+            Ok(cards) => {
+                debug!(
+                    "search_cards: local search returned {} cards",
+                    cards.len()
+                );
+                cards
+            }
+            Err(error) => {
+                warn!(
+                    "search_cards: local source search failed, continuing with provider cards only: {}",
+                    error
+                );
+                Vec::new()
+            }
+        }
+    };
+
+    let provider_count = provider_cards.len();
+    candidates.extend(provider_cards);
+    debug!(
+        "search_cards: {} total candidates (provider={}, local={}), ranking with limit={}",
+        candidates.len(),
+        provider_count,
+        candidates.len() - provider_count,
+        limit
+    );
+    let ranked = rank_chunk_cards(candidates, &parsed_focus, limit);
+    debug!("search_cards: {} cards after ranking", ranked.len());
+    Ok(ranked)
+}
+
+fn search_local_sources(
+    local_sources: &[&KnowledgeSource],
+    query: &str,
+    parsed_focus: &[SemanticFocus],
+    block: Option<&str>,
+    limit: usize,
+) -> KnowledgeResult<Vec<KnowledgeChunkCard>> {
+    let client = algorithm_client()?;
+    let mut chunk_candidates = Vec::<SearchChunkCandidate>::new();
+    let mut bm25_documents = Vec::<serde_json::Value>::new();
+    for source in local_sources {
         let Some(build_id) = source.current_build_id.as_deref() else {
             continue;
         };
@@ -193,7 +283,8 @@ fn search_cards(
             .map(|document| (document.chunk_id, document.text))
             .collect::<BTreeMap<_, _>>();
         for chunk in &chunks_file.chunks {
-            let document_id = lexical_document_id(&source.source_id, build_id, &chunk.chunk_id);
+            let document_id =
+                lexical_document_id(&source.source_id, build_id, &chunk.chunk_id);
             if let Some(text) = docs_by_chunk.get(&chunk.chunk_id) {
                 bm25_documents.push(serde_json::json!({
                     "id": document_id,
@@ -209,7 +300,6 @@ fn search_cards(
         }
     }
     let lexical_scores = global_lexical_scores(&client, query, bm25_documents, limit)?;
-    let semantic_focus = parse_semantic_focuses(semantic_focus);
     let mut candidates = Vec::new();
     for candidate in chunk_candidates {
         let document_id = lexical_document_id(
@@ -218,10 +308,12 @@ fn search_cards(
             &candidate.chunk.chunk_id,
         );
         let lexical = *lexical_scores.get(&document_id).unwrap_or(&0.0);
-        let semantic = semantic_match(&candidate.chunk, &semantic_focus);
+        let semantic = semantic_match(&candidate.chunk, parsed_focus);
         let affinity = block_affinity_score(candidate.chunk.block_affinity.as_ref(), block);
-        let score =
-            lexical * 0.40 + semantic.score * 0.25 + semantic.completeness * 0.20 + affinity * 0.15;
+        let score = lexical * 0.40
+            + semantic.score * 0.25
+            + semantic.completeness * 0.20
+            + affinity * 0.15;
         if score <= 0.0 {
             continue;
         }
@@ -237,7 +329,7 @@ fn search_cards(
             score: round_score(score),
         });
     }
-    Ok(rank_chunk_cards(candidates, &semantic_focus, limit))
+    Ok(candidates)
 }
 
 #[derive(Debug, Clone)]

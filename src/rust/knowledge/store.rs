@@ -5,11 +5,16 @@ use std::{
 };
 
 use chrono::{DateTime, Local, TimeZone, Utc};
-use serde::{de::DeserializeOwned, Serialize};
+use log::{debug, info};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 use crate::{
-    models::{KnowledgeRegistry, PendingQueue},
+    models::{
+        KnowledgeProviderConfig, KnowledgeRegistry, KnowledgeSource, OpenVikingProviderConfig,
+        PendingQueue,
+    },
     paths,
 };
 
@@ -102,6 +107,125 @@ pub fn remove_dir_if_exists(path: &Path) -> KnowledgeResult<()> {
 
 pub fn load_registry() -> KnowledgeResult<KnowledgeRegistry> {
     read_json_or(&paths::registry_file()?, KnowledgeRegistry::empty())
+}
+
+pub fn load_merged_registry() -> KnowledgeResult<KnowledgeRegistry> {
+    let mut registry = load_registry()?;
+    let yaml_sources = load_providers_yaml()?;
+    if yaml_sources.is_empty() {
+        return Ok(registry);
+    }
+    info!(
+        "load_merged_registry: merging {} providers.yaml sources into {} registry sources",
+        yaml_sources.len(),
+        registry.sources.len()
+    );
+    let now = now_string();
+    for entry in yaml_sources {
+        let yaml_source = yaml_source_to_knowledge_source(entry, &now);
+        match registry.sources.iter_mut().find(|existing| {
+            existing.source_id == yaml_source.source_id || existing.name == yaml_source.name
+        }) {
+            Some(existing) => {
+                debug!(
+                    "load_merged_registry: updating provider for existing source '{}'",
+                    existing.name
+                );
+                existing.provider = yaml_source.provider;
+            }
+            None => {
+                debug!(
+                    "load_merged_registry: adding new OpenViking source '{}'",
+                    yaml_source.name
+                );
+                registry.sources.push(yaml_source);
+            }
+        }
+    }
+    registry
+        .sources
+        .sort_by(|left, right| left.name.cmp(&right.name));
+    Ok(registry)
+}
+
+fn load_providers_yaml() -> KnowledgeResult<Vec<ProvidersYamlSource>> {
+    let path = paths::providers_yaml_file()?;
+    if !path.exists() {
+        debug!("load_providers_yaml: {} not found", path.display());
+        return Ok(vec![]);
+    }
+    debug!("load_providers_yaml: loading from {}", path.display());
+    let raw = fs::read_to_string(&path)?;
+    let file: ProvidersYamlFile = serde_yaml::from_str(&raw)?;
+    debug!("load_providers_yaml: {} sources found", file.sources.len());
+    Ok(file.sources)
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProvidersYamlFile {
+    #[serde(default)]
+    sources: Vec<ProvidersYamlSource>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ProvidersYamlSource {
+    name: String,
+    #[serde(default)]
+    enabled: Option<bool>,
+    endpoint: String,
+    #[serde(default)]
+    api_key_env: Option<String>,
+    #[serde(default)]
+    account: Option<String>,
+    #[serde(default)]
+    user: Option<String>,
+    #[serde(default)]
+    target_uri: Option<String>,
+    #[serde(default)]
+    timeout_secs: Option<u64>,
+}
+
+fn yaml_source_to_knowledge_source(entry: ProvidersYamlSource, now: &str) -> KnowledgeSource {
+    let source_id = provider_source_id(&entry.name);
+    KnowledgeSource {
+        source_id,
+        name: entry.name,
+        enabled: entry.enabled.unwrap_or(true),
+        document_paths: vec![],
+        current_build_id: Some("openviking".to_string()),
+        created_at: now.to_string(),
+        updated_at: now.to_string(),
+        last_built_at: None,
+        provider: KnowledgeProviderConfig::OpenViking(OpenVikingProviderConfig {
+            endpoint: entry.endpoint,
+            api_key_env: entry.api_key_env,
+            account: entry.account,
+            user: entry.user,
+            target_uri: entry
+                .target_uri
+                .unwrap_or_else(|| "viking://resources/".to_string()),
+            timeout_secs: entry.timeout_secs,
+        }),
+    }
+}
+
+fn provider_source_id(name: &str) -> String {
+    let safe = name
+        .chars()
+        .map(|ch| {
+            if ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' {
+                ch.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
+        .collect::<String>();
+    let mut hasher = Sha256::new();
+    hasher.update(name.as_bytes());
+    let digest = format!("{:x}", hasher.finalize());
+    format!("ksrc_ov_{safe}_{}", &digest[..8])
 }
 
 pub fn save_registry(registry: &KnowledgeRegistry) -> KnowledgeResult<()> {
@@ -210,4 +334,66 @@ fn tmp_path(path: &Path) -> PathBuf {
         .and_then(|name| name.to_str())
         .unwrap_or("knowledge");
     path.with_file_name(format!("{file_name}.tmp-{}", now_millis()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn providers_yaml_parses_camel_case_keys() {
+        let yaml = r#"
+sources:
+  - name: confluence-kb
+    endpoint: http://openviking.internal:1933
+    apiKeyEnv: CONFLUENCE_OV_KEY
+    account: acme
+    user: alice
+    targetUri: viking://resources/confluence/
+    timeoutSecs: 15
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(file.sources.len(), 1);
+        let source = &file.sources[0];
+        assert_eq!(source.name, "confluence-kb");
+        assert_eq!(source.endpoint, "http://openviking.internal:1933");
+        assert_eq!(source.api_key_env.as_deref(), Some("CONFLUENCE_OV_KEY"));
+        assert_eq!(source.account.as_deref(), Some("acme"));
+        assert_eq!(source.user.as_deref(), Some("alice"));
+        assert_eq!(
+            source.target_uri.as_deref(),
+            Some("viking://resources/confluence/")
+        );
+        assert_eq!(source.timeout_secs, Some(15));
+    }
+
+    #[test]
+    fn providers_yaml_target_uri_defaults_when_absent() {
+        let yaml = r#"
+sources:
+  - name: default-kb
+    endpoint: http://localhost:1933
+"#;
+        let file: ProvidersYamlFile = serde_yaml::from_str(yaml).unwrap();
+        let source = &file.sources[0];
+        assert_eq!(source.target_uri, None);
+        let ks = yaml_source_to_knowledge_source(
+            ProvidersYamlSource {
+                name: source.name.clone(),
+                enabled: source.enabled,
+                endpoint: source.endpoint.clone(),
+                api_key_env: source.api_key_env.clone(),
+                account: source.account.clone(),
+                user: source.user.clone(),
+                target_uri: source.target_uri.clone(),
+                timeout_secs: source.timeout_secs,
+            },
+            "2026-01-01T00:00:00Z",
+        );
+        if let KnowledgeProviderConfig::OpenViking(cfg) = &ks.provider {
+            assert_eq!(cfg.target_uri, "viking://resources/");
+        } else {
+            panic!("expected OpenViking provider");
+        }
+    }
 }

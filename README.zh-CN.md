@@ -281,6 +281,10 @@ Claude Code 和 OpenCode：
 
 Agent 插件会自动设置 Loom 所需的路由环境。正常使用时请走 agent 命令入口；Loom 的产品运行时是 `loom-setup` 安装的 MCP server。
 
+### 调试 MCP 流量
+
+设置 `LOOM_MCP_TRACE=1` 可把每条 MCP 请求和响应（包括 `initialize` 握手和通知）dump 到 `$LOOM_HOME/log/loom-mcp-trace.log`。该文件为人类可读的 pretty-print 格式；复现问题时可用 `tail -f` 实时观看。设置 `LOOM_MCP_TRACE=/some/path.log` 可写到别处。开关默认关闭，关闭时无任何开销。
+
 ## 工作方式
 
 Loom 作为本地 MCP 交付状态机运行。Agent 不需要凭记忆决定完整流程；它向 Loom 获取下一步 request，只读取声明的字段，写入指定 artifact，提交给 Loom 校验，再由 Loom 持久化并路由下一步。
