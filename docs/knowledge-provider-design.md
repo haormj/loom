@@ -1,37 +1,31 @@
-# Loom Knowledge Module — OpenViking Provider Design
+# Loom 知识模块 — OpenViking 知识库 Provider 设计文档
 
-## Background
+## 背景
 
-The loom knowledge module (`src/rust/knowledge/`) currently only supports local
-file-system knowledge bases. Documents must be local files, indexed through the
-built-in build pipeline (parse → chunk → BM25/TF-IDF → LLM semantic enrichment).
+loom 知识模块（`src/rust/knowledge/`）此前仅支持本地文件系统知识库。文档必须是本地文件，通过内置的构建流水线（解析 → 分块 → BM25/TF-IDF → LLM 语义增强）进行索引。
 
-This design adds **OpenViking** as a built-in knowledge provider so enterprises
-can connect an external OpenViking context database without running the local
-build pipeline.
+本设计新增 **OpenViking** 作为内置知识库 provider，使企业能够接入外部 OpenViking 上下文数据库，无需运行本地构建流水线。
 
-## Current Architecture
+## 现有架构
 
-| Module | Responsibility |
-|--------|----------------|
-| `models.rs` | Data models: Registry, Source, Chunk, LexicalIndex, SemanticState |
-| `paths.rs` | Storage paths hardcoded to `~/.loom/knowledge/` |
-| `store.rs` | JSON file I/O, registry/pending management |
-| `operations.rs` | MCP tool operations: add/update/remove/enable/disable/list/status |
-| `builder.rs` | Document discovery → parse → chunk → lexical index → semantic state |
-| `search.rs` | BM25 (via Python worker) + semantic matching + block affinity scoring |
-| `semantic.rs` | Semantic pack submit → validate → publish |
-| `inspect.rs` | Read chunk body from local file |
+| 模块 | 职责 |
+|------|------|
+| `models.rs` | 数据模型：Registry、Source、Chunk、LexicalIndex、SemanticState |
+| `paths.rs` | 存储路径，固定为 `~/.loom/knowledge/` |
+| `store.rs` | JSON 文件 I/O，registry/pending 管理 |
+| `operations.rs` | MCP 工具操作：add/update/remove/enable/disable/list/status |
+| `builder.rs` | 文档发现 → 解析 → 分块 → 词法索引 → 语义状态 |
+| `search.rs` | BM25（通过 Python worker）+ 语义匹配 + block 亲和度评分 |
+| `semantic.rs` | 语义包提交 → 校验 → 发布 |
+| `inspect.rs` | 从本地文件读取 chunk 正文 |
 
-**Coupling points**: storage is local-only; the build pipeline is hardcoded;
-`search_cards()` reads local chunks.json and calls the Python worker directly;
-no abstraction layer separates storage/retrieval from implementation.
+**耦合点**：存储仅支持本地；构建流水线硬编码；`search_cards()` 直接读取本地 chunks.json 并调用 Python worker；没有抽象层将存储/检索与实现分离。
 
-## Design
+## 设计方案
 
 ### KnowledgeProvider Trait
 
-A new `provider.rs` module defines the abstraction:
+新增 `provider.rs` 模块，定义抽象接口：
 
 ```rust
 pub trait KnowledgeProvider: Send + Sync {
@@ -49,46 +43,45 @@ pub trait KnowledgeProvider: Send + Sync {
 
 ### LocalKnowledgeProvider
 
-Wraps the existing search/inspect logic for local file-system sources. No
-behavior change — logic moves from free functions to trait implementation.
+封装现有的本地文件系统搜索/检视逻辑。行为不变，仅将逻辑从自由函数迁移到 trait 实现。实际搜索仍由 `search_cards()` 内联处理（性能优化），`LocalKnowledgeProvider` 主要用于 `inspect_chunk` 的统一调度。
 
 ### OpenVikingProvider
 
-Connects to an OpenViking HTTP server (default port 1933) and maps its API
-to loom's `KnowledgeChunkCard` / `KnowledgeInspectChunkResult` models.
+连接 OpenViking HTTP 服务器（默认端口 1933），将其 API 映射到 loom 的 `KnowledgeChunkCard` / `KnowledgeInspectChunkResult` 模型。
 
-| loom operation | OpenViking API |
-|----------------|----------------|
+| loom 操作 | OpenViking API |
+|-----------|----------------|
 | `search` | `POST /api/v1/search/find` |
 | `inspect_chunk` | `GET /api/v1/content/read?uri={uri}` |
 
-Authentication and multi-tenancy headers:
+认证与多租户头：
 
-| Config field | HTTP header |
-|--------------|-------------|
-| `api_key` | `Authorization: Bearer {key}` |
+| 配置字段 | HTTP 头 |
+|---------|---------|
+| `api_key_env`（环境变量名） | `Authorization: Bearer {key}` + `X-API-Key: {key}` |
 | `account` | `X-OpenViking-Account` |
 | `user` | `X-OpenViking-User` |
 
-### Data Model Mapping
+### 数据模型映射
 
-OpenViking `MatchedContext` → loom `KnowledgeChunkCard`:
+OpenViking `MatchedContext` → loom `KnowledgeChunkCard`：
 
-| loom field | OpenViking source |
-|------------|-------------------|
-| `source_id` / `source_name` | provider config |
-| `build_id` | fixed `"openviking"` |
-| `chunk_id` | `MatchedContext.uri` (viking:// URI) |
-| `document_title` | derived from URI path |
-| `heading_path` | derived from URI path segments |
+| loom 字段 | OpenViking 来源 |
+|-----------|-----------------|
+| `source_id` / `source_name` | provider 配置 |
+| `build_id` | 固定值 `"openviking"` |
+| `chunk_id` | `MatchedContext.uri`（viking:// URI） |
+| `document_title` | 从 URI 路径段推导 |
+| `heading_path` | 从 URI 路径段推导 |
 | `summary` | `MatchedContext.abstract` |
-| `matched_labels` | empty (OpenViking has no loom-format labels) |
+| `matched_labels` | 空（OpenViking 无 loom 格式标签） |
 | `score` | `MatchedContext.score` |
 
-### Registry Model Extension
+搜索结果聚合三个类别的上下文：`resources`、`memories`、`skills`，全部映射为 `KnowledgeChunkCard`。
 
-`KnowledgeSource` gains a `provider` field (defaults to `Local` for backward
-compatibility):
+### Registry 模型扩展
+
+`KnowledgeSource` 新增 `provider` 字段（默认为 `Local`，向后兼容）：
 
 ```rust
 pub enum KnowledgeProviderConfig {
@@ -97,78 +90,90 @@ pub enum KnowledgeProviderConfig {
 }
 
 pub struct OpenVikingProviderConfig {
-    pub endpoint: String,
-    pub api_key_env: Option<String>,   // env var name for token
-    pub account: Option<String>,       // X-OpenViking-Account
-    pub user: Option<String>,          // X-OpenViking-User
-    pub target_uri: String,            // default "viking://resources/"
-    pub timeout_secs: Option<u64>,     // default 10
+    pub endpoint: String,               // OpenViking 服务地址
+    pub api_key_env: Option<String>,    // API Key 所在环境变量名
+    pub account: Option<String>,        // X-OpenViking-Account 头
+    pub user: Option<String>,           // X-OpenViking-User 头
+    pub target_uri: String,             // 搜索目标 URI，默认 "viking://resources/"
+    pub timeout_secs: Option<u64>,      // 超时秒数，默认 10
 }
 ```
 
-### Provider Factory
+**安全设计**：`api_key_env` 只存环境变量名，不存明文密钥。运行时从环境变量读取实际 token。
 
-`create_provider(source) -> Box<dyn KnowledgeProvider>` dispatches based on
-the provider config variant.
+### Provider 工厂
 
-### Configuration File
+`create_provider(source) -> Box<dyn KnowledgeProvider>` 根据 provider 配置变体进行分发。`is_local_provider(source) -> bool` 辅助函数用于判断是否为本地 provider。
 
-OpenViking sources are registered via `~/.loom/knowledge/providers.yaml`:
+### 配置文件
+
+OpenViking 知识源通过 `~/.loom/knowledge/providers.yaml` 注册：
 
 ```yaml
 sources:
   - name: confluence-kb
-    provider:
-      type: openviking
-      endpoint: http://confluence-openviking.internal:1933
-      apiKeyEnv: CONFLUENCE_OV_KEY
-      account: acme
-      user: alice
-      targetUri: viking://resources/confluence/
-      timeoutSecs: 10
+    endpoint: http://confluence-openviking.internal:1933
+    apiKeyEnv: CONFLUENCE_OV_KEY
+    account: acme
+    user: alice
+    targetUri: viking://resources/confluence/
+    timeoutSecs: 10
 ```
 
-`load_registry()` merges `providers.yaml` sources into the registry (by name,
-yaml does not override existing json sources).
+`load_merged_registry()` 在加载时将 `providers.yaml` 中的知识源合并到 registry 中（按名称匹配，yaml 不覆盖已存在的 json 知识源，但会更新其 provider 配置）。
 
-### Search/Inspect Integration
+### 搜索/检视集成
 
-`search_cards()` iterates all enabled sources via `create_provider()` and
-aggregates results. Single provider failure (timeout, HTTP error) does not
-block other sources.
+`search_cards()` 遍历所有启用的知识源，通过 `create_provider()` 分流：
+- **本地源**：走现有 BM25 + 语义匹配路径（内联处理，性能最优）
+- **OpenViking 源**：走 `provider.search()` 远程调用
 
-`inspect_chunk()` dispatches to the source's provider.
+单个 provider 故障（超时、HTTP 错误）不阻断其他知识源的搜索，错误信息输出到 stderr 并 `continue`。
 
-### Existing MCP Tools
+`inspect_chunk()` 根据知识源的 provider 类型分发：本地源读本地文件，OpenViking 源走 `provider.inspect_chunk()` 远程调用。
 
-No new MCP tools. Existing tools auto-adapt:
-- `knowledgeSearch` / `knowledgeBrainstormContext` / `knowledgeInspectChunk` — work for both local and OpenViking sources
-- `knowledgeList` / `knowledgeStatus` / `knowledgeEnable` / `knowledgeDisable` / `knowledgeRemove` — work as-is
-- `knowledgeBuild` / `knowledgeResume` / `knowledgeSemanticSubmitFile` — return error for OpenViking sources
+### 现有 MCP 工具
 
-### Fault Isolation
+不新增 MCP 工具。现有工具自动适配：
 
-A single provider failure (network timeout, HTTP error) does not block the
-overall search — other sources return results normally.
+| MCP 工具 | OpenViking 源行为 |
+|----------|-------------------|
+| `knowledgeSearch` | ✅ 正常搜索 |
+| `knowledgeBrainstormContext` | ✅ 正常搜索 |
+| `knowledgeInspectChunk` | ✅ 正常检视 |
+| `knowledgeList` | ✅ 正常列出 |
+| `knowledgeStatus` | ✅ 正常显示状态 |
+| `knowledgeEnable` / `knowledgeDisable` | ✅ 正常启用/禁用 |
+| `knowledgeRemove` | ✅ 正常移除 |
+| `knowledgeBuild` | ❌ 返回错误（构建仅限本地源） |
+| `knowledgeResume` | ❌ 返回错误 |
+| `knowledgeSemanticSubmitFile` | ❌ 返回错误 |
 
-### Dependency
+### 故障隔离
 
-`ureq = { version = "2.12", features = ["json"] }` — lightweight synchronous
-HTTP client, no tokio dependency.
+单个 provider 故障（网络超时、HTTP 错误）不阻断整体搜索 — 其他知识源正常返回结果。错误信息记录到 stderr。
 
-## Files Changed
+### 依赖
 
-| File | Change |
-|------|--------|
-| `knowledge/provider.rs` | New — trait + LocalKnowledgeProvider + OpenVikingProvider + factory |
-| `knowledge/models.rs` | Add provider field to KnowledgeSource; new config types |
-| `knowledge/operations.rs` | Merge providers.yaml; build/resume error for openviking |
-| `knowledge/search.rs` | search_cards via create_provider |
-| `knowledge/inspect.rs` | inspect_chunk via create_provider |
-| `knowledge/lib.rs` | Export new module |
-| `knowledge/Cargo.toml` | Add ureq dependency |
+`ureq = { version = "2.12", features = ["json"] }` — 轻量级同步 HTTP 客户端，无 tokio 依赖。`urlencoding = "2.1"` — URI 编码。
 
-## Implementation Phases
+## 变更文件清单
 
-1. **Phase 1**: Define trait + LocalKnowledgeProvider refactor (pure refactor, existing tests pass)
-2. **Phase 2**: OpenVikingProvider + providers.yaml config + search/inspect integration + tests
+| 文件 | 变更 |
+|------|------|
+| `knowledge/provider.rs` | 新增 — trait + LocalKnowledgeProvider + OpenVikingProvider + 工厂 |
+| `knowledge/models.rs` | 新增 `provider` 字段；新增 `KnowledgeProviderConfig`、`OpenVikingProviderConfig` 类型 |
+| `knowledge/store.rs` | 新增 `load_merged_registry()`、`load_providers_yaml()` — 合并 providers.yaml |
+| `knowledge/operations.rs` | 读操作改用 `load_merged_registry()`；构造 `KnowledgeSource` 时补 `provider` 字段 |
+| `knowledge/search.rs` | `search_cards()` 通过 provider 分流搜索 |
+| `knowledge/inspect.rs` | `inspect_chunk()` 通过 provider 分流检视 |
+| `knowledge/builder.rs` | `build_source()`/`resume_source()` 对 OpenViking 源返回错误 |
+| `knowledge/paths.rs` | 新增 `providers_yaml_file()` |
+| `knowledge/lib.rs` | 新增 `pub mod provider` + re-exports |
+| `knowledge/Cargo.toml` | 新增 `ureq`、`urlencoding` 依赖 |
+| `src/rust/Cargo.toml` | workspace 新增 `ureq`、`urlencoding` 依赖 |
+
+## 实施阶段
+
+1. **阶段一**：定义 trait + LocalKnowledgeProvider 重构（纯重构，现有测试全绿）
+2. **阶段二**：OpenVikingProvider + providers.yaml 配置 + 搜索/检视集成 + 测试验证
