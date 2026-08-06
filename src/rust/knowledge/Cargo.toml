@@ -22,6 +22,8 @@ serde_yaml.workspace = true
 sha2.workspace = true
 state = { path = "../state" }
 thiserror.workspace = true
+ureq.workspace = true
+urlencoding.workspace = true
 zip.workspace = true
 
 [[test]]

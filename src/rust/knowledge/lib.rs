@@ -4,6 +4,7 @@ pub mod mcp_models;
 pub mod models;
 pub mod operations;
 pub mod paths;
+pub mod provider;
 pub mod search;
 pub mod semantic;
 pub mod store;
@@ -17,6 +18,7 @@ pub use operations::{
     add_source, disable_source, discard_pending, enable_source, list_sources, pending_sources,
     remove_source, source_status, update_source,
 };
+pub use provider::{create_provider, is_local_provider, KnowledgeProvider};
 pub use search::{brainstorm_context, search_knowledge};
 pub use semantic::submit_semantic_pack;
 pub use store::{KnowledgeError, KnowledgeResult};

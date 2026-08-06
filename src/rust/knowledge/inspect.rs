@@ -4,13 +4,18 @@ use crate::{
     mcp_models::{KnowledgeInspectChunkInput, KnowledgeInspectChunkResult},
     models::{ChunksFile, KnowledgeSource},
     paths,
-    store::{load_registry, read_json, KnowledgeError, KnowledgeResult},
+    provider::{create_provider, is_local_provider},
+    store::{load_merged_registry, read_json, KnowledgeError, KnowledgeResult},
 };
 
 pub fn inspect_chunk(
     input: KnowledgeInspectChunkInput,
 ) -> KnowledgeResult<KnowledgeInspectChunkResult> {
     let source = resolve_source(&input)?;
+    if !is_local_provider(&source) {
+        let provider = create_provider(&source)?;
+        return provider.inspect_chunk(&input.chunk_id);
+    }
     let chunks_file: ChunksFile =
         read_json(&paths::chunks_file(&source.source_id, &input.build_id)?)?;
     let chunk = chunks_file
@@ -35,7 +40,7 @@ pub fn read_chunk_body(source_id: &str, build_id: &str, chunk_id: &str) -> Knowl
 }
 
 fn resolve_source(input: &KnowledgeInspectChunkInput) -> KnowledgeResult<KnowledgeSource> {
-    let registry = load_registry()?;
+    let registry = load_merged_registry()?;
     if let Some(source_id) = &input.source_id {
         let source = registry
             .sources

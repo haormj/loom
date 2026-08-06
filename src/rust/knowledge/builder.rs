@@ -21,6 +21,7 @@ use crate::{
     },
     operations::{registry_source, summary},
     paths,
+    provider::is_local_provider,
     semantic::{next_pending_pack, semantic_generation_rules, semantic_result_template},
     store::{
         ensure_dir, load_pending, load_registry, now_millis, now_string, read_json, save_registry,
@@ -69,6 +70,12 @@ pub fn validate_candidate_paths(
 pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpActionResult> {
     let mut registry = load_registry()?;
     let source = registry_source(&registry, name)?.clone();
+    if !is_local_provider(&source) {
+        return Err(KnowledgeError::invalid(format!(
+            "knowledge source '{}' uses an external provider and cannot be built locally",
+            source.name
+        )));
+    }
     cleanup_pending_build_runs(&source.source_id, None)?;
     let pending = load_pending(&source.source_id, &source.name)?;
     let document_paths = apply_pending_paths(&source.document_paths, &pending.operations)?;
@@ -176,6 +183,12 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
 pub fn resume_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpActionResult> {
     let registry = load_registry()?;
     let source = registry_source(&registry, name)?.clone();
+    if !is_local_provider(&source) {
+        return Err(KnowledgeError::invalid(format!(
+            "knowledge source '{}' uses an external provider and cannot be built locally",
+            source.name
+        )));
+    }
     cleanup_pending_build_runs(&source.source_id, source.current_build_id.as_deref())?;
     let Some(build_id) = latest_pending_build(&source.source_id)? else {
         if source.current_build_id.is_some() {

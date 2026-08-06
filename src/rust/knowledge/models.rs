@@ -30,6 +30,8 @@ pub struct KnowledgeSource {
     pub created_at: String,
     pub updated_at: String,
     pub last_built_at: Option<String>,
+    #[serde(default)]
+    pub provider: KnowledgeProviderConfig,
 }
 
 impl<'de> Deserialize<'de> for KnowledgeSource {
@@ -58,6 +60,8 @@ impl<'de> Deserialize<'de> for KnowledgeSource {
             updated_at: String,
             #[serde(default)]
             last_built_at: Option<String>,
+            #[serde(default)]
+            provider: Option<KnowledgeProviderConfig>,
         }
 
         #[derive(Deserialize)]
@@ -103,6 +107,7 @@ impl<'de> Deserialize<'de> for KnowledgeSource {
             created_at: wire.created_at,
             updated_at: wire.updated_at,
             last_built_at,
+            provider: wire.provider.unwrap_or_default(),
         })
     }
 }
@@ -505,4 +510,46 @@ where
     D: Deserializer<'de>,
 {
     Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum KnowledgeProviderConfig {
+    Local,
+    OpenViking(OpenVikingProviderConfig),
+}
+
+impl Default for KnowledgeProviderConfig {
+    fn default() -> Self {
+        Self::Local
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenVikingProviderConfig {
+    pub endpoint: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_key_env: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub account: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(default)]
+    pub target_uri: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timeout_secs: Option<u64>,
+}
+
+impl Default for OpenVikingProviderConfig {
+    fn default() -> Self {
+        Self {
+            endpoint: String::new(),
+            api_key_env: None,
+            account: None,
+            user: None,
+            target_uri: "viking://resources/".to_string(),
+            timeout_secs: None,
+        }
+    }
 }
