@@ -691,8 +691,184 @@ dataAccessMatchers = ["no orm"]
 # Phase 2 后续待填充:
 # - signal_from_selection (contracts/code_quality.rs:345-614)
 # - task_focus_tags (contracts/code_quality.rs:642-1218)
-# - signal_applies_to_task (contracts/code_quality.rs:1235-1287)
 
-stackSignals = []
-focusRules = []
-applicability = []
+# ════════════════════════════════════════════════════════════════════════
+# Phase 2 — 适用性规则
+# 替代 contracts/code_quality.rs 中的 signal_applies_to_task() 函数
+# 来源:code_quality.rs:1235-1287
+#
+# 规则语义:
+# - language: 匹配 signal.language("*" = 任意非 None,"none" = None)
+# - requiredRole: signal.roles 必须包含此角色(可选)
+# - anyFocusTags: task 的 focusTags 包含其中任意一个即匹配(空 = 无条件)
+# - appliesWhenRolesEmpty: 仅在 roles 为空时生效(对应原 unclassified 分支)
+# ════════════════════════════════════════════════════════════════════════
+
+[[applicability]]
+language = "sql"
+anyFocusTags = ["sql", "persistence", "performance", "analytics"]
+
+# typescript: 无条件部分
+[[applicability]]
+language = "typescript"
+anyFocusTags = ["frontend", "configuration", "runtime", "migration"]
+
+# typescript: backend 角色门控部分
+[[applicability]]
+language = "typescript"
+requiredRole = "backend"
+anyFocusTags = ["api", "backend", "testing"]
+
+# javascript: 无条件部分
+[[applicability]]
+language = "javascript"
+anyFocusTags = ["frontend"]
+
+# javascript: backend 角色门控部分
+[[applicability]]
+language = "javascript"
+requiredRole = "backend"
+anyFocusTags = ["api", "backend", "testing"]
+
+# 通用语言 catch-all (*): frontend 角色
+[[applicability]]
+language = "*"
+requiredRole = "frontend"
+anyFocusTags = ["frontend"]
+
+# 通用语言 catch-all (*): backend 角色
+[[applicability]]
+language = "*"
+requiredRole = "backend"
+anyFocusTags = ["backend", "api", "persistence", "security", "configuration", "runtime", "integration", "migration", "architecture", "testing"]
+
+# 通用语言 catch-all (*): persistence 角色
+[[applicability]]
+language = "*"
+requiredRole = "persistence"
+anyFocusTags = ["persistence"]
+
+# 通用语言 catch-all (*): roles 为空时的 unclassified 分支
+[[applicability]]
+language = "*"
+appliesWhenRolesEmpty = true
+anyFocusTags = ["api", "backend", "persistence", "security", "configuration", "runtime"]
+
+# language = None: frontend 角色
+[[applicability]]
+language = "none"
+requiredRole = "frontend"
+anyFocusTags = ["frontend"]
+
+# ════════════════════════════════════════════════════════════════════════
+# Phase 2 — Focus tag 文本关键词规则
+# 替代 contracts/code_quality.rs 中 task_focus_tags() 的文本匹配部分(Layer C)
+# 来源:code_quality.rs:725-1216
+#
+# 规则语义:
+# - keywords: task 文本(title+objective+actions,已规范化为小写+空格分隔)
+#   包含其中任意一个即匹配
+# - focusTags: 匹配成功时添加的标签(去重)
+# - requiresBackend: 仅当 task 为后端任务时才匹配(cache 规则的守卫)
+# ════════════════════════════════════════════════════════════════════════
+
+[[focusRules]]
+focusTags = ["state"]
+keywords = ["state", "store", "context", "reducer", "zustand", "redux", "tanstack", "query client", "selected record", "form draft", "状态", "表单草稿", "选中记录"]
+
+[[focusRules]]
+focusTags = ["hooks"]
+keywords = ["hook", "hooks", "useeffect", "usememo", "usecallback", "useref", "custom hook", "debounce", "localstorage", "effect cleanup", "钩子", "副作用", "防抖"]
+
+[[focusRules]]
+focusTags = ["server_components"]
+keywords = ["server component", "server components", "react server component", "rsc", "suspense", "streaming", "use client", "hydration", "服务端组件", "服务端渲染", "水合"]
+
+[[focusRules]]
+focusTags = ["react19"]
+keywords = ["react 19", "useactionstate", "useformstatus", "useoptimistic", "use()", "ref as prop", "action state", "optimistic", "乐观更新"]
+
+[[focusRules]]
+focusTags = ["app_router"]
+keywords = ["app router", "layout.tsx", "page.tsx", "loading.tsx", "error.tsx", "not-found.tsx", "route group", "route handler", "generate metadata", "metadata api", "dynamic route", "parallel route", "intercepting route"]
+
+[[focusRules]]
+focusTags = ["server_actions"]
+keywords = ["server action", "server actions", "use server", "form action", "revalidatepath", "revalidatetag", "useformstatus", "useactionstate"]
+
+[[focusRules]]
+focusTags = ["data_fetching"]
+keywords = ["data fetching", "fetch", "cache", "revalidate", "isr", "swr", "usefetch", "useasyncdata", "uselazyfetch", "数据获取", "缓存"]
+
+[[focusRules]]
+focusTags = ["nuxt"]
+keywords = ["nuxt", "nitro", "definepagemeta", "runtimeconfig", "clientonly", "usehead", "useseometa", "hydration"]
+
+[[focusRules]]
+focusTags = ["build_tooling"]
+keywords = ["vite", "vite config", "build tooling", "bundle", "chunk", "sourcemap", "dev server", "proxy", "tree shaking", "构建", "打包"]
+
+[[focusRules]]
+focusTags = ["mobile"]
+keywords = ["mobile", "native", "quasar", "capacitor", "pwa", "service worker", "offline", "push notification", "geolocation", "camera", "移动端", "离线"]
+
+[[focusRules]]
+focusTags = ["routing"]
+keywords = ["route", "router", "routing", "navigation", "navigate", "deep link", "deeplink", "guard", "resolver", "tab", "stack", "drawer", "query param", "route param", "路由", "导航", "守卫", "深链"]
+
+[[focusRules]]
+focusTags = ["rxjs"]
+keywords = ["rxjs", "observable", "subscription", "subject", "behaviorsubject", "httpclient", "http client", "api call", "switchmap", "mergemap", "concatmap", "exhaustmap", "takeuntildestroyed", "marble", "流式", "订阅", "可观察"]
+
+[[focusRules]]
+focusTags = ["ngrx"]
+keywords = ["ngrx", "store", "action group", "entity adapter", "selector", "effect", "effects", "reducer", "store devtools", "facade"]
+
+[[focusRules]]
+focusTags = ["riverpod"]
+keywords = ["riverpod", "consumerwidget", "consumer widget", "widgetref", "provider scope", "providerscope", "state notifier", "statenotifier", "async notifier", "asyncnotifier"]
+
+[[focusRules]]
+focusTags = ["bloc"]
+keywords = [" bloc ", "cubit", "blocbuilder", "bloc builder", "bloclistener", "bloc listener", "blocconsumer", "bloc consumer", "blocprovider", "bloc provider", "event driven"]
+
+[[focusRules]]
+focusTags = ["list_performance"]
+keywords = ["list", "feed", "flatlist", "sectionlist", "flashlist", "virtualized", "infinite scroll", "pull to refresh", "refreshcontrol", "onendreached", "list performance", "列表性能", "列表", "动态列表", "下拉刷新", "无限滚动"]
+
+[[focusRules]]
+focusTags = ["storage"]
+keywords = ["asyncstorage", "mmkv", "securestore", "secure store", "storage", "persist", "persistent", "local cache", "localstorage", "缓存持久化", "本地存储"]
+
+[[focusRules]]
+focusTags = ["async"]
+keywords = ["async", "concurrent", "queue", "stream", "websocket", "并发", "异步"]
+
+[[focusRules]]
+focusTags = ["cache"]
+requiresBackend = true
+keywords = ["spring cache", "cachemanager", "cache manager", "cacheable", "cacheevict", "caffeine", "redis cache", "application cache", "in-memory cache", "cache aside", "cache-aside", "cache hit", "cache miss", "缓存", "缓存键", "缓存失效", "缓存策略"]
+
+[[focusRules]]
+focusTags = ["performance"]
+keywords = ["performance", "optimi", "slow", "index", "cache", "性能", "优化", "索引", "缓存"]
+
+[[focusRules]]
+focusTags = ["runtime"]
+keywords = ["runtime", "actuator", "health", "profile", "configuration", "config", "startup", "shutdown", "logging", "tracing", "observability", "resilience", "运行", "健康检查", "启动", "关闭", "日志", "链路追踪"]
+
+[[focusRules]]
+focusTags = ["integration"]
+keywords = ["integration", "external service", "downstream", "webclient", "spring cloud", "cloud gateway", "gateway", "config server", "service discovery", "discovery", "eureka", "circuit breaker", "retry", "timeout", "resilience", "集成", "外部服务", "下游", "网关", "服务发现", "熔断", "重试", "超时"]
+
+[[focusRules]]
+focusTags = ["migration"]
+keywords = ["migration", "migrate", "port from", "from django", "from drf", "迁移", "迁出", "迁到"]
+
+[[focusRules]]
+focusTags = ["architecture"]
+keywords = ["architecture", "clean architecture", "cqrs", "mediatr", "layer", "layers", "use case", "handler", "module boundary", "dependency injection", "provider", "providers", "架构", "分层", "用例", "依赖注入"]
+
+[[focusRules]]
+focusTags = ["generics"]
+keywords = ["generic", "generics", "type parameter", "template", "templates", "concept", "concepts", "constraints", "泛型", "模板", "类型参数"]

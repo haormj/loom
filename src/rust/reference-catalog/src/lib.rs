@@ -25,7 +25,7 @@ pub use error::{CatalogError, CatalogResult};
 pub use merge::{merge_catalogs, prune_groups, replace_item_entry};
 pub use schema::{
     ApplicabilityEntry, BackendEcosystemEntry, ExpandedEntry, FocusRuleEntry, Group, ItemEntry,
-    PrependItem, ProviderOverlay, ReferenceCatalog, Route, SectionGroupMapping, StackSignalEntry,
+    PrependItem, ProviderOverlay, ReferenceCatalog, Route, SectionGroupMapping,
 };
 pub use vendor::{
     load_catalog, load_vendor_catalog, parse_catalog, validate_file_existence, validate_structure,

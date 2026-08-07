@@ -680,3 +680,152 @@ fn deploy_route_uses_loom_deploy_reference_root() {
     let route = catalog.routes.iter().find(|r| r.id == "deploy").unwrap();
     assert_eq!(route.effective_reference_root(), "loom-deploy");
 }
+
+// ─── Phase 2: Focus tag 文本关键词规则 parity 测试 ───────────────────────
+
+/// 验证 vendor catalog 包含预期数量的 focus rules(25 条)。
+#[test]
+fn focus_rules_count_matches_expected() {
+    let catalog = load_vendor_catalog().expect("parse");
+    assert_eq!(
+        catalog.focus_rules.len(),
+        25,
+        "focus_rules 应有 25 条规则(对应原 task_focus_tags 的 25 个文本关键词块)"
+    );
+}
+
+/// 验证 focus rules 的 tag 集合与原硬编码逻辑完全一致。
+#[test]
+fn focus_rules_tags_match_hardcoded_set() {
+    let catalog = load_vendor_catalog().expect("parse");
+    let tags: BTreeSet<String> = catalog
+        .focus_rules
+        .iter()
+        .flat_map(|r| r.focus_tags.iter())
+        .cloned()
+        .collect();
+
+    let expected: BTreeSet<String> = [
+        "state",
+        "hooks",
+        "server_components",
+        "react19",
+        "app_router",
+        "server_actions",
+        "data_fetching",
+        "nuxt",
+        "build_tooling",
+        "mobile",
+        "routing",
+        "rxjs",
+        "ngrx",
+        "riverpod",
+        "bloc",
+        "list_performance",
+        "storage",
+        "async",
+        "cache",
+        "performance",
+        "runtime",
+        "integration",
+        "migration",
+        "architecture",
+        "generics",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+
+    assert_eq!(tags, expected, "focus rule tag 集合不匹配");
+}
+
+/// 验证 `cache` 规则拥有 `requires_backend = true` 守卫,
+/// 且是唯一一条有此守卫的规则。
+#[test]
+fn cache_rule_is_the_only_backend_guarded_rule() {
+    let catalog = load_vendor_catalog().expect("parse");
+    let backend_guarded: Vec<_> = catalog
+        .focus_rules
+        .iter()
+        .filter(|r| r.requires_backend)
+        .collect();
+
+    assert_eq!(
+        backend_guarded.len(),
+        1,
+        "仅 cache 规则应有 requires_backend 守卫"
+    );
+    assert_eq!(
+        backend_guarded[0].focus_tags,
+        vec!["cache"],
+        "requires_backend 守卫的规则应为 cache"
+    );
+}
+
+/// 验证关键词匹配产出正确的 tag(正向用例)。
+#[test]
+fn focus_tags_from_text_produces_expected_tags() {
+    let catalog = load_vendor_catalog().expect("parse");
+
+    // 单关键词 → 单 tag
+    let tags = catalog.focus_tags_from_text("使用 zustand 管理状态", false);
+    assert!(
+        tags.contains(&"state".to_string()),
+        "zustand 应产出 state tag"
+    );
+
+    // 多关键词命中多条规则 → 多 tag
+    let tags = catalog.focus_tags_from_text(" custom hook and deep link ", false);
+    assert!(
+        tags.contains(&"hooks".to_string()),
+        "custom hook 应产出 hooks tag"
+    );
+    assert!(
+        tags.contains(&"routing".to_string()),
+        "deep link 应产出 routing tag"
+    );
+
+    // 整词匹配:" bloc " 不应匹配 "block"
+    let tags = catalog.focus_tags_from_text(" block design ", false);
+    assert!(
+        !tags.contains(&"bloc".to_string()),
+        "'block' 不应匹配 bloc 规则(需要 ' bloc ' 整词)"
+    );
+    let tags = catalog.focus_tags_from_text(" bloc pattern ", false);
+    assert!(
+        tags.contains(&"bloc".to_string()),
+        "' bloc ' 整词应匹配 bloc 规则"
+    );
+}
+
+/// 验证 `requires_backend` 守卫:非后端任务不产出 cache tag,
+/// 后端任务产出 cache tag。
+#[test]
+fn cache_rule_respects_backend_guard() {
+    let catalog = load_vendor_catalog().expect("parse");
+    let cache_text = " 使用 spring cache 和 caffeine 缓存策略 ";
+
+    // 非后端任务:不产出 cache tag
+    let tags = catalog.focus_tags_from_text(cache_text, false);
+    assert!(
+        !tags.contains(&"cache".to_string()),
+        "非后端任务不应产出 cache tag(requires_backend 守卫)"
+    );
+
+    // 后端任务:产出 cache tag
+    let tags = catalog.focus_tags_from_text(cache_text, true);
+    assert!(
+        tags.contains(&"cache".to_string()),
+        "后端任务应产出 cache tag"
+    );
+}
+
+/// 验证去重:同一规则的多个关键词命中只添加一次 tag。
+#[test]
+fn focus_tags_deduplicate_within_same_rule() {
+    let catalog = load_vendor_catalog().expect("parse");
+    // "state" 和 "store" 都属于 state 规则
+    let tags = catalog.focus_tags_from_text(" state and store ", false);
+    let state_count = tags.iter().filter(|t| *t == "state").count();
+    assert_eq!(state_count, 1, "state tag 应只出现一次(去重)");
+}

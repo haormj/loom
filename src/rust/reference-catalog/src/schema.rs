@@ -13,11 +13,7 @@ pub struct ReferenceCatalog {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub routes: Vec<Route>,
 
-    /// Phase 2 占位 — vendor 目录中当前为空。
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub stack_signals: Vec<StackSignalEntry>,
-
-    /// Phase 2 占位 — vendor 目录中当前为空。
+    /// Focus tag 文本关键词规则(Phase 2)。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub focus_rules: Vec<FocusRuleEntry>,
 
@@ -152,37 +148,59 @@ pub struct SectionGroupMapping {
     pub items: Vec<String>,
 }
 
-// ── Phase 2 占位类型(schema 已定义,数据在 Phase 2 填充)──
+// ── Phase 2 类型 ──
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct StackSignalEntry {
-    pub match_keywords: Vec<String>,
-    pub track: String,
-    pub language: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub frameworks: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub roles: Vec<String>,
-}
-
+/// Focus tag 规则(Phase 2 — 替代 code_quality.rs 中的
+/// `task_focus_tags()` 函数的文本关键词匹配部分)。
+///
+/// 每条规则描述:当 task 文本(title + objective + actions)包含
+/// `keywords` 中任意一个关键词时,将 `focus_tags` 中的标签
+/// 添加到 task 的 focus tag 列表。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FocusRuleEntry {
+    /// 匹配成功时添加的 focus tag 列表。
     pub focus_tags: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub task_kinds: Vec<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub actions: Vec<String>,
+
+    /// 文本关键词列表。task 文本包含其中任意一个即匹配。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keywords: Vec<String>,
+
+    /// 可选:仅当 task 为后端任务时才匹配(对应原 `cache` 规则的
+    /// `task_is_backend_task(task)` 守卫)。
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub requires_backend: bool,
 }
 
+/// 适用性规则(Phase 2 — 替代 code_quality.rs 中的
+/// `signal_applies_to_task()` 函数)。
+///
+/// 每条规则描述:当 signal 的 language 匹配 `language` 字段
+/// (或 `language` 为 `"*"` 表示通配,`"none"` 表示 language 为 None),
+/// 且 signal 的 roles 包含 `required_role`(如设置),
+/// 则 signal 适用于拥有 `any_focus_tags` 中任意一个的 task。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApplicabilityEntry {
-    pub signal: String,
-    pub requires_any_focus: Vec<String>,
+    /// 匹配的 language 值。`"*"` 表示匹配任意非 None 的 language,
+    /// `"none"` 表示 language 为 None。
+    pub language: String,
+
+    /// 可选:signal roles 必须包含此角色才适用。
+    /// 未设置时不对 roles 做门控。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub required_role: Option<String>,
+
+    /// signal 适用于 task 的条件:task 的 focus tags 包含此列表中任意一个。
+    /// 空列表表示无条件适用(但仍受 required_role 门控)。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub any_focus_tags: Vec<String>,
+
+    /// 可选:当 required_role 未设置且 roles 为空时,
+    /// signal 是否无条件适用(对应原逻辑中的 `roles.is_empty()` 分支)。
+    /// 设为 true 时,any_focus_tags 仍需满足。
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub applies_when_roles_empty: bool,
 }
 
 /// 后端生态系统定义(Phase 2 — 替代 planning/technical_baseline.rs 中的
@@ -450,6 +468,86 @@ impl ReferenceCatalog {
     /// 返回后端生态系统定义列表。
     pub fn backend_ecosystems(&self) -> &[BackendEcosystemEntry] {
         &self.backend_ecosystems
+    }
+
+    /// 从 task 文本关键词评估 focus tags。
+    ///
+    /// 替代原 `task_focus_tags()` 函数的文本关键词匹配部分(Layer C)。
+    /// 遍历 focus_rules,当文本包含关键词且满足守卫条件时,
+    /// 将对应的 focus tags 添加到结果列表(去重)。
+    ///
+    /// - `text`: 已规范化的 task 文本(title + objective + actions)
+    /// - `is_backend_task`: task 是否为后端任务(用于 `requires_backend` 守卫)
+    pub fn focus_tags_from_text(&self, text: &str, is_backend_task: bool) -> Vec<String> {
+        let mut tags = Vec::new();
+        for rule in &self.focus_rules {
+            if rule.requires_backend && !is_backend_task {
+                continue;
+            }
+            if rule.keywords.iter().any(|kw| text.contains(kw)) {
+                for tag in &rule.focus_tags {
+                    if !tags.contains(tag) {
+                        tags.push(tag.clone());
+                    }
+                }
+            }
+        }
+        tags
+    }
+
+    /// 评估 signal 是否适用于给定 focus tags 的 task。
+    ///
+    /// 替代原 `signal_applies_to_task()` 的决策逻辑。
+    /// 遍历 applicability 规则,任一匹配即返回 true。
+    ///
+    /// - `language`: signal 的 language(Some("sql") 等,None 表示无)
+    /// - `roles`: signal 的 roles 列表
+    /// - `focus_tags`: task 的 focus tags 列表
+    pub fn signal_applies_to_task(
+        &self,
+        language: Option<&str>,
+        roles: &[String],
+        focus_tags: &[String],
+    ) -> bool {
+        let has_focus = |tag: &str| focus_tags.iter().any(|item| item == tag);
+        let has_role = |role: &str| roles.iter().any(|item| item == role);
+        let roles_empty = roles.is_empty();
+
+        for rule in &self.applicability {
+            // 语言匹配
+            let lang_matches = match rule.language.as_str() {
+                "*" => language.is_some(),
+                "none" => language.is_none(),
+                lang => language == Some(lang),
+            };
+            if !lang_matches {
+                continue;
+            }
+
+            // required_role 门控
+            if let Some(ref required) = rule.required_role {
+                if !has_role(required) {
+                    continue;
+                }
+            } else if rule.applies_when_roles_empty && !roles_empty {
+                // applies_when_roles_empty 仅在 roles 为空时生效
+                continue;
+            } else if !rule.applies_when_roles_empty
+                && roles_empty
+                && rule.required_role.is_none()
+                && rule.language != "none"
+            {
+                // 非 applies_when_roles_empty 且无 required_role 且 roles 为空:
+                // 原逻辑中 Some(_) catch-all 的 frontend/persistence 分支需要 roles 非空
+                continue;
+            }
+
+            // any_focus_tags 条件(空列表视为无条件通过)
+            if rule.any_focus_tags.is_empty() || rule.any_focus_tags.iter().any(|t| has_focus(t)) {
+                return true;
+            }
+        }
+        false
     }
 }
 

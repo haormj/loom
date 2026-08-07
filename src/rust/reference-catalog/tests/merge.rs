@@ -10,7 +10,6 @@ fn empty_catalog() -> ReferenceCatalog {
     ReferenceCatalog {
         schema_version: 1,
         routes: vec![],
-        stack_signals: vec![],
         focus_rules: vec![],
         applicability: vec![],
         backend_ecosystems: vec![],
