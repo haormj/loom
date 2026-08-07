@@ -2407,7 +2407,6 @@ fn product_docs_do_not_expose_legacy_install_or_protocol_paths() {
     let repo = repo_root();
     let files = [
         "README.md",
-        "README.zh-CN.md",
         "scripts/README.md",
         "tests/README.md",
     ];

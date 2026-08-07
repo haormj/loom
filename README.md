@@ -1,21 +1,23 @@
 <div align="center">
   <img src="./assets/headbar.png" alt="Loom" width="100%">
-  <p><strong>Loop engineering for agentic software delivery.</strong></p>
-  <p>An open delivery harness that helps Claude Code, Codex, OpenCode, and other coding agents finish larger software tasks without losing state.</p>
+  <p><strong>面向 agentic software delivery 的 loop engineering。</strong></p>
+  <p>一套开源交付 harness，帮助 Claude Code、Codex、OpenCode 等 coding agents 完成更大的软件任务，并保留过程状态。</p>
   <p>
-    <a href="./README.zh-CN.md">Simplified Chinese</a>
+    <a href="./README.md">English</a>
     ·
-    <a href="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/Loomline-v0.pdf">Technical Report</a>
+    <a href="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/Loomline-v0.pdf">技术报告</a>
     ·
-    <a href="./docs/godot.md">Godot</a>
+    <a href="./docs/godot.zh-CN.md">Godot</a>
     ·
-    <a href="./docs/use-cases.md">Use Cases</a>
+    <a href="./docs/use-cases.zh-CN.md">使用场景</a>
     ·
-    <a href="#quick-start">Quick Start</a>
+    <a href="#快速开始">快速开始</a>
     ·
-    <a href="#how-to-use">How to Use</a>
+    <a href="#如何使用">如何使用</a>
     ·
-    <a href="#context-routing">Context Routing</a>
+    <a href="#上下文路由">上下文路由</a>
+    ·
+    <a href="#相关工作">相关工作</a>
     ·
     <a href="#faq">FAQ</a>
   </p>
@@ -26,71 +28,71 @@
     <img alt="Python" src="https://img.shields.io/badge/Python-algorithms-3776AB?logo=python&logoColor=white">
     <img alt="Status" src="https://img.shields.io/badge/status-open-brightgreen">
   </p>
-  <p>⭐ If Loom is useful to you, give it a star and help more developers find it.</p>
+  <p>⭐ 如果 Loom 对你有帮助，欢迎点个 Star，让更多开发者看到它。</p>
 </div>
 
-## What Is Loom?
+## 什么是 Loom？
 
-Coding agents are good at writing code. They are less reliable at finishing the whole job: they lose context, skip checks, and leave handoffs unclear.
+Coding agents 写代码很快，但完整收尾并不稳定：容易丢上下文、跳过检查，最后留下一个不太好接手的状态。
 
-Loom is an open-source harness that runs beside the agent you already use. It keeps the work moving through a simple loop: plan, build, test, fix, preview, and hand off.
+Loom 是一套开源 harness，运行在你已经使用的 agent 旁边。它把任务推进成一条简单的循环：规划、构建、测试、修复、预览、交接。
 
-Loom saves the important project state: requirements, task progress, test results, runtime facts, and repair notes. If a session stops, the next run can continue from where things left off.
+Loom 会保存关键项目状态：需求、任务进度、测试结果、运行时事实和修复记录。会话中断后，下一次运行可以从已有进度继续。
 
-Use Loom when a task is too big for a single prompt: feature work, deployment, review, repair, preview, or a handoff that needs evidence.
+当一个任务不是单条 prompt 能解决的改动，而是涉及功能开发、部署、review、修复、预览或需要交接证据时，就适合使用 Loom。
 
 ## News
 
-- **Upcoming:** V-SEFM, a verifier model for software delivery, is in progress. Details later.
-- **Jul 2026:** Loom moved its MCP runtime from TypeScript to Rust to make the core smaller and faster.
-- **Jul 2026:** Loom now supports Godot projects through Godot MCP. [Setup guide](./docs/godot.md)
+- **即将推出：** V-SEFM，一个面向软件交付的验证模型，正在准备中。细节后续公布。
+- **2026 年 7 月：** Loom 已将 MCP runtime 从 TypeScript 迁移到 Rust，让核心更小、更快。
+- **2026 年 7 月：** Loom 现已支持通过 Godot MCP 开发 Godot 项目。[安装指导](./docs/godot.zh-CN.md)
 
-## Why a Harness?
+## 为什么需要 Harness？
 
-Coding agents can generate websites and apps quickly. The rough part is keeping them on track after the first pass: preserving requirements, checking the work, fixing failures, and resuming after a stopped session.
+现在的 coding agents 很快就能生成网站和应用。更麻烦的是第一版之后的事：保留需求、检查结果、修复失败，以及在会话中断后继续推进。
 
-Longer tasks tend to fail in familiar ways:
+稍微长一点的任务，常见问题很固定：
 
-Failure mode | Loom response
+失败模式 | Loom 的应对
 --- | ---
-Partial completion | Tasks are bounded and must write explicit results before Loom routes the next step.
-Goal drift | Scope and architecture decisions are saved and reused across sessions.
-Self-check bias | Review and repair run as separate steps with recorded evidence.
-Repeated context loading | Agents read compact project and task state instead of reloading the whole repo.
-Handoff gaps | Reports, logs, previews, and repair history make the final state inspectable.
+只完成一部分就宣布完成 | 任务有边界，必须写出明确结果，Loom 再路由下一步。
+目标漂移 | 已确认的 scope 和架构决策会被保存，并在后续会话继续使用。
+自我验证偏差 | Review 和 repair 是单独步骤，并保留对应证据。
+重复加载上下文 | Agent 读取紧凑的项目和任务状态，而不是反复扫完整仓库。
+交付交接缺口 | 报告、日志、预览和修复历史会留下来，方便人或下一个 agent 检查。
 
-## From Demo to Delivery
+## 从 Demo 到交付
 
-AI coding has made demos cheap. A single prompt can get you a web page, a prototype, or a personal tool.
+AI coding 让 demo 变得很便宜。一段 prompt 就能生成页面、原型，或者一个自己用的小工具。
 
-Shipping the same work is different. You still need requirements, architecture choices, tests, runtime setup, fixes, preview evidence, and a handoff someone can trust.
+但交付是另一回事。稍微复杂的任务，仍然需要对齐需求、做架构取舍、跑测试、准备运行环境、修问题、看预览，并留下别人能接手的状态。
 
-Loom focuses on that gap. It gives existing agents a delivery loop and a place to store progress, so a task can survive failed checks, context compaction, and a new session.
+Loom 关注的就是这段差距。它给现有 coding agent 加上一条交付循环和一个保存进度的地方，让任务能扛住检查失败、上下文压缩和会话中断。
 
-The goal is simple: fewer rebuilt sessions, fewer half-finished agent runs, and more software that reaches a verifiable finish.
+目标很简单：少一点从头来过，少一点半成品 agent 输出，多一点能验证、能交接的结果。
 
-Capability | What it changes
+能力 | 解决的问题
 --- | ---
-Stateful delivery protocol | Turns a one-shot coding session into a resumable delivery loop backed by `.loom/` state, request refs, result files, review records, repair requests, and handoff evidence.
-Requirement intelligence | Converts loose prompts into confirmed scope, business rules, lifecycle coverage, UI operation paths, and acceptance details that planning, execution, and review must preserve.
-Architecture and system design | Turns the accepted technical baseline and repository facts into implementation-facing decisions for boundaries, behavior, data ownership, runtime responsibilities, NFR targets, ADRs, and failure modes. These decisions become compact ids that planning, execution, review, and repair can carry forward.
-API contracts | Defines structured interfaces, request and response models, validation, error behavior, collection policies, and compatibility rules when they are actually in scope. Frontend tasks, integration checks, runtime probes, and deploy consume the accepted API contract instead of guessing paths or prefixes.
-Stack-aware implementation guidance | Selects only the language, framework, persistence, and frontend references owned by the current task from the accepted Technical Baseline. The code and framework references provide repository adaptation, implementation patterns, verification expectations, and anti-patterns without loading unrelated stacks or reselecting technology.
-Engineering contracts | Carries runtime, code-quality, and task ownership decisions as structured contracts instead of relying on repeated prompt reminders.
-Production UI guidance | Pushes UI quality to the generation side with surface decisions, scenario references, layout density, style asset plans, token expectations, forbidden content rules, and desktop/mobile evidence.
-Targeted context routing | Lets agents read field groups, reference profiles, task contracts, and repair context instead of repeatedly loading broad files or entire artifacts.
-Task-scoped execution | Splits delivery into bounded tasks with source refs, write boundaries, verification intent, result templates, and continuation rules.
-Verification and review discipline | Applies language/framework-specific testing guidance only when the task owns the evidence, uses review references to assess specification and implementation quality, and adds Playwright browser closure only for explicitly assigned browser behavior. Runtime failures remain environment evidence rather than being misreported as code defects.
-Review and repair loop | Separates implementation from validation through review signals, TaskResult evidence, repair contracts, multi-target repair routing, and re-verification.
-Runtime and deploy readiness | Prepares local Docker Compose previews with topology-aware services, build contexts, environment rules, ports, health checks, logs, and repair boundaries.
-Knowledge-guided clarification | Lets teams register local domain docs as named knowledge sources, build searchable local indexes, and pull only matching chunks into the right clarification step.
-Multi-agent MCP protocol | Runs the same delivery state machine through Codex, Claude Code, OpenCode, and future MCP-capable agents.
+Stateful delivery protocol | 把一次性 coding session 变成可恢复的交付循环，并用 `.loom/` 状态、request refs、结果文件、review 记录、修复请求和交接证据承载过程。
+Requirement intelligence | 把松散 prompt 转成已确认的范围、业务规则、生命周期覆盖、页面办理路径和验收细节，让规划、执行和 review 都必须承接。
+架构与系统设计 | 将已确认的技术基线和仓库事实转成面向实现的边界、行为、数据归属、运行时职责、NFR 目标、ADR 和故障模式决策，并用紧凑 id 传递给规划、执行、评审和修复阶段。
+API 契约 | 在确实属于当前范围时，明确结构化接口、请求与响应模型、校验、错误行为、集合接口策略和兼容性规则。前端任务、联调检查、运行时探测和部署都消费已接受的 API 契约，不再自行猜测路径或前缀。
+按技术栈选择的实现指导 | 根据已确认的 Technical Baseline 和当前任务归属，只加载任务需要的语言、框架、持久化和前端 references。代码与框架 references 提供仓库适配、实现模式、验证要求和反模式约束，不加载无关技术栈，也不重新选择技术。
+Engineering contracts | 将运行时、代码质量和任务归属决策作为结构化 contracts 传递，而不是依赖 agent 反复记住 prompt 提醒。
+Production UI guidance | 将 UI 质量前置到生成端：通过 surface decision、场景 references、布局密度、style asset plan、token 期望、禁用内容规则和 desktop/mobile 证据约束页面交付。
+Targeted context routing | 让 agent 按需读取 field groups、reference profiles、任务 contracts 和 repair context，避免反复读取大文件或整份 artifact。
+Task-scoped execution | 把交付拆成有边界的任务，并携带 source refs、写入边界、验证意图、结果模板和 continuation rules。
+验证与评审纪律 | 只有任务拥有对应验证证据时才加载语言/框架测试指导；使用 review references 检查规格符合性和实现质量；只有明确分配浏览器行为时才加入 Playwright 浏览器闭环。运行时失败保留为环境证据，不误报成代码缺陷。
+Review and repair loop | 通过 review signals、TaskResult evidence、repair contracts、多目标 repair 队列和再次验证，把实现与验证分离。
+Runtime and deploy readiness | 面向本地 Docker Compose 预览准备 topology-aware services、build contexts、环境规则、端口、health checks、日志和 repair boundaries。
+Knowledge-guided clarification | 让团队把本地域文档注册成具名知识库，构建本地可检索索引，并在需求澄清时只按当前步骤读取匹配片段。
+Multi-agent MCP protocol | 让 Codex、Claude Code、OpenCode 和后续支持 MCP 的 agents 运行同一套交付状态机。
 
-The technical guidance behind this path is organized under `plugins/shared/loom/references/tech/`: architecture (`arch`), API design (`api`), language and SQL implementation (`code`), backend and frontend frameworks (`backend` and `frontend`), review (`review`), and Playwright verification (`test/playwright`). These are not loaded as one large skill. Loom derives a task-scoped selection from accepted technical facts and task ownership, then passes only the selected references into the relevant architecture, planning, execution, review, or browser-closure request.
+这条链路背后的技术指导集中在 `plugins/shared/loom/references/tech/`：架构（`arch`）、API 设计（`api`）、语言与 SQL 实现（`code`）、后端和前端框架（`backend`、`frontend`）、评审（`review`）以及 Playwright 验证（`test/playwright`）。这些内容不会作为一整套大 skill 一次性加载，而是由 Loom 根据已接受的技术事实和任务归属生成任务级选择，再把选中的 references 传给对应的架构、规划、执行、评审或浏览器闭环 request。
 
-## Context Routing
+## 上下文路由
 
-High-level context path:
+整体上下文路径：
 
 ```text
 Your coding agent / app
@@ -99,7 +101,7 @@ Your coding agent / app
         | delivery goal . repo context . logs . tests . preview evidence
         v
 +----------------------------------------------------------------------------+
-| Loom  (project-local delivery state; full artifacts stay in .loom/)         |
+| Loom  (项目本地交付状态；完整 artifacts 留在 .loom/)                       |
 |----------------------------------------------------------------------------|
 | Dynamic workflow router -> Request manifest -> Agent read plan              |
 |                              |                                             |
@@ -116,40 +118,40 @@ Your coding agent / app
 Agent turn / LLM context
 ```
 
-## Prerequisites
+## 前置条件
 
-- One supported coding agent installed locally: Codex, Claude Code, or OpenCode
-- Docker for `loom deploy`
+- 本机已安装一种受支持的 coding agent：Codex、Claude Code 或 OpenCode
+- 使用 `loom deploy` 时需要 Docker
 
-## Quick Start
+## 快速开始
 
-Install Loom for the coding agent you use. The installer detects your OS and CPU, downloads the matching release package, verifies the package `.sha256` asset, installs the Rust MCP server, bundles the Python algorithm runtime, writes the agent MCP registration, refreshes the local plugin, and runs `loom-setup doctor`.
+按你使用的 coding agent 安装 Loom。安装脚本会自动识别 OS 和 CPU，下载对应平台包，校验 release 包的 `.sha256` 资产，安装 Rust MCP server，携带受控 Python 算法运行时，写入 agent 的 MCP registration，刷新本地插件，并执行 `loom-setup doctor`。
 
-Codex:
+Codex：
 
 ```bash
 curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent codex
 ```
 
-Claude Code:
+Claude Code：
 
 ```bash
 curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent claude-code
 ```
 
-OpenCode:
+OpenCode：
 
 ```bash
 curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent opencode
 ```
 
-All supported agents on the same machine:
+同一台机器安装全部受支持 agent：
 
 ```bash
 curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent all
 ```
 
-Windows PowerShell:
+Windows PowerShell：
 
 ```powershell
 Invoke-WebRequest https://github.com/valkor-ai/loom/releases/latest/download/install.ps1 -OutFile install.ps1
@@ -159,51 +161,51 @@ Invoke-WebRequest https://github.com/valkor-ai/loom/releases/latest/download/ins
 .\install.ps1 -Agent all
 ```
 
-Run the same install command again to upgrade. The installer removes Loom-owned legacy CLI plugin artifacts before installing the MCP runtime. If it finds files it cannot prove are Loom-owned, it stops and tells you what to remove manually instead of overwriting user files.
+重复执行同一条安装命令就是升级。安装器会在安装 MCP runtime 前清理确认属于 Loom 的旧 CLI 插件产物；如果发现无法确认归属的文件，会停止并提示人工处理路径，而不是覆盖用户文件。
 
-For local validation from a repository checkout, use the same installer in local build mode:
+如果是在仓库本地做验证，请使用同一个安装脚本的本地构建模式：
 
 ```bash
 ./install.sh --agent codex --local-build
 ```
 
-This builds the Rust MCP server and setup binary, writes the same release package layout, then installs through `loom-setup` and runs doctor. Use this path after local bug fixes so the installer, package layout, MCP registration, and plugin refresh are verified together.
+它会构建 Rust MCP server 和 setup 二进制，生成同样的 release package layout，然后通过 `loom-setup` 完成安装并执行 doctor。后续本地修 bug 后都应该走这条路径，这样安装器、包结构、MCP registration 和插件刷新会一起被验证。
 
-After installing or updating an agent plugin, open a new agent session in the target project so the refreshed MCP registration and plugin files are loaded.
+安装或更新 agent 插件后，请在目标项目里打开一个新的 agent 会话，让新的 MCP registration 和插件文件重新加载。
 
-To verify the install without starting a delivery, use the Loom command inside your coding agent:
+如果只想验证安装是否正常、但还不想开始需求交付，请在 coding agent 里使用 Loom 命令：
 
 ```text
 @loom status     # Codex
-/loom status     # Claude Code and OpenCode
+/loom status     # Claude Code 和 OpenCode
 ```
 
-`status` is read-only. In a project that has not used Loom yet, `STATE_NOT_INITIALIZED` is a valid smoke-check result: it means the plugin command is available and no delivery has been started.
+`status` 是只读命令。对于还没有使用过 Loom 的项目，返回 `STATE_NOT_INITIALIZED` 也属于正常的 smoke check 结果：这说明插件命令可用，并且没有启动任何交付流程。
 
-You normally do not initialize `.loom/` by hand. Starting a delivery from the agent, such as `@loom build ...` or `/loom build ...`, initializes the project-local delivery state when needed.
+正常使用时不需要手动初始化 `.loom/`。从 agent 发起交付，例如 `@loom build ...` 或 `/loom build ...`，会在需要时自动为当前项目初始化本地交付状态。
 
-## How to Use
+## 如何使用
 
-Loom is meant to be used through the local plugin inside your coding agent. Use `@loom` in Codex and `/loom` in Claude Code or OpenCode. The Rust MCP server is started by the agent MCP registration; users do not start it by hand.
+Loom 的正常使用入口是 code agent 里的本地插件。Codex 使用 `@loom`，Claude Code 和 OpenCode 使用 `/loom`。Rust MCP server 由 agent 的 MCP registration 自动启动，用户不需要手动启动。
 
-### Use Knowledge Sources
+### 使用知识库
 
-Knowledge sources are optional, but they are useful when your delivery work depends on product rules, domain notes, design standards, operating procedures, or other local reference material.
+知识库是可选能力，适合在交付工作依赖产品规则、业务文档、设计规范、操作手册或其他本地参考资料时使用。
 
-Loom treats knowledge sources as clarification aids, not as requirements by themselves. During requirement clarification, Loom searches enabled and successfully built knowledge indexes, reads only matching chunks for the current clarification step, and turns useful findings into user-visible questions or confirmation points.
+Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身。需求澄清时，Loom 会搜索已启用且已成功构建的知识库索引，只读取当前澄清步骤匹配到的片段，并把有用信息转成对用户可见的问题或确认点。
 
-Run knowledge commands from the coding agent session for the project you are working on. The examples below show Codex with `@loom`; in Claude Code and OpenCode, use the same subcommands with `/loom`.
+知识库命令应在当前项目的 coding agent 会话里执行。下面示例使用 Codex 的 `@loom`；在 Claude Code 和 OpenCode 中，把同样的子命令换成 `/loom`。
 
-Add a new knowledge source:
+新增知识库：
 
 ```text
 @loom knowledge add --name product-rules ~/Documents/product-rules
 @loom knowledge build product-rules
 ```
 
-`--name` is required and must be unique. A source can include one file, many files, one directory, many directories, or a mix of files and directories. Currently supported formats are `.md`, `.txt`, `.json`, `.yaml`, `.yml`, `.pdf`, and `.docx`.
+`--name` 必填且必须全局唯一。一个知识库可以包含单个文件、多个文件、单个目录、多个目录，或文件与目录混合。当前支持的格式是 `.md`、`.txt`、`.json`、`.yaml`、`.yml`、`.pdf`、`.docx`。
 
-Update an existing knowledge source's registered paths:
+更新已有知识库的路径集合：
 
 ```text
 @loom knowledge update product-rules --add-path ~/Documents/new-rules.md
@@ -212,17 +214,17 @@ Update an existing knowledge source's registered paths:
 @loom knowledge build product-rules
 ```
 
-If the files inside an already registered path changed, run `build` again. You do not need `update` unless the path set changes.
+如果只是已注册路径里的文件内容发生变化，直接重新执行 `build`。只有知识库包含的路径集合发生变化时，才需要先执行 `update`。
 
-Resume an unfinished semantic knowledge build:
+恢复未完成的知识库语义构建：
 
 ```text
 @loom knowledge resume product-rules
 ```
 
-Use `resume` when a knowledge build stopped before publishing, for example after reopening a coding-agent session or when a multi-pack semantic build did not finish. It does not rebuild the source; it finds the next unfinished semantic pack and lets the agent continue until the index is published.
+如果知识库构建还没发布就中断了，例如重新打开 coding agent 会话，或者多 pack 语义构建没有跑完，可以使用 `resume`。它不会重新构建知识库，而是找到下一包未完成的语义构建任务，让 agent 接着执行直到索引发布。
 
-Review and manage existing knowledge sources:
+查看和管理已有知识库：
 
 ```text
 @loom knowledge list
@@ -231,26 +233,26 @@ Review and manage existing knowledge sources:
 @loom knowledge discard product-rules
 ```
 
-Disable a source without deleting it:
+临时停用或重新启用某个知识库：
 
 ```text
 @loom knowledge disable product-rules
 @loom knowledge enable product-rules
 ```
 
-Remove a source registration and its local Loom index:
+删除知识库注册和 Loom 本地索引：
 
 ```text
 @loom knowledge remove product-rules
 ```
 
-`remove` does not delete your original documents. It only removes Loom's registration, pending queue, and built index for that knowledge source.
+`remove` 不会删除你的原始文档，只会删除 Loom 对这个知识库的注册信息、待构建队列和已构建索引。
 
-### Run Delivery
+### 运行交付
 
-Start from your coding agent with its Loom command surface:
+在 coding agent 中使用对应的 Loom 命令入口启动：
 
-Codex:
+Codex：
 
 ```text
 @loom build a visitor registration system
@@ -259,7 +261,7 @@ Codex:
 @loom deploy
 ```
 
-Claude Code and OpenCode:
+Claude Code 和 OpenCode：
 
 ```text
 /loom build a visitor registration system
@@ -268,73 +270,72 @@ Claude Code and OpenCode:
 /loom deploy
 ```
 
-In all agents, the command starts the same Loom MCP delivery protocol. The plugin routes the request to Loom tools and follows the structured next action returned by the MCP server.
-For new delivery requests, the explicit `plan` subcommand is equivalent to a bare request: `@loom plan build ...` matches `@loom build ...`, and `/loom plan build ...` matches `/loom build ...`.
+不同 agent 的入口不同，但都会进入同一套 Loom MCP 交付协议。插件会把请求路由到 Loom tools，并按 MCP server 返回的结构化 next action 继续执行。
 
-Use `continue` whenever you want Loom to resume or advance the current delivery safely. This is the right first action after reopening an agent session, after an interruption, after a tool action succeeds but the agent does not keep going, or when you are not sure which step is next.
+当你希望 Loom 安全恢复或推进当前交付时，优先使用 `continue`。例如重新打开 agent 会话、任务中断、某个 tool action 成功后 agent 没继续往下走，或者你不确定下一步是什么时，都应该先用 `continue`。
 
 ```text
 @loom continue     # Codex
-/loom continue     # Claude Code and OpenCode
+/loom continue     # Claude Code 和 OpenCode
 ```
 
-Agent plugins set the Loom routing environment for you. Use the agent command surface for normal work; Loom's product runtime is the MCP server installed by `loom-setup`.
+Agent 插件会自动设置 Loom 所需的路由环境。正常使用时请走 agent 命令入口；Loom 的产品运行时是 `loom-setup` 安装的 MCP server。
 
-### Debug MCP Traffic
+### 调试 MCP 流量
 
-Set `LOOM_MCP_TRACE=1` to dump every MCP request and response (including the `initialize` handshake and notifications) to `$LOOM_HOME/log/loom-mcp-trace.log`. The file is human-readable and pretty-printed; use `tail -f` to watch it live while reproducing an issue. Set `LOOM_MCP_TRACE=/some/path.log` to write elsewhere. The toggle is off by default and adds no overhead when disabled.
+设置 `LOOM_MCP_TRACE=1` 可把每条 MCP 请求和响应（包括 `initialize` 握手和通知）dump 到 `$LOOM_HOME/log/loom-mcp-trace.log`。该文件为人类可读的 pretty-print 格式；复现问题时可用 `tail -f` 实时观看。设置 `LOOM_MCP_TRACE=/some/path.log` 可写到别处。开关默认关闭，关闭时无任何开销。
 
-## How It Works
+## 工作方式
 
-Loom runs as a local MCP delivery state machine. The agent does not decide the whole workflow from memory; it asks Loom for the next request, reads only the declared fields, writes the expected artifact, submits it back, and lets Loom validate and route the next step.
+Loom 作为本地 MCP 交付状态机运行。Agent 不需要凭记忆决定完整流程；它向 Loom 获取下一步 request，只读取声明的字段，写入指定 artifact，提交给 Loom 校验，再由 Loom 持久化并路由下一步。
 
-1. Start or resume from `.loom/` state.
-2. Clarify and confirm scope, optionally using registered knowledge sources.
-3. Build the delivery baseline: repository context, technical baseline, planning contract, and architecture artifact.
-4. Convert contracts into task plans with ownership, read groups, write boundaries, verification intent, and result templates.
-5. Execute bounded tasks through the agent, then write a TaskResult with evidence.
-6. Let Loom validate, normalize, persist, and route from the submitted artifact.
-7. Review through structured signals, then route code repair, task-plan repair, architecture repair, or manual review when needed.
-8. Prepare local deployment previews with runtime facts, Compose topology, environment rules, logs, and repair boundaries when `deploy` is requested.
-9. Continue or hand off from saved state; the next session or another agent can resume without rebuilding the delivery context.
+1. 从 `.loom/` 状态启动或恢复。
+2. 澄清并确认范围，必要时读取已注册的本地知识库。
+3. 建立交付基线：repository context、technical baseline、planning contract 和 architecture artifact。
+4. 将 contracts 转成任务计划，明确任务归属、read groups、写入边界、验证意图和结果模板。
+5. 由 agent 执行有边界的任务，并写入带证据的 TaskResult。
+6. Loom 对提交的 artifact 做校验、归一、持久化，并决定下一步路由。
+7. 通过结构化 review signals 进行评审，并按问题类型路由到代码修复、任务计划修复、架构修复或人工 review。
+8. 当执行 `deploy` 时，基于 runtime facts、Compose topology、环境规则、日志和 repair boundaries 准备本地部署预览。
+9. 后续会话或其他 agent 可以从已保存状态继续，不需要重新整理交付上下文。
 
-## Learn More
+## 了解更多
 
-Need | Command or file
+需求 | 命令或文件
 --- | ---
-Check Loom plugin availability | `@loom status` in Codex, or `/loom status` in Claude Code and OpenCode
-Install or upgrade Codex plugin | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent codex`
-Install or upgrade Claude Code plugin | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent claude-code`
-Install or upgrade OpenCode plugin | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent opencode`
-Install or upgrade all supported plugins | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent all`
-Run a local deployment preview | `@loom deploy` in Codex, or `/loom deploy` in Claude Code and OpenCode
+检查 Loom 插件可用性 | Codex 使用 `@loom status`，Claude Code 和 OpenCode 使用 `/loom status`
+安装或升级 Codex 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent codex`
+安装或升级 Claude Code 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent claude-code`
+安装或升级 OpenCode 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent opencode`
+安装或升级全部受支持插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent all`
+运行本地部署预览 | Codex 使用 `@loom deploy`，Claude Code 和 OpenCode 使用 `/loom deploy`
 
 ## FAQ
 
 <details>
-<summary>How is Loom different from <code>CLAUDE.md</code>, <code>AGENTS.md</code>, or <code>.cursorrules</code>?</summary>
+<summary>Loom 和 <code>CLAUDE.md</code>、<code>AGENTS.md</code>、<code>.cursorrules</code> 有什么不同？</summary>
 
-Those files are useful entry points, but they tend to become large prompts. Loom adds stateful delivery routing, task artifacts, review results, repair requests, deployment evidence, and MCP tools around them.
-
-</details>
-
-<details>
-<summary>What happens if a delivery is interrupted?</summary>
-
-Loom stores project-local delivery state under `.loom/`, including context, task plans, result records, review notes, repair requests, and deployment evidence. Reopen the agent session and run `@loom continue` in Codex or `/loom continue` in Claude Code and OpenCode; Loom will route the next step from the saved delivery state.
+这些文件适合作为入口，但很容易变成越来越大的 prompt。Loom 在它们之外增加了有状态交付路由、任务 artifacts、review 结果、修复请求、部署证据和 MCP tools。
 
 </details>
 
 <details>
-<summary>Does Loom deploy to production?</summary>
+<summary>如果交付过程中断了怎么办？</summary>
 
-Not yet. Production deployment will be added later. Current deployment support focuses on local Docker Compose previews, validation, logs, and repair guidance.
+Loom 会把项目本地交付状态保存到 `.loom/`，包括上下文、任务计划、结果记录、review notes、修复请求和部署证据。重新打开 agent 会话后，在 Codex 中运行 `@loom continue`，或在 Claude Code 和 OpenCode 中运行 `/loom continue`，Loom 会基于已保存的交付状态路由下一步。
 
 </details>
 
-## Uninstalling Loom
+<details>
+<summary>Loom 会部署到生产环境吗？</summary>
 
-If you need to remove Loom from one local agent, use `loom-setup`:
+暂时不会，后续会添加生产环境部署能力。当前部署能力聚焦于本地 Docker Compose 预览、验证、日志和修复指导。
+
+</details>
+
+## 卸载 Loom
+
+如果你需要从本机移除某个 agent 的 Loom 插件，请使用 `loom-setup`：
 
 ```bash
 ~/.loom/bin/loom-setup uninstall --agent codex
@@ -342,32 +343,32 @@ If you need to remove Loom from one local agent, use `loom-setup`:
 ~/.loom/bin/loom-setup uninstall --agent opencode
 ```
 
-To remove all local Loom agent plugins from this machine:
+如果需要移除本机全部 Loom agent 插件：
 
 ```bash
 ~/.loom/bin/loom-setup uninstall --all
 ```
 
-To remove Loom user-level runtime data, including installed runtimes and user-level knowledge indexes:
+如果需要删除 Loom 的用户级 runtime 数据，包括已安装 runtime 和用户级知识库索引：
 
 ```bash
 ~/.loom/bin/loom-setup purge
 ```
 
-`uninstall` keeps project-local `.loom/` delivery state. `purge` is intentionally broader and should be used only when you want to remove Loom's user-level runtime and indexes from this machine.
+`uninstall` 会保留项目本地 `.loom/` 交付状态。`purge` 的范围更大，只应在你确认要移除本机 Loom 用户级 runtime 和索引时使用。
 
-After uninstalling a plugin, open a new agent session so that agent reloads its local command/plugin state.
+卸载插件后，请打开新的 agent 会话，让对应 agent 重新加载本地 command/plugin 状态。
 
-## Related Work
+## 相关工作
 
-Loom is informed by adjacent work in coding-agent skills, agentic engineering workflows, and software engineering evaluation:
+Loom 关注 coding-agent skills、agentic engineering workflows 和软件工程评测方向的相关工作：
 
-- [Matt Pocock's Skills](https://github.com/mattpocock/skills) - Practical agent skills for requirement clarification, domain language, debugging, TDD, and handoff discipline.
-- [SWE-bench](https://github.com/SWE-bench/SWE-bench) - Real-world software engineering tasks used to evaluate coding agents.
+- [Matt Pocock's Skills](https://github.com/mattpocock/skills) - 面向需求澄清、领域语言、调试、TDD 和交接纪律的实用 agent skills。
+- [SWE-bench](https://github.com/SWE-bench/SWE-bench) - 用于评测 coding agents 的真实软件工程任务。
 
-## Supported By
+## 支持方
 
-<img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/Zhejiang_University_Logo.svg" alt="Zhejiang University" width="220"> <img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/University_College_London_logo.svg" alt="University College London" width="220">
+<img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/Zhejiang_University_Logo.svg" alt="浙江大学" width="220"> <img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/University_College_London_logo.svg" alt="伦敦大学学院" width="220">
 
 ## Star History
 
@@ -379,6 +380,6 @@ Loom is informed by adjacent work in coding-agent skills, agentic engineering wo
   </picture>
 </a>
 
-## License
+## 许可证
 
-Loom is open source under the [Apache License 2.0](./LICENSE).
+Loom 基于 [Apache License 2.0](./LICENSE) 开源。
