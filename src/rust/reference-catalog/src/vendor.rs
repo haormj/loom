@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 /// 进程级缓存的 vendor 目录实例。
 ///
 /// 首次调用时从磁盘加载并解析,后续调用直接返回缓存的引用。
-/// Phase 1 中所有选择代码路径通过此函数访问目录数据。
+/// 所有选择代码路径通过此函数访问目录数据。
 static VENDOR_CATALOG: OnceLock<ReferenceCatalog> = OnceLock::new();
 
 /// 返回进程级缓存的 vendor 目录。

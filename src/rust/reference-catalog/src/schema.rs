@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 
 /// 参考目录顶层模型。
 ///
-/// Phase 0 中仅从 vendor `catalog.toml` 填充。
-/// 后续阶段将在此基础上叠加 enterprise 和 project overlay。
+/// 当前仅从 vendor `catalog.toml` 填充。
+/// 后续将在此基础上叠加 enterprise 和 project overlay。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReferenceCatalog {
@@ -13,15 +13,15 @@ pub struct ReferenceCatalog {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub routes: Vec<Route>,
 
-    /// Focus tag 文本关键词规则(Phase 2)。
+    /// Focus tag 文本关键词规则。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub focus_rules: Vec<FocusRuleEntry>,
 
-    /// Phase 2 占位 — vendor 目录中当前为空。
+    /// 适用性规则(signal 是否适用于 task 的决策引擎)。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub applicability: Vec<ApplicabilityEntry>,
 
-    /// 后端生态系统定义(Phase 2)。
+    /// 后端生态系统定义。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub backend_ecosystems: Vec<BackendEcosystemEntry>,
 }
@@ -148,10 +148,10 @@ pub struct SectionGroupMapping {
     pub items: Vec<String>,
 }
 
-// ── Phase 2 类型 ──
+// ── 选择规则类型 ──
 
-/// Focus tag 规则(Phase 2 — 替代 code_quality.rs 中的
-/// `task_focus_tags()` 函数的文本关键词匹配部分)。
+/// Focus tag 规则 — 替代 code_quality.rs 中
+/// `task_focus_tags()` 函数的文本关键词匹配部分。
 ///
 /// 每条规则描述:当 task 文本(title + objective + actions)包含
 /// `keywords` 中任意一个关键词时,将 `focus_tags` 中的标签
@@ -172,8 +172,8 @@ pub struct FocusRuleEntry {
     pub requires_backend: bool,
 }
 
-/// 适用性规则(Phase 2 — 替代 code_quality.rs 中的
-/// `signal_applies_to_task()` 函数)。
+/// 适用性规则 — 替代 code_quality.rs 中
+/// `signal_applies_to_task()` 函数。
 ///
 /// 每条规则描述:当 signal 的 language 匹配 `language` 字段
 /// (或 `language` 为 `"*"` 表示通配,`"none"` 表示 language 为 None),
@@ -203,8 +203,8 @@ pub struct ApplicabilityEntry {
     pub applies_when_roles_empty: bool,
 }
 
-/// 后端生态系统定义(Phase 2 — 替代 planning/technical_baseline.rs 中的
-/// `BACKEND_ECOSYSTEMS` 常量)。
+/// 后端生态系统定义 — 替代 planning/technical_baseline.rs 中
+/// `BACKEND_ECOSYSTEMS` 常量。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BackendEcosystemEntry {

@@ -1,9 +1,8 @@
 //! 参考目录:Loom 参考选择系统的声明式清单。
 //!
-//! Phase 0 建立目录 schema 和 vendor `catalog.toml` 导出,
-//! 行为零变化。`contracts`、`architecture`、`execution`、`deploy` 等 crate
-//! 中现有的硬编码 enum/match 逻辑仍然是活跃的选择引擎。
-//! Phase 1 将把这些代码路径切换为查询本目录。
+//! `contracts`、`architecture`、`deploy`、`planning` 等 crate 中的
+//! 选择代码路径通过此目录查询参考路由、focus tag 规则、适用性规则
+//! 和后端生态系统定义。
 //!
 //! ## 架构
 //!

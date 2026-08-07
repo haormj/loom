@@ -4,8 +4,7 @@
 # 它从 contracts、architecture、execution 和 deploy crate 中的硬编码
 # enum 函数及 match 分支机械导出。
 #
-# Phase 0:本文件与现有硬编码逻辑并存;reference_catalog/tests/parity.rs
-# 中的 parity 测试验证两者一致。Phase 1 将把选择代码路径切换为从本目录读取。
+# reference_catalog/tests/parity.rs 中的 parity 测试验证目录与代码一致。
 #
 # 约定:模板中的 {item} 替换为条目 id。
 
@@ -602,7 +601,7 @@ referenceRoot = "loom-deploy"
     condition = "runtime_static"
 
 # ════════════════════════════════════════════════════════════════════════
-# Phase 2 — 后端生态系统定义
+# 后端生态系统定义
 # 替代 planning/technical_baseline.rs 中的 BACKEND_ECOSYSTEMS 常量
 # 来源:technical_baseline.rs:993-1092
 # ════════════════════════════════════════════════════════════════════════
@@ -688,12 +687,8 @@ backendMatchers = ["no independent backend", "no backend"]
 dataAccessOptions = ["No ORM"]
 dataAccessMatchers = ["no orm"]
 
-# Phase 2 后续待填充:
-# - signal_from_selection (contracts/code_quality.rs:345-614)
-# - task_focus_tags (contracts/code_quality.rs:642-1218)
-
 # ════════════════════════════════════════════════════════════════════════
-# Phase 2 — 适用性规则
+# 适用性规则
 # 替代 contracts/code_quality.rs 中的 signal_applies_to_task() 函数
 # 来源:code_quality.rs:1235-1287
 #
@@ -761,8 +756,8 @@ requiredRole = "frontend"
 anyFocusTags = ["frontend"]
 
 # ════════════════════════════════════════════════════════════════════════
-# Phase 2 — Focus tag 文本关键词规则
-# 替代 contracts/code_quality.rs 中 task_focus_tags() 的文本匹配部分(Layer C)
+# Focus tag 文本关键词规则
+# 替代 contracts/code_quality.rs 中 task_focus_tags() 的文本匹配部分
 # 来源:code_quality.rs:725-1216
 #
 # 规则语义:

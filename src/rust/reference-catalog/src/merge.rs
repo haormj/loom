@@ -6,11 +6,11 @@ use std::collections::BTreeMap;
 ///
 /// 合并语义:
 /// - **路由**:以 `id` 为键。overlay 路由完全替换 base 路由
-///   (Phase 3 将增加按组的细粒度 extend/replace/prune)。
+///   (后续将增加按组的细粒度 extend/replace/prune)。
 /// - **路由内的组**:以 `id` 为键。overlay 组替换 base 组。
 ///
-/// Phase 0 仅加载 vendor 目录,因此该函数仅由单元测试用合成
-/// fixture 验证。Phase 3 将用真实 enterprise/project overlay 调用。
+/// 当前仅加载 vendor 目录,因此该函数仅由单元测试用合成
+/// fixture 验证。后续将用真实 enterprise/project overlay 调用。
 pub fn merge_catalogs(
     base: &ReferenceCatalog,
     overlay: &ReferenceCatalog,
@@ -47,7 +47,7 @@ fn merge_route_groups(base_route: &mut Route, overlay_route: &Route) -> CatalogR
 
     for group in &overlay_route.groups {
         if let Some(_existing) = group_map.get(&group.id) {
-            // 完全替换(Phase 3 将支持 extend/prune 语义)
+            // 完全替换(后续将支持 extend/prune 语义)
             group_map.insert(group.id.clone(), group.clone());
         } else {
             group_map.insert(group.id.clone(), group.clone());
@@ -76,7 +76,7 @@ fn merge_route_groups(base_route: &mut Route, overlay_route: &Route) -> CatalogR
 
 /// 执行 prune 操作:从路由中移除指定的组。
 ///
-/// 这是 Phase 3 辅助函数,目前由单元测试验证。
+/// 目前由单元测试验证。
 pub fn prune_groups(catalog: &mut ReferenceCatalog, route_id: &str, group_ids: &[String]) {
     if let Some(route) = catalog.routes.iter_mut().find(|r| r.id == route_id) {
         route.groups.retain(|g| !group_ids.contains(&g.id));
@@ -85,7 +85,7 @@ pub fn prune_groups(catalog: &mut ReferenceCatalog, route_id: &str, group_ids: &
 
 /// 执行 replace 操作:替换指定组内的某个 item 条目。
 ///
-/// 这是 Phase 3 辅助函数,目前由单元测试验证。
+/// 目前由单元测试验证。
 pub fn replace_item_entry(
     catalog: &mut ReferenceCatalog,
     route_id: &str,

@@ -2,8 +2,8 @@
 //! contracts、architecture 和 deploy crate 中的硬编码 enum 函数及
 //! match 分支。
 //!
-//! 这些测试是 Phase 1 的安全网:当选择代码路径切换为从目录读取时,
-//! 这些测试证明目录是一次忠实的导出。Phase 1 之后可以移除或反转。
+//! 这些测试是选择代码路径切换到目录读取时的安全网,
+//! 证明目录是一次忠实的导出。
 
 use reference_catalog::{
     load_vendor_catalog, validate_file_existence, validate_structure, vendor_catalog_path,
@@ -681,7 +681,7 @@ fn deploy_route_uses_loom_deploy_reference_root() {
     assert_eq!(route.effective_reference_root(), "loom-deploy");
 }
 
-// ─── Phase 2: Focus tag 文本关键词规则 parity 测试 ───────────────────────
+// ─── Focus tag 文本关键词规则 parity 测试 ────────────────────────────────
 
 /// 验证 vendor catalog 包含预期数量的 focus rules(25 条)。
 #[test]
