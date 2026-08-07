@@ -1904,14 +1904,9 @@ fn dedupe_rule_specs(rules: Vec<Value>) -> Vec<Value> {
 }
 
 pub fn known_ui_reference_groups() -> Value {
-    json!({
-        "core": UI_CORE_REFERENCE_ITEMS,
-        "focus": UI_FOCUS_REFERENCE_ITEMS,
-        "tokens": UI_TOKEN_REFERENCE_ITEMS,
-        "scenarios": UI_SCENARIO_REFERENCE_ITEMS,
-        "stacks": UI_STACK_REFERENCE_ITEMS,
-        "templates": UI_DESIGN_TOKEN_TEMPLATE_IDS
-    })
+    let catalog = reference_catalog::vendor_catalog();
+    let groups = catalog.known_reference_groups("uix");
+    json!(groups)
 }
 
 fn infer_primary_scenario(
@@ -2446,37 +2441,23 @@ pub fn ui_reference_load_plan(reference_groups: &Value) -> Value {
     let Some(groups) = reference_groups.as_object() else {
         return Value::Array(vec![]);
     };
+    let catalog = reference_catalog::vendor_catalog();
     let mut items = Vec::new();
     for (group, value) in groups {
         let Some(group_items) = value.as_array() else {
             continue;
         };
         for item in group_items.iter().filter_map(Value::as_str) {
-            if let Some(path) = ui_reference_path(group, item) {
+            if let Some(entry) = catalog.resolve_entry("uix", group, item) {
                 items.push(json!({
-                    "refId": format!("uix.{group}.{item}"),
-                    "path": path,
-                    "reason": format!("Selected UIX {group}.{item} reference for the current frontend quality contract.")
+                    "refId": entry.ref_id,
+                    "path": entry.path,
+                    "reason": entry.reason.unwrap_or_else(|| format!("Selected UIX {group}.{item} reference for the current frontend quality contract."))
                 }));
             }
         }
     }
     Value::Array(items)
-}
-
-fn ui_reference_path(group: &str, item: &str) -> Option<String> {
-    match group {
-        "core" | "focus" => Some(format!("uix/{item}.md")),
-        "tokens" => Some(format!("uix/tokens/{item}.md")),
-        "scenarios" => Some(format!("uix/scenarios/{item}.md")),
-        "stacks" => Some(format!("uix/stacks/{item}.md")),
-        "templates" => match item {
-            "tokens-css" => Some("uix/templates/tokens.css.tpl".to_string()),
-            "tokens-tailwind" => Some("uix/templates/tokens.tailwind.tpl".to_string()),
-            _ => None,
-        },
-        _ => None,
-    }
 }
 
 fn validate_required_string_array(

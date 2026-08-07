@@ -99,90 +99,20 @@ fn reference_load_plan(
 }
 
 fn reference_load_plan_item(reference_id: &str) -> ReferenceLoadPlanItem {
-    let (path, reason) = reference_metadata(reference_id);
+    let catalog = reference_catalog::vendor_catalog();
+    if let Some(entry) = catalog.resolve_entry("deploy", "deploy", reference_id) {
+        return ReferenceLoadPlanItem {
+            ref_id: entry.ref_id,
+            path: entry.path,
+            reason: entry
+                .reason
+                .unwrap_or_else(|| "Deploy reference selected by MCP.".to_string()),
+        };
+    }
     ReferenceLoadPlanItem {
         ref_id: reference_id.to_string(),
-        path: path.to_string(),
-        reason: reason.to_string(),
-    }
-}
-
-fn reference_metadata(reference_id: &str) -> (&'static str, &'static str) {
-    match reference_id {
-        "deploy.providers" => (
-            "providers.md",
-            "Provider selection and generated/existing asset policy.",
-        ),
-        "deploy.matrix" => (
-            "matrix.md",
-            "Deployment topology, runtime, layout, port, and dependency matrix.",
-        ),
-        "deploy.source-model" => (
-            "source-model.md",
-            "Repository evidence to deployable service model guidance.",
-        ),
-        "deploy.topology" => (
-            "topology.md",
-            "Public entry, proxy route, and validation topology guidance.",
-        ),
-        "deploy.compose" => (
-            "compose.md",
-            "Compose service wiring, ports, dependencies, and health guidance.",
-        ),
-        "deploy.dockerfile" => (
-            "dockerfile.md",
-            "Dockerfile context, workdir, copy, build, and runtime guidance.",
-        ),
-        "deploy.environment" => (
-            "environment.md",
-            "Environment, local defaults, dependency URL, and state guidance.",
-        ),
-        "deploy.workspaces" => (
-            "workspaces.md",
-            "Workspace app path, source root, and build context guidance.",
-        ),
-        "deploy.bootstrap" => (
-            "bootstrap.md",
-            "Migration/bootstrap diagnostics and approval boundary guidance.",
-        ),
-        "deploy.repair" => (
-            "repair.md",
-            "Deploy repair decision tree and editable asset boundary.",
-        ),
-        "deploy.dependencies.redis" => (
-            "redis.md",
-            "Redis dependency capabilities, persistence, health, and generated asset boundary.",
-        ),
-        "deploy.stacks.node" => (
-            "node.md",
-            "Node-family scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.python" => (
-            "python.md",
-            "Python scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.go" => ("go.md", "Go scanner, generated asset, and repair guidance."),
-        "deploy.stacks.java" => (
-            "java.md",
-            "Java scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.dotnet" => (
-            "dotnet.md",
-            ".NET scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.php" => (
-            "php.md",
-            "PHP scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.ruby" => (
-            "ruby.md",
-            "Ruby scanner, generated asset, and repair guidance.",
-        ),
-        "deploy.stacks.static" => (
-            "static.md",
-            "Static site scanner, generated asset, and repair guidance.",
-        ),
-        _ => ("providers.md", "Deploy reference selected by MCP."),
+        path: "providers.md".to_string(),
+        reason: "Deploy reference selected by MCP.".to_string(),
     }
 }
 

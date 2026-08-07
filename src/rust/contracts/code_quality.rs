@@ -68,42 +68,11 @@ pub fn build_code_quality_seed(baseline: &TechnicalBaselineContract) -> Value {
 }
 
 pub fn code_quality_enum_refs() -> Value {
+    let catalog = reference_catalog::vendor_catalog();
+    let code_groups = catalog.known_reference_groups("code");
     json!({
         "knownReferenceGroups": {
-                "code": {
-                    "common": ["observability"],
-                "java": ["core", "spring", "persistence", "security", "reactive", "testing"],
-                "springboot": ["web", "data", "security", "testing", "runtime", "async", "cache", "integration", "resilience", "cloud", "observability", "logging"],
-                "mybatisplus": ["configuration", "mapping", "crud", "wrappers", "plugins", "security", "extensions"],
-                "django": ["models", "serializers", "views", "security", "testing", "logging"],
-                "fastapi": ["schemas", "data", "routing", "security", "testing", "migration", "logging"],
-                "aspnetcore": ["minimal", "architecture", "data", "security", "testing", "runtime", "logging"],
-                "nestjs": ["controllers", "dtos", "services", "security", "testing", "migration", "logging"],
-                "react": ["core", "hooks", "state", "performance", "testing", "server-components", "react19", "migration"],
-                "nextjs": ["core", "app-router", "data", "actions", "server-components", "runtime", "testing"],
-                "vue": ["core", "components", "state", "typescript", "nuxt", "build", "mobile", "testing"],
-                "angular": ["core", "components", "routing", "rxjs", "ngrx", "testing"],
-                "reactnative": ["core", "structure", "navigation", "platform", "lists", "storage", "testing"],
-                "flutter": ["core", "structure", "widgets", "navigation", "riverpod", "bloc", "performance", "testing"],
-                "typescript": ["core", "types", "guards", "config", "patterns", "testing"],
-                "javascript": ["core", "async", "modules", "node", "browser", "testing"],
-                "python": ["core", "typing", "async", "packaging", "testing"],
-                "go": ["core", "concurrency", "interfaces", "structure", "generics", "testing"],
-                "csharp": ["core", "modern", "persistence", "blazor", "performance", "testing"],
-                "cpp": ["core", "modern", "templates", "performance", "concurrency", "build", "testing"],
-                "kotlin": ["core", "coroutines", "ktor", "compose", "multiplatform", "dsl", "testing"],
-                "php": ["core", "modern", "laravel", "symfony", "async", "testing"],
-                "rust": ["core", "ownership", "traits", "errors", "async", "testing"],
-                "swift": ["core", "swiftui", "concurrency", "protocols", "memory", "testing"],
-                "sql": [
-                    "schema", "queries", "dialects", "optimization", "windows",
-                    "mysql.schema", "mysql.queries", "mysql.transactions",
-                    "postgresql.schema", "postgresql.queries", "postgresql.transactions",
-                    "sqlserver.schema", "sqlserver.queries", "sqlserver.transactions",
-                    "oracle.schema", "oracle.queries", "oracle.transactions"
-                ],
-                "redis": ["core", "cache", "atomicity", "messaging"]
-            }
+            "code": code_groups
         },
         "focusTag": ["api", "api_client", "frontend", "persistence", "security", "async", "reactive", "cache", "performance", "configuration", "runtime", "integration", "resilience", "observability", "cloud", "migration", "architecture", "testing", "sql", "sql_schema", "sql_query", "sql_transaction", "sql_test", "generics", "analytics", "memory", "hooks", "state", "server_components", "react19", "app_router", "server_actions", "data_fetching", "build_tooling", "mobile", "nuxt", "routing", "rxjs", "ngrx", "riverpod", "bloc", "list_performance", "storage"],
         "confidence": ["high", "medium", "low"]
@@ -276,13 +245,16 @@ fn redis_reference_items_for_task(
 pub fn code_reference_load_plan(
     reference_groups: &BTreeMap<String, Vec<String>>,
 ) -> Vec<ReferenceLoadPlanItem> {
+    let catalog = reference_catalog::vendor_catalog();
     let mut load_plan = Vec::new();
     if !reference_groups.is_empty() {
-        load_plan.push(ReferenceLoadPlanItem {
-            ref_id: "tech.code.common".to_string(),
-            path: "tech/code/common.md".to_string(),
-            reason: "Common Loom code quality rules for repository adaptation, delivery evidence, and verification.".to_string(),
-        });
+        for prepend in catalog.prepend_items_for_route("code") {
+            load_plan.push(ReferenceLoadPlanItem {
+                ref_id: prepend.ref_id.clone(),
+                path: prepend.path.clone(),
+                reason: prepend.reason.clone(),
+            });
+        }
     }
     load_plan.extend(reference_groups.iter().flat_map(|(group_key, groups)| {
         groups
@@ -2225,96 +2197,16 @@ fn frontend_reference_items_for_signal(
 }
 
 fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanItem {
-    if group_key == "mybatisplus"
-        && matches!(
-            group,
-            "configuration"
-                | "mapping"
-                | "crud"
-                | "wrappers"
-                | "plugins"
-                | "security"
-                | "extensions"
-        )
-    {
+    let catalog = reference_catalog::vendor_catalog();
+    if let Some(entry) = catalog.resolve_entry("code", group_key, group) {
         return ReferenceLoadPlanItem {
-            ref_id: format!("bk.spring.mybatisplus.{group}"),
-            path: format!("tech/backend/springboot/mybatis-plus/{group}.md"),
-            reason: format!(
-                "Selected MyBatis-Plus {group} reference for this task-owned persistence capability."
-            ),
-        };
-    }
-    if let Some((ref_prefix, path_group, label)) = match group_key {
-        "springboot" => Some(("bk.spring", "springboot", "Spring Boot")),
-        "django" => Some(("bk.django", "django", "Django")),
-        "fastapi" => Some(("bk.fastapi", "fastapi", "FastAPI")),
-        "aspnetcore" => Some(("bk.aspnet", "aspnetcore", "ASP.NET Core")),
-        "nestjs" => Some(("bk.nest", "nestjs", "NestJS")),
-        _ => None,
-    } {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("{ref_prefix}.{group}"),
-            path: format!("tech/backend/{path_group}/{group}.md"),
-            reason: format!("Selected {label} {group} framework quality reference for this task."),
-        };
-    }
-    if let Some((ref_prefix, path_group, label)) = match group_key {
-        "react" => Some(("fe.react", "react", "React")),
-        "nextjs" => Some(("fe.next", "nextjs", "Next.js")),
-        "vue" => Some(("fe.vue", "vue", "Vue")),
-        "angular" => Some(("fe.angular", "angular", "Angular")),
-        "reactnative" => Some(("fe.rn", "react-native", "React Native")),
-        "flutter" => Some(("fe.flutter", "flutter", "Flutter")),
-        _ => None,
-    } {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("{ref_prefix}.{group}"),
-            path: format!("tech/frontend/{path_group}/{group}.md"),
-            reason: format!(
-                "Selected {label} {group} frontend framework quality reference for this task."
-            ),
-        };
-    }
-    if group_key == "sql" {
-        if let Some((provider, subject)) = group.split_once('.') {
-            if matches!(provider, "mysql" | "postgresql" | "sqlserver" | "oracle")
-                && matches!(subject, "schema" | "queries" | "transactions")
-            {
-                let label = match provider {
-                    "mysql" => "MySQL",
-                    "postgresql" => "PostgreSQL",
-                    "sqlserver" => "SQL Server",
-                    _ => "Oracle",
-                };
-                return ReferenceLoadPlanItem {
-                    ref_id: format!("tech.code.sql.{provider}.{subject}"),
-                    path: format!("tech/code/sql/{provider}/{subject}.md"),
-                    reason: format!(
-                        "Selected {label} {subject} dialect reference for this persistence task."
-                    ),
-                };
-            }
-        }
-    }
-    if group_key == "redis"
-        && matches!(
-            group,
-            "core" | "cache" | "session" | "atomicity" | "messaging"
-        )
-    {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("tech.code.redis.{group}"),
-            path: format!("tech/code/redis/{group}.md"),
-            reason: format!("Selected Redis {group} reference for this task-owned capability."),
-        };
-    }
-    if group_key == "common" && group == "observability" {
-        return ReferenceLoadPlanItem {
-            ref_id: "tech.code.observability".to_string(),
-            path: "tech/code/observability.md".to_string(),
-            reason: "Selected the task-owned cross-stack observability implementation reference."
-                .to_string(),
+            ref_id: entry.ref_id,
+            path: entry.path,
+            reason: entry.reason.unwrap_or_else(|| {
+                format!(
+                    "Selected {group_key}.{group} implementation quality reference for this task."
+                )
+            }),
         };
     }
     ReferenceLoadPlanItem {

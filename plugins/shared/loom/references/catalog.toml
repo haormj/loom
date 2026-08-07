@@ -1,0 +1,698 @@
+# Loom 参考目录 — Vendor 基线
+#
+# 本文件是参考路由/组/条目元数据的唯一声明式来源。
+# 它从 contracts、architecture、execution 和 deploy crate 中的硬编码
+# enum 函数及 match 分支机械导出。
+#
+# Phase 0:本文件与现有硬编码逻辑并存;reference_catalog/tests/parity.rs
+# 中的 parity 测试验证两者一致。Phase 1 将把选择代码路径切换为从本目录读取。
+#
+# 约定:模板中的 {item} 替换为条目 id。
+
+schemaVersion = 1
+
+# ════════════════════════════════════════════════════════════════════════
+# Code 路由 — 替代 code_quality_enum_refs() + reference_load_plan_item()
+# 来源:contracts/code_quality.rs:70-106, 2227-2327
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "code"
+referenceRoot = "loom"
+
+  # code_reference_load_plan() 在选中任意组时前置 common.md
+  [[routes.prependItems]]
+  refId = "tech.code.common"
+  path = "tech/code/common.md"
+  reason = "Common Loom code quality rules for repository adaptation, delivery evidence, and verification."
+  condition = "when_groups_non_empty"
+
+  # ── common 组:特殊路径(非 tech/code/common/observability.md)──
+  [[routes.groups]]
+  id = "common"
+  label = "Common"
+    [[routes.groups.itemEntries]]
+    item = "observability"
+    refId = "tech.code.observability"
+    path = "tech/code/observability.md"
+
+  # ── 语言组(回退路径模式:tech/code/{group}/{item}.md)──
+
+  [[routes.groups]]
+  id = "java"
+  refIdTemplate = "tech.code.java.{item}"
+  pathTemplate = "tech/code/java/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "spring", "persistence", "security", "reactive", "testing"]
+
+  [[routes.groups]]
+  id = "typescript"
+  refIdTemplate = "tech.code.typescript.{item}"
+  pathTemplate = "tech/code/typescript/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "types", "guards", "config", "patterns", "testing"]
+
+  [[routes.groups]]
+  id = "javascript"
+  refIdTemplate = "tech.code.javascript.{item}"
+  pathTemplate = "tech/code/javascript/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "async", "modules", "node", "browser", "testing"]
+
+  [[routes.groups]]
+  id = "python"
+  refIdTemplate = "tech.code.python.{item}"
+  pathTemplate = "tech/code/python/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "typing", "async", "packaging", "testing"]
+
+  [[routes.groups]]
+  id = "go"
+  refIdTemplate = "tech.code.go.{item}"
+  pathTemplate = "tech/code/go/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "concurrency", "interfaces", "structure", "generics", "testing"]
+
+  [[routes.groups]]
+  id = "csharp"
+  refIdTemplate = "tech.code.csharp.{item}"
+  pathTemplate = "tech/code/csharp/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "modern", "persistence", "blazor", "performance", "testing"]
+
+  [[routes.groups]]
+  id = "cpp"
+  refIdTemplate = "tech.code.cpp.{item}"
+  pathTemplate = "tech/code/cpp/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "modern", "templates", "performance", "concurrency", "build", "testing"]
+
+  [[routes.groups]]
+  id = "kotlin"
+  refIdTemplate = "tech.code.kotlin.{item}"
+  pathTemplate = "tech/code/kotlin/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "coroutines", "ktor", "compose", "multiplatform", "dsl", "testing"]
+
+  [[routes.groups]]
+  id = "php"
+  refIdTemplate = "tech.code.php.{item}"
+  pathTemplate = "tech/code/php/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "modern", "laravel", "symfony", "async", "testing"]
+
+  [[routes.groups]]
+  id = "rust"
+  refIdTemplate = "tech.code.rust.{item}"
+  pathTemplate = "tech/code/rust/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "ownership", "traits", "errors", "async", "testing"]
+
+  [[routes.groups]]
+  id = "swift"
+  refIdTemplate = "tech.code.swift.{item}"
+  pathTemplate = "tech/code/swift/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["core", "swiftui", "concurrency", "protocols", "memory", "testing"]
+
+  # ── 后端框架组(路径:tech/backend/{group}/{item}.md)──
+
+  [[routes.groups]]
+  id = "springboot"
+  refIdTemplate = "bk.spring.{item}"
+  pathTemplate = "tech/backend/springboot/{item}.md"
+  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  label = "Spring Boot"
+  items = ["web", "data", "security", "testing", "runtime", "async", "cache", "integration", "resilience", "cloud", "observability", "logging"]
+
+  [[routes.groups]]
+  id = "mybatisplus"
+  refIdTemplate = "bk.spring.mybatisplus.{item}"
+  pathTemplate = "tech/backend/springboot/mybatis-plus/{item}.md"
+  reasonTemplate = "Selected {label} {item} reference for this task-owned persistence capability."
+  label = "MyBatis-Plus"
+  items = ["configuration", "mapping", "crud", "wrappers", "plugins", "security", "extensions"]
+
+  [[routes.groups]]
+  id = "django"
+  refIdTemplate = "bk.django.{item}"
+  pathTemplate = "tech/backend/django/{item}.md"
+  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  label = "Django"
+  items = ["models", "serializers", "views", "security", "testing", "logging"]
+
+  [[routes.groups]]
+  id = "fastapi"
+  refIdTemplate = "bk.fastapi.{item}"
+  pathTemplate = "tech/backend/fastapi/{item}.md"
+  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  label = "FastAPI"
+  items = ["schemas", "data", "routing", "security", "testing", "migration", "logging"]
+
+  [[routes.groups]]
+  id = "aspnetcore"
+  refIdTemplate = "bk.aspnet.{item}"
+  pathTemplate = "tech/backend/aspnetcore/{item}.md"
+  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  label = "ASP.NET Core"
+  items = ["minimal", "architecture", "data", "security", "testing", "runtime", "logging"]
+
+  [[routes.groups]]
+  id = "nestjs"
+  refIdTemplate = "bk.nest.{item}"
+  pathTemplate = "tech/backend/nestjs/{item}.md"
+  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  label = "NestJS"
+  items = ["controllers", "dtos", "services", "security", "testing", "migration", "logging"]
+
+  # ── 前端框架组(路径:tech/frontend/{group}/{item}.md)──
+
+  [[routes.groups]]
+  id = "react"
+  refIdTemplate = "fe.react.{item}"
+  pathTemplate = "tech/frontend/react/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "React"
+  items = ["core", "hooks", "state", "performance", "testing", "server-components", "react19", "migration"]
+
+  [[routes.groups]]
+  id = "nextjs"
+  refIdTemplate = "fe.next.{item}"
+  pathTemplate = "tech/frontend/nextjs/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "Next.js"
+  items = ["core", "app-router", "data", "actions", "server-components", "runtime", "testing"]
+
+  [[routes.groups]]
+  id = "vue"
+  refIdTemplate = "fe.vue.{item}"
+  pathTemplate = "tech/frontend/vue/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "Vue"
+  items = ["core", "components", "state", "typescript", "nuxt", "build", "mobile", "testing"]
+
+  [[routes.groups]]
+  id = "angular"
+  refIdTemplate = "fe.angular.{item}"
+  pathTemplate = "tech/frontend/angular/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "Angular"
+  items = ["core", "components", "routing", "rxjs", "ngrx", "testing"]
+
+  [[routes.groups]]
+  id = "reactnative"
+  refIdTemplate = "fe.rn.{item}"
+  pathTemplate = "tech/frontend/react-native/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "React Native"
+  items = ["core", "structure", "navigation", "platform", "lists", "storage", "testing"]
+
+  [[routes.groups]]
+  id = "flutter"
+  refIdTemplate = "fe.flutter.{item}"
+  pathTemplate = "tech/frontend/flutter/{item}.md"
+  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  label = "Flutter"
+  items = ["core", "structure", "widgets", "navigation", "riverpod", "bloc", "performance", "testing"]
+
+  # ── SQL 组:两级结构(通用项 + provider overlay)──
+  # 来源:code_quality.rs:98-104(enum), 2279-2298(路径映射)
+
+  [[routes.groups]]
+  id = "sql"
+  refIdTemplate = "tech.code.sql.{item}"
+  pathTemplate = "tech/code/sql/{item}.md"
+  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  items = ["dialects", "optimization", "queries", "schema", "windows"]
+
+    [[routes.groups.providers]]
+    id = "mysql"
+    refIdTemplate = "tech.code.sql.mysql.{subject}"
+    pathTemplate = "tech/code/sql/mysql/{subject}.md"
+    subjects = ["schema", "queries", "transactions"]
+    label = "MySQL"
+    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+
+    [[routes.groups.providers]]
+    id = "postgresql"
+    refIdTemplate = "tech.code.sql.postgresql.{subject}"
+    pathTemplate = "tech/code/sql/postgresql/{subject}.md"
+    subjects = ["schema", "queries", "transactions"]
+    label = "PostgreSQL"
+    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+
+    [[routes.groups.providers]]
+    id = "sqlserver"
+    refIdTemplate = "tech.code.sql.sqlserver.{subject}"
+    pathTemplate = "tech/code/sql/sqlserver/{subject}.md"
+    subjects = ["schema", "queries", "transactions"]
+    label = "SQL Server"
+    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+
+    [[routes.groups.providers]]
+    id = "oracle"
+    refIdTemplate = "tech.code.sql.oracle.{subject}"
+    pathTemplate = "tech/code/sql/oracle/{subject}.md"
+    subjects = ["schema", "queries", "transactions"]
+    label = "Oracle"
+    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+
+  # ── Redis 组 ──
+  # 注意:reference_load_plan_item 的 match 分支还处理 "session"
+  # (tech/code/redis/session.md),但它不在 knownReferenceGroups 中。
+
+  [[routes.groups]]
+  id = "redis"
+  refIdTemplate = "tech.code.redis.{item}"
+  pathTemplate = "tech/code/redis/{item}.md"
+  label = "Redis"
+  items = ["core", "cache", "atomicity", "messaging"]
+  reasonTemplate = "Selected {label} {item} reference for this task-owned capability."
+
+# ════════════════════════════════════════════════════════════════════════
+# API 路由 — 替代 api_quality_enum_refs() + api_reference_load_plan()
+# 来源:contracts/api_quality.rs:110-149
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "api"
+referenceRoot = "loom"
+
+  [[routes.groups]]
+  id = "api"
+  refIdTemplate = "tech.api.{item}"
+  pathTemplate = "tech/api/{item}.md"
+  reasonTemplate = "Selected API {item} quality reference for current-phase interface design."
+  items = ["core", "resource", "errors", "pagination", "contract", "security", "jwt", "evolution", "operations"]
+
+# ════════════════════════════════════════════════════════════════════════
+# Architecture 路由 — 替代 architecture_reference_groups()
+# 来源:architecture/request.rs:825-838, 810-816
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "arch"
+referenceRoot = "loom"
+
+  [[routes.groups]]
+  id = "arch"
+  refIdTemplate = "tech.arch.{item}"
+  pathTemplate = "tech/arch/{item}.md"
+  reasonTemplate = "Selected architecture {item} guidance for the {section} section."
+  items = ["core", "patterns", "system", "data", "nfr", "adr", "failure"]
+
+  # 架构 section → items 映射
+  [[routes.sectionGroups]]
+  id = "Foundation"
+  items = ["core", "patterns", "system"]
+
+  [[routes.sectionGroups]]
+  id = "DomainContract"
+  items = ["core", "data", "system"]
+
+  [[routes.sectionGroups]]
+  id = "Behavior"
+  items = ["core", "system", "failure"]
+
+  [[routes.sectionGroups]]
+  id = "FrontendExperience"
+  items = ["core"]
+
+  [[routes.sectionGroups]]
+  id = "RuntimeDelivery"
+  items = ["core", "system", "failure"]
+
+  [[routes.sectionGroups]]
+  id = "Coverage"
+  items = ["core", "patterns", "system", "data", "nfr", "adr", "failure"]
+
+# ════════════════════════════════════════════════════════════════════════
+# UIX 路由 — 替代 UI_*_REFERENCE_ITEMS 常量 + ui_reference_path()
+# 来源:contracts/ui_quality.rs:89-143, 2445-2480
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "uix"
+referenceRoot = "loom"
+
+  [[routes.groups]]
+  id = "core"
+  refIdTemplate = "uix.core.{item}"
+  pathTemplate = "uix/{item}.md"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  items = ["core", "surface-decision", "anti-patterns", "system", "interaction", "content", "verification"]
+
+  [[routes.groups]]
+  id = "focus"
+  refIdTemplate = "uix.focus.{item}"
+  pathTemplate = "uix/{item}.md"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  items = ["data", "mobile", "frameworks", "web-implementation"]
+
+  [[routes.groups]]
+  id = "tokens"
+  refIdTemplate = "uix.tokens.{item}"
+  pathTemplate = "uix/tokens/{item}.md"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  items = ["color-system", "typography", "spacing", "layout-grid", "motion", "radius-elevation"]
+
+  [[routes.groups]]
+  id = "scenarios"
+  refIdTemplate = "uix.scenarios.{item}"
+  pathTemplate = "uix/scenarios/{item}.md"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  items = [
+    "admin-dashboard", "data-console", "fintech-workstation", "fintech-consumer-app",
+    "consumer-app", "mobile-responsive", "mobile-native", "marketing-site",
+    "corporate-site", "docs-site", "developer-tool", "immersive-3d"
+  ]
+
+  [[routes.groups]]
+  id = "stacks"
+  refIdTemplate = "uix.stacks.{item}"
+  pathTemplate = "uix/stacks/{item}.md"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  items = ["react", "vue", "plain-html", "native-mobile", "threejs", "svelte", "uniapp"]
+
+  # templates 使用显式路径(非 .md 扩展名)
+  [[routes.groups]]
+  id = "templates"
+  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+    [[routes.groups.itemEntries]]
+    item = "tokens-css"
+    refId = "uix.templates.tokens-css"
+    path = "uix/templates/tokens.css.tpl"
+
+    [[routes.groups.itemEntries]]
+    item = "tokens-tailwind"
+    refId = "uix.templates.tokens-tailwind"
+    path = "uix/templates/tokens.tailwind.tpl"
+
+# ════════════════════════════════════════════════════════════════════════
+# Browser 路由 — 替代 playwright_reference_load_plan()
+# 来源:contracts/browser_quality.rs:175-246
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "browser"
+referenceRoot = "loom"
+
+  [[routes.groups]]
+  id = "playwright"
+  items = ["core", "locators", "configuration", "fixtures", "network", "visual", "accessibility", "reliability"]
+  requiredSections = ["## Implementation Focus", "## Verification Focus"]
+
+  # 显式条目捕获 playwright_reference_load_plan() 中的非标准 refId 映射和
+  # 选择条件。
+  [[routes.groups]]
+  id = "playwright_explicit"
+    [[routes.groups.itemEntries]]
+    item = "core"
+    refId = "test.pw.core"
+    path = "tech/test/playwright/core.md"
+    reason = "Playwright task boundary, runner adaptation, and deterministic execution rules."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "locators"
+    refId = "test.pw.locators"
+    path = "tech/test/playwright/locators.md"
+    reason = "Playwright locator, assertion, and auto-waiting rules for browser checks."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "configuration"
+    refId = "test.pw.config"
+    path = "tech/test/playwright/configuration.md"
+    reason = "Playwright project configuration, web server, artifact, and CI setup rules."
+    condition = "suite_setup_or_non_existing_project"
+
+    [[routes.groups.itemEntries]]
+    item = "fixtures"
+    refId = "test.pw.fixtures"
+    path = "tech/test/playwright/fixtures.md"
+    reason = "Task-scoped fixture, authentication, test-data, and reusable workflow rules."
+    condition = "business_flow_mode"
+
+    [[routes.groups.itemEntries]]
+    item = "network"
+    refId = "test.pw.network"
+    path = "tech/test/playwright/network.md"
+    reason = "Request synchronization, API-backed state control, and mock-versus-real boundary rules."
+    condition = "action_refs_or_submitting_state"
+
+    [[routes.groups.itemEntries]]
+    item = "visual"
+    refId = "test.pw.visual"
+    path = "tech/test/playwright/visual.md"
+    reason = "Rendered viewport, screenshot, visual comparison, and layout stability rules."
+    condition = "rendered_inspection_or_viewport_rule"
+
+    [[routes.groups.itemEntries]]
+    item = "accessibility"
+    refId = "test.pw.a11y"
+    path = "tech/test/playwright/accessibility.md"
+    reason = "Browser-level semantic, keyboard, focus, and accessibility evidence rules."
+    condition = "accessibility_quality_rule"
+
+# ════════════════════════════════════════════════════════════════════════
+# Deploy 路由 — 替代 reference_metadata() + reference_load_plan()
+# 来源:deploy/references.rs:110-187
+# 文件位于 plugins/shared/loom-deploy/references/
+# ════════════════════════════════════════════════════════════════════════
+
+[[routes]]
+id = "deploy"
+referenceRoot = "loom-deploy"
+
+  [[routes.groups]]
+  id = "deploy"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.providers"
+    refId = "deploy.providers"
+    path = "providers.md"
+    reason = "Provider selection and generated/existing asset policy."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.matrix"
+    refId = "deploy.matrix"
+    path = "matrix.md"
+    reason = "Deployment topology, runtime, layout, port, and dependency matrix."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.source-model"
+    refId = "deploy.source-model"
+    path = "source-model.md"
+    reason = "Repository evidence to deployable service model guidance."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.compose"
+    refId = "deploy.compose"
+    path = "compose.md"
+    reason = "Compose service wiring, ports, dependencies, and health guidance."
+    condition = "always"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.topology"
+    refId = "deploy.topology"
+    path = "topology.md"
+    reason = "Public entry, proxy route, and validation topology guidance."
+    condition = "topology_needed"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.dockerfile"
+    refId = "deploy.dockerfile"
+    path = "dockerfile.md"
+    reason = "Dockerfile context, workdir, copy, build, and runtime guidance."
+    condition = "generated_or_dockerfile_existing"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.environment"
+    refId = "deploy.environment"
+    path = "environment.md"
+    reason = "Environment, local defaults, dependency URL, and state guidance."
+    condition = "env_non_empty"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.workspaces"
+    refId = "deploy.workspaces"
+    path = "workspaces.md"
+    reason = "Workspace app path, source root, and build context guidance."
+    condition = "workspace_or_multi_root"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.bootstrap"
+    refId = "deploy.bootstrap"
+    path = "bootstrap.md"
+    reason = "Migration/bootstrap diagnostics and approval boundary guidance."
+    condition = "bootstrap_tasks_non_empty"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.repair"
+    refId = "deploy.repair"
+    path = "repair.md"
+    reason = "Deploy repair decision tree and editable asset boundary."
+    condition = "repair"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.dependencies.redis"
+    refId = "deploy.dependencies.redis"
+    path = "redis.md"
+    reason = "Redis dependency capabilities, persistence, health, and generated asset boundary."
+    condition = "redis_dependency"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.node"
+    refId = "deploy.stacks.node"
+    path = "node.md"
+    reason = "Node-family scanner, generated asset, and repair guidance."
+    condition = "runtime_node"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.python"
+    refId = "deploy.stacks.python"
+    path = "python.md"
+    reason = "Python scanner, generated asset, and repair guidance."
+    condition = "runtime_python"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.go"
+    refId = "deploy.stacks.go"
+    path = "go.md"
+    reason = "Go scanner, generated asset, and repair guidance."
+    condition = "runtime_go"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.java"
+    refId = "deploy.stacks.java"
+    path = "java.md"
+    reason = "Java scanner, generated asset, and repair guidance."
+    condition = "runtime_java"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.dotnet"
+    refId = "deploy.stacks.dotnet"
+    path = "dotnet.md"
+    reason = ".NET scanner, generated asset, and repair guidance."
+    condition = "runtime_dotnet"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.php"
+    refId = "deploy.stacks.php"
+    path = "php.md"
+    reason = "PHP scanner, generated asset, and repair guidance."
+    condition = "runtime_php"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.ruby"
+    refId = "deploy.stacks.ruby"
+    path = "ruby.md"
+    reason = "Ruby scanner, generated asset, and repair guidance."
+    condition = "runtime_ruby"
+
+    [[routes.groups.itemEntries]]
+    item = "deploy.stacks.static"
+    refId = "deploy.stacks.static"
+    path = "static.md"
+    reason = "Static site scanner, generated asset, and repair guidance."
+    condition = "runtime_static"
+
+# ════════════════════════════════════════════════════════════════════════
+# Phase 2 — 后端生态系统定义
+# 替代 planning/technical_baseline.rs 中的 BACKEND_ECOSYSTEMS 常量
+# 来源:technical_baseline.rs:993-1092
+# ════════════════════════════════════════════════════════════════════════
+
+[[backendEcosystems]]
+ecosystemId = "nextjs_fullstack"
+label = "Next.js full-stack"
+runtimeFamily = "typescript_node"
+backendOptions = ["Next.js + Server Actions / Route Handlers / SSR"]
+backendMatchers = ["next.js", "nextjs"]
+dataAccessOptions = ["Prisma", "Drizzle"]
+dataAccessMatchers = ["prisma", "drizzle"]
+
+[[backendEcosystems]]
+ecosystemId = "node_http"
+label = "Node.js HTTP service"
+runtimeFamily = "typescript_node"
+backendOptions = ["Node.js + Fastify", "Node.js + Express"]
+backendMatchers = ["node.js", "nodejs", "typescript", "fastify", "express"]
+dataAccessOptions = ["Prisma", "Drizzle", "Kysely"]
+dataAccessMatchers = ["prisma", "drizzle", "kysely"]
+
+[[backendEcosystems]]
+ecosystemId = "nestjs_service"
+label = "NestJS service"
+runtimeFamily = "typescript_node"
+backendOptions = ["Node.js + NestJS"]
+backendMatchers = ["nestjs"]
+dataAccessOptions = ["Prisma", "TypeORM"]
+dataAccessMatchers = ["prisma", "typeorm"]
+
+[[backendEcosystems]]
+ecosystemId = "python_fastapi"
+label = "FastAPI service"
+runtimeFamily = "python"
+backendOptions = ["Python + FastAPI"]
+backendMatchers = ["python", "fastapi"]
+dataAccessOptions = ["SQLAlchemy", "SQLModel"]
+dataAccessMatchers = ["sqlalchemy", "sqlmodel"]
+
+[[backendEcosystems]]
+ecosystemId = "python_django"
+label = "Django application"
+runtimeFamily = "python"
+backendOptions = ["Python + Django"]
+backendMatchers = ["django"]
+dataAccessOptions = ["Django ORM"]
+dataAccessMatchers = ["django orm"]
+
+[[backendEcosystems]]
+ecosystemId = "jvm_spring"
+label = "Spring Boot service"
+runtimeFamily = "jvm"
+backendOptions = ["Java + Spring Boot"]
+backendMatchers = ["java", "kotlin", "spring boot"]
+dataAccessOptions = ["Spring Data JPA", "MyBatis Plus", "jOOQ"]
+dataAccessMatchers = ["spring data jpa", "mybatis plus", "mybatis-plus", "mybatisplus", "jooq"]
+
+[[backendEcosystems]]
+ecosystemId = "dotnet_aspnetcore"
+label = "ASP.NET Core service"
+runtimeFamily = "dotnet"
+backendOptions = [".NET + ASP.NET Core"]
+backendMatchers = [".net", "asp.net", "dotnet"]
+dataAccessOptions = ["Entity Framework Core", "Dapper"]
+dataAccessMatchers = ["entity framework", "ef core", "dapper"]
+
+[[backendEcosystems]]
+ecosystemId = "go_http"
+label = "Go HTTP service"
+runtimeFamily = "go"
+backendOptions = ["Go + net/http or Gin"]
+backendMatchers = ["go", "net/http", "gin"]
+dataAccessOptions = ["database/sql", "sqlc", "GORM"]
+dataAccessMatchers = ["database/sql", "sqlc", "gorm"]
+
+[[backendEcosystems]]
+ecosystemId = "no_independent_backend"
+label = "No independent backend"
+runtimeFamily = "none"
+backendOptions = ["No independent backend"]
+backendMatchers = ["no independent backend", "no backend"]
+dataAccessOptions = ["No ORM"]
+dataAccessMatchers = ["no orm"]
+
+# Phase 2 后续待填充:
+# - signal_from_selection (contracts/code_quality.rs:345-614)
+# - task_focus_tags (contracts/code_quality.rs:642-1218)
+# - signal_applies_to_task (contracts/code_quality.rs:1235-1287)
+
+stackSignals = []
+focusRules = []
+applicability = []

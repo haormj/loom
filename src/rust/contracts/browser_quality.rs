@@ -179,33 +179,26 @@ pub fn playwright_reference_load_plan(
     state_refs: &[String],
     quality_rule_refs: &[String],
 ) -> Vec<ReferenceLoadPlanItem> {
-    let mut plan = vec![
-        reference(
-            "test.pw.core",
-            "tech/test/playwright/core.md",
-            "Playwright task boundary, runner adaptation, and deterministic execution rules.",
-        ),
-        reference(
-            "test.pw.locators",
-            "tech/test/playwright/locators.md",
-            "Playwright locator, assertion, and auto-waiting rules for browser checks.",
-        ),
-    ];
+    let catalog = reference_catalog::vendor_catalog();
+    let resolve = |item: &str| -> ReferenceLoadPlanItem {
+        let entry = catalog
+            .resolve_entry("browser", "playwright_explicit", item)
+            .unwrap_or_else(|| panic!("browser reference '{item}' not found in catalog"));
+        ReferenceLoadPlanItem {
+            ref_id: entry.ref_id,
+            path: entry.path,
+            reason: entry.reason.unwrap_or_default(),
+        }
+    };
+
+    let mut plan = vec![resolve("core"), resolve("locators")];
     if matches!(mode, BrowserVerificationMode::SuiteSetup)
         || !matches!(runner_source, BrowserRunnerSource::ExistingProject)
     {
-        plan.push(reference(
-            "test.pw.config",
-            "tech/test/playwright/configuration.md",
-            "Playwright project configuration, web server, artifact, and CI setup rules.",
-        ));
+        plan.push(resolve("configuration"));
     }
     if matches!(mode, BrowserVerificationMode::BusinessFlow) {
-        plan.push(reference(
-            "test.pw.fixtures",
-            "tech/test/playwright/fixtures.md",
-            "Task-scoped fixture, authentication, test-data, and reusable workflow rules.",
-        ));
+        plan.push(resolve("fixtures"));
     }
     if !action_refs.is_empty()
         || state_refs.iter().any(|state| {
@@ -215,42 +208,22 @@ pub fn playwright_reference_load_plan(
             )
         })
     {
-        plan.push(reference(
-            "test.pw.network",
-            "tech/test/playwright/network.md",
-            "Request synchronization, API-backed state control, and mock-versus-real boundary rules.",
-        ));
+        plan.push(resolve("network"));
     }
     if matches!(mode, BrowserVerificationMode::RenderedInspection)
         || quality_rule_refs
             .iter()
             .any(|rule| rule == "verify.rendered_viewports")
     {
-        plan.push(reference(
-            "test.pw.visual",
-            "tech/test/playwright/visual.md",
-            "Rendered viewport, screenshot, visual comparison, and layout stability rules.",
-        ));
+        plan.push(resolve("visual"));
     }
     if quality_rule_refs
         .iter()
         .any(|rule| rule == "web.semantic_accessibility")
     {
-        plan.push(reference(
-            "test.pw.a11y",
-            "tech/test/playwright/accessibility.md",
-            "Browser-level semantic, keyboard, focus, and accessibility evidence rules.",
-        ));
+        plan.push(resolve("accessibility"));
     }
     plan
-}
-
-fn reference(ref_id: &str, path: &str, reason: &str) -> ReferenceLoadPlanItem {
-    ReferenceLoadPlanItem {
-        ref_id: ref_id.to_string(),
-        path: path.to_string(),
-        reason: reason.to_string(),
-    }
 }
 
 #[cfg(test)]

@@ -990,107 +990,6 @@ fn collect_go_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
     signals.package_managers.insert("go".to_string());
 }
 
-#[derive(Clone, Copy)]
-struct BackendEcosystemDefinition {
-    ecosystem_id: &'static str,
-    label: &'static str,
-    runtime_family: &'static str,
-    backend_options: &'static [&'static str],
-    backend_matchers: &'static [&'static str],
-    data_access_options: &'static [&'static str],
-    data_access_matchers: &'static [&'static str],
-}
-
-const BACKEND_ECOSYSTEMS: &[BackendEcosystemDefinition] = &[
-    BackendEcosystemDefinition {
-        ecosystem_id: "nextjs_fullstack",
-        label: "Next.js full-stack",
-        runtime_family: "typescript_node",
-        backend_options: &["Next.js + Server Actions / Route Handlers / SSR"],
-        backend_matchers: &["next.js", "nextjs"],
-        data_access_options: &["Prisma", "Drizzle"],
-        data_access_matchers: &["prisma", "drizzle"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "node_http",
-        label: "Node.js HTTP service",
-        runtime_family: "typescript_node",
-        backend_options: &["Node.js + Fastify", "Node.js + Express"],
-        backend_matchers: &["node.js", "nodejs", "typescript", "fastify", "express"],
-        data_access_options: &["Prisma", "Drizzle", "Kysely"],
-        data_access_matchers: &["prisma", "drizzle", "kysely"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "nestjs_service",
-        label: "NestJS service",
-        runtime_family: "typescript_node",
-        backend_options: &["Node.js + NestJS"],
-        backend_matchers: &["nestjs"],
-        data_access_options: &["Prisma", "TypeORM"],
-        data_access_matchers: &["prisma", "typeorm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "python_fastapi",
-        label: "FastAPI service",
-        runtime_family: "python",
-        backend_options: &["Python + FastAPI"],
-        backend_matchers: &["python", "fastapi"],
-        data_access_options: &["SQLAlchemy", "SQLModel"],
-        data_access_matchers: &["sqlalchemy", "sqlmodel"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "python_django",
-        label: "Django application",
-        runtime_family: "python",
-        backend_options: &["Python + Django"],
-        backend_matchers: &["django"],
-        data_access_options: &["Django ORM"],
-        data_access_matchers: &["django orm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "jvm_spring",
-        label: "Spring Boot service",
-        runtime_family: "jvm",
-        backend_options: &["Java + Spring Boot"],
-        backend_matchers: &["java", "kotlin", "spring boot"],
-        data_access_options: &["Spring Data JPA", "MyBatis Plus", "jOOQ"],
-        data_access_matchers: &[
-            "spring data jpa",
-            "mybatis plus",
-            "mybatis-plus",
-            "mybatisplus",
-            "jooq",
-        ],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "dotnet_aspnetcore",
-        label: "ASP.NET Core service",
-        runtime_family: "dotnet",
-        backend_options: &[".NET + ASP.NET Core"],
-        backend_matchers: &[".net", "asp.net", "dotnet"],
-        data_access_options: &["Entity Framework Core", "Dapper"],
-        data_access_matchers: &["entity framework", "ef core", "dapper"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "go_http",
-        label: "Go HTTP service",
-        runtime_family: "go",
-        backend_options: &["Go + net/http or Gin"],
-        backend_matchers: &["go", "net/http", "gin"],
-        data_access_options: &["database/sql", "sqlc", "GORM"],
-        data_access_matchers: &["database/sql", "sqlc", "gorm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "no_independent_backend",
-        label: "No independent backend",
-        runtime_family: "none",
-        backend_options: &["No independent backend"],
-        backend_matchers: &["no independent backend", "no backend"],
-        data_access_options: &["No ORM"],
-        data_access_matchers: &["no orm"],
-    },
-];
-
 const PORTABLE_DATA_ACCESS_OPTIONS: &[&str] = &["Raw SQL / framework-native wrapper", "No ORM"];
 const PORTABLE_DATA_ACCESS_MATCHERS: &[&str] = &[
     "raw sql",
@@ -1100,6 +999,7 @@ const PORTABLE_DATA_ACCESS_MATCHERS: &[&str] = &[
 ];
 
 fn backend_ecosystem_guidance() -> Value {
+    let catalog = reference_catalog::vendor_catalog();
     json!({
         "sourceOfTruth": "This catalog is the single source for backend/dataAccess recommendation relationships and known runtime-family compatibility checks.",
         "renderingRule": "Render backend and dataAccess as one grouped choice. Do not present an independent flat dataAccess option list.",
@@ -1107,7 +1007,7 @@ fn backend_ecosystem_guidance() -> Value {
         "coverageRule": "When backend choice is open and no confirmed constraint excludes an ecosystem, keep the adjustable range diverse across TypeScript/Node, Python, JVM/Spring, and .NET. Do not truncate by catalog order; include Go when requirement or user preference makes it relevant.",
         "customTechnologyPolicy": "Bundles are mainstream recommendations, not a whitelist. Keep user-specified backend and data-access technologies when their relationship is intentional and explain the custom pairing in the final confirmation summary.",
         "portableDataAccessOptions": PORTABLE_DATA_ACCESS_OPTIONS,
-        "bundles": BACKEND_ECOSYSTEMS.iter().map(|ecosystem| json!({
+        "bundles": catalog.backend_ecosystems().iter().map(|ecosystem| json!({
             "ecosystemId": ecosystem.ecosystem_id,
             "label": ecosystem.label,
             "runtimeFamily": ecosystem.runtime_family,
@@ -1952,10 +1852,12 @@ fn backend_data_access_compatibility_issue(stack: &Value) -> Option<delivery_cor
     {
         return None;
     }
-    let compatible_options = BACKEND_ECOSYSTEMS
+    let catalog = reference_catalog::vendor_catalog();
+    let compatible_options = catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| backend_families.contains(ecosystem.runtime_family))
-        .flat_map(|ecosystem| ecosystem.data_access_options.iter().copied())
+        .filter(|ecosystem| backend_families.contains(&ecosystem.runtime_family))
+        .flat_map(|ecosystem| ecosystem.data_access_options.iter().cloned())
         .collect::<BTreeSet<_>>()
         .into_iter()
         .collect::<Vec<_>>()
@@ -1984,26 +1886,30 @@ fn active_track_selection<'a>(stack: &'a Value, track: &str) -> Option<&'a str> 
         .filter(|selection| !selection.is_empty())
 }
 
-fn backend_runtime_families(selection: &str) -> BTreeSet<&'static str> {
-    BACKEND_ECOSYSTEMS
+fn backend_runtime_families(selection: &str) -> BTreeSet<String> {
+    let catalog = reference_catalog::vendor_catalog();
+    catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| technology_matches_any(selection, ecosystem.backend_matchers))
-        .map(|ecosystem| ecosystem.runtime_family)
+        .filter(|ecosystem| technology_matches_any(selection, &ecosystem.backend_matchers))
+        .map(|ecosystem| ecosystem.runtime_family.clone())
         .collect()
 }
 
-fn data_access_runtime_families(selection: &str) -> BTreeSet<&'static str> {
-    BACKEND_ECOSYSTEMS
+fn data_access_runtime_families(selection: &str) -> BTreeSet<String> {
+    let catalog = reference_catalog::vendor_catalog();
+    catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| technology_matches_any(selection, ecosystem.data_access_matchers))
-        .map(|ecosystem| ecosystem.runtime_family)
+        .filter(|ecosystem| technology_matches_any(selection, &ecosystem.data_access_matchers))
+        .map(|ecosystem| ecosystem.runtime_family.clone())
         .collect()
 }
 
-fn technology_matches_any(selection: &str, matchers: &[&str]) -> bool {
+fn technology_matches_any<S: AsRef<str>>(selection: &str, matchers: &[S]) -> bool {
     let selection = format!(" {} ", normalize_technology_phrase(selection));
     matchers.iter().any(|matcher| {
-        let matcher = format!(" {} ", normalize_technology_phrase(matcher));
+        let matcher = format!(" {} ", normalize_technology_phrase(matcher.as_ref()));
         selection.contains(&matcher)
     })
 }

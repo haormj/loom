@@ -108,14 +108,23 @@ pub fn build_api_quality_seed_from_foundation(
 }
 
 pub fn api_reference_load_plan(api_groups: &[String]) -> Vec<Value> {
+    let catalog = reference_catalog::vendor_catalog();
     api_groups
         .iter()
         .map(|group| {
-            json!({
-                "refId": format!("tech.api.{group}"),
-                "path": format!("tech/api/{group}.md"),
-                "reason": format!("Selected API {group} quality reference for current-phase interface design.")
-            })
+            if let Some(entry) = catalog.resolve_entry("api", "api", group) {
+                json!({
+                    "refId": entry.ref_id,
+                    "path": entry.path,
+                    "reason": entry.reason.unwrap_or_else(|| format!("Selected API {group} quality reference for current-phase interface design."))
+                })
+            } else {
+                json!({
+                    "refId": format!("tech.api.{group}"),
+                    "path": format!("tech/api/{group}.md"),
+                    "reason": format!("Selected API {group} quality reference for current-phase interface design.")
+                })
+            }
         })
         .collect()
 }
@@ -134,9 +143,11 @@ pub fn api_quality_seed_read_fields() -> [&'static str; 8] {
 }
 
 pub fn api_quality_enum_refs() -> Value {
+    let catalog = reference_catalog::vendor_catalog();
+    let api_items = catalog.items_for_group("api", "api");
     json!({
         "knownReferenceGroups": {
-            "api": ["core", "resource", "errors", "pagination", "contract", "security", "jwt", "evolution", "operations"]
+            "api": api_items
         },
         "interfaceType": ["http_api", "service_method", "external_adapter", "event", "job", "cli_command"],
         "httpMethod": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],

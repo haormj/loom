@@ -797,6 +797,7 @@ pub(crate) fn build_architecture_quality_seed(
     section: ArchitectureSectionGroup,
     candidate_plan: Option<&Value>,
 ) -> Value {
+    let catalog = reference_catalog::vendor_catalog();
     let arch_groups = architecture_reference_groups(section);
     let mut seed = json!({
         "required": true,
@@ -808,9 +809,13 @@ pub(crate) fn build_architecture_quality_seed(
                 "arch": arch_groups.clone()
             },
             "referenceLoadPlan": arch_groups.iter().map(|item| {
+                let (ref_id, path) = catalog
+                    .resolve_entry("arch", "arch", item)
+                    .map(|e| (e.ref_id, e.path))
+                    .unwrap_or_else(|| (format!("tech.arch.{item}"), format!("tech/arch/{item}.md")));
                 json!({
-                    "refId": format!("tech.arch.{item}"),
-                    "path": format!("tech/arch/{item}.md"),
+                    "refId": ref_id,
+                    "path": path,
                     "reason": format!("Selected architecture {item} guidance for the {} section.", section_name(section))
                 })
             }).collect::<Vec<_>>()
@@ -822,19 +827,22 @@ pub(crate) fn build_architecture_quality_seed(
     seed
 }
 
-fn architecture_reference_groups(section: ArchitectureSectionGroup) -> Vec<&'static str> {
-    match section {
-        ArchitectureSectionGroup::Foundation => vec!["core", "patterns", "system"],
-        ArchitectureSectionGroup::DomainContract => vec!["core", "data", "system"],
-        ArchitectureSectionGroup::Behavior => vec!["core", "system", "failure"],
-        ArchitectureSectionGroup::FrontendExperience => vec!["core"],
-        ArchitectureSectionGroup::RuntimeDelivery => vec!["core", "system", "failure"],
-        ArchitectureSectionGroup::Coverage => {
-            vec![
-                "core", "patterns", "system", "data", "nfr", "adr", "failure",
-            ]
+fn architecture_reference_groups(section: ArchitectureSectionGroup) -> Vec<String> {
+    let catalog = reference_catalog::vendor_catalog();
+    let section_id = match section {
+        ArchitectureSectionGroup::Foundation => "Foundation",
+        ArchitectureSectionGroup::DomainContract => "DomainContract",
+        ArchitectureSectionGroup::Behavior => "Behavior",
+        ArchitectureSectionGroup::FrontendExperience => "FrontendExperience",
+        ArchitectureSectionGroup::RuntimeDelivery => "RuntimeDelivery",
+        ArchitectureSectionGroup::Coverage => "Coverage",
+    };
+    if let Some(section_groups) = catalog.section_groups_for_route("arch") {
+        if let Some(sg) = section_groups.iter().find(|sg| sg.id == section_id) {
+            return sg.items.clone();
         }
     }
+    Vec::new()
 }
 
 fn architecture_quality_enum_refs() -> Value {
