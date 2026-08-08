@@ -95,8 +95,7 @@ pub fn deploy_prepare_inner(
         && source_model.services.len() < 2
     {
         return Err(StateError::StateCorrupted(
-            "frontend-and-backend SourceModel must contain frontend and backend services."
-                .to_string(),
+            "frontend-and-backend SourceModel 必须包含前端和后端服务。".to_string(),
         ));
     }
     let existing = find_existing_deployment_files(&deployment_root);
@@ -139,8 +138,7 @@ pub fn deploy_prepare_inner(
         .is_some_and(|contract| contract.status != "resolved")
     {
         return Err(StateError::InvalidArgument(
-            "Accepted API contract has interface paths outside its declared public exposure base path."
-                .to_string(),
+            "已接受的 API 契约包含超出其声明的公共暴露基础路径的接口路径。".to_string(),
         ));
     }
     let frontend_api_binding = derive_frontend_api_binding(
@@ -162,7 +160,7 @@ pub fn deploy_prepare_inner(
     if strategy.provider == DeployProvider::Generated && frontend_api_binding.status == "unresolved"
     {
         return Err(StateError::InvalidArgument(format!(
-            "Frontend API binding is unresolved: {}",
+            "前端 API 绑定未解析：{}",
             frontend_api_binding.reason
         )));
     }
@@ -312,7 +310,7 @@ pub fn deploy_prepare_inner(
     Ok(LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root.to_string_lossy().into_owned(),
         summary: format!(
-            "Deployment prepared with {} provider.",
+            "部署已使用 {} provider 准备完成。",
             provider_label(spec.provider)
         ),
         details: Some(deployment_prepare_details(project_root, &spec)?),
@@ -345,32 +343,29 @@ fn apply_controlled_model_repair(
         .unwrap_or_default();
     if base_fingerprint != spec.input_fingerprint {
         return Err(StateError::StateCorrupted(
-            "deployment model repair is stale; regenerate deploy preparation before retrying."
-                .to_string(),
+            "deployment model repair 已过期；请在重试前重新生成部署准备。".to_string(),
         ));
     }
-    let source_model_repaired =
-        if let Some(source_model) = repair.get("sourceModel").filter(|value| !value.is_null()) {
-            spec.source_model = serde_json::from_value(source_model.clone()).map_err(|error| {
-                StateError::StateCorrupted(format!(
-                    "deployment model repair sourceModel is invalid: {error}"
-                ))
-            })?;
-            true
-        } else {
-            false
-        };
-    let topology_repaired =
-        if let Some(topology) = repair.get("topology").filter(|value| !value.is_null()) {
-            spec.topology = serde_json::from_value(topology.clone()).map_err(|error| {
-                StateError::StateCorrupted(format!(
-                    "deployment model repair topology is invalid: {error}"
-                ))
-            })?;
-            true
-        } else {
-            false
-        };
+    let source_model_repaired = if let Some(source_model) =
+        repair.get("sourceModel").filter(|value| !value.is_null())
+    {
+        spec.source_model = serde_json::from_value(source_model.clone()).map_err(|error| {
+            StateError::StateCorrupted(format!("deployment model repair sourceModel 无效：{error}"))
+        })?;
+        true
+    } else {
+        false
+    };
+    let topology_repaired = if let Some(topology) =
+        repair.get("topology").filter(|value| !value.is_null())
+    {
+        spec.topology = serde_json::from_value(topology.clone()).map_err(|error| {
+            StateError::StateCorrupted(format!("deployment model repair topology 无效：{error}"))
+        })?;
+        true
+    } else {
+        false
+    };
     if source_model_repaired && !topology_repaired {
         spec.topology = build_topology(&spec.runtime_contract, &spec.source_model);
     }
@@ -624,7 +619,7 @@ fn apply_healthcheck_override(source_model: &mut DeploymentSourceModel, path: &s
         service.healthcheck_path = Some(path.to_string());
     }
     source_model.notes.push(format!(
-        "Deployment healthcheck path was overridden by DeployToolInput.healthcheck: {path}."
+        "部署健康检查路径被 DeployToolInput.healthcheck 覆盖：{path}。"
     ));
 }
 
@@ -711,7 +706,7 @@ fn env_diagnostics(
             provided: std::env::var(name).is_ok() || generated.contains_key(name),
             generated: generated.contains_key(name),
             sources: vec!["runtime-contract".to_string()],
-            reason: "Declared by RuntimeDeliveryContract.".to_string(),
+            reason: "由 RuntimeDeliveryContract 声明。".to_string(),
         })
         .collect::<Vec<_>>();
     let missing = required
@@ -779,7 +774,7 @@ fn derive_storage_facts(
                 container_path: path,
                 source_path: source_file_database_path(source_value),
                 persistent: true,
-                reason: "A repository file-database setting was containerized and requires a persistent volume.".to_string(),
+                reason: "仓库文件数据库设置已被容器化，需要持久化卷。".to_string(),
             });
         }
         for (name, value) in &environment.generated {
@@ -797,8 +792,7 @@ fn derive_storage_facts(
                 container_path: path,
                 source_path: None,
                 persistent: true,
-                reason: "A generated file-database setting requires a persistent volume."
-                    .to_string(),
+                reason: "生成的文件数据库设置需要持久化卷。".to_string(),
             });
         }
     }
@@ -936,7 +930,7 @@ fn deployment_root_for(project_root: &Path, app_path: Option<&str>) -> StateResu
     let root = from_project_relative(project_root, app_path)?;
     if !root.is_dir() {
         return Err(StateError::InvalidArgument(format!(
-            "appPath must point to an existing directory: {app_path}"
+            "appPath 必须指向已存在的目录：{app_path}"
         )));
     }
     Ok(root)
@@ -963,25 +957,25 @@ fn validate_selected_provider(
     match provider {
         DeployProvider::ComposeExisting if existing.compose_path.is_none() => {
             Err(StateError::InvalidArgument(
-                "providerPolicy selected compose-existing, but no root-level Compose file was found."
+                "providerPolicy 选择了 compose-existing，但未找到根目录 Compose 文件。"
                     .to_string(),
             ))
         }
         DeployProvider::DockerfileExisting if existing.dockerfile_path.is_none() => {
             Err(StateError::InvalidArgument(
-                "providerPolicy selected dockerfile-existing, but no root-level Dockerfile was found."
+                "providerPolicy 选择了 dockerfile-existing，但未找到根目录 Dockerfile。"
                     .to_string(),
             ))
         }
         DeployProvider::DockerfileExisting if source_model.services.len() > 1 => {
             Err(StateError::InvalidArgument(
-                "providerPolicy selected dockerfile-existing, but one root Dockerfile cannot represent multiple application services.".to_string(),
+                "providerPolicy 选择了 dockerfile-existing，但单个根 Dockerfile 无法表示多个应用服务。".to_string(),
             ))
         }
         DeployProvider::Generated | DeployProvider::ComposeExisting | DeployProvider::DockerfileExisting => {
             if policy.force_generate && provider != DeployProvider::Generated {
                 Err(StateError::InvalidArgument(
-                    "forceGenerate can only select generated provider.".to_string(),
+                    "forceGenerate 只能选择 generated provider。".to_string(),
                 ))
             } else {
                 Ok(())
@@ -1003,7 +997,7 @@ fn deployment_files_for_provider(
         DeployProvider::DockerfileExisting => {
             let dockerfile_path = existing.dockerfile_path.as_ref().ok_or_else(|| {
                 StateError::InvalidArgument(
-                    "dockerfile-existing provider requires an existing Dockerfile.".to_string(),
+                    "dockerfile-existing provider 需要已有的 Dockerfile。".to_string(),
                 )
             })?;
             let dockerfile_ref = to_project_relative(project_root, dockerfile_path)?;
@@ -1022,7 +1016,7 @@ fn deployment_files_for_provider(
         DeployProvider::ComposeExisting => {
             let compose_path = existing.compose_path.as_ref().ok_or_else(|| {
                 StateError::InvalidArgument(
-                    "compose-existing provider requires an existing Compose file.".to_string(),
+                    "compose-existing provider 需要已有的 Compose 文件。".to_string(),
                 )
             })?;
             let mut reused = vec![to_project_relative(project_root, compose_path)?];
@@ -1226,7 +1220,7 @@ fn runtime_contract_blocked(project_root: &Path, error: StateError) -> LoomMcpAc
         recommended_tool: Some("loom.deployInspect".to_string()),
         details: Some(json!({
             "failureKind": "runtime_contract_unavailable",
-            "reason": "Deploy could not prepare a runtime contract from accepted AAC runtimeDelivery or repository code evidence."
+            "reason": "Deploy 无法从已接受的 AAC runtimeDelivery 或仓库代码证据中准备运行时契约。"
         })),
     })
 }

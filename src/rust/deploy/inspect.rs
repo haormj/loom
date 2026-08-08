@@ -24,7 +24,7 @@ pub fn deploy_inspect(input: DeployToolInput) -> LoomMcpActionResult {
     let spec = read_spec(project_root).ok();
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root_display,
-        summary: "Deployment inspect loaded.".to_string(),
+        summary: "部署检查已加载。".to_string(),
         details: Some(json!({
             "prepared": spec.is_some(),
             "provider": spec.as_ref().map(|spec| spec.provider),

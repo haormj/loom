@@ -28,9 +28,7 @@ pub fn inspect_chunk(
         .chunks
         .iter()
         .find(|chunk| chunk.chunk_id == input.chunk_id)
-        .ok_or_else(|| {
-            KnowledgeError::invalid(format!("knowledge chunk not found: {}", input.chunk_id))
-        })?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("知识分块未找到：{}", input.chunk_id)))?;
     let text = read_chunk_body(&source.source_id, &input.build_id, &input.chunk_id)?;
     Ok(KnowledgeInspectChunkResult {
         document_title: chunk.document_title.clone(),
@@ -53,12 +51,10 @@ fn resolve_source(input: &KnowledgeInspectChunkInput) -> KnowledgeResult<Knowled
             .iter()
             .find(|source| source.source_id == *source_id)
             .cloned()
-            .ok_or_else(|| {
-                KnowledgeError::invalid(format!("knowledge source not found: {source_id}"))
-            })?;
+            .ok_or_else(|| KnowledgeError::invalid(format!("知识源未找到：{source_id}")))?;
         if !input.source_name.trim().is_empty() && source.name != input.source_name {
             return Err(KnowledgeError::invalid(format!(
-                "knowledge source name does not match sourceId: {} != {}",
+                "知识源名称与 sourceId 不匹配：{} != {}",
                 input.source_name, source.name
             )));
         }
@@ -69,7 +65,5 @@ fn resolve_source(input: &KnowledgeInspectChunkInput) -> KnowledgeResult<Knowled
         .iter()
         .find(|source| source.name == input.source_name)
         .cloned()
-        .ok_or_else(|| {
-            KnowledgeError::invalid(format!("knowledge source not found: {}", input.source_name))
-        })
+        .ok_or_else(|| KnowledgeError::invalid(format!("知识源未找到：{}", input.source_name)))
 }

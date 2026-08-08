@@ -477,7 +477,7 @@ pub fn ui_surface_decision_candidate_template() -> Value {
             ],
             "forbiddenUserVisibleContent": [],
             "customForbiddenContent": [],
-            "copyRule": "Use product language for the user task; do not show delivery, runtime, stack, validator, or generated artifact language unless the product mode requires it."
+            "copyRule": "使用面向用户任务的产品语言；除非产品模式要求，否则不要展示交付、运行时、技术栈、校验器或生成产物的语言。"
         }
     })
 }
@@ -531,7 +531,7 @@ pub fn ui_surface_decision_contract_shape() -> Value {
         "referencePlan": [{
             "refId": "uix.core.core",
             "path": "uix/core.md",
-            "reason": "MCP-selected UIX reference for this decision contract."
+            "reason": "MCP 为此决策契约选择的 UIX 参考。"
         }],
         "qualityRules": [{
             "ruleId": "string",
@@ -681,7 +681,7 @@ fn ui_surface_content_boundary_shape() -> Value {
             UI_FORBIDDEN_USER_VISIBLE_CONTENT.join(" | ")
         )],
         "customForbiddenContent": ["required when product-specific content must be blocked"],
-        "copyRule": "Use product language for the user task; do not show delivery, runtime, stack, validator, or generated artifact language unless the product mode requires it."
+        "copyRule": "使用面向用户任务的产品语言；除非产品模式要求，否则不要展示交付、运行时、技术栈、校验器或生成产物的语言。"
     })
 }
 
@@ -716,7 +716,7 @@ pub fn build_ui_quality_seed(
         "designTokenAssetPlan": design_token_seed,
         "forbiddenUserVisibleContent": UI_FORBIDDEN_USER_VISIBLE_CONTENT,
         "requiredUiStates": UI_REQUIRED_STATES,
-        "selectionRule": "Use these candidates only as read-only hints while writing surfaceDecisionCandidate. Do not write requiredReferenceGroups, referenceLoadPlan, referenceProfile, or derived rule lists inside the candidate; MCP recomputes uiSurfaceDecisionContract.referencePlan and qualityRules during submit from the selected surface decision and stack signals."
+        "selectionRule": "在编写 surfaceDecisionCandidate 时，仅将这些候选项作为只读提示使用。不要在候选项中写入 requiredReferenceGroups、referenceLoadPlan、referenceProfile 或派生规则列表；MCP 在提交时会根据所选的界面决策和技术栈信号重新计算 uiSurfaceDecisionContract.referencePlan 和 qualityRules。"
     })
 }
 
@@ -927,7 +927,7 @@ fn normalized_surface_content_boundary(candidate: &Value) -> Value {
     {
         object.insert(
             "copyRule".to_string(),
-            json!("Use product language for the user task; do not show delivery, runtime, stack, validator, or generated artifact language unless the product mode requires it."),
+            json!("使用面向用户任务的产品语言；除非产品模式要求，否则不要展示交付、运行时、技术栈、校验器或生成产物的语言。"),
         );
     }
     value
@@ -1649,7 +1649,7 @@ fn ui_quality_rule_specs(
             "form",
             "action_panel",
         ],
-        "Task-owned UI regions, actions, states, quality rules, and content boundary must be implemented and proven through frontendQualitySelfCheck surface evidence.",
+        "任务所属的 UI 区域、操作、状态、质量规则和内容边界必须通过 frontendQualitySelfCheck 界面证据实现并验证。",
         &[
             "surface_region_evidence",
             "surface_action_evidence",
@@ -1664,7 +1664,7 @@ fn ui_quality_rule_specs(
         "uix.core.anti-patterns",
         "must",
         &["app_shell", "page", "navigation", "record_list", "record_detail", "form"],
-        "User-visible UI must not expose Loom/MCP terms, delivery progress, runtime commands, verification instructions, stack explanations, request ids, or future-phase planning language.",
+        "用户可见的 UI 不得暴露 Loom/MCP 术语、交付进度、运行时命令、验证说明、技术栈解释、请求 ID 或未来阶段规划语言。",
         &["changed_files", "source_check", "forbidden_content_check"],
     );
     push_rule(
@@ -1673,7 +1673,7 @@ fn ui_quality_rule_specs(
         "uix.core.verification",
         "must",
         &["app_shell", "page", "record_list", "record_detail", "form"],
-        "When a local preview is available, record desktop and mobile rendered inspection; when unavailable, record blocked_by_environment with the concrete blocker and fallback source checks.",
+        "当本地预览可用时，记录桌面端和移动端的渲染检查结果；当不可用时，记录 blocked_by_environment 并附带具体阻碍原因和回退源码检查。",
         &["render_or_environment_reason", "viewport_check", "fallback_source_check"],
     );
     match scenario {
@@ -1709,7 +1709,7 @@ fn ui_quality_rule_specs(
             "uix.focus.frameworks",
             "must",
             &["app_shell", "page", "record_list", "record_detail", "form", "action_panel"],
-            "Real screens must separate shell, page orchestration, feature components, shared primitives, data/API helpers, and state-specific components when the workflow spans multiple regions.",
+            "当工作流跨越多个区域时，真实界面必须分离外壳、页面编排、功能组件、共享基础组件、数据/API 辅助模块和状态特定组件。",
             &["changed_files", "component_split_evidence"],
         );
     }
@@ -1723,7 +1723,7 @@ fn ui_quality_rule_specs(
             "uix.stacks.react",
             "must",
             &["app_shell", "page", "record_list", "record_detail", "form", "action_panel"],
-            "React workbench UI must keep page orchestration separate from reusable feature components, data/API modules, formatters, and state-specific UI.",
+            "React 工作台 UI 必须将页面编排与可复用的功能组件、数据/API 模块、格式化器和状态特定 UI 分离。",
             &["changed_files", "component_split_evidence", "state_ownership_evidence"],
         );
     }
@@ -1744,7 +1744,7 @@ fn push_admin_rules(rules: &mut Vec<Value>) {
         "uix.scenarios.admin-dashboard",
         "must",
         &["app_shell", "page"],
-        "The first viewport must be the working business console with navigation, current page context, a real work region, and primary business action access.",
+        "首个视口必须是工作业务控制台，包含导航、当前页面上下文、真实工作区域和主要业务操作入口。",
         &["changed_files", "surface_evidence", "source_check"],
     );
     push_rule(
@@ -1753,7 +1753,7 @@ fn push_admin_rules(rules: &mut Vec<Value>) {
         "uix.scenarios.admin-dashboard",
         "should",
         &["app_shell", "navigation", "page"],
-        "Topbar/header content must provide operational context and relevant actions such as search, filters, user/workspace context, or primary action; it must not be filler description.",
+        "顶栏/页头内容必须提供操作上下文和相关操作（如搜索、筛选、用户/工作区上下文或主要操作）；不得用作填充描述。",
         &["changed_files", "surface_evidence"],
     );
     push_rule(
@@ -1762,7 +1762,7 @@ fn push_admin_rules(rules: &mut Vec<Value>) {
         "uix.scenarios.admin-dashboard",
         "must",
         &["record_list", "record_detail", "page"],
-        "Record-management screens must preserve list context across filter, pagination, row selection, detail viewing, and mutations.",
+        "记录管理界面必须在筛选、分页、行选择、详情查看和变更操作过程中保持列表上下文。",
         &["changed_files", "state_coverage", "workflow_evidence"],
     );
 }
@@ -1774,7 +1774,7 @@ fn push_data_rules(rules: &mut Vec<Value>) {
         "uix.focus.data",
         "must",
         &["record_list", "record_detail", "page"],
-        "Data surfaces must show object identity, status, key fields, and available action in the same scan path, with loading, empty, error, and business-blocking states placed near the affected region.",
+        "数据界面必须在同一扫描路径中展示对象标识、状态、关键字段和可用操作，并将加载、空、错误和业务受阻状态放置在受影响区域附近。",
         &["changed_files", "state_coverage", "surface_evidence"],
     );
     push_rule(
@@ -1783,7 +1783,7 @@ fn push_data_rules(rules: &mut Vec<Value>) {
         "uix.core.interaction",
         "must",
         &["record_list", "record_detail", "form", "action_panel"],
-        "Loading, success, validation, error, and business-blocking feedback must appear near the table, form, detail, row, or action they affect instead of only in a generic global message.",
+        "加载、成功、校验、错误和业务受阻反馈必须出现在其影响的表格、表单、详情、行或操作附近，而不是仅显示在通用全局消息中。",
         &["changed_files", "state_coverage", "business_feedback_evidence"],
     );
 }
@@ -1795,7 +1795,7 @@ fn push_mobile_rules(rules: &mut Vec<Value>) {
         "uix.focus.mobile",
         "must",
         &["record_list", "record_detail", "page"],
-        "Responsive record-management UI must keep the workflow usable on narrow screens through cards, drawer/detail route, or an explicit source-checked fallback; do not rely only on shrinking a dense table.",
+        "响应式记录管理 UI 必须通过卡片、抽屉/详情路由或显式的源码检查回退方案，确保工作流在窄屏上可用；不要仅依赖缩小密集表格。",
         &["changed_files", "viewport_check", "responsive_source_check"],
     );
 }
@@ -1815,7 +1815,7 @@ fn push_web_implementation_rules(rules: &mut Vec<Value>) {
             "form",
             "action_panel",
         ],
-        "Web UI must use native semantics before ARIA, provide accessible names for icon-only controls and form fields, preserve visible focus, and announce scoped async feedback when it changes user state.",
+        "Web UI 必须优先使用原生语义而非 ARIA，为纯图标控件和表单字段提供无障碍名称，保留可见焦点，并在异步反馈改变用户状态时播报作用域内的反馈。",
         &["changed_files", "source_check", "accessibility_source_evidence"],
     );
     push_rule(
@@ -1824,7 +1824,7 @@ fn push_web_implementation_rules(rules: &mut Vec<Value>) {
         "uix.focus.web-implementation",
         "must",
         &["form", "action_panel"],
-        "Web forms and business actions must include meaningful field metadata, keep input recoverable on failure, show inline errors near affected fields or controls, and avoid blocking paste or double submission.",
+        "Web 表单和业务操作必须包含有意义的字段元数据，在失败时保持输入可恢复，在受影响字段或控件附近显示行内错误，并避免阻止粘贴或重复提交。",
         &["changed_files", "source_check", "state_coverage", "form_resilience_evidence"],
     );
     push_rule(
@@ -1840,7 +1840,7 @@ fn push_web_implementation_rules(rules: &mut Vec<Value>) {
             "form",
             "action_panel",
         ],
-        "Web surfaces must handle long content, empty collections, media sizing, large lists, reduced motion, locale formatting, hydration-sensitive values, and restorable navigation state where those concerns are in scope.",
+        "Web 界面必须在相关范围内处理长内容、空集合、媒体尺寸、大型列表、减少动画、区域格式化、水合敏感值和可恢复导航状态。",
         &["changed_files", "source_check", "state_coverage", "layout_resilience_evidence"],
     );
 }
@@ -1856,7 +1856,7 @@ fn push_token_rules(rules: &mut Vec<Value>, design_token_plan: &Value) {
         template_ref,
         "must",
         &["app_shell", "page", "record_list", "record_detail", "form", "action_panel"],
-        "Token assets must cover semantic surface, text, border, primary, status, focus, control, shell, table/list, and detail/action roles needed by the implemented UI.",
+        "Token 资产必须覆盖已实现 UI 所需的语义界面、文本、边框、主要、状态、焦点、控件、外壳、表格/列表和详情/操作角色。",
         &["token_asset_files", "token_consumer_files", "source_check"],
     );
     push_rule(
@@ -1864,8 +1864,15 @@ fn push_token_rules(rules: &mut Vec<Value>, design_token_plan: &Value) {
         "token.single_source_consumed",
         "uix.core.system",
         "must",
-        &["app_shell", "page", "record_list", "record_detail", "form", "action_panel"],
-        "The UI must consume one token/theme source through the project style entry or component system and must not create a parallel token system.",
+        &[
+            "app_shell",
+            "page",
+            "record_list",
+            "record_detail",
+            "form",
+            "action_panel",
+        ],
+        "UI 必须通过项目样式入口或组件系统消费唯一的 token/主题源，不得创建并行 token 系统。",
         &["token_asset_files", "token_consumer_files", "source_check"],
     );
 }
@@ -2131,12 +2138,12 @@ fn reference_groups_value(groups: BTreeMap<String, BTreeSet<String>>) -> Value {
 fn scenario_candidates(primary: &str) -> Vec<Value> {
     let mut candidates = vec![scenario_candidate(
         primary,
-        "primary signal from confirmed frontend target and technical baseline",
+        "来自已确认前端目标和技术基线的主要信号",
     )];
     for fallback in fallback_scenarios(primary) {
         candidates.push(scenario_candidate(
             fallback,
-            "fallback when the concrete surface semantics fit this scenario better",
+            "当具体界面语义更匹配此场景时的回退选项",
         ));
     }
     candidates
@@ -2320,7 +2327,7 @@ fn design_token_asset_seed(baseline: Option<&TechnicalBaselineContract>) -> Valu
             "strategy": "create_tailwind_tokens",
             "templateId": "tokens-tailwind",
             "targetFiles": ["tailwind.config.js"],
-            "existingStyleEvidence": empty_style_evidence("No repository style evidence is available in the seed. During architecture, inspect RepositoryContext and project files; switch to reuse_existing or extend_existing when existing token/theme assets are found."),
+            "existingStyleEvidence": empty_style_evidence("种子中无可用仓库样式证据。在架构阶段，检查 RepositoryContext 和项目文件；当发现已有 token/主题资产时，切换为 reuse_existing 或 extend_existing。"),
             "mergePolicy": "preserve_existing_project_tokens",
             "duplicationPolicy": "do_not_create_parallel_token_system"
         })
@@ -2340,7 +2347,7 @@ fn design_token_asset_seed(baseline: Option<&TechnicalBaselineContract>) -> Valu
             "strategy": "not_applicable",
             "templateId": Value::Null,
             "targetFiles": [],
-            "existingStyleEvidence": empty_style_evidence("Native mobile stacks should use the platform or existing app theme. CSS/Tailwind token templates are not directly applicable."),
+            "existingStyleEvidence": empty_style_evidence("原生移动技术栈应使用平台或现有应用主题。CSS/Tailwind token 模板不直接适用。"),
             "mergePolicy": "preserve_existing_project_tokens",
             "duplicationPolicy": "do_not_create_parallel_token_system"
         })
@@ -2349,7 +2356,7 @@ fn design_token_asset_seed(baseline: Option<&TechnicalBaselineContract>) -> Valu
             "strategy": "create_css_tokens",
             "templateId": "tokens-css",
             "targetFiles": ["src/styles/tokens.css"],
-            "existingStyleEvidence": empty_style_evidence("No repository style evidence is available in the seed. During architecture, inspect RepositoryContext and project files; switch to reuse_existing or extend_existing when existing token/theme assets are found."),
+            "existingStyleEvidence": empty_style_evidence("种子中无可用仓库样式证据。在架构阶段，检查 RepositoryContext 和项目文件；当发现已有 token/主题资产时，切换为 reuse_existing 或 extend_existing。"),
             "mergePolicy": "preserve_existing_project_tokens",
             "duplicationPolicy": "do_not_create_parallel_token_system"
         })
@@ -2361,7 +2368,7 @@ fn default_design_token_asset_plan() -> Value {
         "strategy": "create_css_tokens",
         "templateId": "tokens-css",
         "targetFiles": ["src/styles/tokens.css"],
-        "existingStyleEvidence": empty_style_evidence("No design token evidence was supplied."),
+        "existingStyleEvidence": empty_style_evidence("未提供设计 token 证据。"),
         "mergePolicy": "preserve_existing_project_tokens",
         "duplicationPolicy": "do_not_create_parallel_token_system"
     })
@@ -2452,7 +2459,7 @@ pub fn ui_reference_load_plan(reference_groups: &Value) -> Value {
                 items.push(json!({
                     "refId": entry.ref_id,
                     "path": entry.path,
-                    "reason": entry.reason.unwrap_or_else(|| format!("Selected UIX {group}.{item} reference for the current frontend quality contract."))
+                    "reason": entry.reason.unwrap_or_else(|| format!("为当前前端质量契约选择的 UIX {group}.{item} 参考。"))
                 }));
             }
         }

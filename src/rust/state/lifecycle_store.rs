@@ -28,7 +28,7 @@ pub fn finalize_agent_candidate(
         && relative_path.contains("/agent-writable/");
     if !relative_path.starts_with(".loom/agent-writable/") && !delivery_candidate {
         return Err(crate::store::StateError::InvalidArgument(
-            "accepted candidate must be under .loom/agent-writable/".to_string(),
+            "已接受的候选产物必须位于 .loom/agent-writable/ 目录下".to_string(),
         ));
     }
     let candidate = from_project_relative(project_root, relative_path)?;
@@ -108,7 +108,7 @@ impl TransitionStore for FileTransitionStore {
         if !path_exists(&paths.config_file) || !path_exists(&paths.status_file) {
             return Err(LoomCoreError::failure(
                 "STATE_NOT_INITIALIZED",
-                format!("Loom is not initialized for {}.", paths.root.display()),
+                format!("Loom 尚未为 {} 初始化。", paths.root.display()),
             ));
         }
         read_json(&paths.status_file)
@@ -133,7 +133,7 @@ impl TransitionStore for FileTransitionStore {
         if !path_exists(&file) {
             return Err(LoomCoreError::failure(
                 "DELIVERY_INDEX_CORRUPTED",
-                format!("Delivery index does not exist for {delivery_id}."),
+                format!("{delivery_id} 的交付索引不存在。"),
             ));
         }
         read_json(&file)

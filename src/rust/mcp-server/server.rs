@@ -543,11 +543,13 @@ fn submit_file_tool(tool_name: &str, input: FileSubmitInput) -> LoomMcpActionRes
                 issues,
                 resubmit_tool: resubmit_tool.clone(),
                 fix_scope: Some(
-                    "Edit only the authorized artifact JSON target, then resubmit with the same Loom MCP submit tool."
+                    "仅编辑已授权的 artifact JSON 目标，然后使用相同的 Loom MCP 提交工具重新提交。"
                         .to_string(),
                 ),
                 read_groups,
-                agent_instruction: delivery_core::repairable_error_agent_instruction(&resubmit_tool),
+                agent_instruction: delivery_core::repairable_error_agent_instruction(
+                    &resubmit_tool,
+                ),
             });
             if let LoomMcpActionResult::RepairableError(repair) = &result {
                 if let Err(error) = state::record_pending_repair_for_request(
@@ -756,7 +758,7 @@ fn submit_file_tool(tool_name: &str, input: FileSubmitInput) -> LoomMcpActionRes
         error: LoomMcpFailure {
             code: "not_implemented_for_batch".to_string(),
             message: format!(
-                "{tool_name} passed MCP native submit preflight for {:?} targets {:?}, but its domain accept handler is assigned to batch {target_batch}.",
+                "{tool_name} 通过了 MCP 原生提交预检（目标类型 {:?}，目标 ID {:?}），但其域接受处理程序已分配到批次 {target_batch}。",
                 summary.artifact_kind, summary.target_ids
             ),
             target_batch: Some(target_batch),
@@ -821,13 +823,10 @@ where
     T: serde::de::DeserializeOwned,
 {
     let Some(arguments) = arguments else {
-        return Err(McpError::invalid_params(
-            "tool arguments are required",
-            None,
-        ));
+        return Err(McpError::invalid_params("工具参数为必填项", None));
     };
     serde_json::from_value(serde_json::Value::Object(arguments))
-        .map_err(|error| McpError::invalid_params(format!("invalid tool arguments: {error}"), None))
+        .map_err(|error| McpError::invalid_params(format!("无效的工具参数：{error}"), None))
 }
 
 fn structured<T>(result: Result<T, state::store::StateError>) -> Result<CallToolResult, McpError>

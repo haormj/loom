@@ -621,9 +621,10 @@ dependencies = ["fastapi", "uvicorn"]
         .filter_map(Value::as_str)
         .collect::<Vec<_>>();
     assert!(
-        bad_issues.iter().any(
-            |issue| issue.contains("sourceModel service frontend root frontend does not exist")
-        ),
+        bad_issues
+            .iter()
+            .any(|issue| issue
+                .contains("sourceModel 服务 frontend root frontend 在构建上下文内不存在")),
         "{bad_value:#}"
     );
     let applied_repair: Value = read_json(
@@ -2755,7 +2756,7 @@ fn deploy_validate_flags_compose_dockerfile_paths_that_do_not_resolve() {
         .iter()
         .any(|issue| issue
             .as_str()
-            .is_some_and(|text| text.contains("compose dockerfile path"))));
+            .is_some_and(|text| text.contains("compose dockerfile 路径"))));
 }
 
 #[test]

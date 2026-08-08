@@ -89,7 +89,7 @@ pub fn next_pending_pack(
         .packs
         .iter()
         .find(|pack| matches!(pack.status, SemanticPackStatus::Pending))
-        .ok_or_else(|| KnowledgeError::invalid("semantic build has no pending packs"))?;
+        .ok_or_else(|| KnowledgeError::invalid("语义构建没有待处理的包"))?;
     let chunks_file: ChunksFile = read_json(&paths::chunks_file(source_id, build_id)?)?;
     let read_plan = pack
         .chunk_ids
@@ -214,7 +214,7 @@ pub fn submit_semantic_pack(
     let target = authorized
         .targets
         .first()
-        .ok_or_else(|| KnowledgeError::invalid("semantic submit has no authorized target"))?;
+        .ok_or_else(|| KnowledgeError::invalid("语义提交没有已授权的写入目标"))?;
     let result_file = std::path::PathBuf::from(project_root).join(&target.path);
     let raw_result: Value = read_json(&result_file)?;
     let result = normalize_semantic_result_machine_fields(
@@ -264,7 +264,7 @@ pub fn submit_semantic_pack(
     publish_build(&source_id, &build_id)?;
     Ok(LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root.to_string(),
-        summary: "Knowledge semantic build published.".to_string(),
+        summary: "知识语义构建已发布。".to_string(),
         details: Some(json!({
             "sourceId": source_id,
             "sourceName": source_name,
@@ -290,11 +290,11 @@ fn read_semantic_request_root(project_root: &str, request_ref: &str) -> Knowledg
 fn parse_semantic_request_id(request_ref: &str) -> KnowledgeResult<String> {
     let rest = request_ref
         .strip_prefix("loom://projects/")
-        .ok_or_else(|| KnowledgeError::invalid(format!("invalid requestRef: {request_ref}")))?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("无效的 requestRef：{request_ref}")))?;
     let request_id = rest
         .split_once("/requests/")
         .and_then(|(_, id)| (!id.is_empty()).then_some(id))
-        .ok_or_else(|| KnowledgeError::invalid(format!("invalid requestRef: {request_ref}")))?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("无效的 requestRef：{request_ref}")))?;
     Ok(request_id.to_string())
 }
 
@@ -314,7 +314,7 @@ fn validate_semantic_result(
         issues.push(issue(
             "CHUNK_RESULT_COUNT_MISMATCH",
             format!(
-                "chunkResults must contain exactly {} item(s) in chunkReadPlan order.",
+                "chunkResults 必须按 chunkReadPlan 顺序包含恰好 {} 项。",
                 expected_chunk_ids.len()
             ),
             Some("chunkResults"),
@@ -329,7 +329,7 @@ fn validate_semantic_result(
         if !returned.contains(chunk_id) {
             issues.push(issue(
                 "CHUNK_RESULT_MISSING",
-                format!("chunkResults must include {chunk_id}"),
+                format!("chunkResults 必须包含 {chunk_id}"),
                 Some("chunkResults"),
             ));
         }
@@ -349,7 +349,7 @@ fn validate_semantic_result(
         if !matches!(status, "completed" | "low_signal" | "unreadable") {
             issues.push(issue(
                 "STATUS_INVALID",
-                "status must be completed, low_signal, or unreadable.",
+                "status 必须为 completed、low_signal 或 unreadable。",
                 Some("status"),
             ));
         }
@@ -360,7 +360,7 @@ fn validate_semantic_result(
         if status == "completed" && summary.trim().is_empty() {
             issues.push(issue(
                 "SUMMARY_REQUIRED",
-                "summary is required for completed chunks.",
+                "completed 状态的分块必须提供 summary。",
                 Some("summary"),
             ));
         }
@@ -370,7 +370,7 @@ fn validate_semantic_result(
         {
             issues.push(issue(
                 "SUMMARY_LANGUAGE_MISMATCH",
-                "Chinese chunks require Chinese summary.",
+                "中文分块需要中文 summary。",
                 Some("summary"),
             ));
         }
@@ -378,7 +378,7 @@ fn validate_semantic_result(
         if status == "completed" && semantic_labels.is_none() {
             issues.push(issue(
                 "SEMANTIC_LABELS_REQUIRED",
-                "semanticLabels must be an array.",
+                "semanticLabels 必须为数组。",
                 Some("semanticLabels"),
             ));
         }
@@ -392,7 +392,7 @@ fn validate_semantic_result(
                 {
                     issues.push(issue(
                         "SEMANTIC_LABEL_NORMALIZED_TEXT_REQUIRED",
-                        "semanticLabels[].normalizedText must be a string.",
+                        "semanticLabels[].normalizedText 必须为字符串。",
                         Some(&field_path),
                     ));
                 }
@@ -402,7 +402,7 @@ fn validate_semantic_result(
                 {
                     issues.push(issue(
                         "SEMANTIC_LABEL_ALIASES_REQUIRED",
-                        "semanticLabels[].aliases must be an array of strings.",
+                        "semanticLabels[].aliases 必须为字符串数组。",
                         Some(&field_path),
                     ));
                 }
@@ -411,7 +411,7 @@ fn validate_semantic_result(
         if chunk.get("semanticAliases").is_some() {
             issues.push(issue(
                 "SEMANTIC_ALIASES_NOT_ALLOWED",
-                "semanticAliases is an old duplicate field. Put retrieval aliases on semanticLabels[].aliases.",
+                "semanticAliases 是已废弃的重复字段。请将检索别名放在 semanticLabels[].aliases 上。",
                 Some("semanticAliases"),
             ));
         }
@@ -420,9 +420,7 @@ fn validate_semantic_result(
             if affinity.and_then(|value| value.get(old_field)).is_some() {
                 issues.push(issue(
                     "BLOCK_AFFINITY_FIELD_NOT_ALLOWED",
-                    format!(
-                        "blockAffinity.{old_field} is not used by the current MCP knowledge query path."
-                    ),
+                    format!("blockAffinity.{old_field} 不被当前 MCP 知识查询路径使用。"),
                     Some("blockAffinity"),
                 ));
             }
@@ -435,7 +433,7 @@ fn validate_semantic_result(
             {
                 issues.push(issue(
                     "BLOCK_AFFINITY_FIELD_REQUIRED",
-                    format!("blockAffinity.{field} must be numeric."),
+                    format!("blockAffinity.{field} 必须为数值。"),
                     Some("blockAffinity"),
                 ));
             }

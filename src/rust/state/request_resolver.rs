@@ -100,7 +100,7 @@ pub fn read_field_group_flat(input: ReadFieldGroupInput) -> StateResult<ReadRequ
         .find(|group| group.group_id == input.group_id)
         .ok_or_else(|| {
             StateError::InvalidArgument(format!(
-                "UNKNOWN_FIELD_GROUP: {}. Available groups: {}",
+                "UNKNOWN_FIELD_GROUP: {}。可用分组：{}",
                 input.group_id,
                 request
                     .read_groups
@@ -136,12 +136,12 @@ pub fn read_request_fields(input: ReadRequestFieldsInput) -> StateResult<ReadReq
     let fields = dedupe(input.fields);
     if fields.is_empty() {
         return Err(StateError::InvalidArgument(
-            "fields must include at least one field".to_string(),
+            "fields 必须包含至少一个字段".to_string(),
         ));
     }
     if fields.len() > 20 {
         return Err(StateError::InvalidArgument(
-            "readRequestFields accepts at most 20 fields".to_string(),
+            "readRequestFields 最多接受 20 个字段".to_string(),
         ));
     }
     let allowed = allowed_fields(&request.read_groups);
@@ -152,7 +152,7 @@ pub fn read_request_fields(input: ReadRequestFieldsInput) -> StateResult<ReadReq
         .collect();
     if !forbidden.is_empty() {
         return Err(StateError::InvalidArgument(format!(
-            "FIELD_NOT_ALLOWED: {}. Available groups: {}",
+            "FIELD_NOT_ALLOWED: {}。可用分组：{}",
             forbidden.join(","),
             request
                 .read_groups
@@ -196,7 +196,7 @@ fn load_request(project_root: &str, request_ref: &str) -> StateResult<LoadedRequ
     let config = read_project_config(project_root)?;
     if config.project_id != parsed.project_id {
         return Err(StateError::InvalidArgument(format!(
-            "requestRef projectId {} does not match project root projectId {}",
+            "requestRef 的 projectId {} 与项目根目录的 projectId {} 不匹配",
             parsed.project_id, config.project_id
         )));
     }
@@ -208,7 +208,7 @@ fn load_request(project_root: &str, request_ref: &str) -> StateResult<LoadedRequ
     if let Some(cached) = REQUEST_CACHE
         .get_or_init(|| Mutex::new(BTreeMap::new()))
         .lock()
-        .map_err(|_| StateError::StateCorrupted("request resolver cache is poisoned".to_string()))?
+        .map_err(|_| StateError::StateCorrupted("请求解析器缓存已中毒".to_string()))?
         .get(&cache_key)
         .filter(|cached| cached.fingerprint == fingerprint)
         .map(|cached| cached.request.clone())
@@ -229,9 +229,7 @@ fn load_request(project_root: &str, request_ref: &str) -> StateResult<LoadedRequ
     let mut request_cache = REQUEST_CACHE
         .get_or_init(|| Mutex::new(BTreeMap::new()))
         .lock()
-        .map_err(|_| {
-            StateError::StateCorrupted("request resolver cache is poisoned".to_string())
-        })?;
+        .map_err(|_| StateError::StateCorrupted("请求解析器缓存已中毒".to_string()))?;
     request_cache.insert(
         cache_key,
         CachedRequest {
@@ -260,9 +258,7 @@ fn resolve_fields(
         if let Some(value) = FIELD_CACHE
             .get_or_init(|| Mutex::new(BTreeMap::new()))
             .lock()
-            .map_err(|_| {
-                StateError::StateCorrupted("field resolver cache is poisoned".to_string())
-            })?
+            .map_err(|_| StateError::StateCorrupted("字段解析器缓存已中毒".to_string()))?
             .get(&cache_key)
             .cloned()
         {
@@ -274,9 +270,7 @@ fn resolve_fields(
                 let mut field_cache = FIELD_CACHE
                     .get_or_init(|| Mutex::new(BTreeMap::new()))
                     .lock()
-                    .map_err(|_| {
-                        StateError::StateCorrupted("field resolver cache is poisoned".to_string())
-                    })?;
+                    .map_err(|_| StateError::StateCorrupted("字段解析器缓存已中毒".to_string()))?;
                 field_cache.insert(cache_key, value.clone());
                 while field_cache.len() > FIELD_CACHE_MAX_ENTRIES {
                     let Some(oldest_key) = field_cache.keys().next().cloned() else {
@@ -471,7 +465,7 @@ fn selector_parts(field: &str) -> StateResult<Vec<String>> {
     let parts = projection_selector_parts(field)?;
     if parts[0] == "requestManifest" || parts[0] == "agentAction" {
         return Err(StateError::InvalidArgument(format!(
-            "field is not allowed through request read protocol: {field}"
+            "该字段不允许通过请求读取协议读取：{field}"
         )));
     }
     Ok(parts)
@@ -480,14 +474,14 @@ fn selector_parts(field: &str) -> StateResult<Vec<String>> {
 fn parse_request_ref(request_ref: &str) -> StateResult<ParsedRequestRef> {
     let prefix = "loom://projects/";
     let rest = request_ref.strip_prefix(prefix).ok_or_else(|| {
-        StateError::InvalidArgument("requestRef must start with loom://projects/".to_string())
+        StateError::InvalidArgument("requestRef 必须以 loom://projects/ 开头".to_string())
     })?;
-    let (project_id, rest) = rest.split_once("/requests/").ok_or_else(|| {
-        StateError::InvalidArgument("requestRef must include /requests/".to_string())
-    })?;
+    let (project_id, rest) = rest
+        .split_once("/requests/")
+        .ok_or_else(|| StateError::InvalidArgument("requestRef 必须包含 /requests/".to_string()))?;
     if project_id.is_empty() || rest.is_empty() || rest.contains('/') {
         return Err(StateError::InvalidArgument(format!(
-            "invalid requestRef: {request_ref}"
+            "无效的 requestRef：{request_ref}"
         )));
     }
     Ok(ParsedRequestRef {
@@ -505,13 +499,13 @@ struct ParsedGroupResource {
 fn parse_field_group_resource(uri: &str) -> StateResult<ParsedGroupResource> {
     let prefix = "loom://projects/";
     let rest = uri.strip_prefix(prefix).ok_or_else(|| {
-        StateError::InvalidArgument("resource URI must start with loom://projects/".to_string())
+        StateError::InvalidArgument("资源 URI 必须以 loom://projects/ 开头".to_string())
     })?;
-    let (project_id, rest) = rest.split_once("/requests/").ok_or_else(|| {
-        StateError::InvalidArgument("resource URI must include /requests/".to_string())
-    })?;
+    let (project_id, rest) = rest
+        .split_once("/requests/")
+        .ok_or_else(|| StateError::InvalidArgument("资源 URI 必须包含 /requests/".to_string()))?;
     let (request_id, group_id) = rest.split_once("/field-groups/").ok_or_else(|| {
-        StateError::InvalidArgument("resource URI must include /field-groups/".to_string())
+        StateError::InvalidArgument("资源 URI 必须包含 /field-groups/".to_string())
     })?;
     Ok(ParsedGroupResource {
         project_id: project_id.to_string(),
@@ -527,14 +521,12 @@ fn decode_component(value: &str) -> StateResult<String> {
     while index < bytes.len() {
         if bytes[index] == b'%' {
             if index + 2 >= bytes.len() {
-                return Err(StateError::InvalidArgument(
-                    "invalid percent escape".to_string(),
-                ));
+                return Err(StateError::InvalidArgument("无效的百分号转义".to_string()));
             }
             let hex = std::str::from_utf8(&bytes[index + 1..index + 3])
-                .map_err(|_| StateError::InvalidArgument("invalid percent escape".to_string()))?;
+                .map_err(|_| StateError::InvalidArgument("无效的百分号转义".to_string()))?;
             let byte = u8::from_str_radix(hex, 16)
-                .map_err(|_| StateError::InvalidArgument("invalid percent escape".to_string()))?;
+                .map_err(|_| StateError::InvalidArgument("无效的百分号转义".to_string()))?;
             output.push(byte);
             index += 3;
         } else {
@@ -542,9 +534,8 @@ fn decode_component(value: &str) -> StateResult<String> {
             index += 1;
         }
     }
-    String::from_utf8(output).map_err(|_| {
-        StateError::InvalidArgument("resource URI component is not valid UTF-8".to_string())
-    })
+    String::from_utf8(output)
+        .map_err(|_| StateError::InvalidArgument("资源 URI 组件不是有效的 UTF-8".to_string()))
 }
 
 fn allowed_fields(groups: &[ReadGroupRef]) -> BTreeSet<String> {

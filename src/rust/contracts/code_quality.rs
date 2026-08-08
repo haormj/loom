@@ -592,13 +592,13 @@ fn signal_from_selection(track: &str, source_path: &str, raw_selection: &str) ->
     let mapped = language.is_some() || !frameworks.is_empty() || !dialects.is_empty();
     let confidence = if mapped { "high" } else { "low" }.to_string();
     let reason = if language.is_some() {
-        "Mapped language from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的语言。".to_string()
     } else if !frameworks.is_empty() {
-        "Mapped framework from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的框架。".to_string()
     } else if !dialects.is_empty() {
-        "Mapped storage dialect from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的存储方言。".to_string()
     } else {
-        "No known Loom code reference profile matched this stack selection.".to_string()
+        "没有已知的 Loom 代码参考配置匹配此技术栈选择。".to_string()
     };
     CodeStackSignal {
         source_track: track.to_string(),
@@ -1669,19 +1669,15 @@ fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanIt
         return ReferenceLoadPlanItem {
             ref_id: entry.ref_id,
             path: entry.path,
-            reason: entry.reason.unwrap_or_else(|| {
-                format!(
-                    "Selected {group_key}.{group} implementation quality reference for this task."
-                )
-            }),
+            reason: entry
+                .reason
+                .unwrap_or_else(|| format!("为此任务选择的 {group_key}.{group} 实现质量参考。")),
         };
     }
     ReferenceLoadPlanItem {
         ref_id: format!("tech.code.{group_key}.{group}"),
         path: format!("tech/code/{group_key}/{group}.md"),
-        reason: format!(
-            "Selected {group_key}.{group} implementation quality reference for this task."
-        ),
+        reason: format!("为此任务选择的 {group_key}.{group} 实现质量参考。"),
     }
 }
 
@@ -2207,13 +2203,11 @@ pub fn jvm_package_naming_policy(applies_to: Vec<String>) -> CodePackageNamingPo
     CodePackageNamingPolicy {
         applies_to,
         priority_order: vec![
-            "existing production package root in src/main".to_string(),
-            "build metadata group such as Gradle group or Maven groupId".to_string(),
-            "confirmed organization or product namespace from project context".to_string(),
-            "fallback app.<project_slug> derived from repository or confirmed project name"
-                .to_string(),
-            "absolute fallback app.generated only when no stable project slug exists"
-                .to_string(),
+            "src/main 中已有的生产包根路径".to_string(),
+            "构建元数据 group，如 Gradle group 或 Maven groupId".to_string(),
+            "来自项目上下文的已确认组织或产品命名空间".to_string(),
+            "从仓库或已确认项目名称派生的回退 app.<project_slug>".to_string(),
+            "仅在不存在稳定项目 slug 时的绝对回退 app.generated".to_string(),
         ],
         forbidden_package_prefixes: forbidden_jvm_package_prefixes()
             .into_iter()
@@ -2222,8 +2216,9 @@ pub fn jvm_package_naming_policy(applies_to: Vec<String>) -> CodePackageNamingPo
         fallback_package_template: "app.<project_slug>".to_string(),
         absolute_fallback_package: "app.generated".to_string(),
         notes: vec![
-            "project_slug must use lowercase letters and digits; split invalid separators into package segments and drop empty segments.".to_string(),
-            "Fallback packages are local bootstrap namespaces, not public organization identities, and should be replaced when a real organization namespace is known.".to_string(),
+            "project_slug 必须使用小写字母和数字；将无效分隔符拆分为包段并丢弃空段。".to_string(),
+            "回退包是本地引导命名空间，不是公共组织标识，在已知真实组织命名空间时应被替换。"
+                .to_string(),
         ],
     }
 }

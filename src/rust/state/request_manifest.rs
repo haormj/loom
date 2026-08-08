@@ -150,9 +150,9 @@ pub fn write_native_request(
 
     let mut root = input.root;
     {
-        let root_object = root.as_object_mut().ok_or_else(|| {
-            StateError::InvalidArgument("native request root must be a JSON object".to_string())
-        })?;
+        let root_object = root
+            .as_object_mut()
+            .ok_or_else(|| StateError::InvalidArgument("原生请求根必须为 JSON 对象".to_string()))?;
         root_object.insert(
             "requestId".to_string(),
             Value::String(input.request_id.clone()),
@@ -174,9 +174,9 @@ pub fn write_native_request(
     let full_bytes = pretty_len(&root);
 
     let (read_groups, manifest_refs, read_plan_warnings) = {
-        let root_object = root.as_object_mut().ok_or_else(|| {
-            StateError::InvalidArgument("native request root must be a JSON object".to_string())
-        })?;
+        let root_object = root
+            .as_object_mut()
+            .ok_or_else(|| StateError::InvalidArgument("原生请求根必须为 JSON 对象".to_string()))?;
         let initial_read_groups = canonicalize_read_plan(
             root_object,
             &request_ref,
@@ -272,7 +272,7 @@ pub fn read_group_refs_from_root(
         .and_then(|plan| plan.get("groups"))
         .and_then(Value::as_array)
         .ok_or_else(|| {
-            StateError::InvalidArgument("requestReadPlan.groups is required".to_string())
+            StateError::InvalidArgument("requestReadPlan.groups 为必填项".to_string())
         })?;
     groups
         .iter()
@@ -318,13 +318,13 @@ fn canonicalize_read_plan(
         .remove("requestReadPlan")
         .and_then(|value| value.as_object().cloned())
         .ok_or_else(|| {
-            StateError::InvalidArgument("requestReadPlan.groups is required".to_string())
+            StateError::InvalidArgument("requestReadPlan.groups 为必填项".to_string())
         })?;
     let groups = plan
         .remove("groups")
         .and_then(|value| value.as_array().cloned())
         .ok_or_else(|| {
-            StateError::InvalidArgument("requestReadPlan.groups is required".to_string())
+            StateError::InvalidArgument("requestReadPlan.groups 为必填项".to_string())
         })?;
     let mut canonical_groups = Vec::with_capacity(groups.len());
     for (index, group) in groups.iter().enumerate() {
@@ -354,7 +354,7 @@ fn canonicalize_read_plan(
             if split {
                 batch_ref.group_id = format!("{}__batch_{}", group_ref.group_id, batch_index + 1);
                 batch_ref.purpose = format!(
-                    "{} Projection batch {} of {}.",
+                    "{} 投影批次 {} / {}。",
                     group_ref.purpose,
                     batch_index + 1,
                     batch_count
@@ -447,7 +447,7 @@ fn reproject_resolved_read_groups(
             if needs_batch_id {
                 batch.group_id = format!("{}__resolved_batch_{}", group.group_id, batch_index + 1);
                 batch.purpose = format!(
-                    "{} Resolved semantic projection batch {} of {}.",
+                    "{} 已解析的语义投影批次 {} / {}。",
                     group.purpose,
                     batch_index + 1,
                     batch_count
@@ -465,7 +465,7 @@ fn reproject_resolved_read_groups(
     }
     if canonical_groups.is_empty() {
         return Err(StateError::InvalidArgument(format!(
-            "request {request_ref} has no readable request groups"
+            "请求 {request_ref} 没有可读的请求分组"
         )));
     }
     Ok(canonical_groups)
@@ -478,21 +478,17 @@ fn split_resolved_field(value: &Value, field: &str, budget: usize) -> Result<Vec
     match value {
         Value::Object(object) if !object.is_empty() => object
             .iter()
-            .map(|(key, child)| {
-                split_resolved_field(child, &format!("{field}.{key}"), budget)
-            })
+            .map(|(key, child)| split_resolved_field(child, &format!("{field}.{key}"), budget))
             .collect::<Result<Vec<_>, _>>()
             .map(|paths| paths.into_iter().flatten().collect()),
         Value::Array(items) if !items.is_empty() => items
             .iter()
             .enumerate()
-            .map(|(index, child)| {
-                split_resolved_field(child, &format!("{field}.{index}"), budget)
-            })
+            .map(|(index, child)| split_resolved_field(child, &format!("{field}.{index}"), budget))
             .collect::<Result<Vec<_>, _>>()
             .map(|paths| paths.into_iter().flatten().collect()),
         _ => Err(format!(
-            "request projection field {field} exceeds {budget} bytes and cannot be split without truncation"
+            "请求投影字段 {field} 超过 {budget} 字节，无法在不截断的情况下拆分"
         )),
     }
 }
@@ -554,19 +550,19 @@ fn read_group_ref_from_value(
 ) -> StateResult<ReadGroupRef> {
     let object = value
         .as_object()
-        .ok_or_else(|| StateError::InvalidArgument("read group must be an object".to_string()))?;
+        .ok_or_else(|| StateError::InvalidArgument("读取分组必须为对象".to_string()))?;
     let group_id = string_field(object, "groupId")?;
     reject_read_group_sidecar_fields(&group_id, object)?;
     if object.contains_key("fields") {
         return Err(StateError::InvalidArgument(format!(
-            "read group {group_id} must use selectors, not fields"
+            "读取分组 {group_id} 必须使用 selectors，而非 fields"
         )));
     }
     let selectors = object
         .get("selectors")
         .and_then(Value::as_array)
         .ok_or_else(|| {
-            StateError::InvalidArgument(format!("read group {group_id} selectors are required"))
+            StateError::InvalidArgument(format!("读取分组 {group_id} 的 selectors 为必填项"))
         })
         .and_then(|_| {
             serde_json::from_value::<Vec<ReadSelector>>(
@@ -577,7 +573,7 @@ fn read_group_ref_from_value(
             )
             .map_err(|error| {
                 StateError::InvalidArgument(format!(
-                    "read group {group_id} selectors are invalid: {error}"
+                    "读取分组 {group_id} 的 selectors 无效：{error}"
                 ))
             })
         })?;
@@ -587,7 +583,7 @@ fn read_group_ref_from_value(
         .collect::<StateResult<Vec<_>>>()?;
     if fields.is_empty() {
         return Err(StateError::InvalidArgument(format!(
-            "read group {group_id} must include at least one selector field"
+            "读取分组 {group_id} 必须包含至少一个 selector 字段"
         )));
     }
     let selectors = read_selectors_from_paths(fields);
@@ -601,12 +597,12 @@ fn read_group_ref_from_value(
         purpose: object
             .get("purpose")
             .and_then(Value::as_str)
-            .unwrap_or("Read request fields for the current action.")
+            .unwrap_or("读取当前操作所需的请求字段。")
             .to_string(),
         when_to_read: object
             .get("whenToRead")
             .and_then(Value::as_str)
-            .unwrap_or("Before acting on this request.")
+            .unwrap_or("在处理此请求之前。")
             .to_string(),
         projection_mode: object
             .get("projectionMode")
@@ -662,7 +658,7 @@ fn write_ref(
         RequestStorageManifestRef {
             ref_key: format!("{key}Ref"),
             r#ref: relative.clone(),
-            purpose: format!("Content-addressed private storage ref for {key}. Not agent-facing."),
+            purpose: format!("{key} 的内容寻址私有存储引用，非 Agent 可见。"),
         },
     );
     Ok(())
@@ -683,7 +679,7 @@ fn reject_forbidden_root_keys(root_object: &Map<String, Value>) -> StateResult<(
     for key in FORBIDDEN_ROOT_KEYS {
         if root_object.contains_key(*key) {
             return Err(StateError::InvalidArgument(format!(
-                "native MCP request root must not include {key}; use requestReadPlan.groups and submitTool/writeTargets only"
+                "原生 MCP 请求根不能包含 {key}；仅使用 requestReadPlan.groups 和 submitTool/writeTargets"
             )));
         }
     }
@@ -698,7 +694,7 @@ fn reject_root_ref_aliases(root_object: &Map<String, Value>) -> StateResult<()> 
         .collect::<Vec<_>>();
     if !illegal.is_empty() {
         return Err(StateError::InvalidArgument(format!(
-            "native MCP request root must not include root ref aliases: {}",
+            "原生 MCP 请求根不能包含根引用别名：{}",
             illegal.join(",")
         )));
     }
@@ -712,7 +708,7 @@ fn reject_read_group_sidecar_fields(
     for key in ["readCommand", "fallbackRule"] {
         if object.contains_key(key) {
             return Err(StateError::InvalidArgument(format!(
-                "read group {group_id} must not include {key}; requestReadPlan.groups is the only read contract"
+                "读取分组 {group_id} 不能包含 {key}；requestReadPlan.groups 是唯一的读取契约"
             )));
         }
     }
@@ -738,7 +734,7 @@ fn normalize_output_contract_submit_metadata(
         };
         if root_value != contract_value {
             return Err(StateError::InvalidArgument(format!(
-                "native MCP request root {key} conflicts with outputContract.{key}; keep one authoritative value in outputContract"
+                "原生 MCP 请求根的 {key} 与 outputContract.{key} 冲突；请在 outputContract 中保留唯一权威值"
             )));
         }
         root_object.remove(key);
@@ -860,7 +856,7 @@ fn validate_read_plan_contract(
                         bytes: 0,
                         limit_bytes: MAX_READ_FIELD_BYTES,
                         message: format!(
-                            "requestReadPlan field {} in group {} could not be measured: {}; request remains persisted for later read resolution",
+                            "requestReadPlan 字段 {}（分组 {}）无法度量：{}；请求已持久化以供后续读取解析",
                             field, group.group_id, error
                         ),
                     });
@@ -876,7 +872,7 @@ fn validate_read_plan_contract(
                     bytes: field_bytes,
                     limit_bytes: MAX_READ_FIELD_BYTES,
                     message: format!(
-                        "requestReadPlan field {} in group {} is too large: {} bytes > {} bytes",
+                        "requestReadPlan 字段 {}（分组 {}）过大：{} 字节 > {} 字节",
                         field, group.group_id, field_bytes, MAX_READ_FIELD_BYTES
                     ),
                 });
@@ -891,7 +887,7 @@ fn validate_read_plan_contract(
                 bytes: group_bytes,
                 limit_bytes: MAX_READ_GROUP_BYTES,
                 message: format!(
-                    "requestReadPlan group {} is too large: {} bytes > {} bytes",
+                    "requestReadPlan 分组 {} 过大：{} 字节 > {} 字节",
                     group.group_id, group_bytes, MAX_READ_GROUP_BYTES
                 ),
             });
@@ -1012,7 +1008,7 @@ fn validate_read_field_selector(field: &str) -> StateResult<String> {
     let field = field.trim();
     if field.is_empty() {
         return Err(StateError::InvalidArgument(
-            "read group field selector is required".to_string(),
+            "读取分组的字段选择器为必填项".to_string(),
         ));
     }
     if field.contains(".refs")
@@ -1023,23 +1019,23 @@ fn validate_read_field_selector(field: &str) -> StateResult<String> {
         || field.contains(" ")
     {
         return Err(StateError::InvalidArgument(format!(
-            "field is not allowed through requestReadPlan.groups: {field}"
+            "该字段不允许通过 requestReadPlan.groups 读取：{field}"
         )));
     }
     if FORBIDDEN_EXACT_READ_FIELDS.contains(&field) {
         return Err(StateError::InvalidArgument(format!(
-            "read field is too broad for requestReadPlan.groups: {field}"
+            "该读取字段对 requestReadPlan.groups 而言范围过宽：{field}"
         )));
     }
     let parts = selector_parts(field)?;
     if parts[0] == "requestManifest" || parts[0] == "agentAction" {
         return Err(StateError::InvalidArgument(format!(
-            "field is not allowed through request read protocol: {field}"
+            "该字段不允许通过请求读取协议读取：{field}"
         )));
     }
     if parts[0] == "sectionOutputs" {
         return Err(StateError::InvalidArgument(format!(
-            "sectionOutputs is private workflow state and must not be exposed through requestReadPlan.groups: {field}"
+            "sectionOutputs 为私有工作流状态，不得通过 requestReadPlan.groups 暴露：{field}"
         )));
     }
     Ok(field.to_string())
@@ -1050,7 +1046,7 @@ fn string_field(object: &Map<String, Value>, key: &str) -> StateResult<String> {
         .get(key)
         .and_then(Value::as_str)
         .map(str::to_string)
-        .ok_or_else(|| StateError::InvalidArgument(format!("{key} is required")))
+        .ok_or_else(|| StateError::InvalidArgument(format!("{key} 为必填项")))
 }
 
 pub fn encode_component(value: &str) -> String {

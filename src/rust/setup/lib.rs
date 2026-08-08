@@ -315,7 +315,7 @@ impl AgentKind {
         match raw.trim().to_ascii_lowercase().as_str() {
             "opencode" | "open-code" | "open_code" => Ok(Self::Opencode),
             other => Err(SetupError::InvalidArgument(format!(
-                "unsupported agent '{other}', expected opencode or all"
+                "不支持的代理 '{other}'，应为 opencode 或 all"
             ))),
         }
     }
@@ -356,7 +356,7 @@ impl TargetPlatform {
             "linux-arm64" | "linux-aarch64" => Ok(Self::LinuxArm64),
             "windows-x64" | "windows-amd64" => Ok(Self::WindowsX64),
             other => Err(SetupError::InvalidArgument(format!(
-                "unsupported platform '{other}'"
+                "不支持的平台 '{other}'"
             ))),
         }
     }
@@ -572,15 +572,16 @@ impl SetupEnvironment {
         let user_home = env_path("LOOM_SETUP_USER_HOME")
             .or_else(|| env_path("HOME"))
             .or_else(|| env_path("USERPROFILE"))
-            .ok_or_else(|| SetupError::InvalidArgument("HOME/USERPROFILE is required".into()))?;
+            .ok_or_else(|| {
+                SetupError::InvalidArgument("需要 HOME 或 USERPROFILE 环境变量".into())
+            })?;
         let loom_home = env_path("LOOM_HOME").unwrap_or_else(|| user_home.join(".loom"));
         let package_root = package_root_arg
             .or_else(|| env_path("LOOM_SETUP_PACKAGE_ROOT"))
             .or_else(package_root_from_current_exe)
             .ok_or_else(|| {
                 SetupError::InvalidArgument(
-                    "package root is required; set LOOM_SETUP_PACKAGE_ROOT or pass --package-root"
-                        .into(),
+                    "需要包根目录；请设置 LOOM_SETUP_PACKAGE_ROOT 或传递 --package-root".into(),
                 )
             })?;
         let opencode_home =
@@ -666,7 +667,7 @@ fn repo_root() -> Result<PathBuf, SetupError> {
         .ancestors()
         .nth(3)
         .map(Path::to_path_buf)
-        .ok_or_else(|| SetupError::InvalidArgument("failed to resolve repository root".into()))
+        .ok_or_else(|| SetupError::InvalidArgument("无法解析仓库根目录".into()))
 }
 
 fn current_binary_dir() -> Result<PathBuf, SetupError> {
@@ -679,11 +680,12 @@ fn current_binary_dir() -> Result<PathBuf, SetupError> {
     })?;
     let dir = exe
         .parent()
-        .ok_or_else(|| SetupError::InvalidArgument("current executable has no parent".into()))?;
+        .ok_or_else(|| SetupError::InvalidArgument("当前可执行文件没有父目录".into()))?;
     if dir.file_name().and_then(|name| name.to_str()) == Some("deps") {
-        return dir.parent().map(Path::to_path_buf).ok_or_else(|| {
-            SetupError::InvalidArgument("failed to resolve cargo target directory".into())
-        });
+        return dir
+            .parent()
+            .map(Path::to_path_buf)
+            .ok_or_else(|| SetupError::InvalidArgument("无法解析 cargo target 目录".into()));
     }
     Ok(dir.to_path_buf())
 }
@@ -802,26 +804,18 @@ impl fmt::Display for SetupError {
                 actual,
             } => write!(
                 formatter,
-                "checksum mismatch for {}: expected {expected}, got {actual}",
+                "{} 的校验和不匹配：预期 {expected}，实际 {actual}",
                 path.display()
             ),
             Self::MissingPackageEntry(path) => {
-                write!(
-                    formatter,
-                    "release package entry is missing: {}",
-                    path.display()
-                )
+                write!(formatter, "发布包条目缺失：{}", path.display())
             }
             Self::LegacyCleanupBlocked(blocked) => {
-                write!(
-                    formatter,
-                    "legacy cleanup blocked for {} path(s)",
-                    blocked.len()
-                )
+                write!(formatter, "旧版清理被阻止，涉及 {} 个路径", blocked.len())
             }
             Self::DoctorFailed(checks) => write!(
                 formatter,
-                "doctor failed: {} check(s) did not pass",
+                "doctor 检查失败：{} 项检查未通过",
                 checks
                     .iter()
                     .filter(|check| check.status != "passed")
@@ -834,7 +828,7 @@ impl fmt::Display for SetupError {
                 ..
             } => write!(
                 formatter,
-                "{program} failed with exit status {status}: {}",
+                "{program} 失败，退出状态码 {status}：{}",
                 stderr.trim()
             ),
         }
@@ -887,7 +881,7 @@ pub fn prepare_browser_runtime(
     for browser in &browsers {
         if !matches!(browser.as_str(), "chromium" | "firefox" | "webkit") {
             return Err(SetupError::InvalidArgument(format!(
-                "unsupported Playwright browser `{browser}`; use chromium, firefox, or webkit"
+                "不支持的 Playwright 浏览器 `{browser}`；请使用 chromium、firefox 或 webkit"
             )));
         }
     }
@@ -1047,7 +1041,7 @@ fn prepare_browser_runtime_version(
             .filter(|value| !value.trim().is_empty())
             .ok_or_else(|| {
                 SetupError::InvalidArgument(format!(
-                    "installed Playwright package has no version: {}",
+                    "已安装的 Playwright 包没有版本号：{}",
                     installed_package.display()
                 ))
             })?
@@ -1098,7 +1092,7 @@ fn prepare_browser_runtime_version(
         };
         if browser_entries.is_empty() {
             return Err(SetupError::InvalidArgument(format!(
-                "Playwright browser install produced no cache entries under {}",
+                "Playwright 浏览器安装在 {} 下未产生缓存条目",
                 browsers_path.display()
             )));
         }
@@ -1133,7 +1127,7 @@ fn prepare_browser_runtime_version(
         )?
         .ok_or_else(|| {
             SetupError::InvalidArgument(format!(
-                "prepared Playwright runtime failed doctor checks: {}",
+                "准备好的 Playwright 运行时未通过 doctor 检查：{}",
                 runtime_root.display()
             ))
         })?;
@@ -1225,7 +1219,7 @@ fn browser_runtime_doctor(
         "manifest_version",
         manifest.schema_version == PLAYWRIGHT_RUNTIME_SCHEMA_VERSION
             && manifest.runtime_revision == PLAYWRIGHT_RUNTIME_REVISION,
-        "Runtime manifest schema and Loom runtime revision match.",
+        "运行时清单架构和 Loom 运行时修订版本匹配。",
     ));
     let lock_path = runtime_root.join("package-lock.json");
     let lock_matches = sha256_file(&lock_path)
@@ -1234,7 +1228,7 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "package_lock_checksum",
         lock_matches,
-        "Runtime package lock checksum matches the manifest.",
+        "运行时包锁校验和与清单匹配。",
     ));
     let installed_package = runtime_root.join("node_modules/@playwright/test/package.json");
     let installed_version_matches = read_json_value(&installed_package)
@@ -1249,12 +1243,12 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "runner_package_version",
         installed_version_matches,
-        "Installed @playwright/test version matches the manifest.",
+        "已安装的 @playwright/test 版本与清单匹配。",
     ));
     checks.push(browser_doctor_check(
         "runner_executable",
         runtime_root.join(&manifest.runner_relative_path).is_file(),
-        "Playwright runner executable is present.",
+        "Playwright 运行器可执行文件存在。",
     ));
     let browsers_present = !manifest.browser_entries.is_empty()
         && manifest
@@ -1264,7 +1258,7 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "browser_cache",
         browsers_present,
-        "Required Playwright browser cache entries are present.",
+        "所需的 Playwright 浏览器缓存条目存在。",
     ));
     if checks.iter().all(|check| check.status == "passed") {
         checks.extend(manifest.browsers.iter().map(|browser| {
@@ -1282,8 +1276,7 @@ fn browser_doctor_check(check_id: &str, passed: bool, summary: &str) -> BrowserR
         summary: summary.to_string(),
         failure_code: (!passed).then(|| "runtime_integrity_failed".to_string()),
         diagnostic: None,
-        remediation: (!passed)
-            .then(|| "Rebuild the Loom-managed Playwright runtime cache.".to_string()),
+        remediation: (!passed).then(|| "重建 Loom 管理的 Playwright 运行时缓存。".to_string()),
     }
 }
 
@@ -1306,7 +1299,7 @@ fn browser_launch_doctor_check(
             check_id: format!("launch_smoke_{browser}"),
             scope: "launch".to_string(),
             status: "passed".to_string(),
-            summary: format!("{browser} launched, rendered a page, and closed successfully."),
+            summary: format!("{browser} 已启动、渲染页面并成功关闭。"),
             failure_code: None,
             diagnostic: None,
             remediation: None,
@@ -1318,7 +1311,7 @@ fn browser_launch_doctor_check(
                 check_id: format!("launch_smoke_{browser}"),
                 scope: "launch".to_string(),
                 status: "failed".to_string(),
-                summary: format!("{browser} could not launch on the host."),
+                summary: format!("{browser} 无法在主机上启动。"),
                 failure_code: Some(failure_code.to_string()),
                 diagnostic: Some(diagnostic),
                 remediation: Some(browser_launch_remediation(failure_code).to_string()),
@@ -1328,12 +1321,10 @@ fn browser_launch_doctor_check(
             check_id: format!("launch_smoke_{browser}"),
             scope: "launch".to_string(),
             status: "failed".to_string(),
-            summary: format!("{browser} launch doctor could not start Node.js."),
+            summary: format!("{browser} 启动 doctor 无法启动 Node.js。"),
             failure_code: Some("node_runtime_unavailable".to_string()),
             diagnostic: Some(error.to_string()),
-            remediation: Some(
-                "Install a compatible Node.js runtime or make it available on PATH.".to_string(),
-            ),
+            remediation: Some("安装兼容的 Node.js 运行时或使其在 PATH 中可用。".to_string()),
         },
     }
 }
@@ -1361,14 +1352,14 @@ fn classify_browser_launch_failure(diagnostic: &str) -> &'static str {
 fn browser_launch_remediation(failure_code: &str) -> &'static str {
     match failure_code {
         "missing_system_dependencies" => {
-            "Use Loom's managed Playwright container fallback or install the host browser system dependencies."
+            "使用 Loom 管理的 Playwright 容器回退，或安装主机浏览器系统依赖。"
         }
-        "browser_executable_missing" => "Reprepare the Loom browser runtime for this platform.",
+        "browser_executable_missing" => "为当前平台重新准备 Loom 浏览器运行时。",
         "browser_launch_permission_denied" => {
-            "Correct host execution permissions or use Loom's managed Playwright container fallback."
+            "修正主机执行权限或使用 Loom 管理的 Playwright 容器回退。"
         }
-        "browser_platform_mismatch" => "Prepare the runtime on the current OS and CPU architecture.",
-        _ => "Inspect the bounded launch diagnostic and use Loom's managed Playwright container fallback.",
+        "browser_platform_mismatch" => "在当前操作系统和 CPU 架构上准备运行时。",
+        _ => "检查有限的启动诊断信息并使用 Loom 管理的 Playwright 容器回退。",
     }
 }
 
@@ -1441,7 +1432,8 @@ fn managed_container_doctor(
                                 check_id: "managed_container_smoke".to_string(),
                                 scope: "container".to_string(),
                                 status: "passed".to_string(),
-                                summary: "Managed Playwright container launched every requested browser successfully.".to_string(),
+                                summary: "托管 Playwright 容器成功启动了所有请求的浏览器。"
+                                    .to_string(),
                                 failure_code: None,
                                 diagnostic: None,
                                 remediation: None,
@@ -1465,19 +1457,18 @@ fn managed_container_doctor(
     }
     let (failure_code, diagnostic) = last_failure.unwrap_or((
         "container_runtime_unavailable",
-        "No managed container runtime candidate was available.".to_string(),
+        "没有可用的托管容器运行时候选。".to_string(),
     ));
     (
         vec![BrowserRuntimeDoctorCheck {
             check_id: "managed_container_smoke".to_string(),
             scope: "container".to_string(),
             status: "failed".to_string(),
-            summary: "Managed Playwright container fallback is unavailable.".to_string(),
+            summary: "托管 Playwright 容器回退不可用。".to_string(),
             failure_code: Some(failure_code.to_string()),
             diagnostic: Some(diagnostic),
             remediation: Some(
-                "Start a Docker-compatible container runtime, restore registry access, or provide external browser evidence."
-                    .to_string(),
+                "启动 Docker 兼容的容器运行时，恢复注册表访问，或提供外部浏览器证据。".to_string(),
             ),
         }],
         None,
@@ -1521,7 +1512,7 @@ fn validate_playwright_version_spec(value: &str) -> Result<(), SetupError> {
         || lower.starts_with("https:")
     {
         return Err(SetupError::InvalidArgument(format!(
-            "unsupported Playwright version spec `{value}`; use a registry version, range, or tag"
+            "不支持的 Playwright 版本规范 `{value}`；请使用注册表版本、范围或标签"
         )));
     }
     Ok(())
@@ -1825,7 +1816,7 @@ impl BrowserRuntimeLock {
                     }
                     if started.elapsed().unwrap_or_default() >= PLAYWRIGHT_LOCK_WAIT {
                         return Err(SetupError::InvalidArgument(format!(
-                            "timed out waiting for Playwright runtime lock {}",
+                            "等待 Playwright 运行时锁 {} 超时",
                             path.display()
                         )));
                     }
@@ -1957,12 +1948,12 @@ pub fn doctor(
     report.checks.push(check_path(
         "runtime.current",
         &current,
-        "current runtime directory or symlink",
+        "当前运行时目录或符号链接",
     ));
     report.checks.push(check_path(
         "runtime.mcpServer",
         &server_binary,
-        "loom-mcp-server binary",
+        "loom-mcp-server 二进制文件",
     ));
     report.checks.push(check_mcp_surface());
     report.checks.push(check_python_worker(env));
@@ -1970,7 +1961,7 @@ pub fn doctor(
         report.checks.push(check_path(
             &format!("{}.plugin", agent.as_str()),
             &env.agent_plugin_root(*agent),
-            "agent plugin files",
+            "代理插件文件",
         ));
         report.checks.push(check_agent_plugin_version(env, *agent));
         report
@@ -2027,7 +2018,7 @@ pub fn write_package_layout(
     })?;
     write_text(
         &package_dir.join(&manifest.python.runtime).join("README"),
-        "This local development package uses the host python3 runtime when a bundled Python runtime is not present.\n",
+        "本本地开发包在未提供内置 Python 运行时时使用主机 python3 运行时。\n",
     )?;
 
     copy_required(
@@ -2106,7 +2097,7 @@ fn read_manifest(package_root: &Path) -> Result<ReleaseManifest, SetupError> {
 fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(), SetupError> {
     if manifest.schema_version != PACKAGE_SCHEMA_VERSION {
         return Err(SetupError::InvalidArgument(format!(
-            "unsupported package schemaVersion {}",
+            "不支持的包 schemaVersion {}",
             manifest.schema_version
         )));
     }
@@ -2173,7 +2164,7 @@ fn audit_package_contents(package_root: &Path) -> Result<(), SetupError> {
                 .any(|prefix| relative.starts_with(prefix))
         {
             return Err(SetupError::InvalidArgument(format!(
-                "release package must not include legacy or source-only entry: {relative}"
+                "发布包不得包含旧版或仅源码条目：{relative}"
             )));
         }
     }
@@ -2197,10 +2188,10 @@ fn verify_checksums(package_root: &Path) -> Result<(), SetupError> {
         let mut parts = trimmed.split_whitespace();
         let expected = parts
             .next()
-            .ok_or_else(|| SetupError::InvalidArgument("invalid checksums.txt line".into()))?;
+            .ok_or_else(|| SetupError::InvalidArgument("无效的 checksums.txt 行".into()))?;
         let relative = parts
             .next()
-            .ok_or_else(|| SetupError::InvalidArgument("invalid checksums.txt line".into()))?;
+            .ok_or_else(|| SetupError::InvalidArgument("无效的 checksums.txt 行".into()))?;
         let path = package_root.join(relative);
         let actual = sha256_file(&path)?;
         if expected != actual {
@@ -2308,11 +2299,11 @@ fn install_opencode_plugin(
             &template.join(".opencode/commands").join(name),
             &command_target,
         )?;
-        write_file_marker(&command_target, "Loom MCP-only OpenCode command")?;
+        write_file_marker(&command_target, "Loom 仅 MCP 的 OpenCode 命令")?;
     }
     let plugin_target = plugin_root.join("loom.js");
     copy_path(&template.join(".opencode/plugins/loom.js"), &plugin_target)?;
-    write_js_file_marker(&plugin_target, "Loom MCP-only OpenCode plugin")?;
+    write_js_file_marker(&plugin_target, "Loom 仅 MCP 的 OpenCode 插件")?;
     install_standalone_references(
         env,
         SHARED_LOOM_REFERENCES,
@@ -2496,7 +2487,7 @@ fn cleanup_legacy_path(path: &Path, outcome: &mut LegacyCleanupOutcome) -> Resul
     }
     outcome.blocked.push(LegacyBlockedPath {
         path: path_string(path),
-        reason: "existing path has no Loom stamp or legacy CLI marker".to_string(),
+        reason: "现有路径没有 Loom 标记或旧版 CLI 标记".to_string(),
     });
     Ok(())
 }
@@ -2586,7 +2577,8 @@ fn file_contains_marker(path: &Path) -> Result<bool, SetupError> {
         return Ok(false);
     };
     Ok(LEGACY_MARKERS.iter().any(|marker| content.contains(marker))
-        || content.contains("Loom MCP-only"))
+        || content.contains("Loom MCP-only")
+        || content.contains("Loom 仅 MCP"))
 }
 
 fn prepare_generated_target(target: &Path) -> Result<(), SetupError> {
@@ -2594,7 +2586,7 @@ fn prepare_generated_target(target: &Path) -> Result<(), SetupError> {
         if !is_confirmed_loom_generated(target)? {
             return Err(SetupError::LegacyCleanupBlocked(vec![LegacyBlockedPath {
                 path: path_string(target),
-                reason: "target exists and is not confirmed as Loom-generated".to_string(),
+                reason: "目标已存在且未被确认为 Loom 生成".to_string(),
             }]));
         }
         remove_path(target)?;
@@ -2751,13 +2743,13 @@ fn check_mcp_surface() -> DoctorCheck {
         DoctorCheck {
             name: "mcp.toolsResources".to_string(),
             status: "passed".to_string(),
-            detail: "required MCP tools are registered".to_string(),
+            detail: "所需 MCP 工具已注册".to_string(),
         }
     } else {
         DoctorCheck {
             name: "mcp.toolsResources".to_string(),
             status: "failed".to_string(),
-            detail: format!("missing tools: {}", missing.join(", ")),
+            detail: format!("缺失的工具：{}", missing.join(", ")),
         }
     }
 }
@@ -2770,19 +2762,19 @@ fn check_python_worker(env: &SetupEnvironment) -> DoctorCheck {
         return DoctorCheck {
             name: "python.worker".to_string(),
             status: "failed".to_string(),
-            detail: format!("missing worker {}", algorithms.display()),
+            detail: format!("缺失 worker {}", algorithms.display()),
         };
     }
     if !python.exists() {
         return DoctorCheck {
             name: "python.worker".to_string(),
             status: "skipped".to_string(),
-            detail: "bundled python executable is not present in this package".to_string(),
+            detail: "此包中未提供内置 python 可执行文件".to_string(),
         };
     }
     let smoke = json!({
         "operation": "tokenize",
-        "text": "Loom MCP doctor smoke"
+        "text": "Loom MCP doctor 冒烟测试"
     });
     let output = Command::new(&python)
         .arg(&algorithms)
@@ -2802,7 +2794,7 @@ fn check_python_worker(env: &SetupEnvironment) -> DoctorCheck {
         Ok(output) if output.status.success() => DoctorCheck {
             name: "python.worker".to_string(),
             status: "passed".to_string(),
-            detail: "tokenization smoke passed".to_string(),
+            detail: "分词冒烟测试通过".to_string(),
         },
         Ok(output) => DoctorCheck {
             name: "python.worker".to_string(),
@@ -2846,10 +2838,7 @@ fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> Docto
             return DoctorCheck {
                 name: name.to_string(),
                 status: "failed".to_string(),
-                detail: format!(
-                    "runtime manifest version is missing or invalid: {}",
-                    runtime_manifest.display()
-                ),
+                detail: format!("运行时清单版本缺失或无效：{}", runtime_manifest.display()),
             }
         }
     };
@@ -2868,14 +2857,14 @@ fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> Docto
         DoctorCheck {
             name: name.to_string(),
             status: "passed".to_string(),
-            detail: format!("agent plugin version {expected}"),
+            detail: format!("代理插件版本 {expected}"),
         }
     } else {
         DoctorCheck {
             name: name.to_string(),
             status: "failed".to_string(),
             detail: format!(
-                "agent plugin version {:?} does not match runtime {expected}: {}",
+                "代理插件版本 {:?} 与运行时 {expected} 不匹配：{}",
                 actual,
                 path.display()
             ),
@@ -2892,7 +2881,7 @@ fn check_opencode_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> Do
             return DoctorCheck {
                 name,
                 status: "failed".to_string(),
-                detail: format!("missing OpenCode config: {}", path.display()),
+                detail: format!("缺失 OpenCode 配置：{}", path.display()),
             }
         }
         Err(error) => {
@@ -2918,13 +2907,13 @@ fn check_opencode_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> Do
         DoctorCheck {
             name,
             status: "passed".to_string(),
-            detail: format!("OpenCode config contains mcp.loom: {}", path.display()),
+            detail: format!("OpenCode 配置包含 mcp.loom：{}", path.display()),
         }
     } else {
         DoctorCheck {
             name,
             status: "failed".to_string(),
-            detail: format!("missing or stale mcp.loom in {}", path.display()),
+            detail: format!("{} 中缺失或过期的 mcp.loom", path.display()),
         }
     }
 }
@@ -2934,13 +2923,13 @@ fn check_path(name: &str, path: &Path, detail: &str) -> DoctorCheck {
         DoctorCheck {
             name: name.to_string(),
             status: "passed".to_string(),
-            detail: format!("{detail}: {}", path.display()),
+            detail: format!("{detail}：{}", path.display()),
         }
     } else {
         DoctorCheck {
             name: name.to_string(),
             status: "failed".to_string(),
-            detail: format!("missing {detail}: {}", path.display()),
+            detail: format!("缺失 {detail}：{}", path.display()),
         }
     }
 }
@@ -2968,10 +2957,7 @@ fn write_archive_checksum(archive: &Path) -> Result<(), SetupError> {
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| {
-            SetupError::InvalidArgument(format!(
-                "archive path has no valid file name: {}",
-                archive.display()
-            ))
+            SetupError::InvalidArgument(format!("归档路径没有有效的文件名：{}", archive.display()))
         })?;
     let checksum_path = archive.with_file_name(format!("{file_name}.sha256"));
     write_text(&checksum_path, &format!("{hash}  {file_name}\n"))
@@ -2989,11 +2975,10 @@ fn write_zip_archive(package_dir: &Path, archive: &Path) -> Result<(), SetupErro
     let root_name = package_dir
         .file_name()
         .and_then(|name| name.to_str())
-        .ok_or_else(|| SetupError::InvalidArgument("package directory must have a name".into()))?;
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有名称".into()))?;
     zip_dir_inner(package_dir, package_dir, root_name, &mut zip, options)?;
-    zip.finish().map_err(|error| {
-        SetupError::InvalidArgument(format!("failed to finish zip archive: {error}"))
-    })?;
+    zip.finish()
+        .map_err(|error| SetupError::InvalidArgument(format!("完成 zip 归档失败：{error}")))?;
     Ok(())
 }
 
@@ -3028,12 +3013,12 @@ fn zip_dir_inner(
         if path.is_dir() {
             zip.add_directory(format!("{archive_name}/"), options)
                 .map_err(|error| {
-                    SetupError::InvalidArgument(format!("failed to add zip directory: {error}"))
+                    SetupError::InvalidArgument(format!("添加 zip 目录失败：{error}"))
                 })?;
             zip_dir_inner(base, &path, root_name, zip, options)?;
         } else if path.is_file() {
             zip.start_file(archive_name, options).map_err(|error| {
-                SetupError::InvalidArgument(format!("failed to add zip file: {error}"))
+                SetupError::InvalidArgument(format!("添加 zip 文件失败：{error}"))
             })?;
             let bytes = fs::read(&path).map_err(|source| SetupError::Io {
                 path: path.clone(),
@@ -3056,10 +3041,10 @@ fn write_tar_gz_archive(
     let package_name = package_dir
         .file_name()
         .and_then(|name| name.to_str())
-        .ok_or_else(|| SetupError::InvalidArgument("package directory must have a name".into()))?;
-    let parent = package_dir.parent().ok_or_else(|| {
-        SetupError::InvalidArgument("package directory must have a parent".into())
-    })?;
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有名称".into()))?;
+    let parent = package_dir
+        .parent()
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有父目录".into()))?;
     let status = Command::new("tar")
         .arg("-czf")
         .arg(archive)
@@ -3073,7 +3058,7 @@ fn write_tar_gz_archive(
         })?;
     if !status.success() {
         return Err(SetupError::InvalidArgument(format!(
-            "tar failed with status {status}"
+            "tar 失败，状态码 {status}"
         )));
     }
     Ok(())

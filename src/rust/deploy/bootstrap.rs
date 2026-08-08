@@ -47,7 +47,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "prisma",
             package_manager_exec(stack.package_manager, "prisma migrate deploy"),
-            "Prisma schema detected; databases may require migrations before the app can serve requests.",
+            "检测到 Prisma schema；数据库可能需要在应用提供服务前执行迁移。",
         );
     }
 
@@ -58,7 +58,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "django",
             "python manage.py migrate --noinput".to_string(),
-            "Django manage.py detected; pending migrations can surface as missing-table errors at boot or first request.",
+            "检测到 Django manage.py；未执行的迁移可能在启动或首次请求时表现为缺表错误。",
         );
     }
 
@@ -69,7 +69,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "rails",
             "bundle exec rails db:migrate".to_string(),
-            "Rails migrations detected; pending migrations can cause boot or request failures.",
+            "检测到 Rails 迁移；未执行的迁移可能导致启动或请求失败。",
         );
     }
 
@@ -80,7 +80,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "laravel",
             "php artisan migrate --force".to_string(),
-            "Laravel migrations detected; pending migrations can cause database/table failures.",
+            "检测到 Laravel 迁移；未执行的迁移可能导致数据库/表错误。",
         );
     }
 
@@ -91,7 +91,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "flyway",
             flyway_command(stack),
-            "Flyway configuration detected; schema migrations may need to run before deployment is healthy.",
+            "检测到 Flyway 配置；schema 迁移可能需要在部署健康之前执行。",
         );
     }
 
@@ -102,7 +102,7 @@ pub(crate) fn analyze_deployment_bootstrap(
             &root,
             "liquibase",
             liquibase_command(stack),
-            "Liquibase configuration detected; schema migrations may need to run before deployment is healthy.",
+            "检测到 Liquibase 配置；schema 迁移可能需要在部署健康之前执行。",
         );
     }
 
@@ -110,7 +110,7 @@ pub(crate) fn analyze_deployment_bootstrap(
         vec![]
     } else {
         vec![
-            "Bootstrap tasks are diagnostic and confirmation-gated; Loom does not run migrations automatically during deploy prepare, deploy up, or deploy run."
+            "引导任务为诊断性质且需确认后执行；Loom 不会在 deploy prepare、deploy up 或 deploy run 期间自动运行迁移。"
                 .to_string(),
         ]
     };
@@ -126,9 +126,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
         Err(error) => {
             return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                 project_root: input.project_root,
-                blockers: vec![format!(
-                    "Deployment is not prepared, so bootstrap tasks cannot be read: {error}."
-                )],
+                blockers: vec![format!("部署未准备就绪，无法读取引导任务：{error}。")],
                 recommended_tool: Some("loom.deployPrepare".to_string()),
                 details: None,
             })
@@ -151,7 +149,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
     if tasks.is_empty() {
         return LoomMcpActionResult::Done(LoomMcpDoneResult {
             project_root: input.project_root,
-            summary: "Deployment bootstrap has no matching tasks to run.".to_string(),
+            summary: "部署引导没有匹配的任务可运行。".to_string(),
             details: Some(json!({
                 "executed": [],
                 "skipped": [],
@@ -165,7 +163,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
     if !input.confirm {
         return LoomMcpActionResult::UserGate(LoomMcpUserGateResult::new(
             input.project_root,
-            "Deployment bootstrap may run database migrations or seed commands. Confirm before execution.",
+            "部署引导可能运行数据库迁移或种子命令。执行前请确认。",
             vec!["confirm".to_string()],
             None,
             None,
@@ -186,7 +184,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
             return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                 project_root: input.project_root,
                 blockers: vec![format!(
-                    "Deployment bootstrap could not resolve Compose file {}: {error}.",
+                    "部署引导无法解析 Compose 文件 {}：{error}。",
                     spec.files.compose_path
                 )],
                 recommended_tool: Some("loom.deployPrepare".to_string()),
@@ -225,7 +223,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
                 if !output.status.success() {
                     return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                         project_root: input.project_root,
-                        blockers: vec![format!("Deployment bootstrap task {} failed.", task.kind)],
+                        blockers: vec![format!("部署引导任务 {} 失败。", task.kind)],
                         recommended_tool: Some("loom.deployInspect".to_string()),
                         details: Some(json!({ "executed": executed })),
                     });
@@ -242,10 +240,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
                 }));
                 return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                     project_root: input.project_root,
-                    blockers: vec![format!(
-                        "Deployment bootstrap task {} could not start: {error}.",
-                        task.kind
-                    )],
+                    blockers: vec![format!("部署引导任务 {} 无法启动：{error}。", task.kind)],
                     recommended_tool: Some("loom.deployInspect".to_string()),
                     details: Some(json!({ "executed": executed })),
                 });
@@ -255,7 +250,7 @@ pub fn deploy_bootstrap(input: DeployBootstrapInput) -> LoomMcpActionResult {
 
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: input.project_root,
-        summary: "Deployment bootstrap executed confirmed task(s).".to_string(),
+        summary: "部署引导已执行确认的任务。".to_string(),
         details: Some(json!({ "executed": executed })),
         warnings: spec.bootstrap.warnings,
     })
@@ -284,9 +279,7 @@ fn ensure_compose_service_running(
             }
             Some(LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                 project_root: project_root_display.to_string(),
-                blockers: vec![format!(
-                    "Deployment bootstrap requires running Compose service {service_id}."
-                )],
+                blockers: vec![format!("部署引导需要运行中的 Compose 服务 {service_id}。")],
                 recommended_tool: Some("loom.deployUp".to_string()),
                 details: Some(json!({
                     "composePath": compose_path,
@@ -300,7 +293,7 @@ fn ensure_compose_service_running(
         Ok(output) => Some(LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
             project_root: project_root_display.to_string(),
             blockers: vec![format!(
-                "Deployment bootstrap could not confirm running Compose service {service_id}."
+                "部署引导无法确认运行中的 Compose 服务 {service_id}。"
             )],
             recommended_tool: Some("loom.deployUp".to_string()),
             details: Some(json!({
@@ -314,7 +307,7 @@ fn ensure_compose_service_running(
         Err(error) => Some(LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
             project_root: project_root_display.to_string(),
             blockers: vec![format!(
-                "Deployment bootstrap could not inspect Compose service {service_id}: {error}."
+                "部署引导无法检查 Compose 服务 {service_id}：{error}。"
             )],
             recommended_tool: Some("loom.deployUp".to_string()),
             details: Some(json!({

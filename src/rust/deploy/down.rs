@@ -18,7 +18,7 @@ pub fn deploy_down(input: DeployToolInput) -> LoomMcpActionResult {
         Err(error) => {
             return LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
-                summary: "Deployment down could not acquire operation.".to_string(),
+                summary: "Deployment down 无法获取操作锁。".to_string(),
                 details: Some(json!({ "error": error.to_string() })),
                 warnings: vec![error.to_string()],
             })
@@ -30,7 +30,7 @@ pub fn deploy_down(input: DeployToolInput) -> LoomMcpActionResult {
             drop(guard);
             return LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
-                summary: "Deployment is not prepared; nothing was stopped.".to_string(),
+                summary: "部署未准备就绪；未停止任何内容。".to_string(),
                 details: Some(json!({ "error": error.to_string() })),
                 warnings: vec![],
             });
@@ -58,7 +58,7 @@ pub fn deploy_down(input: DeployToolInput) -> LoomMcpActionResult {
     drop(guard);
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: input.project_root,
-        summary: "Deployment stop requested.".to_string(),
+        summary: "已请求停止部署。".to_string(),
         details: Some(json!({
             "exitCode": output.as_ref().and_then(|output| output.status.code()),
             "stdoutTail": output.as_ref().map(|output| String::from_utf8_lossy(&output.stdout).lines().rev().take(40).map(str::to_string).collect::<Vec<_>>()).unwrap_or_default(),

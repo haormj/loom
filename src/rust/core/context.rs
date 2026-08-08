@@ -51,23 +51,23 @@ pub struct NormalizedProjectRoot {
 pub fn normalize_project_root(raw: &str) -> Result<NormalizedProjectRoot, String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
-        return Err("projectRoot is required.".to_string());
+        return Err("projectRoot 为必填项。".to_string());
     }
 
     let path = Path::new(trimmed);
     if !path.is_absolute() {
-        return Err("projectRoot must be an absolute path.".to_string());
+        return Err("projectRoot 必须为绝对路径。".to_string());
     }
     if !path.exists() {
-        return Err("projectRoot must exist.".to_string());
+        return Err("projectRoot 必须存在。".to_string());
     }
     if !path.is_dir() {
-        return Err("projectRoot must be a directory.".to_string());
+        return Err("projectRoot 必须为目录。".to_string());
     }
 
     let canonical = path
         .canonicalize()
-        .map_err(|error| format!("projectRoot cannot be canonicalized: {error}"))?;
+        .map_err(|error| format!("projectRoot 无法规范化：{error}"))?;
     Ok(NormalizedProjectRoot {
         display: canonical.to_string_lossy().into_owned(),
         path: canonical,

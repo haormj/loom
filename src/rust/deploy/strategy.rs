@@ -75,32 +75,27 @@ fn reason_for(
     policy: &DeploymentProviderPolicy,
 ) -> String {
     if policy.force_generate {
-        return "Provider policy forces generated Dockerfile/Compose assets.".to_string();
+        return "Provider policy 强制生成 Dockerfile/Compose 资产。".to_string();
     }
     if let Some(forced) = policy.provider {
-        return format!(
-            "Provider policy explicitly selected {}.",
-            provider_label(forced)
-        );
+        return format!("Provider policy 显式选择了 {}。", provider_label(forced));
     }
     if !policy.reuse_existing {
-        return "Provider policy disables existing deployment asset reuse.".to_string();
+        return "Provider policy 禁用了现有部署资产复用。".to_string();
     }
     match provider {
         DeployProvider::ComposeExisting => {
-            "Root-level Compose file exists, so Loom will try it before generated fallback."
-                .to_string()
+            "根目录存在 Compose 文件，Loom 将在生成回退之前优先尝试它。".to_string()
         }
         DeployProvider::DockerfileExisting => {
-            "Root-level Dockerfile exists, so Loom will reuse it with a generated Compose wrapper."
-                .to_string()
+            "根目录存在 Dockerfile，Loom 将复用它并生成 Compose 包装。".to_string()
         }
         DeployProvider::Generated => {
             if existing.dockerfile_path.is_some() && source_model.services.len() > 1 {
-                "Existing root Dockerfile cannot represent multiple application services; generated deployment assets are safer.".to_string()
+                "现有根 Dockerfile 无法表示多个应用服务；生成的部署资产更安全。".to_string()
             } else {
                 format!(
-                    "Repository probes found {:?} runtime evidence, so Loom will generate deployment assets.",
+                    "仓库探针发现 {:?} 运行时证据，Loom 将生成部署资产。",
                     code_probe.kind
                 )
             }
@@ -171,12 +166,12 @@ fn candidate_reason(
     policy: &DeploymentProviderPolicy,
 ) -> String {
     if policy.force_generate && provider != DeployProvider::Generated {
-        return "Skipped because provider policy forces generated deployment assets.".to_string();
+        return "因 Provider policy 强制生成部署资产而跳过。".to_string();
     }
     if let Some(forced) = policy.provider {
         if forced != provider {
             return format!(
-                "Skipped because provider policy explicitly selected {}.",
+                "因 Provider policy 显式选择了 {} 而跳过。",
                 provider_label(forced)
             );
         }
@@ -185,19 +180,19 @@ fn candidate_reason(
         DeployProvider::ComposeExisting => existing
             .compose_path
             .as_ref()
-            .map(|_| "Existing Compose file found at deployment root.".to_string())
-            .unwrap_or_else(|| "No root-level Compose file was found.".to_string()),
+            .map(|_| "在部署根目录找到现有 Compose 文件。".to_string())
+            .unwrap_or_else(|| "未找到根目录 Compose 文件。".to_string()),
         DeployProvider::DockerfileExisting => {
             if existing.dockerfile_path.is_none() {
-                "No root-level Dockerfile was found.".to_string()
+                "未找到根目录 Dockerfile。".to_string()
             } else if source_model.services.len() > 1 {
-                "Skipped because one root Dockerfile cannot represent multiple application services.".to_string()
+                "因单个根 Dockerfile 无法表示多个应用服务而跳过。".to_string()
             } else {
-                "Existing Dockerfile found at deployment root.".to_string()
+                "在部署根目录找到现有 Dockerfile。".to_string()
             }
         }
         DeployProvider::Generated => format!(
-            "Available because Loom can model {:?} runtime evidence as generated local deployment assets.",
+            "可用，因为 Loom 可以将 {:?} 运行时证据建模为生成的本地部署资产。",
             code_probe.kind
         ),
     }

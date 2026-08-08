@@ -20,7 +20,7 @@ pub fn deploy_run(input: DeployToolInput) -> LoomMcpActionResult {
         Err(error) => {
             return LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
-                summary: "Deployment run could not acquire operation.".to_string(),
+                summary: "Deployment run 无法获取操作锁。".to_string(),
                 details: Some(json!({ "error": error.to_string() })),
                 warnings: vec![error.to_string()],
             })

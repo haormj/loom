@@ -29,10 +29,7 @@ pub fn create_provider(source: &KnowledgeSource) -> KnowledgeResult<Box<dyn Know
     match &source.provider {
         KnowledgeProviderConfig::Local => {
             let build_id = source.current_build_id.as_deref().ok_or_else(|| {
-                KnowledgeError::invalid(format!(
-                    "local knowledge source '{}' has no build",
-                    source.name
-                ))
+                KnowledgeError::invalid(format!("本地知识源 '{}' 没有构建", source.name))
             })?;
             debug!(
                 "create_provider: source '{}' -> Local (build_id={})",
@@ -146,22 +143,19 @@ impl KnowledgeProvider for LocalKnowledgeProvider {
         _limit: usize,
     ) -> KnowledgeResult<Vec<KnowledgeChunkCard>> {
         Err(KnowledgeError::invalid(
-            "local provider search is handled inline by search_cards; this method should not be called",
+            "本地 provider 搜索由 search_cards 内联处理；不应调用此方法",
         ))
     }
 
     fn inspect_chunk(&self, chunk_id: &str) -> KnowledgeResult<KnowledgeInspectChunkResult> {
         let chunk = crate::inspect::read_chunk_body(&self.source_id, &self.build_id, chunk_id)?;
-        let chunks_file: crate::models::ChunksFile = crate::store::read_json(
-            &crate::paths::chunks_file(&self.source_id, &self.build_id)?,
-        )?;
+        let chunks_file: crate::models::ChunksFile =
+            crate::store::read_json(&crate::paths::chunks_file(&self.source_id, &self.build_id)?)?;
         let meta = chunks_file
             .chunks
             .iter()
             .find(|c| c.chunk_id == chunk_id)
-            .ok_or_else(|| {
-                KnowledgeError::invalid(format!("knowledge chunk not found: {chunk_id}"))
-            })?;
+            .ok_or_else(|| KnowledgeError::invalid(format!("知识分块未找到：{chunk_id}")))?;
         Ok(KnowledgeInspectChunkResult {
             document_title: meta.document_title.clone(),
             heading_path: meta.heading_path.clone(),
@@ -259,31 +253,19 @@ impl KnowledgeProvider for OpenVikingProvider {
             .map_err(|error| map_ureq_error(error, &self.source_name))?;
         let result: OpenVikingFindResponse = response
             .into_json()
-            .map_err(|error| KnowledgeError::invalid(format!("invalid OpenViking response: {error}")))?;
+            .map_err(|error| KnowledgeError::invalid(format!("无效的 OpenViking 响应：{error}")))?;
         let resource_count = result.result.resources.len();
         let memory_count = result.result.memories.len();
         let skill_count = result.result.skills.len();
         let mut cards = Vec::new();
         for ctx in result.result.resources {
-            cards.push(context_to_card(
-                &ctx,
-                &self.source_id,
-                &self.source_name,
-            ));
+            cards.push(context_to_card(&ctx, &self.source_id, &self.source_name));
         }
         for ctx in result.result.memories {
-            cards.push(context_to_card(
-                &ctx,
-                &self.source_id,
-                &self.source_name,
-            ));
+            cards.push(context_to_card(&ctx, &self.source_id, &self.source_name));
         }
         for ctx in result.result.skills {
-            cards.push(context_to_card(
-                &ctx,
-                &self.source_id,
-                &self.source_name,
-            ));
+            cards.push(context_to_card(&ctx, &self.source_id, &self.source_name));
         }
         let before = cards.len();
         cards.retain(|card| card.score >= self.min_score);
@@ -315,7 +297,7 @@ impl KnowledgeProvider for OpenVikingProvider {
             .map_err(|error| map_ureq_error(error, &self.source_name))?;
         let result: OpenVikingReadResponse = response
             .into_json()
-            .map_err(|error| KnowledgeError::invalid(format!("invalid OpenViking response: {error}")))?;
+            .map_err(|error| KnowledgeError::invalid(format!("无效的 OpenViking 响应：{error}")))?;
         let (document_title, heading_path) = parse_viking_uri(chunk_id);
         Ok(KnowledgeInspectChunkResult {
             document_title,
@@ -420,7 +402,7 @@ fn map_ureq_error(error: ureq::Error, source_name: &str) -> KnowledgeError {
                 source_name, code, body
             );
             KnowledgeError::invalid(format!(
-                "OpenViking source '{source_name}' returned HTTP {code}: {body}"
+                "OpenViking 源 '{source_name}' 返回 HTTP {code}：{body}"
             ))
         }
         ureq::Error::Transport(transport) => {
@@ -428,9 +410,7 @@ fn map_ureq_error(error: ureq::Error, source_name: &str) -> KnowledgeError {
                 "openviking[{}]: transport error: {}",
                 source_name, transport
             );
-            KnowledgeError::invalid(format!(
-                "OpenViking source '{source_name}' unreachable: {transport}"
-            ))
+            KnowledgeError::invalid(format!("OpenViking 源 '{source_name}' 不可达：{transport}"))
         }
     }
 }
@@ -499,7 +479,10 @@ mod tests {
         );
         let url = format!("{}{}", provider.endpoint, "/api/v1/search/find");
         assert_eq!(url, "http://127.0.0.1:1933/api/v1/search/find");
-        assert!(!url.contains("//api"), "URL should not contain double slash before path");
+        assert!(
+            !url.contains("//api"),
+            "URL should not contain double slash before path"
+        );
     }
 
     #[test]
@@ -622,10 +605,7 @@ mod tests {
     fn resolve_api_key_env_takes_precedence_over_config() {
         let env_name = "LOOM_TEST_API_KEY_ENV_PRECEDENCE";
         std::env::set_var(env_name, "from-env");
-        let (key, source) = resolve_api_key(&config_with(
-            Some(env_name),
-            Some("from-config"),
-        ));
+        let (key, source) = resolve_api_key(&config_with(Some(env_name), Some("from-config")));
         std::env::remove_var(env_name);
         assert_eq!(key.as_deref(), Some("from-env"), "env var must win");
         assert!(matches!(source, ApiKeySource::Env(n) if n == env_name));
@@ -635,10 +615,7 @@ mod tests {
     fn resolve_api_key_falls_back_to_config_when_env_unset() {
         let env_name = "LOOM_TEST_API_KEY_ENV_UNSET_FALLBACK";
         std::env::remove_var(env_name);
-        let (key, source) = resolve_api_key(&config_with(
-            Some(env_name),
-            Some("from-config"),
-        ));
+        let (key, source) = resolve_api_key(&config_with(Some(env_name), Some("from-config")));
         assert_eq!(key.as_deref(), Some("from-config"), "config fallback");
         assert!(matches!(source, ApiKeySource::EnvUnset(n) if n == env_name));
     }
@@ -647,12 +624,13 @@ mod tests {
     fn resolve_api_key_falls_back_to_config_when_env_empty() {
         let env_name = "LOOM_TEST_API_KEY_ENV_EMPTY_FALLBACK";
         std::env::set_var(env_name, "");
-        let (key, source) = resolve_api_key(&config_with(
-            Some(env_name),
-            Some("from-config"),
-        ));
+        let (key, source) = resolve_api_key(&config_with(Some(env_name), Some("from-config")));
         std::env::remove_var(env_name);
-        assert_eq!(key.as_deref(), Some("from-config"), "empty env should fall back");
+        assert_eq!(
+            key.as_deref(),
+            Some("from-config"),
+            "empty env should fall back"
+        );
         assert!(matches!(source, ApiKeySource::EnvUnset(n) if n == env_name));
     }
 

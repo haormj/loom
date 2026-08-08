@@ -1047,7 +1047,7 @@ fn brainstorm_context_is_request_scoped_and_uses_inspect_read_plan() {
         semantic_focus: vec!["证券账户".to_string(), "开户".to_string()],
     })
     .expect_err("repeat knowledge step requires queryId");
-    assert!(missing_query_id.to_string().contains("queryId is required"));
+    assert!(missing_query_id.to_string().contains("需要 queryId"));
 
     for query_id in ["capability_closure_A", "capability_closure_B"] {
         brainstorm_context(KnowledgeBrainstormContextInput {
@@ -1088,7 +1088,7 @@ fn brainstorm_context_is_request_scoped_and_uses_inspect_read_plan() {
         semantic_focus: vec![],
     })
     .expect_err("wrong step must fail");
-    assert!(wrong_step.to_string().contains("does not belong"));
+    assert!(wrong_step.to_string().contains("不属于"));
 }
 
 #[test]

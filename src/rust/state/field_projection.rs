@@ -11,7 +11,7 @@ pub(crate) fn selector_parts(field: &str) -> StateResult<Vec<String>> {
         .collect::<Vec<_>>();
     if parts.is_empty() {
         return Err(StateError::InvalidArgument(
-            "field selector is required".to_string(),
+            "字段选择器为必填项".to_string(),
         ));
     }
     Ok(parts)
@@ -28,15 +28,15 @@ pub(crate) fn select_value(root: &Value, parts: &[String]) -> StateResult<Value>
             }
             Value::Array(array) => {
                 let index = part.parse::<usize>().map_err(|_| {
-                    StateError::InvalidArgument(format!("invalid array index in selector: {part}"))
+                    StateError::InvalidArgument(format!("选择器中的数组索引无效：{part}"))
                 })?;
-                current = array.get(index).ok_or_else(|| {
-                    StateError::InvalidArgument(format!("array index out of bounds: {part}"))
-                })?;
+                current = array
+                    .get(index)
+                    .ok_or_else(|| StateError::InvalidArgument(format!("数组索引越界：{part}")))?;
             }
             _ => {
                 return Err(StateError::InvalidArgument(format!(
-                    "selector cannot traverse non-container value at {part}"
+                    "选择器无法在 {part} 处遍历非容器值"
                 )));
             }
         }

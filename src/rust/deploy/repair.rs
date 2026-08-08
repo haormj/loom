@@ -44,7 +44,7 @@ pub fn deploy_repair(input: DeployToolInput) -> LoomMcpActionResult {
         Ok(Some(request)) => repair_next(project_root, &request),
         Ok(None) => LoomMcpActionResult::Done(LoomMcpDoneResult {
             project_root: input.project_root,
-            summary: "No deployment repair action is pending.".to_string(),
+            summary: "没有待处理的部署修复操作。".to_string(),
             details: None,
             warnings: vec![],
         }),
@@ -188,9 +188,9 @@ pub fn repair_next(project_root: &Path, request: &DeploymentRepairAction) -> Loo
                     ),
                     error_window: request.error_window.as_ref().map(compact_next_error_window),
                     read_policy: delivery_core::DeploymentRepairReadPolicy {
-                        first_read: "Use next.primaryReason, next.diagnostics, and next.errorWindow before reading refs.".to_string(),
-                        diagnostics_ref: "Read next.diagnosticsRef only when compact diagnostics and errorWindow are insufficient.".to_string(),
-                        full_log_ref: "Read full logs only after diagnosticsRef is still insufficient or the retry returns a new failure.".to_string(),
+                        first_read: "在读取引用之前，先使用 next.primaryReason、next.diagnostics 和 next.errorWindow。".to_string(),
+                        diagnostics_ref: "仅当精简诊断和 errorWindow 不足时，再读取 next.diagnosticsRef。".to_string(),
+                        full_log_ref: "仅在 diagnosticsRef 仍然不足或重试返回新失败后，再读取完整日志。".to_string(),
                     },
                     deploy_reference_profile: spec
                         .as_ref()
@@ -212,7 +212,7 @@ pub fn repair_next(project_root: &Path, request: &DeploymentRepairAction) -> Loo
         DeploymentRepairRoute::ManualReview => {
             LoomMcpActionResult::UserGate(delivery_core::LoomMcpUserGateResult::new(
                 project_root.to_string_lossy().into_owned(),
-                "Deployment failure needs user review before Loom can safely repair it.",
+                "部署失败需要用户审查后，Loom 才能安全修复。",
                 vec!["confirm".to_string()],
                 None,
                 None,
@@ -259,9 +259,10 @@ fn accept_deploy_execution_repair_file_inner(
     input: &FileSubmitInput,
     authorized: &AuthorizedWriteSet,
 ) -> StateResult<LoomMcpActionResult> {
-    let target = authorized.targets.first().ok_or_else(|| {
-        StateError::InvalidArgument("Deploy execution repair result target is missing.".to_string())
-    })?;
+    let target = authorized
+        .targets
+        .first()
+        .ok_or_else(|| StateError::InvalidArgument("部署执行修复结果目标缺失。".to_string()))?;
     let project_root = Path::new(&input.project_root);
     let target_file = target.path.clone();
     let request_fields = state::read_request_fields(delivery_core::ReadRequestFieldsInput {
@@ -330,7 +331,7 @@ fn accept_deploy_execution_repair_file_inner(
                 vec![repair_issue(
                     "DEPLOY_REPAIR_RESULT_JSON_INVALID",
                     "$",
-                    &format!("Deploy execution repair result JSON is not readable: {error}"),
+                    &format!("部署执行修复结果 JSON 无法读取：{error}"),
                 )],
             ))
         }
@@ -352,7 +353,7 @@ fn accept_deploy_execution_repair_file_inner(
                     vec![repair_issue(
                         "DEPLOY_REPAIR_RESULT_SCHEMA_INVALID",
                         "$",
-                        &format!("Deploy execution repair result has an invalid schema: {error}"),
+                        &format!("部署执行修复结果 schema 无效：{error}"),
                     )],
                 ))
             }
@@ -365,7 +366,7 @@ fn accept_deploy_execution_repair_file_inner(
             vec![repair_issue(
                 "DEPLOY_REPAIR_STATUS_INVALID",
                 "status",
-                "Deploy execution repair status must be completed, completed_with_notes, blocked, or failed.",
+                "部署执行修复状态必须为 completed、completed_with_notes、blocked 或 failed。",
             )],
         ));
     }
@@ -377,7 +378,7 @@ fn accept_deploy_execution_repair_file_inner(
             vec![repair_issue(
                 "DEPLOY_REPAIR_CHANGED_FILES_REQUIRED",
                 "changedFiles",
-                "Completed deploy execution repair requires at least one changed application code, package script, or runtime wiring file.",
+                "已完成的部署执行修复至少需要一个变更的应用程序代码、包脚本或运行时接线文件。",
             )],
         ));
     }
@@ -405,7 +406,7 @@ fn accept_deploy_execution_repair_file_inner(
                 vec![repair_issue(
                     "DEPLOY_REPAIR_PROTECTED_PATH_CHANGED",
                     "changedFiles",
-                    &format!("Deploy execution repair must not change protected path {changed}."),
+                    &format!("部署执行修复不得修改受保护路径 {changed}。"),
                 )],
             ));
         }
@@ -442,9 +443,10 @@ fn materialize_deploy_execution_repair(
     project_root: &Path,
     request: &DeploymentRepairAction,
 ) -> StateResult<LoomMcpActionResult> {
-    let failure_ref = request.failure_ref.clone().ok_or_else(|| {
-        StateError::StateCorrupted("execution repair is missing failureRef.".to_string())
-    })?;
+    let failure_ref = request
+        .failure_ref
+        .clone()
+        .ok_or_else(|| StateError::StateCorrupted("执行修复缺少 failureRef。".to_string()))?;
     let failure: DeploymentFailureReport =
         read_json(&from_project_relative(project_root, &failure_ref)?)?;
     if let Some(request_id) =
@@ -546,7 +548,7 @@ fn materialize_deploy_execution_repair(
                 "protectedPaths": protected_paths
             },
         "executionRules": {
-            "scope": "Repair application source code, package scripts, or runtime wiring required by the deploy failure report.",
+            "scope": "修复部署失败报告所需的应用程序源代码、包脚本或运行时接线。",
             "mustNotEditGeneratedAssets": true,
             "mustNotClaimDeploymentSuccess": true,
             "completionBarrier": {
@@ -566,14 +568,14 @@ fn materialize_deploy_execution_repair(
                 "targetId": "result",
                 "path": result_file,
                 "required": true,
-                "description": "Write the deploy execution repair result JSON."
+                "description": "编写部署执行修复结果 JSON。"
             }],
             "schemaShape": schema_shape,
             "resultTemplate": deploy_execution_repair_result_template(&failure),
             "resultRules": [
-                "changedFiles must not include generated Dockerfile, Compose, nginx, dockerignore, RuntimeDeliveryContract, AAC, TaskPlan, ReviewResult, or .loom.",
-                "Loom derives runtimeDeliveryEvidence.addressedFailedContractFields from repairContext.failedContractFields; do not write that linkage field.",
-                "Report codeLevelChecks in repairContext.requiredCodeLevelChecks order with status and evidence only; Loom derives each checkId."
+                "changedFiles 不得包含生成的 Dockerfile、Compose、nginx、dockerignore、RuntimeDeliveryContract、AAC、TaskPlan、ReviewResult 或 .loom。",
+                "Loom 从 repairContext.failedContractFields 推导 runtimeDeliveryEvidence.addressedFailedContractFields；请勿写入该关联字段。",
+                "按照 repairContext.requiredCodeLevelChecks 的顺序报告 codeLevelChecks，仅包含 status 和 evidence；Loom 会推导每个 checkId。"
             ]
         },
         "requestReadPlan": {
@@ -581,15 +583,15 @@ fn materialize_deploy_execution_repair(
                 {
                     "groupId": "deploy_failure_context",
                     "required": true,
-                    "purpose": "Read deploy failure report and edit boundary before editing application code.",
-                    "whenToRead": "Read before source edits.",
+                    "purpose": "在编辑应用程序代码之前，读取部署失败报告和编辑边界。",
+                    "whenToRead": "在源代码编辑之前读取。",
                     "selectors": read_selectors_value_from_paths(deploy_failure_fields)
                 },
                 {
                     "groupId": "deploy_repair_result_contract",
                     "required": true,
-                    "purpose": "Read result path, schema shape, and submit rules before writing repair result.",
-                    "whenToRead": "Read before writing the result file.",
+                    "purpose": "在编写修复结果之前，读取结果路径、schema 形状和提交规则。",
+                    "whenToRead": "在编写结果文件之前读取。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.repairId",
                         "outputContract.deploymentFailureRef",
@@ -836,7 +838,7 @@ fn repair_attempt_limit_result(
     LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
         project_root: project_root.to_string_lossy().into_owned(),
         blockers: vec![format!(
-            "Deployment repair attempt limit reached for {} after {} automatic repair attempts.",
+            "部署修复尝试次数已达到上限 {}，在 {} 次自动修复尝试之后。",
             enum_string(&request.failure_kind),
             request.attempts
         )],
@@ -871,7 +873,7 @@ fn compact_repair_summary(project_root: &Path, request: &DeploymentRepairAction)
         "maxAttempts": request.max_attempts,
         "readPolicy": {
             "firstRead": "repairSummary.diagnostics and repairSummary.errorWindow",
-            "fullLogRef": "Read only when compact diagnostics and errorWindow are insufficient."
+            "fullLogRef": "仅在精简诊断和 errorWindow 不足时读取。"
         },
         "sourceRefs": {
             "repairActionRef": to_project_relative(
@@ -899,7 +901,7 @@ fn primary_repair_reason(request: &DeploymentRepairAction) -> String {
         return action.clone();
     }
     format!(
-        "{} owned by {}",
+        "{} 归属于 {}",
         enum_string(&request.failure_kind),
         enum_string(&request.failure_owner)
     )
@@ -1063,7 +1065,7 @@ fn validate_runtime_delivery_evidence(
     for expected in expected_fields {
         if !addressed_fields.contains(&expected) {
             return Err(StateError::InvalidArgument(format!(
-                "runtimeDeliveryEvidence.addressedFailedContractFields is missing {expected}."
+                "runtimeDeliveryEvidence.addressedFailedContractFields 缺少 {expected}。"
             )));
         }
     }
@@ -1087,7 +1089,7 @@ fn validate_runtime_delivery_evidence(
     for expected in expected_checks {
         if !actual_checks.contains(&expected) {
             return Err(StateError::InvalidArgument(format!(
-                "runtimeDeliveryEvidence.codeLevelChecks is missing {expected}."
+                "runtimeDeliveryEvidence.codeLevelChecks 缺少 {expected}。"
             )));
         }
     }
@@ -1113,14 +1115,14 @@ fn validate_runtime_delivery_evidence(
             .unwrap_or_default();
         if !failed_or_blocked_checks.is_empty() {
             return Err(StateError::InvalidArgument(format!(
-                "completed deploy execution repair cannot contain failed or blocked runtime code-level checks: {}.",
+                "已完成的部署执行修复不得包含 failed 或 blocked 的运行时代码级检查：{}。",
                 failed_or_blocked_checks.join(", ")
             )));
         }
     }
     if result.self_repair_summary.is_null() {
         return Err(StateError::InvalidArgument(
-            "selfRepairSummary is required.".to_string(),
+            "selfRepairSummary 为必填项。".to_string(),
         ));
     }
     Ok(())
@@ -1404,20 +1406,19 @@ fn suggested_actions(
         .collect::<Vec<_>>();
     let mut actions = match owner {
         DeploymentFailureOwner::Environment => {
-            vec!["Start Docker Desktop or Docker daemon, then rerun loom.deployUp.".to_string()]
+            vec!["启动 Docker Desktop 或 Docker 守护进程，然后重新运行 loom.deployUp。".to_string()]
         }
         DeploymentFailureOwner::ExternalSystem => {
-            vec!["Fix Docker registry or network access, then rerun loom.deployUp.".to_string()]
+            vec!["修复 Docker 镜像仓库或网络访问，然后重新运行 loom.deployUp。".to_string()]
         }
-        DeploymentFailureOwner::ApplicationCode => vec![
-            "Repair application code or runtime wiring through deploy execution repair."
-                .to_string(),
-        ],
+        DeploymentFailureOwner::ApplicationCode => {
+            vec!["通过部署执行修复来修复应用程序代码或运行时接线。".to_string()]
+        }
         DeploymentFailureOwner::DeploymentAssets => vec![format!(
-            "Repair generated deployment assets for {}.",
+            "为 {} 修复生成的部署资产。",
             enum_string(&failure_kind)
         )],
-        DeploymentFailureOwner::Unknown => vec!["Review deployment failure manually.".to_string()],
+        DeploymentFailureOwner::Unknown => vec!["手动审查部署失败。".to_string()],
     };
     actions.extend(diagnostic_actions);
     actions
@@ -1427,15 +1428,15 @@ fn instruction_for(failure_kind: DeploymentFailureKind, owner: DeploymentFailure
     match owner {
         DeploymentFailureOwner::DeploymentAssets => {
             if failure_kind == DeploymentFailureKind::ApiRouteNotVerified {
-                "Repair generated deployment assets or the controlled model-repair file. Preserve the accepted API route contract; do not invent business probes or bypass validation.".to_string()
+                "修复生成的部署资产或受控的模型修复文件。保留已接受的 API 路由契约；请勿编造业务探针或绕过验证。".to_string()
             } else {
-                "Repair only generated deployment assets listed in editableFiles. Use model-repair.json for source-model or topology corrections; do not edit source-model.json, topology.json, facts.json, application code, or Loom contracts.".to_string()
+                "仅修复 editableFiles 中列出的生成部署资产。使用 model-repair.json 修正 source-model 或 topology；请勿编辑 source-model.json、topology.json、facts.json、应用程序代码或 Loom 契约。".to_string()
             }
         }
         DeploymentFailureOwner::ApplicationCode => {
-            "Repair application code or runtime wiring through deploy execution repair. Do not edit generated deployment assets.".to_string()
+            "通过部署执行修复来修复应用程序代码或运行时接线。请勿编辑生成的部署资产。".to_string()
         }
-        _ => "Do not edit files for this deployment failure until the blocker is resolved.".to_string(),
+        _ => "在阻塞问题解决之前，请勿为此部署失败编辑文件。".to_string(),
     }
 }
 
@@ -1467,7 +1468,7 @@ fn diagnose_deployment_failure(
         diagnostics.push(DeploymentFailureDiagnostic {
             code: "spec_missing_env".to_string(),
             severity: "warning".to_string(),
-            message: "DeploymentSpec already contains missing environment diagnostics.".to_string(),
+            message: "DeploymentSpec 已包含缺失的环境诊断。".to_string(),
             evidence: spec
                 .environment
                 .missing
@@ -1475,9 +1476,8 @@ fn diagnose_deployment_failure(
                 .map(|variable| variable.name.clone())
                 .take(12)
                 .collect(),
-            suggested_action:
-                "Review environment.missing before changing Dockerfile or Compose commands."
-                    .to_string(),
+            suggested_action: "在修改 Dockerfile 或 Compose 命令之前，请审查 environment.missing。"
+                .to_string(),
         });
     }
     if !spec.bootstrap.tasks.is_empty()
@@ -1491,7 +1491,7 @@ fn diagnose_deployment_failure(
         diagnostics.push(DeploymentFailureDiagnostic {
             code: "bootstrap_task_relevant".to_string(),
             severity: "warning".to_string(),
-            message: "Detected bootstrap tasks may be relevant to this failure.".to_string(),
+            message: "检测到的引导任务可能与此次失败相关。".to_string(),
             evidence: spec
                 .bootstrap
                 .tasks
@@ -1499,9 +1499,7 @@ fn diagnose_deployment_failure(
                 .take(12)
                 .map(|task| format!("{}: {}", task.kind, task.command))
                 .collect(),
-            suggested_action:
-                "Ask before running bootstrap or migration commands; use them as diagnosis first."
-                    .to_string(),
+            suggested_action: "在运行引导或迁移命令之前先询问；先将其用作诊断。".to_string(),
         });
     }
     dedupe_diagnostics(diagnostics)
@@ -1528,8 +1526,8 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "docker.sock",
             "error during connect",
         ],
-        message: "Docker is not reachable from the current execution environment.",
-        suggested_action: "Start Docker Desktop or the Docker daemon, verify `docker version` works from the same session, then retry deployUp.",
+        message: "Docker 在当前执行环境中不可达。",
+        suggested_action: "启动 Docker Desktop 或 Docker 守护进程，验证 `docker version` 在同一会话中可用，然后重试 deployUp。",
     },
     DiagnosticRule {
         code: "registry_network",
@@ -1547,15 +1545,15 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "registry-1.docker.io",
             "auth.docker.io",
         ],
-        message: "Docker could not reach or authenticate with the container registry.",
-        suggested_action: "Fix Docker registry or network access, configure a registry mirror, pre-pull the base image, or retry when registry access is healthy.",
+        message: "Docker 无法访问或认证容器镜像仓库。",
+        suggested_action: "修复 Docker 镜像仓库或网络访问，配置镜像仓库镜像，预拉取基础镜像，或在镜像仓库访问正常时重试。",
     },
     DiagnosticRule {
         code: "missing_module",
         severity: "error",
         needles: &["cannot find module", "module_not_found", "no module named"],
-        message: "The app could not load a required runtime module.",
-        suggested_action: "Check dependency installation, package lockfiles, optional native packages, and production/runtime dependency pruning.",
+        message: "应用程序无法加载所需的运行时模块。",
+        suggested_action: "检查依赖安装、包锁定文件、可选的原生包以及生产/运行时依赖裁剪。",
     },
     DiagnosticRule {
         code: "native_optional_dependency",
@@ -1572,8 +1570,8 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "gnu.node",
             "musl.node",
         ],
-        message: "A platform-specific native optional dependency may be missing in the container image.",
-        suggested_action: "Repair the install step or lockfile so the Linux container receives the required native package.",
+        message: "容器镜像中可能缺少特定平台的原生可选依赖。",
+        suggested_action: "修复安装步骤或锁定文件，使 Linux 容器获得所需的原生包。",
     },
     DiagnosticRule {
         code: "port_in_use",
@@ -1584,8 +1582,8 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "port is already allocated",
             "bind: address already in use",
         ],
-        message: "A configured deployment port is already in use.",
-        suggested_action: "Change the generated host port or stop the conflicting local/container process before retrying.",
+        message: "配置的部署端口已被占用。",
+        suggested_action: "更改生成的主机端口或停止冲突的本地/容器进程后再重试。",
     },
     DiagnosticRule {
         code: "database_schema",
@@ -1598,8 +1596,8 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "pendingmigrationerror",
             "migration pending",
         ],
-        message: "The app likely needs a database schema or migration step before serving traffic.",
-        suggested_action: "Use bootstrap or migration commands only as explicit evidence; do not run migrations automatically without user approval.",
+        message: "应用程序在提供服务前可能需要数据库 schema 或迁移步骤。",
+        suggested_action: "仅将引导或迁移命令用作明确证据；未经用户批准请勿自动运行迁移。",
     },
     DiagnosticRule {
         code: "framework_startup_failed",
@@ -1621,8 +1619,8 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "improperlyconfigured",
             "sqlstate[",
         ],
-        message: "The application framework failed during startup.",
-        suggested_action: "Route through deploy execution repair and inspect dependencies, migrations, runtime configuration, and startup code before editing generated deployment assets.",
+        message: "应用程序框架在启动过程中失败。",
+        suggested_action: "通过部署执行修复路由，并在编辑生成的部署资产之前检查依赖、迁移、运行时配置和启动代码。",
     },
     DiagnosticRule {
         code: "missing_env",
@@ -1636,15 +1634,15 @@ const DEPLOYMENT_DIAGNOSTIC_RULES: &[DiagnosticRule] = &[
             "app_key",
             "secret_key_base",
         ],
-        message: "The app reported a missing or invalid environment variable.",
-        suggested_action: "Compare logs with DeploymentSpec.environment.missing and add safe local placeholders only when appropriate.",
+        message: "应用程序报告了缺失或无效的环境变量。",
+        suggested_action: "将日志与 DeploymentSpec.environment.missing 对比，仅在适当时添加安全的本地占位符。",
     },
     DiagnosticRule {
         code: "permission_denied",
         severity: "error",
         needles: &["permission denied", "eacces", "operation not permitted"],
-        message: "The container hit a filesystem or executable permission problem.",
-        suggested_action: "Repair generated Dockerfile ownership, chmod executable scripts, or adjust writable runtime directories.",
+        message: "容器遇到了文件系统或可执行权限问题。",
+        suggested_action: "修复生成的 Dockerfile 权限、chmod 可执行脚本，或调整可写的运行时目录。",
     },
 ];
 

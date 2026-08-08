@@ -24,12 +24,14 @@ use crate::{
 };
 
 pub fn add_source(input: KnowledgeAddInput) -> KnowledgeResult<KnowledgeSummary> {
-    info!("knowledgeAdd: name='{}', {} paths", input.name, input.paths.len());
+    info!(
+        "knowledgeAdd: name='{}', {} paths",
+        input.name,
+        input.paths.len()
+    );
     validate_name(&input.name)?;
     if input.paths.is_empty() {
-        return Err(KnowledgeError::invalid(
-            "knowledgeAdd.paths must not be empty",
-        ));
+        return Err(KnowledgeError::invalid("knowledgeAdd.paths 不能为空"));
     }
     let warnings = validate_candidate_paths(&input.paths, true)?;
     let mut registry = load_registry()?;
@@ -39,7 +41,7 @@ pub fn add_source(input: KnowledgeAddInput) -> KnowledgeResult<KnowledgeSummary>
         .any(|source| source.name == input.name)
     {
         return Err(KnowledgeError::invalid(format!(
-            "knowledge source name already exists: {}",
+            "知识源名称已存在：{}",
             input.name
         )));
     }
@@ -101,7 +103,7 @@ pub fn update_source(input: KnowledgeUpdateInput) -> KnowledgeResult<KnowledgeSu
         .collect::<Vec<_>>();
     if active.len() != 1 {
         return Err(KnowledgeError::invalid(
-            "knowledgeUpdate must provide exactly one of addPaths, removePaths, replacePaths",
+            "knowledgeUpdate 必须提供 addPaths、removePaths 或 replacePaths 中的一个",
         ));
     }
     let (_, kind, paths) = active.into_iter().next().ok_or_else(|| {
@@ -315,7 +317,7 @@ pub(crate) fn registry_source<'a>(
         .sources
         .iter()
         .find(|source| source.name == name)
-        .ok_or_else(|| KnowledgeError::invalid(format!("knowledge source not found: {name}")))
+        .ok_or_else(|| KnowledgeError::invalid(format!("知识源未找到：{name}")))
 }
 
 pub(crate) fn registry_source_mut<'a>(
@@ -326,7 +328,7 @@ pub(crate) fn registry_source_mut<'a>(
         .sources
         .iter_mut()
         .find(|source| source.name == name)
-        .ok_or_else(|| KnowledgeError::invalid(format!("knowledge source not found: {name}")))
+        .ok_or_else(|| KnowledgeError::invalid(format!("知识源未找到：{name}")))
 }
 
 pub(crate) fn summary(
@@ -387,16 +389,14 @@ fn set_enabled(input: KnowledgeNameInput, enabled: bool) -> KnowledgeResult<Know
 
 fn validate_name(name: &str) -> KnowledgeResult<()> {
     if !(2..=80).contains(&name.len()) {
-        return Err(KnowledgeError::invalid(
-            "knowledge name length must be between 2 and 80",
-        ));
+        return Err(KnowledgeError::invalid("知识源名称长度必须在 2 到 80 之间"));
     }
     if !name
         .chars()
         .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '.' | '_' | '-'))
     {
         return Err(KnowledgeError::invalid(
-            "knowledge name may only contain letters, numbers, dot, underscore, and dash",
+            "知识源名称只能包含字母、数字、点、下划线和连字符",
         ));
     }
     Ok(())
@@ -429,7 +429,7 @@ fn canonicalize_paths(paths: &[String]) -> KnowledgeResult<Vec<String>> {
         let canonical = PathBuf::from(path)
             .expand_tilde()
             .canonicalize()
-            .map_err(|error| KnowledgeError::invalid(format!("invalid path {path}: {error}")))?;
+            .map_err(|error| KnowledgeError::invalid(format!("无效路径 {path}：{error}")))?;
         result.push(canonical.to_string_lossy().to_string());
     }
     result.sort();
@@ -458,7 +458,7 @@ fn normalize_paths_without_fs(paths: &[String]) -> KnowledgeResult<Vec<String>> 
     result.dedup();
     if result.is_empty() {
         return Err(KnowledgeError::invalid(
-            "knowledgeUpdate removePaths must not be empty",
+            "knowledgeUpdate removePaths 不能为空",
         ));
     }
     Ok(result)

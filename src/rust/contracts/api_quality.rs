@@ -43,7 +43,7 @@ pub fn build_api_quality_seed_from_foundation(
         "required": true,
         "qualityLevel": "production_api_contract",
         "selectionReason": format!(
-            "Accepted Foundation interactions declare current-phase HTTP boundaries: {}.",
+            "已接受的 Foundation 交互声明了当前阶段的 HTTP 边界：{}。",
             signals.http_interaction_ids.join(", ")
         ),
         "techReferenceProfile": {
@@ -54,7 +54,7 @@ pub fn build_api_quality_seed_from_foundation(
             "referenceLoadPlan": reference_load_plan
         },
         "interfaceContract": {
-            "appliesTo": "Architecture content.interfaces entries with type=http_api or task-owned HTTP API bindings.",
+            "appliesTo": "Architecture content.interfaces 中 type=http_api 的条目或任务所属的 HTTP API 绑定。",
             "requiredFields": [
                 "interfaceId",
                 "name",
@@ -93,16 +93,16 @@ pub fn build_api_quality_seed_from_foundation(
             ]
         },
         "generationRules": [
-            "Use apiQualitySeed only for HTTP interactions declared by the accepted Foundation; do not infer API work from prose or a backend-capable stack.",
-            "Represent API contracts in Architecture interfaces and downstream apiContractRequirements; do not paste API reference prose into candidates.",
-            "Declare publicExposure and browserBinding once at the accepted API contract level. RuntimeDelivery, TaskPlan, Execution, Review, and Deploy consume that contract; they must not invent a second API base prefix.",
-            "Do not author runtime httpProbes.apiPaths or api.probePaths. Loom derives probe paths from accepted HTTP interface paths after architecture acceptance.",
-            "Read only files listed in techReferenceProfile.referenceLoadPlan; selected API groups are semantic evidence labels, not path maps.",
-            "Do not add versioned paths or deprecation policy unless techReferenceProfile.referenceLoadPlan selects tech/api/evolution.md.",
-            "Do not require OpenAPI files unless techReferenceProfile.referenceLoadPlan selects tech/api/contract.md or the repository already owns one.",
-            "Do not add authPolicy or authentication infrastructure unless techReferenceProfile.referenceLoadPlan selects tech/api/security.md or the accepted interface already has an auth policy.",
-            "JWT is dormant by default. Read tech/api/jwt.md only when an explicitly accepted security profile bound to the current protected API selects bearer_jwt; never activate it from a framework, backend stack, keyword, or generic protected requirement.",
-            "Do not add idempotency, cache, rate-limit, retry, or request-id infrastructure unless techReferenceProfile.referenceLoadPlan selects tech/api/operations.md or the repository already owns that convention."
+            "仅将 apiQualitySeed 用于已接受 Foundation 声明的 HTTP 交互；不要从描述文本或具备后端能力的技术栈推断 API 工作。",
+            "在 Architecture interfaces 和下游 apiContractRequirements 中表示 API 契约；不要将 API 参考描述粘贴到候选项中。",
+            "在已接受的 API 契约层级声明一次 publicExposure 和 browserBinding。RuntimeDelivery、TaskPlan、Execution、Review 和 Deploy 消费该契约；它们不得发明第二个 API 基础前缀。",
+            "不要编写 runtime httpProbes.apiPaths 或 api.probePaths。Loom 在架构接受后从已接受的 HTTP 接口路径派生探测路径。",
+            "仅读取 techReferenceProfile.referenceLoadPlan 中列出的文件；所选 API 分组是语义证据标签，不是路径映射。",
+            "除非 techReferenceProfile.referenceLoadPlan 选择了 tech/api/evolution.md，否则不要添加版本化路径或弃用策略。",
+            "除非 techReferenceProfile.referenceLoadPlan 选择了 tech/api/contract.md 或仓库已拥有 OpenAPI 文件，否则不要要求 OpenAPI 文件。",
+            "除非 techReferenceProfile.referenceLoadPlan 选择了 tech/api/security.md 或已接受接口已有认证策略，否则不要添加 authPolicy 或认证基础设施。",
+            "JWT 默认处于休眠状态。仅当绑定到当前受保护 API 的显式接受安全配置选择了 bearer_jwt 时，才读取 tech/api/jwt.md；切勿从框架、后端技术栈、关键词或通用受保护需求中激活它。",
+            "除非 techReferenceProfile.referenceLoadPlan 选择了 tech/api/operations.md 或仓库已拥有该约定，否则不要添加幂等性、缓存、限流、重试或请求 ID 基础设施。"
         ]
     })
 }
@@ -116,13 +116,13 @@ pub fn api_reference_load_plan(api_groups: &[String]) -> Vec<Value> {
                 json!({
                     "refId": entry.ref_id,
                     "path": entry.path,
-                    "reason": entry.reason.unwrap_or_else(|| format!("Selected API {group} quality reference for current-phase interface design."))
+                    "reason": entry.reason.unwrap_or_else(|| format!("为当前阶段接口设计选择的 API {group} 质量参考。"))
                 })
             } else {
                 json!({
                     "refId": format!("tech.api.{group}"),
                     "path": format!("tech/api/{group}.md"),
-                    "reason": format!("Selected API {group} quality reference for current-phase interface design.")
+                    "reason": format!("为当前阶段接口设计选择的 API {group} 质量参考。")
                 })
             }
         })

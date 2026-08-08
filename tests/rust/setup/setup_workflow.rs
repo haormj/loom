@@ -644,7 +644,7 @@ fn archive_package_layout_rejects_legacy_typescript_runtime_entries() {
     .unwrap_err();
     match error {
         SetupError::InvalidArgument(message) => {
-            assert!(message.contains("release package must not include"));
+            assert!(message.contains("发布包不得包含"));
             assert!(message.contains("src/ts/cli.ts"));
         }
         other => panic!("expected InvalidArgument, got {other:?}"),
@@ -666,7 +666,7 @@ fn archive_package_layout_rejects_legacy_cli_launcher_entries() {
     .unwrap_err();
     match error {
         SetupError::InvalidArgument(message) => {
-            assert!(message.contains("release package must not include"));
+            assert!(message.contains("发布包不得包含"));
             assert!(message.contains("bin/loom-cli"));
         }
         other => panic!("expected InvalidArgument, got {other:?}"),
