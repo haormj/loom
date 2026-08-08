@@ -23,13 +23,13 @@ referenceRoot = "loom"
   [[routes.prependItems]]
   refId = "tech.code.common"
   path = "tech/code/common.md"
-  reason = "Common Loom code quality rules for repository adaptation, delivery evidence, and verification."
+  reason = "Loom 代码质量通用规则，涵盖仓库适配、交付证据与验证。"
   condition = "when_groups_non_empty"
 
   # ── common 组:特殊路径(非 tech/code/common/observability.md)──
   [[routes.groups]]
   id = "common"
-  label = "Common"
+  label = "通用"
     [[routes.groups.itemEntries]]
     item = "observability"
     refId = "tech.code.observability"
@@ -41,77 +41,77 @@ referenceRoot = "loom"
   id = "java"
   refIdTemplate = "tech.code.java.{item}"
   pathTemplate = "tech/code/java/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "spring", "persistence", "security", "reactive", "testing"]
 
   [[routes.groups]]
   id = "typescript"
   refIdTemplate = "tech.code.typescript.{item}"
   pathTemplate = "tech/code/typescript/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "types", "guards", "config", "patterns", "testing"]
 
   [[routes.groups]]
   id = "javascript"
   refIdTemplate = "tech.code.javascript.{item}"
   pathTemplate = "tech/code/javascript/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "async", "modules", "node", "browser", "testing"]
 
   [[routes.groups]]
   id = "python"
   refIdTemplate = "tech.code.python.{item}"
   pathTemplate = "tech/code/python/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "typing", "async", "packaging", "testing"]
 
   [[routes.groups]]
   id = "go"
   refIdTemplate = "tech.code.go.{item}"
   pathTemplate = "tech/code/go/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "concurrency", "interfaces", "structure", "generics", "testing"]
 
   [[routes.groups]]
   id = "csharp"
   refIdTemplate = "tech.code.csharp.{item}"
   pathTemplate = "tech/code/csharp/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "modern", "persistence", "blazor", "performance", "testing"]
 
   [[routes.groups]]
   id = "cpp"
   refIdTemplate = "tech.code.cpp.{item}"
   pathTemplate = "tech/code/cpp/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "modern", "templates", "performance", "concurrency", "build", "testing"]
 
   [[routes.groups]]
   id = "kotlin"
   refIdTemplate = "tech.code.kotlin.{item}"
   pathTemplate = "tech/code/kotlin/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "coroutines", "ktor", "compose", "multiplatform", "dsl", "testing"]
 
   [[routes.groups]]
   id = "php"
   refIdTemplate = "tech.code.php.{item}"
   pathTemplate = "tech/code/php/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "modern", "laravel", "symfony", "async", "testing"]
 
   [[routes.groups]]
   id = "rust"
   refIdTemplate = "tech.code.rust.{item}"
   pathTemplate = "tech/code/rust/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "ownership", "traits", "errors", "async", "testing"]
 
   [[routes.groups]]
   id = "swift"
   refIdTemplate = "tech.code.swift.{item}"
   pathTemplate = "tech/code/swift/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["core", "swiftui", "concurrency", "protocols", "memory", "testing"]
 
   # ── 后端框架组(路径:tech/backend/{group}/{item}.md)──
@@ -120,7 +120,7 @@ referenceRoot = "loom"
   id = "springboot"
   refIdTemplate = "bk.spring.{item}"
   pathTemplate = "tech/backend/springboot/{item}.md"
-  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考，用于本任务。"
   label = "Spring Boot"
   items = ["web", "data", "security", "testing", "runtime", "async", "cache", "integration", "resilience", "cloud", "observability", "logging"]
 
@@ -128,7 +128,7 @@ referenceRoot = "loom"
   id = "mybatisplus"
   refIdTemplate = "bk.spring.mybatisplus.{item}"
   pathTemplate = "tech/backend/springboot/mybatis-plus/{item}.md"
-  reasonTemplate = "Selected {label} {item} reference for this task-owned persistence capability."
+  reasonTemplate = "已选择 {label} {item} 参考，用于本任务所属的持久化能力。"
   label = "MyBatis-Plus"
   items = ["configuration", "mapping", "crud", "wrappers", "plugins", "security", "extensions"]
 
@@ -136,7 +136,7 @@ referenceRoot = "loom"
   id = "django"
   refIdTemplate = "bk.django.{item}"
   pathTemplate = "tech/backend/django/{item}.md"
-  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考，用于本任务。"
   label = "Django"
   items = ["models", "serializers", "views", "security", "testing", "logging"]
 
@@ -144,7 +144,7 @@ referenceRoot = "loom"
   id = "fastapi"
   refIdTemplate = "bk.fastapi.{item}"
   pathTemplate = "tech/backend/fastapi/{item}.md"
-  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考，用于本任务。"
   label = "FastAPI"
   items = ["schemas", "data", "routing", "security", "testing", "migration", "logging"]
 
@@ -152,7 +152,7 @@ referenceRoot = "loom"
   id = "aspnetcore"
   refIdTemplate = "bk.aspnet.{item}"
   pathTemplate = "tech/backend/aspnetcore/{item}.md"
-  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考，用于本任务。"
   label = "ASP.NET Core"
   items = ["minimal", "architecture", "data", "security", "testing", "runtime", "logging"]
 
@@ -160,7 +160,7 @@ referenceRoot = "loom"
   id = "nestjs"
   refIdTemplate = "bk.nest.{item}"
   pathTemplate = "tech/backend/nestjs/{item}.md"
-  reasonTemplate = "Selected {label} {item} framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考，用于本任务。"
   label = "NestJS"
   items = ["controllers", "dtos", "services", "security", "testing", "migration", "logging"]
 
@@ -170,7 +170,7 @@ referenceRoot = "loom"
   id = "react"
   refIdTemplate = "fe.react.{item}"
   pathTemplate = "tech/frontend/react/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "React"
   items = ["core", "hooks", "state", "performance", "testing", "server-components", "react19", "migration"]
 
@@ -178,7 +178,7 @@ referenceRoot = "loom"
   id = "nextjs"
   refIdTemplate = "fe.next.{item}"
   pathTemplate = "tech/frontend/nextjs/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "Next.js"
   items = ["core", "app-router", "data", "actions", "server-components", "runtime", "testing"]
 
@@ -186,7 +186,7 @@ referenceRoot = "loom"
   id = "vue"
   refIdTemplate = "fe.vue.{item}"
   pathTemplate = "tech/frontend/vue/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "Vue"
   items = ["core", "components", "state", "typescript", "nuxt", "build", "mobile", "testing"]
 
@@ -194,7 +194,7 @@ referenceRoot = "loom"
   id = "angular"
   refIdTemplate = "fe.angular.{item}"
   pathTemplate = "tech/frontend/angular/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "Angular"
   items = ["core", "components", "routing", "rxjs", "ngrx", "testing"]
 
@@ -202,7 +202,7 @@ referenceRoot = "loom"
   id = "reactnative"
   refIdTemplate = "fe.rn.{item}"
   pathTemplate = "tech/frontend/react-native/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "React Native"
   items = ["core", "structure", "navigation", "platform", "lists", "storage", "testing"]
 
@@ -210,7 +210,7 @@ referenceRoot = "loom"
   id = "flutter"
   refIdTemplate = "fe.flutter.{item}"
   pathTemplate = "tech/frontend/flutter/{item}.md"
-  reasonTemplate = "Selected {label} {item} frontend framework quality reference for this task."
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考，用于本任务。"
   label = "Flutter"
   items = ["core", "structure", "widgets", "navigation", "riverpod", "bloc", "performance", "testing"]
 
@@ -221,7 +221,7 @@ referenceRoot = "loom"
   id = "sql"
   refIdTemplate = "tech.code.sql.{item}"
   pathTemplate = "tech/code/sql/{item}.md"
-  reasonTemplate = "Selected {group_id}.{item} implementation quality reference for this task."
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考，用于本任务。"
   items = ["dialects", "optimization", "queries", "schema", "windows"]
 
     [[routes.groups.providers]]
@@ -230,7 +230,7 @@ referenceRoot = "loom"
     pathTemplate = "tech/code/sql/mysql/{subject}.md"
     subjects = ["schema", "queries", "transactions"]
     label = "MySQL"
-    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+    reasonTemplate = "已选择 {label} {subject} 的方言参考，用于本持久化任务。"
 
     [[routes.groups.providers]]
     id = "postgresql"
@@ -238,7 +238,7 @@ referenceRoot = "loom"
     pathTemplate = "tech/code/sql/postgresql/{subject}.md"
     subjects = ["schema", "queries", "transactions"]
     label = "PostgreSQL"
-    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+    reasonTemplate = "已选择 {label} {subject} 的方言参考，用于本持久化任务。"
 
     [[routes.groups.providers]]
     id = "sqlserver"
@@ -246,7 +246,7 @@ referenceRoot = "loom"
     pathTemplate = "tech/code/sql/sqlserver/{subject}.md"
     subjects = ["schema", "queries", "transactions"]
     label = "SQL Server"
-    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+    reasonTemplate = "已选择 {label} {subject} 的方言参考，用于本持久化任务。"
 
     [[routes.groups.providers]]
     id = "oracle"
@@ -254,7 +254,7 @@ referenceRoot = "loom"
     pathTemplate = "tech/code/sql/oracle/{subject}.md"
     subjects = ["schema", "queries", "transactions"]
     label = "Oracle"
-    reasonTemplate = "Selected {label} {subject} dialect reference for this persistence task."
+    reasonTemplate = "已选择 {label} {subject} 的方言参考，用于本持久化任务。"
 
   # ── Redis 组 ──
   # 注意:reference_load_plan_item 的 match 分支还处理 "session"
@@ -266,7 +266,7 @@ referenceRoot = "loom"
   pathTemplate = "tech/code/redis/{item}.md"
   label = "Redis"
   items = ["core", "cache", "atomicity", "messaging"]
-  reasonTemplate = "Selected {label} {item} reference for this task-owned capability."
+  reasonTemplate = "已选择 {label} {item} 参考，用于本任务所属的能力。"
 
 # ════════════════════════════════════════════════════════════════════════
 # API 路由 — 替代 api_quality_enum_refs() + api_reference_load_plan()
@@ -281,7 +281,7 @@ referenceRoot = "loom"
   id = "api"
   refIdTemplate = "tech.api.{item}"
   pathTemplate = "tech/api/{item}.md"
-  reasonTemplate = "Selected API {item} quality reference for current-phase interface design."
+  reasonTemplate = "已选择 API {item} 质量参考，用于当前阶段的接口设计。"
   items = ["core", "resource", "errors", "pagination", "contract", "security", "jwt", "evolution", "operations"]
 
 # ════════════════════════════════════════════════════════════════════════
@@ -297,7 +297,7 @@ referenceRoot = "loom"
   id = "arch"
   refIdTemplate = "tech.arch.{item}"
   pathTemplate = "tech/arch/{item}.md"
-  reasonTemplate = "Selected architecture {item} guidance for the {section} section."
+  reasonTemplate = "已选择架构 {item} 指导，用于 {section} 部分。"
   items = ["core", "patterns", "system", "data", "nfr", "adr", "failure"]
 
   # 架构 section → items 映射
@@ -338,28 +338,28 @@ referenceRoot = "loom"
   id = "core"
   refIdTemplate = "uix.core.{item}"
   pathTemplate = "uix/{item}.md"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
   items = ["core", "surface-decision", "anti-patterns", "system", "interaction", "content", "verification"]
 
   [[routes.groups]]
   id = "focus"
   refIdTemplate = "uix.focus.{item}"
   pathTemplate = "uix/{item}.md"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
   items = ["data", "mobile", "frameworks", "web-implementation"]
 
   [[routes.groups]]
   id = "tokens"
   refIdTemplate = "uix.tokens.{item}"
   pathTemplate = "uix/tokens/{item}.md"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
   items = ["color-system", "typography", "spacing", "layout-grid", "motion", "radius-elevation"]
 
   [[routes.groups]]
   id = "scenarios"
   refIdTemplate = "uix.scenarios.{item}"
   pathTemplate = "uix/scenarios/{item}.md"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
   items = [
     "admin-dashboard", "data-console", "fintech-workstation", "fintech-consumer-app",
     "consumer-app", "mobile-responsive", "mobile-native", "marketing-site",
@@ -370,13 +370,13 @@ referenceRoot = "loom"
   id = "stacks"
   refIdTemplate = "uix.stacks.{item}"
   pathTemplate = "uix/stacks/{item}.md"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
   items = ["react", "vue", "plain-html", "native-mobile", "threejs", "svelte", "uniapp"]
 
   # templates 使用显式路径(非 .md 扩展名)
   [[routes.groups]]
   id = "templates"
-  reasonTemplate = "Selected UIX {group_id}.{item} reference for the current frontend quality contract."
+  reasonTemplate = "已选择 UIX {group_id}.{item} 参考，用于当前前端质量契约。"
     [[routes.groups.itemEntries]]
     item = "tokens-css"
     refId = "uix.templates.tokens-css"
@@ -409,49 +409,49 @@ referenceRoot = "loom"
     item = "core"
     refId = "test.pw.core"
     path = "tech/test/playwright/core.md"
-    reason = "Playwright task boundary, runner adaptation, and deterministic execution rules."
+    reason = "Playwright 任务边界、运行器适配与确定性执行规则。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "locators"
     refId = "test.pw.locators"
     path = "tech/test/playwright/locators.md"
-    reason = "Playwright locator, assertion, and auto-waiting rules for browser checks."
+    reason = "Playwright 定位器、断言与自动等待规则，用于浏览器检查。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "configuration"
     refId = "test.pw.config"
     path = "tech/test/playwright/configuration.md"
-    reason = "Playwright project configuration, web server, artifact, and CI setup rules."
+    reason = "Playwright 项目配置、Web 服务器、产物与 CI 设置规则。"
     condition = "suite_setup_or_non_existing_project"
 
     [[routes.groups.itemEntries]]
     item = "fixtures"
     refId = "test.pw.fixtures"
     path = "tech/test/playwright/fixtures.md"
-    reason = "Task-scoped fixture, authentication, test-data, and reusable workflow rules."
+    reason = "任务级 fixture、认证、测试数据与可复用工作流规则。"
     condition = "business_flow_mode"
 
     [[routes.groups.itemEntries]]
     item = "network"
     refId = "test.pw.network"
     path = "tech/test/playwright/network.md"
-    reason = "Request synchronization, API-backed state control, and mock-versus-real boundary rules."
+    reason = "请求同步、API 驱动的状态控制与真实/模拟边界规则。"
     condition = "action_refs_or_submitting_state"
 
     [[routes.groups.itemEntries]]
     item = "visual"
     refId = "test.pw.visual"
     path = "tech/test/playwright/visual.md"
-    reason = "Rendered viewport, screenshot, visual comparison, and layout stability rules."
+    reason = "渲染视口、截图、视觉对比与布局稳定性规则。"
     condition = "rendered_inspection_or_viewport_rule"
 
     [[routes.groups.itemEntries]]
     item = "accessibility"
     refId = "test.pw.a11y"
     path = "tech/test/playwright/accessibility.md"
-    reason = "Browser-level semantic, keyboard, focus, and accessibility evidence rules."
+    reason = "浏览器层级的语义、键盘、焦点与无障碍证据规则。"
     condition = "accessibility_quality_rule"
 
 # ════════════════════════════════════════════════════════════════════════
@@ -471,133 +471,133 @@ referenceRoot = "loom-deploy"
     item = "deploy.providers"
     refId = "deploy.providers"
     path = "providers.md"
-    reason = "Provider selection and generated/existing asset policy."
+    reason = "Provider 选择与生成/既有产物策略。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "deploy.matrix"
     refId = "deploy.matrix"
     path = "matrix.md"
-    reason = "Deployment topology, runtime, layout, port, and dependency matrix."
+    reason = "部署拓扑、运行时、布局、端口与依赖矩阵。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "deploy.source-model"
     refId = "deploy.source-model"
     path = "source-model.md"
-    reason = "Repository evidence to deployable service model guidance."
+    reason = "从仓库证据到可部署服务模型的指导。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "deploy.compose"
     refId = "deploy.compose"
     path = "compose.md"
-    reason = "Compose service wiring, ports, dependencies, and health guidance."
+    reason = "Compose 服务编排、端口、依赖与健康检查指导。"
     condition = "always"
 
     [[routes.groups.itemEntries]]
     item = "deploy.topology"
     refId = "deploy.topology"
     path = "topology.md"
-    reason = "Public entry, proxy route, and validation topology guidance."
+    reason = "公共入口、代理路由与验证拓扑指导。"
     condition = "topology_needed"
 
     [[routes.groups.itemEntries]]
     item = "deploy.dockerfile"
     refId = "deploy.dockerfile"
     path = "dockerfile.md"
-    reason = "Dockerfile context, workdir, copy, build, and runtime guidance."
+    reason = "Dockerfile 上下文、工作目录、复制、构建与运行时指导。"
     condition = "generated_or_dockerfile_existing"
 
     [[routes.groups.itemEntries]]
     item = "deploy.environment"
     refId = "deploy.environment"
     path = "environment.md"
-    reason = "Environment, local defaults, dependency URL, and state guidance."
+    reason = "环境、本地默认值、依赖 URL 与状态指导。"
     condition = "env_non_empty"
 
     [[routes.groups.itemEntries]]
     item = "deploy.workspaces"
     refId = "deploy.workspaces"
     path = "workspaces.md"
-    reason = "Workspace app path, source root, and build context guidance."
+    reason = "工作区应用路径、源码根目录与构建上下文指导。"
     condition = "workspace_or_multi_root"
 
     [[routes.groups.itemEntries]]
     item = "deploy.bootstrap"
     refId = "deploy.bootstrap"
     path = "bootstrap.md"
-    reason = "Migration/bootstrap diagnostics and approval boundary guidance."
+    reason = "迁移/引导诊断与审批边界指导。"
     condition = "bootstrap_tasks_non_empty"
 
     [[routes.groups.itemEntries]]
     item = "deploy.repair"
     refId = "deploy.repair"
     path = "repair.md"
-    reason = "Deploy repair decision tree and editable asset boundary."
+    reason = "部署修复决策树与可编辑产物边界。"
     condition = "repair"
 
     [[routes.groups.itemEntries]]
     item = "deploy.dependencies.redis"
     refId = "deploy.dependencies.redis"
     path = "redis.md"
-    reason = "Redis dependency capabilities, persistence, health, and generated asset boundary."
+    reason = "Redis 依赖能力、持久化、健康检查与生成产物边界。"
     condition = "redis_dependency"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.node"
     refId = "deploy.stacks.node"
     path = "node.md"
-    reason = "Node-family scanner, generated asset, and repair guidance."
+    reason = "Node 系扫描器、生成产物与修复指导。"
     condition = "runtime_node"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.python"
     refId = "deploy.stacks.python"
     path = "python.md"
-    reason = "Python scanner, generated asset, and repair guidance."
+    reason = "Python 扫描器、生成产物与修复指导。"
     condition = "runtime_python"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.go"
     refId = "deploy.stacks.go"
     path = "go.md"
-    reason = "Go scanner, generated asset, and repair guidance."
+    reason = "Go 扫描器、生成产物与修复指导。"
     condition = "runtime_go"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.java"
     refId = "deploy.stacks.java"
     path = "java.md"
-    reason = "Java scanner, generated asset, and repair guidance."
+    reason = "Java 扫描器、生成产物与修复指导。"
     condition = "runtime_java"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.dotnet"
     refId = "deploy.stacks.dotnet"
     path = "dotnet.md"
-    reason = ".NET scanner, generated asset, and repair guidance."
+    reason = ".NET 扫描器、生成产物与修复指导。"
     condition = "runtime_dotnet"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.php"
     refId = "deploy.stacks.php"
     path = "php.md"
-    reason = "PHP scanner, generated asset, and repair guidance."
+    reason = "PHP 扫描器、生成产物与修复指导。"
     condition = "runtime_php"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.ruby"
     refId = "deploy.stacks.ruby"
     path = "ruby.md"
-    reason = "Ruby scanner, generated asset, and repair guidance."
+    reason = "Ruby 扫描器、生成产物与修复指导。"
     condition = "runtime_ruby"
 
     [[routes.groups.itemEntries]]
     item = "deploy.stacks.static"
     refId = "deploy.stacks.static"
     path = "static.md"
-    reason = "Static site scanner, generated asset, and repair guidance."
+    reason = "静态站点扫描器、生成产物与修复指导。"
     condition = "runtime_static"
 
 # ════════════════════════════════════════════════════════════════════════
@@ -608,7 +608,7 @@ referenceRoot = "loom-deploy"
 
 [[backendEcosystems]]
 ecosystemId = "nextjs_fullstack"
-label = "Next.js full-stack"
+label = "Next.js 全栈"
 runtimeFamily = "typescript_node"
 backendOptions = ["Next.js + Server Actions / Route Handlers / SSR"]
 backendMatchers = ["next.js", "nextjs"]
@@ -617,7 +617,7 @@ dataAccessMatchers = ["prisma", "drizzle"]
 
 [[backendEcosystems]]
 ecosystemId = "node_http"
-label = "Node.js HTTP service"
+label = "Node.js HTTP 服务"
 runtimeFamily = "typescript_node"
 backendOptions = ["Node.js + Fastify", "Node.js + Express"]
 backendMatchers = ["node.js", "nodejs", "typescript", "fastify", "express"]
@@ -626,7 +626,7 @@ dataAccessMatchers = ["prisma", "drizzle", "kysely"]
 
 [[backendEcosystems]]
 ecosystemId = "nestjs_service"
-label = "NestJS service"
+label = "NestJS 服务"
 runtimeFamily = "typescript_node"
 backendOptions = ["Node.js + NestJS"]
 backendMatchers = ["nestjs"]
@@ -635,7 +635,7 @@ dataAccessMatchers = ["prisma", "typeorm"]
 
 [[backendEcosystems]]
 ecosystemId = "python_fastapi"
-label = "FastAPI service"
+label = "FastAPI 服务"
 runtimeFamily = "python"
 backendOptions = ["Python + FastAPI"]
 backendMatchers = ["python", "fastapi"]
@@ -644,7 +644,7 @@ dataAccessMatchers = ["sqlalchemy", "sqlmodel"]
 
 [[backendEcosystems]]
 ecosystemId = "python_django"
-label = "Django application"
+label = "Django 应用"
 runtimeFamily = "python"
 backendOptions = ["Python + Django"]
 backendMatchers = ["django"]
@@ -653,7 +653,7 @@ dataAccessMatchers = ["django orm"]
 
 [[backendEcosystems]]
 ecosystemId = "jvm_spring"
-label = "Spring Boot service"
+label = "Spring Boot 服务"
 runtimeFamily = "jvm"
 backendOptions = ["Java + Spring Boot"]
 backendMatchers = ["java", "kotlin", "spring boot"]
@@ -662,7 +662,7 @@ dataAccessMatchers = ["spring data jpa", "mybatis plus", "mybatis-plus", "mybati
 
 [[backendEcosystems]]
 ecosystemId = "dotnet_aspnetcore"
-label = "ASP.NET Core service"
+label = "ASP.NET Core 服务"
 runtimeFamily = "dotnet"
 backendOptions = [".NET + ASP.NET Core"]
 backendMatchers = [".net", "asp.net", "dotnet"]
@@ -671,20 +671,20 @@ dataAccessMatchers = ["entity framework", "ef core", "dapper"]
 
 [[backendEcosystems]]
 ecosystemId = "go_http"
-label = "Go HTTP service"
+label = "Go HTTP 服务"
 runtimeFamily = "go"
-backendOptions = ["Go + net/http or Gin"]
+backendOptions = ["Go + net/http 或 Gin"]
 backendMatchers = ["go", "net/http", "gin"]
 dataAccessOptions = ["database/sql", "sqlc", "GORM"]
 dataAccessMatchers = ["database/sql", "sqlc", "gorm"]
 
 [[backendEcosystems]]
 ecosystemId = "no_independent_backend"
-label = "No independent backend"
+label = "无独立后端"
 runtimeFamily = "none"
-backendOptions = ["No independent backend"]
+backendOptions = ["无独立后端"]
 backendMatchers = ["no independent backend", "no backend"]
-dataAccessOptions = ["No ORM"]
+dataAccessOptions = ["无 ORM"]
 dataAccessMatchers = ["no orm"]
 
 # ════════════════════════════════════════════════════════════════════════
