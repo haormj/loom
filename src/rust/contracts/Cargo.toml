@@ -15,3 +15,7 @@ serde.workspace = true
 serde_json.workspace = true
 delivery-core = { path = "../core" }
 reference-catalog = { path = "../reference-catalog" }
+
+[[test]]
+name = "architecture_quality_contract"
+path = "../../../tests/rust/contracts/architecture_quality_contract.rs"

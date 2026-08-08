@@ -4,7 +4,7 @@
 # 它从 contracts、architecture、execution 和 deploy crate 中的硬编码
 # enum 函数及 match 分支机械导出。
 #
-# reference_catalog/tests/parity.rs 中的 parity 测试验证目录与代码一致。
+# tests/rust/reference-catalog/parity.rs 中的 parity 测试验证目录与代码一致。
 #
 # 约定:模板中的 {item} 替换为条目 id。
 

@@ -20,8 +20,8 @@ contracts = { path = "../contracts" }
 
 [[test]]
 name = "parity"
-path = "tests/parity.rs"
+path = "../../../tests/rust/reference-catalog/parity.rs"
 
 [[test]]
 name = "catalog_merge"
-path = "tests/merge.rs"
+path = "../../../tests/rust/reference-catalog/merge.rs"
