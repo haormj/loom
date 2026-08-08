@@ -1,75 +1,75 @@
-# Deploy Topology Reference
+# 部署拓扑参考
 
-Use this reference when Loom selects `deploy.topology`. It explains public entry, proxy routes, validation paths, and gateway behavior.
+当 Loom 选择 `deploy.topology` 时使用本参考文档。它解释公共入口、代理路由、验证路径和网关行为。
 
-## Authority
+## 权威
 
-`DeploymentTopology` is generated from Loom deploy facts. Compose and Nginx must implement it; agents should not replace it with an invented topology during repair.
+`DeploymentTopology` 从 Loom 部署事实生成。Compose 和 Nginx 必须实现它；agent 不应在修复期间用发明的拓扑替换它。
 
-Fields:
+字段：
 
-- `publicEntryServiceId`: service that owns the preview URL and published host port.
-- `routes`: public routing rules such as static SPA serving or HTTP proxy paths.
-- `validation.previewPaths`: paths probed against the public entry URL.
-- `validation.apiProbes`: safe `GET`/`HEAD` probes derived only from read-safe interfaces in the accepted API contract. Route contracts still include every declared method; write interfaces are never executed as deploy probes.
+- `publicEntryServiceId`：拥有预览 URL 和已发布主机端口的服务。
+- `routes`：公共路由规则，如 static SPA 服务或 HTTP 代理路径。
+- `validation.previewPaths`：针对公共入口 URL 探测的路径。
+- `validation.apiProbes`：仅从已接受 API 契约中的读取安全接口派生的安全 `GET`/`HEAD` 探测。路由契约仍包含每个声明的方法；写接口绝不作为部署探测执行。
 
-## Frontend Gateway + Backend API
+## 前端网关 + 后端 API
 
-When topology class is `frontend_gateway_backend_api`:
+当拓扑类别为 `frontend_gateway_backend_api` 时：
 
-- Public entry service is frontend/static gateway.
-- Backend service remains internal.
-- Compose publishes only the frontend gateway host port unless another public port is explicitly present.
-- Nginx or equivalent gateway must define API proxy locations before SPA fallback.
-- `location /api/` and an exact `/api` route are both needed when the base path is `/api`.
-- `proxy_pass` must target the backend Compose service name and container port.
-- SPA fallback belongs after API proxy locations.
+- 公共入口服务是前端/static 网关。
+- 后端服务保持内部。
+- 除非另一个公共端口明确存在，否则 Compose 仅发布前端网关主机端口。
+- Nginx 或等效网关必须在 SPA fallback 之前定义 API 代理位置。
+- 当 base 路径为 `/api` 时，`location /api/` 和精确的 `/api` 路由都需要。
+- `proxy_pass` 必须指向后端 Compose 服务名和容器端口。
+- SPA fallback 位于 API 代理位置之后。
 
-## Backend-Served Frontend + API
+## 后端服务前端 + API
 
-When topology class is `backend_served_frontend_api`:
+当拓扑类别为 `backend_served_frontend_api` 时：
 
-- One service owns both preview and API validation.
-- No HTTP proxy route is necessary.
-- Frontend assets must be copied into the backend's static output before packaging or runtime start.
-- API validation paths are probed directly against the backend public port.
+- 一个服务同时拥有预览和 API 验证。
+- 不需要 HTTP 代理路由。
+- 前端资产必须在打包或运行时启动前复制到后端的 static 输出中。
+- API 验证路径直接针对后端公共端口探测。
 
-## API-Only Single Service
+## API-only 单服务
 
-When topology class is `api_only_single_service`:
+当拓扑类别为 `api_only_single_service` 时：
 
-- API paths are direct validation paths.
-- Missing proxy routes are not an error.
-- Preview URL may be the health/root path if the app exposes HTTP.
+- API 路径是直接验证路径。
+- 缺失代理路由不是错误。
+- 如果应用暴露 HTTP，预览 URL 可以是 health/root 路径。
 
-## Single Service App
+## 单服务应用
 
-When topology class is `single_service_app`:
+当拓扑类别为 `single_service_app` 时：
 
-- One app service owns the public preview URL.
-- No HTTP proxy route is required.
-- Validation probes the preview/health path directly against the app public port.
+- 一个应用服务拥有公共预览 URL。
+- 不需要 HTTP 代理路由。
+- 验证直接针对应用公共端口探测预览/健康路径。
 
-## Static Site
+## Static 站点
 
-When topology class is `static_site`:
+当拓扑类别为 `static_site` 时：
 
-- Public entry serves static content.
-- API paths must be empty.
-- SPA fallback is added only when client-side routing is signaled by framework/source evidence.
+- 公共入口服务 static 内容。
+- API 路径必须为空。
+- 仅当框架/源证据信号客户端路由时才添加 SPA fallback。
 
-## Validation Rules
+## 验证规则
 
-Generated assets should fail preflight when:
+生成的资产应在以下情况预检失败：
 
-- Topology references a service id not present in source model.
-- Frontend gateway topology lacks an HTTP proxy route.
-- Nginx proxy route appears after SPA fallback.
-- API validation path returns HTML fallback.
-- `DeploymentSpec.runtime.ports` has no public port for the public entry service.
+- 拓扑引用了源模型中不存在的服务 id。
+- 前端网关拓扑缺少 HTTP 代理路由。
+- Nginx 代理路由出现在 SPA fallback 之后。
+- API 验证路径返回 HTML fallback。
+- `DeploymentSpec.runtime.ports` 中公共入口服务没有公共端口。
 
-Repair should fix generated gateway files when they contradict topology. If the topology itself contradicts source facts, the MCP generator is wrong and should be fixed rather than hidden by asset edits.
+当生成的网关文件与拓扑矛盾时，修复应修复生成的网关文件。如果拓扑本身与源事实矛盾，MCP 生成器是错误的，应被修复而非通过资产编辑隐藏。
 
-## API Contract Boundary
+## API 契约边界
 
-Deploy consumes the project-level current API contract referenced by the accepted Architecture artifact. It does not infer a public API prefix from a string such as `/api`, and it does not let a generated frontend environment variable redefine an interface path. Before generated assets are written, Loom checks that every declared interface path fits the public exposure base and derives safe read probes separately. An unresolved or conflicting binding blocks generated deployment assets with the source files and contract reference in the diagnostic.
+部署消费由已接受的 Architecture artifact 引用的项目级当前 API 契约。它不从诸如 `/api` 的字符串推断公共 API 前缀，也不允许生成的前端环境变量重新定义接口路径。在生成资产写入之前，Loom 检查每个声明的接口路径是否适合公共暴露 base，并单独派生安全读取探测。未解决或冲突的绑定在诊断中阻止生成部署资产，并附带源文件和契约引用。

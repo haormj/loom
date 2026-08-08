@@ -1,90 +1,90 @@
-# Java Deployment Reference
+# Java 部署参考
 
-Use this reference when implementing or repairing loom deploy support for Java-family projects.
+当实现或修复 Java 家族项目的 loom deploy 支持时，使用本参考文档。
 
-## Scanner Signals
+## 扫描器信号
 
-- `pom.xml` or `mvnw` identifies a Maven project.
-- `build.gradle`, `build.gradle.kts`, `settings.gradle`, `settings.gradle.kts`, or `gradlew` identifies a Gradle project.
-- `org.springframework.boot` or `spring-boot` dependency/plugin signals Spring Boot.
-- `io.quarkus` signals Quarkus.
-- `io.micronaut` signals Micronaut.
-- Java version signals may appear in Maven properties such as `java.version`, `maven.compiler.release`, or `maven.compiler.target`; Gradle signals include `sourceCompatibility`, `targetCompatibility`, and toolchain `languageVersion`.
-- `server.port` in `application.properties`, or `server: port:` style YAML, should become the runtime port. Default Java web port is 8080.
+- `pom.xml` 或 `mvnw` 标识 Maven 项目。
+- `build.gradle`、`build.gradle.kts`、`settings.gradle`、`settings.gradle.kts` 或 `gradlew` 标识 Gradle 项目。
+- `org.springframework.boot` 或 `spring-boot` 依赖/插件信号标识 Spring Boot。
+- `io.quarkus` 信号标识 Quarkus。
+- `io.micronaut` 信号标识 Micronaut。
+- Java 版本信号可能出现在 Maven 属性中，如 `java.version`、`maven.compiler.release` 或 `maven.compiler.target`；Gradle 信号包括 `sourceCompatibility`、`targetCompatibility` 和 toolchain `languageVersion`。
+- `application.properties` 中的 `server.port`，或 `server: port:` 风格的 YAML，应成为运行时端口。Java web 默认端口为 8080。
 
-## Template Rules
+## 模板规则
 
-- Use a multi-stage Dockerfile.
-- Prefer project wrappers when present:
-  - Maven: `./mvnw -DskipTests package`, otherwise `mvn -DskipTests package`.
-  - Gradle: `./gradlew build -x test`, otherwise `gradle build -x test`.
-- Run wrapper commands from the directory that contains the wrapper/build file. If the service root is `service/`, the Dockerfile must `WORKDIR /app/service` before invoking `./gradlew` or `./mvnw`.
-- Use maintained Eclipse Temurin images:
-  - Maven builder: `maven:3-eclipse-temurin-<major>`.
-  - Gradle builder: `gradle:8-jdk<major>`.
-  - Runtime: `eclipse-temurin:<major>-jre`.
-- Default Java major version is 21 when the project does not declare one.
-- Copy the first runnable jar from `target` or `build/libs`, excluding `*-plain.jar`, `*-sources.jar`, and `*-javadoc.jar`.
-- Set both `PORT` and `SERVER_PORT` in generated Compose/runtime environment for Spring Boot compatibility.
-- If a frontend build output must be served by Spring Boot, copy that output into `src/main/resources/static` or the generated build staging area before packaging the jar; do not run a separate frontend dev server in the runtime image.
+- 使用多阶段 Dockerfile。
+- 存在项目 wrapper 时优先使用：
+  - Maven：`./mvnw -DskipTests package`，否则 `mvn -DskipTests package`。
+  - Gradle：`./gradlew build -x test`，否则 `gradle build -x test`。
+- 从包含 wrapper/build 文件的目录运行 wrapper 命令。如果服务根为 `service/`，Dockerfile 必须在调用 `./gradlew` 或 `./mvnw` 之前 `WORKDIR /app/service`。
+- 使用受维护的 Eclipse Temurin 镜像：
+  - Maven builder：`maven:3-eclipse-temurin-<major>`。
+  - Gradle builder：`gradle:8-jdk<major>`。
+  - Runtime：`eclipse-temurin:<major>-jre`。
+- 项目未声明版本时，默认 Java 主版本为 21。
+- 从 `target` 或 `build/libs` 复制第一个可运行 jar，排除 `*-plain.jar`、`*-sources.jar` 和 `*-javadoc.jar`。
+- 在生成的 Compose/runtime 环境中为 Spring Boot 兼容性同时设置 `PORT` 和 `SERVER_PORT`。
+- 如果前端构建输出必须由 Spring Boot 提供，在打包 jar 之前将该输出复制到 `src/main/resources/static` 或生成的构建暂存区；不要在 runtime 镜像中运行独立的前端 dev server。
 
-## Dependency Services
+## 依赖服务
 
-- Detect Postgres from JDBC URLs, `postgresql`, `org.postgresql`, Flyway/Liquibase migration config, or Spring datasource settings.
-- Detect MySQL/MariaDB from JDBC URLs, `mysql`, `mariadb`, or driver dependencies.
-- Detect Redis from `spring-data-redis`, `lettuce`, or `jedis`.
-- Detect MongoDB from `mongodb` or Spring Data MongoDB.
-- Detect RabbitMQ from `amqp`, `spring-rabbit`, or RabbitMQ config.
-- Detect Elasticsearch/OpenSearch from client dependencies or endpoint variables.
+- 从 JDBC URL、`postgresql`、`org.postgresql`、Flyway/Liquibase 迁移配置或 Spring datasource 设置检测 Postgres。
+- 从 JDBC URL、`mysql`、`mariadb` 或驱动依赖检测 MySQL/MariaDB。
+- 从 `spring-data-redis`、`lettuce` 或 `jedis` 检测 Redis。
+- 从 `mongodb` 或 Spring Data MongoDB 检测 MongoDB。
+- 从 `amqp`、`spring-rabbit` 或 RabbitMQ 配置检测 RabbitMQ。
+- 从客户端依赖或 endpoint 变量检测 Elasticsearch/OpenSearch。
 
-## Persistence And Migrations
+## 持久化与迁移
 
-- JDBC URLs using Compose dependency services must use service DNS names, not `localhost`.
-- File database URLs such as SQLite, H2 file, HSQLDB file, and Derby file must use the writable `containerPath` selected in `DeploymentSpec.storageFacts`; do not assume a fixed directory.
-- When Flyway or Liquibase is detected, treat migration tooling as the schema owner for local deployment. Framework schema validation that is known to misread file database type affinity should be disabled or downgraded with a safe local generated env override instead of causing container startup failure.
-- Do not assume SQLite for every Java app. Use this path only when repository config or generated env explicitly points at a file database.
+- 使用 Compose 依赖服务的 JDBC URL 必须使用服务 DNS 名，而非 `localhost`。
+- 文件数据库 URL（如 SQLite、H2 file、HSQLDB file 和 Derby file）必须使用 `DeploymentSpec.storageFacts` 中选择的可写 `containerPath`；不要假设固定目录。
+- 当检测到 Flyway 或 Liquibase 时，将迁移工具视为本地部署的 schema 拥有者。已知会误读文件数据库类型亲和性的框架 schema 验证应使用安全的本地生成 env 覆盖来禁用或降级，而非导致容器启动失败。
+- 不要为每个 Java 应用假设 SQLite。仅当仓库配置或生成的 env 明确指向文件数据库时才使用此路径。
 
-## Repair Notes
+## 修复说明
 
-- If the build cannot find a wrapper script, fall back to the installed Maven/Gradle command in the builder image.
-- If the final jar cannot be found, inspect the build output directory and exclude classifier jars before selecting the application jar.
-- If a Spring Boot container starts but healthcheck fails, verify `SERVER_PORT`, `server.address`, profile-specific config, and whether the app requires database migrations or secrets.
-- If Gradle builds fail due to daemon or cache issues, disable the daemon or rerun with a clean generated image before changing application code.
-- If Java build context misses a sibling frontend or shared module, fix Compose build context and Dockerfile copy paths together.
+- 如果构建找不到 wrapper 脚本，回退到 builder 镜像中已安装的 Maven/Gradle 命令。
+- 如果找不到最终 jar，检查构建输出目录并在选择应用 jar 之前排除 classifier jar。
+- 如果 Spring Boot 容器启动但 healthcheck 失败，验证 `SERVER_PORT`、`server.address`、profile 特定配置，以及应用是否需要数据库迁移或密钥。
+- 如果 Gradle 构建因 daemon 或缓存问题失败，在更改应用代码之前禁用 daemon 或使用全新的生成镜像重试。
+- 如果 Java 构建上下文遗漏了同级前端或共享模块，同时修复 Compose 构建上下文和 Dockerfile 复制路径。
 
-## Scanner Signals To Deploy Facts
+## 扫描器信号到部署事实
 
-Translate Java scanner evidence into deploy facts before generating files:
+在生成文件之前，将 Java 扫描器证据转换为部署事实：
 
-- Maven/Gradle build file path becomes the service root and manifest ref.
-- Wrapper scripts become preferred build command facts only when they are inside the build context.
-- Spring Boot, Quarkus, Micronaut, servlet container, or CLI signals decide whether the service exposes HTTP.
-- Java version properties/toolchains select builder/runtime image majors.
-- `server.port`, profile config, Actuator config, and docs become runtime port and healthcheck candidates.
-- Flyway/Liquibase, datasource config, JDBC URLs, and driver dependencies become persistence/dependency facts.
-- Frontend assets under sibling/root directories become backend-served frontend facts only when the build/package path can include them.
+- Maven/Gradle build 文件路径成为服务根和 manifest ref。
+- Wrapper 脚本仅当它们位于构建上下文内时才成为首选构建命令事实。
+- Spring Boot、Quarkus、Micronaut、servlet 容器或 CLI 信号决定服务是否暴露 HTTP。
+- Java 版本属性/toolchain 选择 builder/runtime 镜像主版本。
+- `server.port`、profile 配置、Actuator 配置和文档成为运行时端口和 healthcheck 候选。
+- Flyway/Liquibase、datasource 配置、JDBC URL 和驱动依赖成为持久化/依赖事实。
+- 同级/根目录下的前端资产仅当构建/打包路径可以包含它们时才成为后端服务前端事实。
 
-## Generated Asset Expectations
+## 生成的资产预期
 
-Generated Java assets should show:
+生成的 Java 资产应显示：
 
-- Multi-stage Dockerfile with build and JRE runtime stages.
-- `WORKDIR` aligned to the directory containing `pom.xml` or `build.gradle*`.
-- Build context wide enough for wrapper scripts, build files, sibling modules, and frontend assets when the topology needs them.
-- Runnable jar selection excluding `*-plain.jar`, sources, and javadoc artifacts.
-- Compose env includes `PORT` and framework-specific port variables such as `SERVER_PORT` when Spring Boot is detected.
-- File database URLs point at mounted writable container paths; service databases use Compose DNS names.
-- Migration-aware local defaults avoid blocking startup on schema validation differences when migration tooling owns schema creation.
+- 带有构建和 JRE runtime 阶段的多阶段 Dockerfile。
+- `WORKDIR` 与包含 `pom.xml` 或 `build.gradle*` 的目录对齐。
+- 构建上下文足够宽，以容纳 wrapper 脚本、build 文件、同级模块和前端资产（当拓扑需要时）。
+- 可运行 jar 选择，排除 `*-plain.jar`、sources 和 javadoc artifact。
+- Compose env 包含 `PORT` 和框架特定端口变量（如检测到 Spring Boot 时的 `SERVER_PORT`）。
+- 文件数据库 URL 指向挂载的可写容器路径；服务数据库使用 Compose DNS 名。
+- 迁移感知的本地默认值避免在迁移工具拥有 schema 创建时因 schema 验证差异而阻塞启动。
 
-## Repair Boundary
+## 修复边界
 
-Repair generated Java deploy assets when:
+在以下情况下修复生成的 Java 部署资产：
 
-- Context/workdir cannot see wrapper scripts or build files.
-- Build uses a wrapper path outside the Docker build context.
-- Runtime selects a non-runnable classifier jar.
-- Container port/env does not match the Java runtime port.
-- Dependency URL uses `localhost` inside a container.
-- Generated local file database path is not mounted or writable.
+- 上下文/workdir 无法看到 wrapper 脚本或 build 文件。
+- 构建使用了 Docker 构建上下文之外的 wrapper 路径。
+- Runtime 选择了不可运行的 classifier jar。
+- 容器端口/env 与 Java runtime 端口不匹配。
+- 依赖 URL 在容器内使用了 `localhost`。
+- 生成的本地文件数据库路径未挂载或不可写。
 
-Do not modify application entity mappings, migrations, profiles, or source config during deploy asset repair unless the MCP action routes to execution repair.
+在部署资产修复期间不要修改应用 entity 映射、迁移、profile 或源配置，除非 MCP 操作路由到执行修复。

@@ -1,63 +1,63 @@
-# Workspace / Monorepo Deploy Guidance
+# Workspace / Monorepo 部署指导
 
-Use this reference when `loom.deployPrepare` or `loom.deployRun` receives a `projectRoot` that points at a monorepo root rather than a single application directory.
+当 `loom.deployPrepare` 或 `loom.deployRun` 接收指向 monorepo 根而非单个应用目录的 `projectRoot` 时，使用本参考文档。
 
-## Detection
+## 检测
 
-Treat these as workspace root markers:
+将以下视为 workspace 根标记：
 
 - `pnpm-workspace.yaml`
-- `package.json` with `workspaces` or `workspaces.packages`
+- 带有 `workspaces` 或 `workspaces.packages` 的 `package.json`
 - `turbo.json`
 - `nx.json`
 - `lerna.json`
 - `rush.json`
 
-If the root already has a Compose file, Dockerfile, or directly deployable stack, use the root. Otherwise, search likely app directories such as `apps/*`, `packages/*`, `services/*`, `sites/*`, `web`, `frontend`, `backend`, and `api`.
+如果根已经有 Compose 文件、Dockerfile 或直接可部署的技术栈，使用根。否则，搜索可能的应用目录，如 `apps/*`、`packages/*`、`services/*`、`sites/*`、`web`、`frontend`、`backend` 和 `api`。
 
-Rank candidates by explicit deployment assets first, then runnable framework/start command signals, then common app directory names. Keep the selected path and candidate scores in `DeploymentSpec.workspace` so an agent can explain or repair the choice.
+按显式部署资产优先排序候选，然后是可运行的框架/start 命令信号，然后是常见应用目录名。将选定路径和候选分数保存在 `DeploymentSpec.workspace` 中，以便 agent 可以解释或修复选择。
 
-## App Path And Build Context Matrix
+## 应用路径与构建上下文矩阵
 
-Use this matrix before generating Compose or Dockerfiles:
+在生成 Compose 或 Dockerfile 之前使用此矩阵：
 
-- Root app: app path `.`, source root `.`, build context `.`, generated Dockerfile paths root-relative.
-- App-local subdirectory: app path such as `service`, `backend`, `web`, or `frontend`; source root is that directory; build context is the app path unless ancestor lockfiles/workspace manifests are needed.
-- Split frontend/backend: app paths are separate source roots; generated Compose has separate services unless topology proves backend-served frontend.
-- Same-root fullstack: one app path contains backend and frontend build inputs; build context stays at that root and Dockerfile stages separate frontend build from backend runtime.
-- Workspace package: app path is under `apps/*`, `packages/*`, or `services/*`; build context is workspace root when root lockfiles/workspace manifests are required; Dockerfile `WORKDIR` changes to the package before build/start.
-- Existing Dockerfile: build context follows the Dockerfile's own assumptions; wrapper Compose must not choose a context that makes existing `COPY` paths invalid.
-- Existing Compose: Compose file owns service context choices; Loom reports them instead of replacing them during prepare.
+- 根应用：应用路径 `.`，源根 `.`，构建上下文 `.`，生成的 Dockerfile 路径相对于根。
+- 应用本地子目录：应用路径如 `service`、`backend`、`web` 或 `frontend`；源根是该目录；构建上下文是应用路径，除非需要祖先 lockfile/workspace 清单。
+- 拆分前端/后端：应用路径是独立的源根；生成的 Compose 有独立服务，除非拓扑证明后端服务前端。
+- 同根 fullstack：一个应用路径包含后端和前端构建输入；构建上下文保持在该根，Dockerfile 阶段将前端构建与后端 runtime 分离。
+- Workspace package：应用路径在 `apps/*`、`packages/*` 或 `services/*` 下；当需要根 lockfile/workspace 清单时，构建上下文是 workspace 根；Dockerfile `WORKDIR` 在 build/start 之前切换到 package。
+- 现有 Dockerfile：构建上下文遵循 Dockerfile 自身的假设；包装 Compose 不得选择使现有 `COPY` 路径无效的上下文。
+- 现有 Compose：Compose 文件拥有服务上下文选择；Loom 在 prepare 期间报告它们而非替换。
 
-The selected app path is not always the build context. The build context is the smallest directory that contains all files the generated Dockerfile must copy.
+选定的应用路径不总是构建上下文。构建上下文是包含生成的 Dockerfile 必须复制的所有文件的最小目录。
 
-## Explicit App Path
+## 显式应用路径
 
-`DeployToolInput.appPath` overrides automatic workspace selection. It must stay inside `projectRoot` and point to an existing directory.
+`DeployToolInput.appPath` 覆盖自动 workspace 选择。它必须保持在 `projectRoot` 内并指向现有目录。
 
-Use explicit app paths when a repo has multiple deployable targets, such as `apps/web`, `apps/admin`, and `services/api`. loom still stores one current local deployment under the root `.loom`; selecting a different app rewrites the current generated deployment spec/assets.
+当仓库有多个可部署目标（如 `apps/web`、`apps/admin` 和 `services/api`）时使用显式应用路径。loom 仍在根 `.loom` 下存储一个当前本地部署；选择不同应用会重写当前生成的部署 spec/资产。
 
-## Build Context
+## 构建上下文
 
-For reused app-local Dockerfiles and Compose files, keep the build context at the selected app path. User-authored Dockerfiles usually assume their own directory as context.
+对于复用的应用本地 Dockerfile 和 Compose 文件，将构建上下文保持在选定的应用路径。用户编写的 Dockerfile 通常假设自己的目录作为上下文。
 
-For generated Node workspace Dockerfiles, prefer the workspace root as build context so root lockfiles and workspace manifests remain available to npm/pnpm/yarn/bun. Set `detectedStack.workingDirectory` to the selected app path and make the Dockerfile switch to that directory before running app build/start scripts.
+对于生成的 Node workspace Dockerfile，优先使用 workspace 根作为构建上下文，以便根 lockfile 和 workspace 清单对 npm/pnpm/yarn/bun 可用。将 `detectedStack.workingDirectory` 设为选定的应用路径，并使 Dockerfile 在运行应用 build/start 脚本之前切换到该目录。
 
-For generated non-Node stacks, choose context from the source model:
+对于生成的非 Node 技术栈，从源模型选择上下文：
 
-- app-local service with all build files under one root -> app root context
-- frontend/backend composition where one image copies frontend static assets into a backend -> repository or common ancestor context
-- multi-service generated Compose -> each service may use a different Dockerfile and workdir, but every Dockerfile path must be valid from its Compose build context
+- 所有构建文件在一个根下的应用本地服务 -> 应用根上下文
+- 一个镜像将前端 static 资产复制到后端的前端/后端组合 -> 仓库或公共祖先上下文
+- 多服务生成 Compose -> 每个服务可以使用不同的 Dockerfile 和 workdir，但每个 Dockerfile 路径必须从其 Compose 构建上下文有效
 
-## Package Managers
+## 包管理器
 
-Package-manager detection can use lockfiles in ancestor directories when scanning a selected Node app. This is important for pnpm/npm/yarn/bun monorepos where the app does not carry its own lockfile.
+当扫描选定的 Node 应用时，包管理器检测可以使用祖先目录中的 lockfile。这对于应用不携带自身 lockfile 的 pnpm/npm/yarn/bun monorepo 很重要。
 
-For pnpm workspaces, copy `pnpm-workspace.yaml` with the root lockfile before install. Without it, `pnpm install --frozen-lockfile` may fail or install an incomplete workspace graph.
+对于 pnpm workspace，在安装之前复制 `pnpm-workspace.yaml` 和根 lockfile。没有它，`pnpm install --frozen-lockfile` 可能失败或安装不完整的 workspace 图。
 
-## Repair Notes
+## 修复说明
 
-When a monorepo deployment fails, inspect these fields first:
+当 monorepo 部署失败时，首先检查这些字段：
 
 - `workspace.appPath`
 - `workspace.buildContextPath`
@@ -65,17 +65,17 @@ When a monorepo deployment fails, inspect these fields first:
 - `files.dockerfilePath`
 - `detectedStack.workingDirectory`
 
-Common fixes are correcting the Compose `build.context`, Dockerfile path relative to that context, or the Dockerfile `WORKDIR` used before install/build/start commands.
+常见修复是更正 Compose `build.context`、相对于该上下文的 Dockerfile 路径，或在 install/build/start 命令之前使用的 Dockerfile `WORKDIR`。
 
-If a build command works locally only because it is run from a subdirectory, encode that subdirectory as `WORKDIR` or an explicit `cd` in the generated Dockerfile. Do not flatten the workspace into one root command unless the project already has root-level build scripts for that app.
+如果构建命令仅在从子目录运行时本地工作，将该子目录编码为生成 Dockerfile 中的 `WORKDIR` 或显式 `cd`。除非项目已有该应用的根级构建脚本，否则不要将 workspace 展平为一个根命令。
 
-## Source Root Repair Boundary
+## 源根修复边界
 
-When a workspace deploy fails:
+当 workspace 部署失败时：
 
-- Missing manifest from Docker build means build context or `COPY` path is wrong.
-- Missing wrapper/build script means `WORKDIR` is wrong or the service root was misidentified.
-- Missing sibling package/module means the context was too narrow for a workspace dependency graph.
-- Wrong public service means topology/source model selection is wrong, not a Compose retry detail.
+- Docker 构建中缺失 manifest 意味着构建上下文或 `COPY` 路径错误。
+- 缺失 wrapper/build 脚本意味着 `WORKDIR` 错误或服务根被错误识别。
+- 缺失同级 package/module 意味着上下文对于 workspace 依赖图太窄。
+- 错误的公共服务意味着拓扑/源模型选择错误，而非 Compose 重试细节。
 
-Repair generated assets to match the selected source model. If the source model selected the wrong app path, report that fact instead of compensating with broad repository copies.
+修复生成资产以匹配选定的源模型。如果源模型选择了错误的应用路径，报告该事实而非用宽泛的仓库复制来补偿。

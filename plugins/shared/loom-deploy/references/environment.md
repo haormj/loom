@@ -1,101 +1,101 @@
-# Environment Diagnostics Reference
+# 环境诊断参考
 
-Use this reference when implementing or repairing loom deploy behavior related to environment variables, secrets, framework config, or generated Compose `environment`.
+当实现或修复与环境变量、密钥、框架配置或生成的 Compose `environment` 相关的 loom deploy 行为时，使用本参考文档。
 
-## Scanner Rules
+## 扫描器规则
 
-Record variable names from:
+从以下来源记录变量名：
 
-- `.env.example`, `.env.sample`, `.env.local.example`, `.env.template`, and `.env.dist`
-- local `.env`, `.env.local`, `.env.development`, and `.env.production` names only
-- source-code references such as `process.env.X`, `import.meta.env.X`, `os.getenv("X")`, `System.getenv("X")`, `Environment.GetEnvironmentVariable("X")`, `getenv("X")`, and `ENV["X"]`
-- framework-required variables such as Laravel `APP_KEY`, Rails `SECRET_KEY_BASE`, Django `SECRET_KEY`, and NextAuth `NEXTAUTH_SECRET`
+- `.env.example`、`.env.sample`、`.env.local.example`、`.env.template` 和 `.env.dist`
+- 仅本地 `.env`、`.env.local`、`.env.development` 和 `.env.production` 的名称
+- 源代码引用，如 `process.env.X`、`import.meta.env.X`、`os.getenv("X")`、`System.getenv("X")`、`Environment.GetEnvironmentVariable("X")`、`getenv("X")` 和 `ENV["X"]`
+- 框架必需变量，如 Laravel `APP_KEY`、Rails `SECRET_KEY_BASE`、Django `SECRET_KEY` 和 NextAuth `NEXTAUTH_SECRET`
 
-Do not read, print, copy, or inject real local `.env` values. Local `.env` files only prove that a variable name exists on the developer machine.
+不要读取、打印、复制或注入真实的本地 `.env` 值。本地 `.env` 文件仅证明变量名在开发者机器上存在。
 
-## Required vs Optional
+## 必需 vs 可选
 
-Treat obvious runtime defaults as optional when loom generates them, such as `PORT`, `NODE_ENV`, `RAILS_ENV`, `RACK_ENV`, `SERVER_PORT`, and `ASPNETCORE_URLS`.
+当 loom 生成明显的运行时默认值时将其视为可选，如 `PORT`、`NODE_ENV`、`RAILS_ENV`、`RACK_ENV`、`SERVER_PORT` 和 `ASPNETCORE_URLS`。
 
-Treat public frontend env names such as `NEXT_PUBLIC_*`, `VITE_*`, and `PUBLIC_*` as referenced but not required for boot unless logs prove otherwise.
+将公共前端 env 名称（如 `NEXT_PUBLIC_*`、`VITE_*` 和 `PUBLIC_*`）视为已引用但非启动必需，除非日志证明并非如此。
 
-Treat secrets, tokens, passwords, keys, JWT/session/cookie variables, and connection URLs as required when referenced by examples or source code unless loom already generated a safe local default.
+当密钥、令牌、密码、key、JWT/session/cookie 变量和连接 URL 被示例或源代码引用时视为必需，除非 loom 已生成安全的本地默认值。
 
-## Generated Defaults
+## 生成的默认值
 
-Generated Compose may include:
+生成的 Compose 可以包含：
 
-- runtime defaults such as `PORT`
-- dependency service connection values such as `DATABASE_URL`, `REDIS_URL`, `MONGODB_URL`, and related service URLs
-- local-only placeholders for common framework secrets where they are needed to boot a local preview
-- container-safe file database URLs when the project already points at local file databases such as SQLite, H2 file, HSQLDB file, or Derby file
-- framework override variables that make the generated local container agree with the generated runtime, such as `SERVER_PORT`, `ASPNETCORE_URLS`, or safe local profile flags
+- 运行时默认值，如 `PORT`
+- 依赖服务连接值，如 `DATABASE_URL`、`REDIS_URL`、`MONGODB_URL` 和相关服务 URL
+- 仅本地占位符，用于启动本地预览所需的常见框架密钥
+- 容器安全的文件数据库 URL，当项目已指向本地文件数据库（如 SQLite、H2 file、HSQLDB file 或 Derby file）时
+- 框架覆盖变量，使生成的本地容器与生成的运行时一致，如 `SERVER_PORT`、`ASPNETCORE_URLS` 或安全的本地 profile 标志
 
-Generated placeholders are not production secrets. They exist only to make local deployment diagnosable and runnable.
+生成的占位符不是生产密钥。它们的存在仅为了使本地部署可诊断和可运行。
 
-## Environment Fact Flow
+## 环境事实流
 
-Scanner evidence becomes deploy facts before assets are generated:
+扫描器证据在资产生成之前成为部署事实：
 
-- Env example names become `environment.expectedNames`.
-- Source-code env references become `environment.referencedNames`.
-- Known safe local defaults become generated Compose values.
-- Real secret names remain diagnostics and must not be filled from local files.
-- Dependency facts decide connection URL shapes and service names.
-- File database facts decide writable container paths and volume mounts.
+- Env 示例名成为 `environment.expectedNames`。
+- 源代码 env 引用成为 `environment.referencedNames`。
+- 已知安全的本地默认值成为生成的 Compose 值。
+- 真实密钥名保持为诊断，不得从本地文件填充。
+- 依赖事实决定连接 URL 形态和服务名。
+- 文件数据库事实决定可写容器路径和卷挂载。
 
-Generated Compose should only include values supported by those facts. If a variable is absent from facts and not required by the selected runtime template, do not invent it.
+生成的 Compose 应只包含由这些事实支持的值。如果某个变量在事实中不存在且所选运行时模板不要求它，不要发明它。
 
-## File Databases And Local State
+## 文件数据库与本地状态
 
-For local file databases, container paths must be inside the mounted writable directory selected by `DeploymentSpec.storageFacts`. Compose should create the volume named by that fact. Do not point a container at a host-only relative path that existed only on the developer machine.
+对于本地文件数据库，容器路径必须在 `DeploymentSpec.storageFacts` 选择的可写挂载目录内。Compose 应创建该事实命名的卷。不要将容器指向仅存在于开发者机器上的主机相对路径。
 
-For Spring Boot plus JPA/Flyway/Liquibase style stacks, do not assume Hibernate schema validation is authoritative for all local file databases. If generated deployment is supplying a containerized file database URL and migration tooling owns schema creation, prefer a safe local override that prevents schema validation from failing on SQLite/H2 type affinity before the app can boot.
+对于 Spring Boot 加 JPA/Flyway/Liquibase 风格技术栈，不要假设 Hibernate schema 验证对所有本地文件数据库是权威的。如果生成的部署正在提供容器化的文件数据库 URL 且迁移工具拥有 schema 创建，优先使用安全本地覆盖来防止 schema 验证在应用启动前因 SQLite/H2 类型亲和性而失败。
 
-When dependency services are generated, application URLs must use Compose service names such as `postgres`, `mysql`, or `redis`, not `localhost`. Browser-facing frontend env may use public proxy paths; container-to-container env must use service DNS names.
+当生成依赖服务时，应用 URL 必须使用 Compose 服务名（如 `postgres`、`mysql` 或 `redis`），而非 `localhost`。面向浏览器的前端 env 可以使用公共代理路径；容器到容器的 env 必须使用服务 DNS 名。
 
-File database handling is not SQLite-specific:
+文件数据库处理并非仅针对 SQLite：
 
-- File-database paths are containerized into the path declared by `DeploymentSpec.storageFacts`; the path is not a universal `/app/data` convention. Preserve the URL prefix and query/options while mounting the matching named volume.
-- H2 file, HSQLDB file, Derby, LiteFS-backed SQLite, and similar local file stores still need writable mounted paths.
-- If the app config names a host path such as `./data/app.db`, translate it into a container path and mount a volume at the parent directory.
-- If migrations are present, let migration tooling initialize schema for local deployment unless repository config explicitly disables it.
+- 文件数据库路径被容器化到 `DeploymentSpec.storageFacts` 声明的路径；该路径不是通用的 `/app/data` 约定。挂载匹配的命名卷时保留 URL 前缀和查询/选项。
+- H2 file、HSQLDB file、Derby、LiteFS 支持的 SQLite 和类似的本地文件存储仍然需要可写挂载路径。
+- 如果应用配置命名了主机路径如 `./data/app.db`，将其转换为容器路径并在父目录挂载卷。
+- 如果存在迁移，让迁移工具为本地部署初始化 schema，除非仓库配置明确禁用了它。
 
-## Service Dependency URLs
+## 服务依赖 URL
 
-Generate dependency URLs from service facts:
+从服务事实生成依赖 URL：
 
-- Postgres: host `postgres`, port `5432`, generated local user/password/database.
-- MySQL/MariaDB: host `mysql` or `mariadb`, port `3306`, generated local user/password/database.
-- Redis: host `redis`, port `6379`.
-- MongoDB: host `mongo` or `mongodb`, port `27017`.
-- RabbitMQ: host `rabbitmq`, ports stay internal unless explicitly public.
-- MinIO/S3-compatible: endpoint uses the Compose service DNS name and internal port.
+- Postgres：host `postgres`，port `5432`，生成的本地 user/password/database。
+- MySQL/MariaDB：host `mysql` 或 `mariadb`，port `3306`，生成的本地 user/password/database。
+- Redis：host `redis`，port `6379`。
+- MongoDB：host `mongo` 或 `mongodb`，port `27017`。
+- RabbitMQ：host `rabbitmq`，端口保持内部，除非明确为公共。
+- MinIO/S3-compatible：endpoint 使用 Compose 服务 DNS 名和内部端口。
 
-Framework-specific variable names can wrap the same service URL. Use the framework's expected config names when detected, but keep the underlying host/port consistent with Compose.
+框架特定的变量名可以包装同一服务 URL。检测到时使用框架期望的配置名，但保持底层 host/port 与 Compose 一致。
 
-## Framework Local Safety Defaults
+## 框架本地安全默认值
 
-Safe local defaults can unblock local preview without pretending to be production configuration:
+安全本地默认值可以解除本地预览阻塞，而无需假装是生产配置：
 
-- Spring Boot: `SERVER_PORT`, local datasource URL/driver when generated, and migration/JPA flags needed for containerized local boot.
-- Django: `SECRET_KEY`, `DEBUG=1`, allowed hosts for local container access, and database URL when generated.
-- Rails: `SECRET_KEY_BASE`, local database URL, and writable storage/log paths.
-- Laravel: `APP_KEY`, `APP_ENV=local`, `APP_DEBUG=true`, storage/cache paths, and generated DB/Redis URLs.
-- ASP.NET Core: `ASPNETCORE_URLS`, `ASPNETCORE_ENVIRONMENT=Development`, and connection strings from generated dependencies.
-- NextAuth/Auth.js: local `NEXTAUTH_SECRET` or equivalent only when the app requires it to boot.
+- Spring Boot：`SERVER_PORT`，生成时的本地 datasource URL/driver，以及容器化本地启动所需的迁移/JPA 标志。
+- Django：`SECRET_KEY`、`DEBUG=1`，本地容器访问的 allowed hosts，以及生成时的数据库 URL。
+- Rails：`SECRET_KEY_BASE`、本地数据库 URL 和可写的 storage/log 路径。
+- Laravel：`APP_KEY`、`APP_ENV=local`、`APP_DEBUG=true`、storage/cache 路径和生成的 DB/Redis URL。
+- ASP.NET Core：`ASPNETCORE_URLS`、`ASPNETCORE_ENVIRONMENT=Development` 和来自生成依赖的连接字符串。
+- NextAuth/Auth.js：仅当应用需要它来启动时，使用本地 `NEXTAUTH_SECRET` 或等效值。
 
-Do not add framework defaults for a framework that was not detected.
+不要为未检测到的框架添加框架默认值。
 
-## Repair Guidance
+## 修复指导
 
-When `environment.missing` is non-empty, inspect it before editing Dockerfile/Compose. If the missing variable can be safely generated for local deployment, add it to generated Compose only. If it is a real credential, ask the user for a safe local value or explain the blocker.
+当 `environment.missing` 非空时，在编辑 Dockerfile/Compose 之前检查它。如果缺失的变量可以安全地为本地部署生成，仅将其添加到生成的 Compose 中。如果它是真实凭证，向用户请求安全的本地值或解释阻塞原因。
 
-If logs mention missing env, missing secret, invalid config, app key, secret key base, database URL, auth secret, JWT secret, or credentials, compare the log with `DeploymentSpec.environment` and update generated deployment files or ask for user-provided values.
+如果日志提到缺失 env、缺失密钥、无效配置、app key、secret key base、database URL、auth secret、JWT secret 或凭证，将日志与 `DeploymentSpec.environment` 比较，更新生成的部署文件或请求用户提供值。
 
-If logs mention missing tables, pending migrations, schema drift, Prisma migration errors, Django/Rails/Laravel migration errors, Flyway, or Liquibase, compare the log with `DeploymentSpec.bootstrap`. Treat bootstrap commands as diagnostic guidance only; ask before running them.
+如果日志提到缺失数据表、待执行迁移、schema drift、Prisma 迁移错误、Django/Rails/Laravel 迁移错误、Flyway 或 Liquibase，将日志与 `DeploymentSpec.bootstrap` 比较。将 bootstrap 命令视为仅诊断指导；运行前需询问。
 
-Do not turn every boot error into a user confirmation. If the failure can be fixed inside generated Compose/Dockerfile with safe local defaults and the affected files are editable, repair the generated deployment assets. Ask the user only for real credentials, destructive state changes, or edits to protected user-owned assets.
-## Frontend API Environment
+不要将每个启动错误都变成用户确认。如果失败可以在生成的 Compose/Dockerfile 中用安全本地默认值修复且受影响文件可编辑，则修复生成的部署资产。仅在需要真实凭证、破坏性状态更改或编辑受保护的用户资产时才询问用户。
+## 前端 API 环境
 
-Frontend API environment variables are not global deploy defaults. Loom injects only the environment key that repository source actually uses and only when source-level request construction proves that the key supplies a relative suffix's public base. When source code already sends a complete accepted interface path, the injected value is empty so a fallback such as `/api` cannot produce `/api/api/...`. Conflicting or unproven bindings for detected request construction are blocked before image generation; a frontend with no detectable API request remains deployable without an injection.
+前端 API 环境变量不是全局部署默认值。Loom 仅注入仓库源代码实际使用的环境键，且仅当源代码级请求构造证明该键提供了相对后缀的公共 base 时。当源代码已经发送完整的已接受接口路径时，注入值为空，因此诸如 `/api` 的 fallback 不能产生 `/api/api/...`。检测到的请求构造的冲突或未证明绑定在镜像生成前被阻止；没有可检测 API 请求的前端仍然可部署而无需注入。
