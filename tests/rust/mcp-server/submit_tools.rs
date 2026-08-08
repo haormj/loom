@@ -479,14 +479,14 @@ fn brainstorm_submit_accepts_valid_candidate_and_hands_off_to_batch_eight() {
     assert!(guidance["backendEcosystems"]["renderingRule"]
         .as_str()
         .expect("backend ecosystem rendering rule")
-        .contains("Do not present an independent flat dataAccess option list"));
+        .contains("不得呈现独立的扁平 dataAccess 选项列表"));
     assert_eq!(
         guidance["independentTrackOptions"]["qualityAutomation"]["examples"][0],
         json!("Playwright")
     );
     assert_eq!(
         recommendation["trackModel"]["conditionalTracks"]["qualityAutomation"],
-        json!("Required when web.status is selected or user_custom; choose the browser automation stack in the same confirmed baseline.")
+        json!("当 web.status 为 selected 或 user_custom 时必需；在同一已确认基线中选择浏览器自动化技术栈。")
     );
     assert!(recommendation["shorthandNormalization"]["backend"]
         .as_array()
@@ -507,7 +507,7 @@ fn brainstorm_submit_accepts_valid_candidate_and_hands_off_to_batch_eight() {
             .any(|section| section
                 .as_str()
                 .unwrap_or_default()
-                .contains("Adjustable technology range"))
+                .contains("可调整技术范围"))
     );
     assert!(guidance["replyProtocolForUser"]["partialAdjustmentExample"]
         .as_str()
@@ -520,7 +520,7 @@ fn brainstorm_submit_accepts_valid_candidate_and_hands_off_to_batch_eight() {
         .any(|rule| rule
             .as_str()
             .unwrap_or_default()
-            .contains("Do not mention Loom internals")));
+            .contains("不得在面向用户的文本中提及 Loom 内部机制")));
     assert_eq!(
         guidance["userFacingConfirmationProtocol"]["responseContract"]["mode"],
         json!("single_user_message")
@@ -905,7 +905,7 @@ fn technical_baseline_accept_routes_existing_project_to_repository_context() {
     );
     let generation_rule_text = generation_rules.fields["generationRules"].value.to_string();
     assert!(
-        generation_rule_text.contains("integration_boundary is not a surface relevance value"),
+        generation_rule_text.contains("integration_boundary 不是表面相关性值"),
         "RepositoryContext rules must prevent surface relevance/read reason enum mixing: {generation_rule_text}"
     );
     let write_contract = state::read_field_group(ReadFieldGroupInput {
@@ -928,7 +928,7 @@ fn technical_baseline_accept_routes_existing_project_to_repository_context() {
             [0]["message"]
             .as_str()
             .expect("contextQuality warning message")
-            .contains("Use [] only when there are no warnings")
+            .contains("无警告时使用 []")
     );
     assert_eq!(
         write_contract.fields["outputContract.resultTemplate"].value["warnings"][0]["code"],
@@ -962,21 +962,21 @@ fn technical_baseline_accept_routes_existing_project_to_repository_context() {
             ["properties"]["technologySignals"]["constraints"][0]
             .as_str()
             .expect("technologySignals shape rule")
-            .contains("object")
+            .contains("对象")
     );
     assert!(
         write_contract.fields["outputContract.schemaProjection"].value["fieldContract"]
             ["properties"]["contextQuality"]["properties"]["warnings"]["constraints"][0]
             .as_str()
             .expect("contextQuality warnings shape rule")
-            .contains("code and message")
+            .contains("code 和 message")
     );
     assert!(
         write_contract.fields["outputContract.schemaProjection"].value["fieldContract"]
             ["properties"]["warnings"]["constraints"][0]
             .as_str()
             .expect("warnings shape rule")
-            .contains("code and message")
+            .contains("code 和 message")
     );
 
     let repository_candidate = write_contract.fields["outputContract.resultTemplate"]
@@ -1395,7 +1395,7 @@ fn technical_baseline_request_treats_later_phase_without_repo_markers_as_existin
         .expect("decision needs");
     assert!(decision_needs.iter().any(|item| item
         .as_str()
-        .is_some_and(|text| text.contains("reuse the previous TechnicalBaseline unchanged"))));
+        .is_some_and(|text| text.contains("原样复用先前的 TechnicalBaseline"))));
 }
 
 #[test]
@@ -6917,7 +6917,7 @@ fn review_accept_approved_materializes_next_phase_from_preview() {
         phase_2_generation_rules.fields["generationRules"]
             .value
             .to_string()
-            .contains("after those delivered phases"),
+            .contains("已交付阶段之后"),
         "incremental repository context must tell the agent to scan after completed phases"
     );
     let brainstorm_contract_ref = phase_2["latestRefs"]["brainstormContract"]
