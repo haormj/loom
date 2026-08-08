@@ -47,7 +47,7 @@ impl Default for SecurityRequirement {
             applies: SecurityRequirementApplicability::NotApplicable,
             client_trust_models: Vec::new(),
             source_refs: Vec::new(),
-            rationale: "Security applicability was not selected for this delivery.".to_string(),
+            rationale: "此交付的安全适用性未被选择。".to_string(),
         }
     }
 }

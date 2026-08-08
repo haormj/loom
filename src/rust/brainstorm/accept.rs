@@ -62,7 +62,7 @@ where
                 target_ids: vec![],
                 issues: vec![delivery_core::RepairIssue {
                     code: "TARGET_MISSING".to_string(),
-                    message: "No authorized Brainstorm candidate target was written.".to_string(),
+                    message: "未写入授权的 Brainstorm candidate target。".to_string(),
                     target_id: Some("candidate".to_string()),
                     field_path: None,
                 }],
@@ -78,10 +78,10 @@ where
     let project_root = Path::new(&input.project_root);
     let candidate_file = from_project_relative(project_root, &target.path)?;
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("authorized deliveryId is missing".to_string())
+        state::store::StateError::InvalidArgument("授权的 deliveryId 缺失".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("authorized phaseId is missing".to_string())
+        state::store::StateError::InvalidArgument("授权的 phaseId 缺失".to_string())
     })?;
     if let Some(result) = ensure_latest_brainstorm_request(
         &input.project_root,
@@ -139,9 +139,7 @@ where
                     target_ids: vec![target.target_id.clone()],
                     issues: vec![delivery_core::RepairIssue {
                         code: "BRAINSTORM_CANDIDATE_SCHEMA_INVALID".to_string(),
-                        message: format!(
-                            "Brainstorm candidate JSON has an invalid schema: {error}"
-                        ),
+                        message: format!("Brainstorm candidate JSON schema 无效：{error}"),
                         target_id: Some(target.target_id.clone()),
                         field_path: Some("candidate".to_string()),
                     }],
@@ -449,7 +447,7 @@ fn load_accept_request_context(
             .cloned()
             .ok_or_else(|| {
                 state::store::StateError::StateCorrupted(
-                    "Brainstorm request userFacingLanguage is missing".to_string(),
+                    "Brainstorm 请求的 userFacingLanguage 缺失".to_string(),
                 )
             })?,
     )
@@ -461,7 +459,7 @@ fn load_accept_request_context(
         .and_then(serde_json::Value::as_object)
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "Brainstorm request contextRefs is missing".to_string(),
+                "Brainstorm 请求的 contextRefs 缺失".to_string(),
             )
         })?;
     let requirement_context_ref = context_refs
@@ -469,7 +467,7 @@ fn load_accept_request_context(
         .and_then(serde_json::Value::as_str)
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "Brainstorm request contextRefs.requirementContextRef is missing".to_string(),
+                "Brainstorm 请求的 contextRefs.requirementContextRef 缺失".to_string(),
             )
         })?;
     let requirement_context_file =
@@ -497,15 +495,15 @@ fn parse_request_id(request_ref: &str) -> Result<String, state::store::StateErro
     let prefix = "loom://projects/";
     let rest = request_ref.strip_prefix(prefix).ok_or_else(|| {
         state::store::StateError::InvalidArgument(
-            "requestRef must start with loom://projects/.".to_string(),
+            "requestRef 必须以 loom://projects/ 开头。".to_string(),
         )
     })?;
     let (_project_id, request_id) = rest.split_once("/requests/").ok_or_else(|| {
-        state::store::StateError::InvalidArgument("requestRef must include /requests/.".to_string())
+        state::store::StateError::InvalidArgument("requestRef 必须包含 /requests/。".to_string())
     })?;
     if request_id.is_empty() || request_id.contains('/') {
         return Err(state::store::StateError::InvalidArgument(format!(
-            "invalid requestRef: {request_ref}"
+            "无效的 requestRef：{request_ref}"
         )));
     }
     Ok(request_id.to_string())
@@ -525,7 +523,7 @@ fn ensure_latest_brainstorm_request(
         return Ok(Some(stale_request_failure(
             project_root,
             format!(
-                "Brainstorm submit is bound to phase {phase_id}, but the active phase is {}.",
+                "Brainstorm 提交绑定到 phase {phase_id}，但当前活跃阶段为 {}。",
                 delivery.active_phase_id
             ),
         )));
@@ -537,14 +535,14 @@ fn ensure_latest_brainstorm_request(
     else {
         return Ok(Some(stale_request_failure(
             project_root,
-            format!("Active delivery {delivery_id} is missing phase {phase_id}."),
+            format!("活跃的 delivery {delivery_id} 缺少 phase {phase_id}。"),
         )));
     };
     let latest_request = phase.latest_refs.get("brainstormRequestRef");
     if latest_request.map(String::as_str) != Some(request_ref) {
         return Ok(Some(stale_request_failure(
             project_root,
-            "Brainstorm submit must use the active phase latest Brainstorm requestRef. Read the latest request and resubmit from that request only.".to_string(),
+            "Brainstorm 提交必须使用当前活跃阶段的最新 Brainstorm requestRef。阅读最新请求并仅从该请求重新提交。".to_string(),
         )));
     }
     Ok(None)

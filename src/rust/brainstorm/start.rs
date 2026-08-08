@@ -148,7 +148,7 @@ fn start_brainstorm_inner(
         source: "brainstorm_start".to_string(),
         reason: "await_phase_scope_confirmation".to_string(),
         prompt: Some(
-            "Read the current Brainstorm block request, query request-scoped knowledge for this block, and present only active phase boundary options in the user's language."
+            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，并用用户语言仅呈现当前阶段边界选项。"
                 .to_string(),
         ),
         accepted_responses: vec!["reply_in_chat".to_string()],
@@ -185,7 +185,7 @@ fn start_brainstorm_inner(
     Ok(LoomMcpActionResult::UserGate(
         LoomMcpUserGateResult::new(
             input.project_root.clone(),
-            "Read the current Brainstorm block request, query request-scoped knowledge for this block, present only active phase boundary options in the user's language, then call loom.brainstormConfirmBlock after the user confirms one boundary.",
+            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，用用户语言仅呈现当前阶段边界选项，然后在用户确认一个边界后调用 loom.brainstormConfirmBlock。",
             vec!["reply_in_chat".to_string()],
             Some(stored.request_ref),
             Some(delivery_id),
@@ -227,7 +227,7 @@ fn initial_contract(
         user_confirmation: UserConfirmation {
             confirmed: false,
             confirmed_at: None,
-            confirmation_summary: "Waiting for final_summary confirmation.".to_string(),
+            confirmation_summary: "等待 final_summary 确认。".to_string(),
             confirmation_basis: None,
         },
         delivery_context: contracts::DeliveryContext {
@@ -264,16 +264,14 @@ fn initial_contract(
                 status: PhasePlanCurrentStatus::ScopeConfirmed,
             },
             next_phase_preview: contracts::NextPhasePreview::None {
-                reason: "Next phase preview will be decided during Brainstorm clarification."
-                    .to_string(),
+                reason: "下一阶段预览将在 Brainstorm 澄清期间决定。".to_string(),
             },
         },
         security_requirement: contracts::SecurityRequirement {
             applies: contracts::SecurityRequirementApplicability::NotApplicable,
             client_trust_models: vec![],
             source_refs: vec![],
-            rationale: "Security applicability will be confirmed during requirement clarification."
-                .to_string(),
+            rationale: "安全适用性将在需求澄清期间确认。".to_string(),
         },
         concept_grounding: None,
         concept_confirmation: None,
@@ -303,7 +301,7 @@ fn summarize_request(request_text: &str, file_count: usize) -> RequestSummary {
     let title = one_line
         .split(['。', '.', '!', '?', '\n'])
         .next()
-        .unwrap_or("Brainstorm request")
+        .unwrap_or("Brainstorm 请求")
         .trim()
         .chars()
         .take(60)
@@ -317,12 +315,12 @@ fn summarize_request(request_text: &str, file_count: usize) -> RequestSummary {
     };
     RequestSummary {
         title: if title.is_empty() {
-            "Brainstorm request".to_string()
+            "Brainstorm 请求".to_string()
         } else {
             title
         },
         one_line: if one_line.is_empty() {
-            "Clarify the current phase scope.".to_string()
+            "澄清当前阶段范围。".to_string()
         } else {
             one_line.clone()
         },

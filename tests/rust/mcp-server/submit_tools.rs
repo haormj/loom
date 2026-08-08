@@ -103,7 +103,7 @@ fn brainstorm_confirmation_requires_request_inspection_and_declared_reads() {
     assert!(result["agentInstruction"]
         .as_str()
         .expect("agent instruction")
-        .contains("Do not ask the user to reconfirm"));
+        .contains("不要要求用户重新确认"));
 }
 
 #[test]
@@ -192,12 +192,9 @@ fn brainstorm_phase_scope_rejects_single_wide_capability_closure_query() {
         message.contains("phase_scope_capability_closure"),
         "{message}"
     );
+    assert!(message.contains("对每个候选阶段边界调用一次"), "{message}");
     assert!(
-        message.contains("once per candidate phase boundary"),
-        "{message}"
-    );
-    assert!(
-        message.contains("Do not ask the user to reconfirm"),
+        message.contains("不要要求用户重新确认"),
         "repair must not ask the user to reconfirm: {message}"
     );
 }
@@ -550,7 +547,7 @@ fn brainstorm_submit_derives_glossary_update_ids_instead_of_repairing_agent_outp
             ["constraints"][0]
             .as_str()
             .expect("glossary update shape rule")
-            .contains("Loom generates updateId")
+            .contains("Loom 在 accept 时生成 updateId")
     );
     let request_id = request_ref
         .rsplit('/')
@@ -6959,7 +6956,7 @@ fn review_accept_approved_materializes_next_phase_from_preview() {
     assert!(repository_result["prompt"]
         .as_str()
         .expect("phase-3 brainstorm prompt")
-        .contains("Brainstorm clarification for phase-2 is active"));
+        .contains("Brainstorm 对 phase-2 的澄清已激活"));
     assert!(!repository_result["prompt"]
         .as_str()
         .expect("phase-3 brainstorm prompt")

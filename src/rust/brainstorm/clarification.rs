@@ -143,12 +143,12 @@ fn missing_request_read_next(
     ) {
         (
             "loom.inspectRequest",
-            "Call loom.inspectRequest first, then retry loom.brainstormConfirmBlock with the same requestRef, block, summary, and confirmedData. Do not ask the user to reconfirm.",
+            "先调用 loom.inspectRequest，然后使用相同的 requestRef、block、summary 和 confirmedData 重试 loom.brainstormConfirmBlock。不要要求用户重新确认。",
         )
     } else {
         (
             "loom.readFieldGroup",
-            "Read every missing required group, then retry loom.brainstormConfirmBlock with the same requestRef, block, summary, and confirmedData. Do not ask the user to reconfirm.",
+            "阅读每个缺失的必需 group，然后使用相同的 requestRef、block、summary 和 confirmedData 重试 loom.brainstormConfirmBlock。不要要求用户重新确认。",
         )
     };
     LoomMcpActionResult::AutoRunnable(LoomMcpAutoRunnableResult {
@@ -193,7 +193,7 @@ fn missing_knowledge_context_next(
         project_root: error.project_root,
         stop_allowed: false,
         agent_instruction: format!(
-            "{} Retry loom.brainstormConfirmBlock with the same requestRef, block, summary, and confirmedData already submitted.",
+            "{} 使用已提交的相同 requestRef、block、summary 和 confirmedData 重试 loom.brainstormConfirmBlock。",
             error.message
         ),
         next: LoomMcpNextAction::RunLoomTool(RunLoomToolNext {
@@ -259,7 +259,8 @@ fn confirm_block_inner(
         return Err(ConfirmError {
             project_root,
             code: "BRAINSTORM_CONFIRM_REQUEST_KIND_INVALID".to_string(),
-            message: "loom.brainstormConfirmBlock only accepts a Brainstorm clarification block requestRef.".to_string(),
+            message: "loom.brainstormConfirmBlock 仅接受 Brainstorm 澄清块的 requestRef。"
+                .to_string(),
         });
     }
     let inspected_request = state::inspect_request_unrecorded(delivery_core::InspectRequestInput {
@@ -289,11 +290,11 @@ fn confirm_block_inner(
             project_root,
             code: "BRAINSTORM_REQUEST_READ_REQUIRED".to_string(),
             message: format!(
-                "Before confirming {}, the agent must inspect requestRef {} and read every required requestReadPlan group. Missing groups: {}.",
+                "在确认 {} 之前，agent 必须检查 requestRef {} 并阅读每个必需的 requestReadPlan group。缺失的 groups：{}。",
                 block_id(&input.block),
                 input.request_ref,
                 if missing_group_ids.is_empty() {
-                    "none (inspectRequest is missing)".to_string()
+                    "无（inspectRequest 缺失）".to_string()
                 } else {
                     missing_group_ids.join(", ")
                 }
@@ -306,12 +307,12 @@ fn confirm_block_inner(
         .ok_or_else(|| ConfirmError {
             project_root: project_root.clone(),
             code: "REQUEST_DELIVERY_MISSING".to_string(),
-            message: "Brainstorm request is missing deliveryId.".to_string(),
+            message: "Brainstorm 请求缺失 deliveryId。".to_string(),
         })?;
     let phase_id = request_index.phase_id.clone().ok_or_else(|| ConfirmError {
         project_root: project_root.clone(),
         code: "REQUEST_PHASE_MISSING".to_string(),
-        message: "Brainstorm request is missing phaseId.".to_string(),
+        message: "Brainstorm 请求缺失 phaseId。".to_string(),
     })?;
 
     let store = FileTransitionStore;
@@ -329,7 +330,7 @@ fn confirm_block_inner(
         .ok_or_else(|| ConfirmError {
             project_root: project_root.clone(),
             code: "PHASE_NOT_FOUND".to_string(),
-            message: format!("phase {phase_id} does not exist in delivery {delivery_id}."),
+            message: format!("phase {phase_id} 在 delivery {delivery_id} 中不存在。"),
         })?;
     if phase
         .latest_refs
@@ -340,8 +341,7 @@ fn confirm_block_inner(
         return Err(ConfirmError {
             project_root,
             code: "STALE_BRAINSTORM_REQUEST".to_string(),
-            message: "Brainstorm confirmation must use the active latest Brainstorm requestRef."
-                .to_string(),
+            message: "Brainstorm 确认必须使用当前活跃的最新 Brainstorm requestRef。".to_string(),
         });
     }
 
@@ -353,7 +353,7 @@ fn confirm_block_inner(
         .ok_or_else(|| ConfirmError {
             project_root: project_root.clone(),
             code: "CLARIFICATION_STATE_MISSING".to_string(),
-            message: "Brainstorm clarification state is missing.".to_string(),
+            message: "Brainstorm 澄清状态缺失。".to_string(),
         })?;
     let state_file = from_project_relative(root, &state_ref).map_err(|error| ConfirmError {
         project_root: project_root.clone(),
@@ -370,7 +370,7 @@ fn confirm_block_inner(
             project_root,
             code: "BRAINSTORM_BLOCK_OUT_OF_ORDER".to_string(),
             message: format!(
-                "Current Brainstorm block is {:?}, but confirm input targeted {:?}.",
+                "当前 Brainstorm 块为 {:?}，但确认输入针对 {:?}。",
                 state.current_block, input.block
             ),
         });
@@ -386,14 +386,14 @@ fn confirm_block_inner(
         return Err(ConfirmError {
             project_root,
             code: "BRAINSTORM_CONFIRM_SUMMARY_REQUIRED".to_string(),
-            message: "Brainstorm block confirmation summary is required.".to_string(),
+            message: "Brainstorm 块确认 summary 是必需的。".to_string(),
         });
     }
     if input.skipped && input.block != ClarificationBlockName::FrontendExperience {
         return Err(ConfirmError {
             project_root,
             code: "BRAINSTORM_BLOCK_SKIP_NOT_ALLOWED".to_string(),
-            message: "Only the page operation path block can be skipped.".to_string(),
+            message: "仅页面操作路径块可以被跳过。".to_string(),
         });
     }
     ensure_block_knowledge_context(
@@ -655,7 +655,7 @@ fn ensure_block_knowledge_context(
     let repair_instruction = if *block == ClarificationBlockName::PhaseScope
         && missing_steps.contains(&"phase_scope_capability_closure")
     {
-        " For phase_scope_capability_closure, call loom.knowledgeBrainstormContext once per candidate phase boundary with distinct queryId values such as capability_closure_A and capability_closure_B. If the phase is genuinely atomic, call it once with queryId=atomic_scope and a non-empty atomicScopeReason."
+        " 对于 phase_scope_capability_closure，对每个候选阶段边界调用一次 loom.knowledgeBrainstormContext，使用不同的 queryId 值，如 capability_closure_A 和 capability_closure_B。如果阶段确实是原子的，使用 queryId=atomic_scope 和非空的 atomicScopeReason 调用一次。"
     } else {
         ""
     };
@@ -663,7 +663,7 @@ fn ensure_block_knowledge_context(
         project_root: project_root.to_string(),
         code: "BRAINSTORM_KNOWLEDGE_CONTEXT_REQUIRED".to_string(),
         message: format!(
-            "Before confirming {block_name}, the agent must read requestReadPlan group knowledge_context_plan for requestRef {request_ref} and call loom.knowledgeBrainstormContext for the missing stepIds: {}. Empty knowledge results are acceptable; missing request-scoped knowledge result files are not.{repair_instruction} Do not ask the user to reconfirm this block; run the missing Loom knowledge calls, then retry loom.brainstormConfirmBlock.",
+            "在确认 {block_name} 之前，agent 必须阅读 requestRef {request_ref} 的 requestReadPlan group knowledge_context_plan，并对缺失的 stepIds 调用 loom.knowledgeBrainstormContext：{}。空的 knowledge 结果是可接受的；缺失的 request-scoped knowledge 结果文件不可接受。{repair_instruction} 不要要求用户重新确认此块；运行缺失的 Loom knowledge 调用，然后重试 loom.brainstormConfirmBlock。",
             missing_steps.join(", "),
         ),
     })
@@ -715,7 +715,7 @@ fn materialize_confirmation_request_inner(
         .phases
         .iter()
         .find(|phase| phase.phase_id == phase_id)
-        .ok_or_else(|| StateError::InvalidArgument(format!("phase {phase_id} not found")))?;
+        .ok_or_else(|| StateError::InvalidArgument(format!("未找到 phase {phase_id}")))?;
     let request_ref = phase
         .latest_refs
         .get("brainstormRequestRef")
@@ -832,7 +832,7 @@ fn gate_for_state(block: ClarificationBlockName, state: &ClarificationState) -> 
             reason: confirmed
                 .skip_reason
                 .clone()
-                .unwrap_or_else(|| "User confirmed this block is not applicable.".to_string()),
+                .unwrap_or_else(|| "用户确认此块不适用。".to_string()),
         })
         .collect();
     gate_for_block(block, already_confirmed_blocks, skipped_blocks)
