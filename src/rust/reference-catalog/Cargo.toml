@@ -7,7 +7,7 @@ repository.workspace = true
 
 [lib]
 name = "reference_catalog"
-path = "src/lib.rs"
+path = "lib.rs"
 
 [dependencies]
 serde.workspace = true
