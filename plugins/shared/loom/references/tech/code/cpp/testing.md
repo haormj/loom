@@ -1,84 +1,84 @@
-# C++ Verification And Test Design
+# C++ 验证与测试设计
 
 ## When To Use
 
-Use this reference only when the task explicitly owns C++ test implementation, fixture/test-target wiring, fuzz/property tests, sanitizer/static-analysis checks, or benchmarks.
+仅当任务显式拥有 C++ 测试实现、夹具/测试目标接线、模糊/属性测试、sanitizer/静态分析检查或基准测试时才使用此参考。
 
 ## Implementation Focus
 
 ### Select The Boundary
 
-Test public functions/classes/adapters/parsers/services/executables through observable results. Use compile tests for template/type contracts, integration tests for OS/library/network/database boundaries, and runtime/sanitizer tools for lifetime/concurrency behavior.
+通过可观察结果测试公共函数/类/适配器/解析器/服务/可执行文件。对模板/类型契约使用编译测试，对 OS/库/网络/数据库边界使用集成测试，对生命周期/并发行为使用运行时/sanitizer 工具。
 
-Follow the repository's Catch2, GoogleTest/Mock, Boost.Test, doctest, CTest, custom harness, or embedded framework. Do not introduce a second framework for one task.
+遵循仓库的 Catch2、GoogleTest/Mock、Boost.Test、doctest、CTest、自定义框架或嵌入式框架。不要为单个任务引入第二个框架。
 
-Keep benchmarks separate: tests prove correctness; benchmarks/profile runs support performance claims.
+保持基准测试分开：测试证明正确性；基准/profile 运行支持性能声明。
 
 ### Cases And Invariants
 
-Cover success, invalid/boundary/empty/large input, null/optional/error states, ownership transfer, copy/move, exception/status behavior, and cleanup changed by the task.
+覆盖任务变更的成功、无效/边界/空/大输入、null/可选/错误状态、所有权转移、拷贝/移动、异常/状态行为和清理。
 
-For parsers/protocols, include malformed/truncated/unknown/duplicate/overflow/encoding cases. For stateful code, assert illegal/repeated transitions and rollback/partial failure.
+对于解析器/协议，包含格式错误/截断/未知/重复/溢出/编码情况。对于有状态代码，断言非法/重复转换和回滚/部分失败。
 
-Use parameterized/table tests for meaningful equivalence classes without hiding which case failed.
+对有意义的等价类使用参数化/表测试而不隐藏哪个用例失败。
 
 ### Fixtures And Isolation
 
-Use RAII fixtures for files, directories, environment, handles, servers, threads, sockets, processes, clocks, databases, and global configuration. Cleanup must run after assertions/exceptions.
+为文件、目录、环境、句柄、服务器、线程、socket、进程、时钟、数据库和全局配置使用 RAII 夹具。清理必须在断言/异常后运行。
 
-Use unique temp resources and isolate tests for parallel execution. Restore locale, environment, working directory, signal handlers, static registries, and singleton state.
+使用唯一临时资源并为并行执行隔离测试。恢复 locale、环境、工作目录、信号处理器、静态注册表和单例状态。
 
-Avoid order dependence and test-only sleeps. Inject/control clocks, randomness, scheduling, and I/O where those are part of correctness.
+避免顺序依赖和仅测试 sleep。当时钟、随机性、调度和 I/O 是正确性的一部分时注入/控制它们。
 
 ### Mocks And Fakes
 
-Mock external boundaries, not the algorithm/object under test. Prefer small stateful fakes for protocols and use expectations only for calls/order that are public behavior.
+Mock 外部边界，而非被测算法/对象。对协议优先使用小型有状态 fake，仅对公共行为的调用/顺序使用期望。
 
-Avoid over-specifying private call sequences. Verify outputs, durable effects, resource lifecycle, and externally visible interactions.
+避免过度指定私有调用序列。验证输出、持久效果、资源生命周期和外部可见交互。
 
 ### Memory, UB, And Race Tools
 
-Run ASan for memory lifetime/bounds, UBSan for undefined operations, TSan for races, MSan where toolchain/dependencies support instrumented builds, and platform tools for leaks/handles.
+为内存生命周期/边界运行 ASan，为未定义操作运行 UBSan，为竞争运行 TSan，在 toolchain/依赖支持插桩构建时运行 MSan，为泄漏/句柄运行平台工具。
 
-Sanitizer configurations must instrument relevant code and use compatible dependencies. A clean run does not prove unexecuted paths.
+Sanitizer 配置必须插桩相关代码并使用兼容依赖。干净运行不证明未执行路径。
 
-Use deterministic concurrency hooks/barriers and deadlines plus TSan; one repeated stress test is supporting evidence only.
+使用确定性并发 hook/屏障和截止时间加 TSan；一次重复压力测试仅是支持证据。
 
 ### Property And Fuzz Testing
 
-Use property tests for invariants across broad generated inputs and fuzzers for parsers, decoders, protocol/state inputs, and memory-safe boundaries with clear dictionaries/seeds/corpus.
+对广泛生成输入上的不变式使用属性测试，对解析器、解码器、协议/状态输入和内存安全边界使用带清晰字典/种子/语料库的模糊测试。
 
-Fuzz targets must be deterministic, bounded, leak-safe, reset state each iteration, and convert crashes into reproducible regression seeds.
+模糊测试目标必须是确定性的、有界的、泄漏安全的、每次迭代重置状态并将崩溃转换为可复现的回归种子。
 
 ### Floating Point And Platform Behavior
 
-Choose absolute/relative/ULP tolerance from domain magnitude and algorithm, handling NaN/infinity/signed zero explicitly. Do not use arbitrary epsilon everywhere.
+从领域幅度和算法选择绝对/相对/ULP 容差，显式处理 NaN/无穷/有符号零。不要到处使用任意 epsilon。
 
-Run platform/compiler-specific behavior on the affected target or record the exact unproved branch. Unit tests on one standard library do not establish all ABI/platform behavior.
+在受影响目标上运行平台/编译器特定行为或记录确切未证明分支。一个标准库上的单元测试不建立所有 ABI/平台行为。
 
 ### Compile And Public API Tests
 
-Compile public headers standalone where practical and add supported/unsupported template cases through repository compile-fail/static assertion infrastructure.
+在可行时独立编译公共头并通过仓库编译失败/静态断言基础设施添加支持/不支持的模板情况。
 
-For libraries, build a consumer or package test to prove exported includes, symbols, transitive dependencies, and standard requirements.
+对于库，构建消费者或包测试以证明导出的 include、符号、传递依赖和标准要求。
 
 ## Verification Focus
 
-- Run the narrow changed test target and prove it is registered/discoverable by the build runner.
-- Run relevant sanitizer/static-analysis configurations for the changed risk.
-- Repeat concurrency/property/fuzz regression seeds deterministically and retain minimal failing cases.
-- Verify release/optimized behavior when debug assertions or optimization could change semantics.
-- Record exact compiler/platform/sanitizer limitations without claiming broader coverage.
+- 运行变更的最窄测试目标并证明它被构建运行器注册/发现。
+- 为变更风险运行相关 sanitizer/静态分析配置。
+- 确定性重复并发/属性/模糊回归种子并保留最小失败用例。
+- 当调试断言或优化可能改变语义时验证发布/优化行为。
+- 记录确切的编译器/平台/sanitizer 限制而不声称更广泛覆盖。
 
 ## Evidence Focus
 
-Name the behavior/invariant, test layer, configuration/compiler/platform, and assertion/tool result. Test count, framework presence, or a green build without executed checks is weak evidence.
+说明行为/不变式、测试层、配置/编译器/平台和断言/工具结果。没有执行检查的测试计数、框架存在或绿色构建是弱证据。
 
 ## Unsafe Defaults
 
-- Load this reference only when the accepted task owns C++ test creation, test modification, or test-specific verification.
-- New test framework added despite repository tooling.
-- Private call order asserted instead of public behavior.
-- Sleep-only concurrency tests or sanitizer-clean claims over unexecuted paths.
-- Benchmarks treated as correctness tests.
-- Floating-point exact equality or arbitrary epsilon without domain basis.
+- 仅当已接受的任务拥有 C++ 测试创建、测试修改或测试特定验证时才加载此参考。
+- 尽管有仓库工具仍添加新测试框架。
+- 断言私有调用顺序而非公共行为。
+- 仅 sleep 的并发测试或对未执行路径的 sanitizer 干净声明。
+- 将基准测试视为正确性测试。
+- 没有领域基础的浮点精确相等或任意 epsilon。

@@ -1,10 +1,10 @@
-# Angular Router And Navigation
+# Angular 路由与导航
 
-Implement only task-owned navigation: route definitions, route parameters, guards, resolvers, deep links, nested outlets, redirects, or unsaved-change behavior. Component-only work should not receive router guidance.
+仅实现任务所属的导航：路由定义、路由参数、守卫、resolver、深链接、嵌套 outlet、重定向或未保存变更行为。仅组件工作不应接收路由指导。
 
-## Route Ownership
+## 路由所有权
 
-Map each product surface to a stable route segment and keep effective paths aligned with the accepted frontend/API deployment base. Use feature route files and lazy boundaries for cohesive areas rather than one catch-all component that switches on URL text.
+将每个产品界面映射到稳定的路由 segment，保持有效路径与已接受的前端/API 部署 base 对齐。为内聚区域使用功能路由文件和惰性边界，而非一个按 URL 文本切换的 catch-all 组件。
 
 ```typescript
 export const ORDER_ROUTES: Routes = [
@@ -22,71 +22,71 @@ export const ORDER_ROUTES: Routes = [
 ];
 ```
 
-Preserve the repository's trailing slash, hash/path location, base href, fallback, and deployment rewrite conventions. Browser refresh/deep link must reach the Angular entry point without breaking `/api` routing.
+保留仓库的尾斜杠、hash/path 位置、base href、回退和部署 rewrite 约定。浏览器刷新/深链接必须到达 Angular 入口点而不破坏 `/api` 路由。
 
-## Lazy Loading And Preloading
+## 惰性加载与预加载
 
-Use `loadComponent`/`loadChildren` for substantial feature boundaries that are not required initially. Avoid tiny chunks for every leaf and avoid eager imports that defeat the lazy boundary.
+对初始不需要的大量功能边界使用 `loadComponent`/`loadChildren`。避免为每个叶子创建微小分块，避免击败惰性边界的急切导入。
 
-Preload based on likely user flow and bundle cost. Do not apply `PreloadAllModules` or custom delays from a tutorial without product/runtime rationale. Protect lazy routes server-side as well; code splitting is not authorization.
+基于可能的用户流和包成本预加载。不要在没有产品/运行时理由的情况下应用 `PreloadAllModules` 或教程中的自定义延迟。服务端也保护惰性路由；代码拆分不是授权。
 
-## Parameters And URL State
+## 参数与 URL 状态
 
-Validate path/query values before API/store operations. Missing, malformed, unauthorized, and not-found identifiers need explicit outcomes.
+在 API/store 操作之前验证路径/查询值。缺失、格式错误、未授权和未找到的标识符需要显式结果。
 
-Use `withComponentInputBinding` only when the app has selected it and input names/types align with params/resolved data. Otherwise use `paramMap`/`queryParamMap` with proper lifecycle cleanup or signal interop.
+仅当应用已选择 `withComponentInputBinding` 且输入名称/类型与参数/解析数据对齐时使用它。否则使用 `paramMap`/`queryParamMap` 配以正确的生命周期清理或 signal interop。
 
-Filters, sort, page, selected tab, and return context belong in query params when they must survive refresh/share/back navigation. Preserve or replace query values deliberately; avoid accidental merge of stale filters into unrelated surfaces.
+筛选、排序、分页、选定标签和返回上下文在必须经受刷新/分享/返回导航时属于查询参数。有意识地保留或替换查询值；避免过期筛选意外合并到不相关界面。
 
-Do not put secrets, full drafts, or sensitive personal data in URL state. Navigation `extras.state` is ephemeral and should not be the only source for a refreshable route.
+不要将密钥、完整草稿或敏感个人数据放在 URL 状态中。导航 `extras.state` 是临时的，不应是可刷新路由的唯一来源。
 
-## Guards And Authorization
+## 守卫与授权
 
-Functional guards may use `inject()` on compatible versions and should return `boolean`, `UrlTree`, or observable/promise equivalents. Return a `UrlTree` for redirects instead of imperative `navigate` plus false.
+兼容版本上的函数守卫可以使用 `inject()`，应返回 `boolean`、`UrlTree` 或 observable/promise 等价物。返回 `UrlTree` 进行重定向而非命令式 `navigate` 加 false。
 
-Guards improve navigation experience; they are not server authorization. Distinguish unauthenticated login redirects, forbidden surfaces, invalid state, and not-found behavior.
+守卫改善导航体验；它们不是服务端授权。区分未认证登录重定向、禁止界面、无效状态和未找到行为。
 
-Keep unsaved-change guards tied to an explicit dirty-draft contract. Prefer a product confirmation dialog over raw `window.confirm` when the design system provides one, and cover browser/back/close navigation paths.
+将未保存变更守卫绑定到显式的脏草稿契约。当设计系统提供时优先使用产品确认对话框而非原始 `window.confirm`，覆盖浏览器/返回/关闭导航路径。
 
-## Resolvers And Loading Strategy
+## Resolver 与加载策略
 
-Use resolvers only for data required before route activation. Long or failure-prone data can render a route-level loading/error state instead. Do not make every page wait on unrelated dashboard requests.
+仅在路由激活前需要的数据使用 resolver。长或易失败的数据可以改为渲染路由级加载/错误状态。不要让每个页面等待不相关的仪表板请求。
 
-Resolvers must map errors to the accepted route outcome and support cancellation when navigation changes. Returning `null` for every failure erases the distinction among not found, forbidden, and unavailable.
+Resolver 必须将错误映射到已接受的路由结果，并在导航变更时支持取消。为每次失败返回 `null` 会擦除未找到、禁止和不可用之间的区别。
 
-Keep resolver-loaded data, component reloads, and store caches consistent; avoid duplicate requests from all three layers.
+保持 resolver 加载的数据、组件重新加载和 store 缓存一致；避免三层重复请求。
 
-## Nested Routes, Outlets, And Titles
+## 嵌套路由、Outlet 与标题
 
-Use child routes/outlets when the product hierarchy and preserved context require them. Named outlets add URL and mental complexity; use them for independently navigable panels, not ordinary page layout.
+当产品层级和保留上下文需要时使用子路由/outlet。命名 outlet 增加 URL 和心智复杂性；为独立可导航面板使用它们，而非普通页面布局。
 
-Set route titles/metadata from business context without leaking internal IDs or stale resolved values. Keep breadcrumbs and navigation selection derived from route config/state rather than duplicated path-string checks.
+从业务上下文设置路由标题/元数据，不泄漏内部 ID 或过期解析值。从路由配置/状态派生面包屑和导航选择，而非重复的路径字符串检查。
 
-## Navigation Lifecycle
+## 导航生命周期
 
-Handle `NavigationCancel` and `NavigationError` as well as start/end when showing global progress. Clean router event subscriptions with `takeUntilDestroyed` or signal interop.
+在显示全局进度时处理 `NavigationCancel` 和 `NavigationError` 以及开始/结束。用 `takeUntilDestroyed` 或 signal interop 清理路由事件订阅。
 
-Preserve scroll/focus/restoration behavior for list-detail-return flows. After navigation, place focus at the new page context or restored control according to accessibility/product behavior.
+为列表-详情-返回流保留滚动/焦点/恢复行为。导航后，按可访问性/产品行为将焦点放在新页面上下文或恢复的控件处。
 
 ## Verification
 
-- Test exact route matching, redirects, lazy imports, params/query parsing, and wildcard/not-found behavior.
-- Exercise guard allow/redirect/forbid and resolver success/not-found/forbidden/unavailable branches.
-- Verify direct deep-link refresh and deployment fallback for changed public routes.
-- Confirm filter/tab/page/return context through forward, back, refresh, and programmatic navigation.
-- Test dirty-draft navigation and focus/scroll restoration when owned.
-- Build route configuration to catch circular/missing standalone imports.
+- 测试精确路由匹配、重定向、惰性导入、参数/查询解析和通配/未找到行为。
+- 练习守卫允许/重定向/禁止和 resolver 成功/未找到/禁止/不可用分支。
+- 验证变更公共路由的直接深链接刷新和部署回退。
+- 通过前进、后退、刷新和编程导航确认筛选/标签/分页/返回上下文。
+- 在拥有时测试脏草稿导航和焦点/滚动恢复。
+- 构建路由配置以捕获循环/缺失的 standalone 导入。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the effective URL, route owner, and RouterTestingHarness or browser assertion proving activation and relevant guard/resolver/query behavior. A route object or direct guard call alone cannot prove lazy loading, redirects, navigation cancellation, deep links, or deployment fallback.
+标识有效 URL、路由所有者和证明激活及相关守卫/resolver/查询行为的 RouterTestingHarness 或浏览器断言。仅路由对象或直接守卫调用不能证明惰性加载、重定向、导航取消、深链接或部署回退。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Router reference selected from prose rather than navigation ownership.
-- Guards treated as server authorization.
-- Imperative navigation inside guards instead of returning `UrlTree`.
-- Resolver failures collapsed to null/home redirects.
-- Filters/drafts duplicated in hidden component state when URL persistence is required.
-- Named outlets and preloading added without a workflow reason.
-- Deep links tested only through in-app clicks.
+- 从描述而非导航所有权选择路由参考。
+- 将守卫视为服务端授权。
+- 守卫内部命令式导航而非返回 `UrlTree`。
+- Resolver 失败折叠为 null/主页重定向。
+- 当需要 URL 持久化时筛选/草稿在隐藏组件状态中重复。
+- 无工作流理由添加命名 outlet 和预加载。
+- 仅通过应用内点击测试深链接。

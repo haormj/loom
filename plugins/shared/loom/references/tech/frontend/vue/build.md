@@ -1,87 +1,87 @@
-# Vue Build And Runtime Configuration
+# Vue 构建与运行时配置
 
-Apply build guidance only when the task owns Vite/Vue plugin setup, aliases, environment/config, dev proxy, code splitting, assets, sourcemaps, PWA integration, bundle performance, or framework migration.
+仅当任务拥有 Vite/Vue 插件设置、别名、环境/配置、开发代理、代码拆分、资源、sourcemap、PWA 集成、包性能或框架迁移时应用构建指导。
 
-## Preserve The Toolchain
+## 保留工具链
 
-Inspect package manager, scripts, Vite/Rollup version, Vue plugin/compiler, monorepo root, aliases, CSS preprocessors, test transforms, environment modes, and deploy output before editing configuration.
+编辑配置之前检查包管理器、脚本、Vite/Rollup 版本、Vue 插件/compiler、monorepo 根、别名、CSS 预处理器、测试转换、环境模式和部署输出。
 
-Do not replace an established Vue CLI, Nuxt, Quasar, library build, or custom bundler with plain Vite as an incidental change. Nuxt/Quasar own their wrapper configuration where applicable.
+不要作为附带变更用普通 Vite 替换已建立的 Vue CLI、Nuxt、Quasar、库构建或自定义打包器。Nuxt/Quasar 在适用处拥有其包装配置。
 
-Keep configuration deterministic and avoid executing network calls or environment-sensitive filesystem discovery during build unless the repository intentionally does so.
+保持配置确定性，避免在构建期间执行网络调用或环境敏感的文件系统发现，除非仓库有意这样做。
 
-## Plugins And Generated Imports
+## 插件与生成导入
 
-Add a plugin only for task-owned behavior and confirm version compatibility, plugin order, server/build/test behavior, and generated-file ownership.
+仅为任务所属行为添加插件，确认版本兼容性、插件顺序、服务端/构建/测试行为和生成文件所有权。
 
-Auto-import/component plugins need scoped directories/resolvers, deterministic declaration output, lint/type integration, and collision policy. Do not enable repository-wide magic imports for one component.
+自动导入/组件插件需要限定目录/resolver、确定性声明输出、lint/类型集成和碰撞策略。不要为一个组件启用全仓库魔法导入。
 
-Dev-only inspection plugins must not expose production routes/data or inflate production bundles.
+仅开发检查插件不得暴露生产路由/数据或膨胀生产包。
 
-## Aliases And Monorepos
+## 别名与 Monorepo
 
-Resolve aliases through path-safe URL/filesystem APIs and keep Vite, TypeScript/JavaScript, tests, lint, SSR, and workspace package exports aligned.
+通过路径安全的 URL/文件系统 API 解析别名，保持 Vite、TypeScript/JavaScript、测试、lint、SSR 和工作区包导出对齐。
 
-An editor-resolved alias can still fail in tests or production. Avoid aliases that bypass package public exports or create duplicate Vue/runtime copies.
+编辑器解析的别名仍可能在测试或生产中失败。避免绕过包公共导出或创建重复 Vue/运行时副本的别名。
 
-Configure monorepo filesystem access, dependency optimization, symlinks, and watch roots narrowly; do not expose the whole workstation through the dev server.
+窄配置 monorepo 文件系统访问、依赖优化、符号链接和监听根；不要通过开发服务器暴露整个工作站。
 
-## Environment And Public Config
+## 环境与公共配置
 
-Treat `VITE_*` and every client-injected value as public. Secrets, signing keys, provider credentials, and private backend endpoints must remain server/deploy configuration.
+将 `VITE_*` 和每个客户端注入值视为公开的。密钥、签名密钥、provider 凭据和私有后端端点必须保留为服务端/部署配置。
 
-Type and validate required public values. Distinguish missing, empty, invalid URL/path, and mode-specific values; do not silently fall back to localhost in production.
+类型化和验证所需公共值。区分缺失、空、无效 URL/路径和模式特定值；不要在生产中静默回退到 localhost。
 
-Preserve same-origin/API base-path contracts and deployment subpaths. Build `base`, router history base, asset URLs, and service-worker scope must agree.
+保留同源/API base-path 契约和部署子路径。构建 `base`、router history base、资源 URL 和 service-worker scope 必须一致。
 
-## Development Proxy
+## 开发代理
 
-Proxy only accepted path ownership and preserve method/path/query/body/headers/cookies/streaming/WebSocket behavior required by the API.
+仅代理已接受的路径所有权，保留 API 所需的方法/路径/查询/体/header/cookie/流式/WebSocket 行为。
 
-Do not strip `/api` or rewrite routes merely to make development pass when production preserves the path. Avoid proxy configuration becoming a second undocumented API contract.
+当生产保留路径时，不要仅为使开发通过而剥离 `/api` 或重写路由。避免代理配置成为第二个未记录的 API 契约。
 
-Keep proxy targets environment-owned and prevent an externally reachable dev server from becoming an open proxy.
+保持代理目标为环境拥有，防止外部可达的开发服务器成为开放代理。
 
-## Code Splitting And Chunks
+## 代码拆分与分块
 
-Use route dynamic imports or `defineAsyncComponent` for heavy optional regions with stable loading/error/retry UI. Confirm generated chunks through a production build.
+为沉重的可选区域使用路由动态导入或 `defineAsyncComponent`，配以稳定的加载/错误/重试 UI。通过生产构建确认生成的分块。
 
-Manual chunks require measured cache/bundle benefit and must avoid circular or one-package-per-chunk explosions. Preserve CSS/assets and predictable invalidation.
+手动分块需要已测量的缓存/包收益，必须避免循环或每包一分块的爆炸。保留 CSS/资源和可预测的失效。
 
-Keep server-only/optional dependencies out of client chunks and avoid namespace imports or package entry points known to defeat tree shaking.
+将仅服务端/可选依赖排除在客户端分块之外，避免已知会破坏 tree shaking 的命名空间导入或包入口点。
 
-## Assets, CSS, And Sourcemaps
+## 资源、CSS 与 Sourcemap
 
-Handle public versus imported assets, base paths, hashed output, fonts, worker URLs, and CSS side effects according to Vite semantics. Referenced assets must exist with correct case.
+按 Vite 语义处理公共与导入资源、base path、哈希输出、字体、worker URL 和 CSS 副作用。引用的资源必须以正确大小写存在。
 
-Choose sourcemap mode with error-reporting access policy. Hidden maps still contain source and must be uploaded/stored securely and removed from public artifacts where required.
+按错误报告访问策略选择 sourcemap 模式。隐藏 map 仍包含源代码，必须安全上传/存储，并在需要时从公共产物中移除。
 
-Do not define build time or random content into deterministic bundles unless reproducibility/cache behavior accepts it.
+不要将构建时间或随机内容定义到确定性包中，除非可复现性/缓存行为接受。
 
-## Performance And Output
+## 性能与输出
 
-Measure representative route chunks and dependency duplication before optimization. Compression plugins do not replace server/CDN content negotiation and should not produce unused artifacts.
+优化之前测量代表性路由分块和依赖重复。压缩插件不替代服务端/CDN 内容协商，不应产生未使用的产物。
 
-For library builds, preserve external/peer dependency, declaration, CSS, exports, module format, and consumer compatibility contracts.
+对于库构建，保留 external/peer 依赖、声明、CSS、导出、模块格式和消费者兼容性契约。
 
 ## Verification
 
-- Run the exact production build plus focused type/lint/test targets after config changes.
-- Verify aliases/generated declarations in editor-independent typecheck, tests, and build.
-- Probe dev proxy method/path/cookie/error/WebSocket behavior without changing accepted API paths.
-- Exercise lazy loading/error and inspect output chunks/assets/base paths/sourcemap publication.
-- Test required public config failure and production runtime/deploy substitution.
+- 配置变更后运行精确的生产构建加聚焦的类型/lint/测试目标。
+- 在编辑器无关的 typecheck、测试和构建中验证别名/生成声明。
+- 在不改变已接受 API 路径的情况下探测开发代理方法/路径/cookie/错误/WebSocket 行为。
+- 练习惰性加载/错误并检查输出分块/资源/base path/sourcemap 发布。
+- 测试所需公共配置失败和生产运行时/部署替换。
 
-## Delivery Evidence
+## 交付证据
 
-Name the config owner, plugin/alias/env/proxy/chunk decision, expected output, and command/artifact proving it. Dev-server success alone does not establish production paths, runtime config, chunk integrity, sourcemap safety, or deploy compatibility.
+命名配置所有者、插件/别名/env/代理/分块决策、预期输出和证明它的命令/产物。仅开发服务器成功不能建立生产路径、运行时配置、分块完整性、sourcemap 安全或部署兼容性。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Plain Vite configuration imposed on Nuxt/Quasar/legacy tooling.
-- Plugin or auto-import enabled globally for one local need.
-- `VITE_*` treated as secret storage.
-- Development proxy rewriting away the production API contract.
-- Manual chunks copied without bundle measurement.
-- Hidden sourcemaps shipped publicly.
-- Alias updated in only one resolver.
+- 将普通 Vite 配置强加于 Nuxt/Quasar/遗留工具。
+- 为一个本地需求全局启用插件或自动导入。
+- `VITE_*` 被视为密钥存储。
+- 开发代理重写掉生产 API 契约。
+- 在无包测量的情况下复制手动分块。
+- 公开发布隐藏 sourcemap。
+- 别名仅在一个 resolver 中更新。

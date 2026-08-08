@@ -1,46 +1,46 @@
-# Redis Session Integration
+# Redis 会话集成
 
 ## When To Use
 
-Use this reference only when the task owns the accepted Redis `session` capability or changes login-state, session lookup, session renewal, logout, or session invalidation behavior.
+仅当任务拥有已接受的 Redis `session` 能力或变更登录状态、会话查找、会话续期、登出或会话失效行为时才使用此参考。
 
 ## Implementation Focus
 
-- Define whether Redis stores the authoritative session state or only a shared lookup for an application-owned session record.
-- Use a dedicated namespace with a non-guessable session identifier; never use a user id as the session key.
-- Store only the minimum identity, expiry, authorization-version, and revocation data needed by the session boundary.
-- Set an explicit idle or absolute expiration on every session and define renewal behavior before expiry.
-- Invalidate sessions on logout, credential change, permission revocation, and security-sensitive account changes when the accepted policy requires it.
-- Make session serialization versioned and reject incompatible payloads instead of silently accepting partial state.
-- Keep cookie or token attributes, rotation, CSRF protection, and transport security in the application authentication boundary; Redis is only the shared state store.
-- For multi-instance services, use the Compose or runtime service name rather than `localhost` and bound connection timeout and pool behavior.
+- 定义 Redis 存储权威会话状态还是仅存储应用拥有的会话记录的共享查找。
+- 使用具有不可猜测会话标识符的专用命名空间；永远不要使用用户 ID 作为会话键。
+- 仅存储会话边界所需的最小标识、过期、授权版本和撤销数据。
+- 为每个会话设置显式空闲或绝对过期并定义过期前的续期行为。
+- 在登出、凭据变更、权限撤销和安全敏感账户变更时，当已接受策略要求时使会话失效。
+- 使会话序列化版本化并拒绝不兼容载荷而非静默接受部分状态。
+- 将 cookie 或令牌属性、轮换、CSRF 保护和传输安全保留在应用认证边界；Redis 仅是共享状态存储。
+- 对于多实例服务，使用 Compose 或运行时服务名而非 `localhost` 并绑定连接超时和池行为。
 
 ## Failure Boundary
 
-Define the behavior when Redis is unavailable or a session is missing. A required session store must fail closed with an actionable authentication response; a declared fallback must not turn an expired, revoked, or malformed session into an authenticated request.
+定义 Redis 不可用或会话缺失时的行为。必需的会话存储必须以可操作的认证响应失败关闭；声明的回退不得将过期、撤销或格式错误的会话变为已认证请求。
 
 ## Scope Boundary
 
-- Keep password hashing, token signing, cookie construction, CSRF checks, and authorization policy in the application authentication module.
-- Keep Redis-specific key, expiry, serialization, and unavailable-provider behavior in one session adapter.
-- Do not make a session reference the reason to add Redis when the accepted baseline does not select the session capability.
+- 将密码哈希、令牌签名、cookie 构造、CSRF 检查和授权策略保留在应用认证模块中。
+- 将 Redis 特定的键、过期、序列化和不可用提供者行为保留在一个会话适配器中。
+- 当已接受的基线未选择会话能力时，不要使会话引用成为添加 Redis 的理由。
 
 ## Verification Focus
 
-- Two application instances can read the same valid session without leaking another user or tenant's state.
-- Idle and absolute expiration, renewal, logout, revocation, and credential-change invalidation follow the accepted policy.
-- Session identifiers cannot be enumerated or derived from user identity.
-- Redis unavailable, timeout, malformed payload, and stale-version behavior fail safely.
-- Cookie or token rotation and authorization-version changes do not leave an old session usable.
+- 两个应用实例可以读取同一个有效会话而不泄露另一个用户或租户的状态。
+- 空闲和绝对过期、续期、登出、撤销和凭据变更失效遵循已接受策略。
+- 会话标识符不能被枚举或从用户标识派生。
+- Redis 不可用、超时、格式错误载荷和过期版本行为安全失败。
+- cookie 或令牌轮换和授权版本变更不留下旧会话可用。
 
 ## Evidence Focus
 
-Record the session namespace, identity fields, expiration policy, renewal and invalidation triggers, runtime URL, unavailable-provider behavior, and focused authentication tests.
+记录会话命名空间、标识字段、过期策略、续期和失效触发、运行时 URL、不可用提供者行为和聚焦的认证测试。
 
 ## Unsafe Defaults
 
-- Using `user:{id}` as a bearer session key.
-- Treating Redis availability as proof that a session is authenticated.
-- Omitting expiration or extending a session on every request without an absolute limit.
-- Storing passwords, raw credentials, or unrestricted domain objects in session values.
-- Falling back to an old session after a logout, revocation, or payload-version failure.
+- 使用 `user:{id}` 作为持有者会话键。
+- 将 Redis 可用性视为会话已认证的证明。
+- 省略过期或在没有绝对限制的情况下每次请求延长会话。
+- 在会话值中存储密码、原始凭据或不受限的领域对象。
+- 在登出、撤销或载荷版本失败后回退到旧会话。

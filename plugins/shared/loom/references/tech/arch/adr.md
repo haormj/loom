@@ -1,72 +1,72 @@
-# ADR Guidance For Loom Architecture
+# Loom 架构的 ADR 指导
 
-Use this reference when writing architecture decision records.
+当编写架构决策记录时使用本引用。
 
-Loom ADRs are structured architecture decision entries, not Markdown files unless the user's project explicitly asks for ADR documents.
+Loom ADR 是结构化架构决策条目，除非用户项目明确要求 ADR 文档，否则不是 Markdown 文件。
 
-## Decision Quality
+## 决策质量
 
-Each decision must make four things unambiguous:
+每个决策必须使四件事明确：
 
-- **forces**: current requirements, constraints, and existing boundaries that make a decision necessary
-- **choice**: the structural rule implementation will follow
-- **ownership**: modules and interfaces that can satisfy or violate the choice
-- **evidence**: observable implementation or verification signals that prove the choice was respected
+- **驱动力**：使决策必要的当前需求、约束和已有边界
+- **选择**：实现将遵循的结构规则
+- **所有权**：可满足或违反选择的模块和接口
+- **证据**：证明选择被遵守的可观测实现或验证信号
 
-## Decision Categories
+## 决策类别
 
-| Category | Use When |
+| 类别 | 使用时机 |
 |---|---|
-| architecture_style | Selecting single app, modular monolith, service split, event-driven, CQRS-style separation, or similar structure. |
-| module_boundary | Defining ownership and responsibility between modules. |
-| data_boundary | Defining entity ownership, transaction boundary, migration impact, or read/write model. |
-| integration_boundary | Defining external adapter, async dependency, or interface boundary. |
-| runtime_boundary | Defining build/start/probe/environment/runtime surface constraints. |
-| security_boundary | Defining authorization, sensitive data, audit, or exposure boundaries. |
-| operability | Defining observability, recovery, or operational simplicity trade-offs. |
+| architecture_style | 选择单一应用、模块化单体、服务拆分、事件驱动、CQRS 式分离或类似结构。 |
+| module_boundary | 定义模块间的所有权和职责。 |
+| data_boundary | 定义实体所有权、事务边界、迁移影响或读/写模型。 |
+| integration_boundary | 定义外部适配器、异步依赖或接口边界。 |
+| runtime_boundary | 定义构建/启动/探针/环境/运行时面约束。 |
+| security_boundary | 定义授权、敏感数据、审计或暴露边界。 |
+| operability | 定义可观测性、恢复或运维简单性权衡。 |
 
-## Alternatives
+## 备选方案
 
-Alternatives are mandatory because they prove the decision is a trade-off, not a guess.
+备选方案是强制性的，因为它们证明决策是权衡而非猜测。
 
-For each alternative:
+对于每个备选方案：
 
-- name the alternative
-- state the trade-off
-- explain why it was rejected for the current phase
+- 命名备选方案
+- 说明权衡
+- 解释为何在当前阶段被拒绝
 
-Do not list strawman alternatives. Compare realistic options.
+不要列出稻草人备选方案。比较现实选项。
 
-Every alternative needs a name, the real trade-off it would create, and a rejection reason tied to current-phase forces. Product names or patterns copied from an example are not alternatives unless they could actually satisfy the same requirement.
+每个备选方案需要一个名称、它将创造的真实权衡以及与当前阶段驱动力相关的拒绝理由。从示例复制的产​​品名称或模式不是备选方案，除非它们能实际满足相同需求。
 
-## Consequences
+## 后果
 
-Positive consequences should describe implementation or verification benefits.
+正面后果应描述实现或验证收益。
 
-Negative consequences should describe real cost, limitation, or future risk.
+负面后果应描述真实成本、限制或未来风险。
 
-Neutral consequences can capture follow-up awareness without creating current tasks.
+中性后果可以捕获后续意识而不创建当前任务。
 
-At least one positive and one negative consequence are required for a meaningful trade-off. Empty consequence headings or paraphrases of the decision do not establish architectural cost.
+一个有意义的权衡至少需要一个正面和一个负面后果。空的后果标题或决策的改述不建立架构成本。
 
-## Verification Hints
+## 验证提示
 
-Verification hints should identify evidence that proves the decision was respected:
+验证提示应识别证明决策被遵守的证据：
 
-- changed module files align with module ownership
-- API paths use declared interface boundary
-- persistence changes preserve transaction/invariant rules
-- runtime scripts/probes match runtime delivery contract
-- tests or static checks cover the stated risk
+- 变更的模块文件与模块所有权对齐
+- API 路径使用声明的接口边界
+- 持久化变更保持事务/不变量规则
+- 运行时脚本/探针匹配运行时交付契约
+- 测试或静态检查覆盖所述风险
 
-## Anti-Patterns
+## 反模式
 
-- ADRs with only "we choose X because it is simple."
-- Alternatives that are impossible or unrelated.
-- Consequences that repeat the decision.
-- Decisions that implement future phase scope.
-- Decisions without source refs to scope, acceptance, or requirement details.
+- 仅有"我们选择 X 因为它简单"的 ADR。
+- 不可能或不相关的备选方案。
+- 重复决策的后果。
+- 实现未来阶段范围的决策。
+- 没有指向范围、验收或需求详情的来源引用的决策。
 
-## Current Phase Rule
+## 当前阶段规则
 
-An ADR belongs in the current phase only when it affects current implementation or verification. General future architecture notes should stay outside the current-phase design.
+ADR 仅当影响当前实现或验证时才属于当前阶段。一般性未来架构笔记应留在当前阶段设计之外。

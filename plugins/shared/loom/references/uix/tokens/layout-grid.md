@@ -1,20 +1,20 @@
-# UIX Token: Layout Grid
+# UIX 令牌：布局网格
 
-Load this file when defining page layout, app shells, responsive behavior, dashboards, data consoles, marketing pages, docs, or mobile screens.
+在定义页面布局、应用外壳、响应式行为、仪表板、数据控制台、营销页面、文档或移动屏幕时加载此文件。
 
-## Breakpoints
+## 断点
 
-Use mobile-first breakpoints unless the repo already has a system:
+除非仓库已有系统，否则使用移动优先断点：
 
-- `sm`: 640px.
-- `md`: 768px.
-- `lg`: 1024px.
-- `xl`: 1280px.
-- `2xl`: 1536px.
+- `sm`：640px。
+- `md`：768px。
+- `lg`：1024px。
+- `xl`：1280px。
+- `2xl`：1536px。
 
-Do not scale font size directly with viewport width. Use breakpoint-specific layout changes and stable type tokens.
+不要直接随视口宽度缩放字体大小。使用断点特定的布局变化和稳定的排版令牌。
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
 ```css
 :root {
@@ -41,49 +41,38 @@ Do not scale font size directly with viewport width. Use breakpoint-specific lay
 }
 ```
 
-## Containers
+## 容器
 
-- Workbench/admin: full-width shell with constrained internal panels where needed; avoid marketing-style centered containers.
-- Data console: reserve width for tables, filters, logs, charts, and right-side detail panels.
-- Docs/prose: readable content width around 60-75 characters plus navigation/TOC.
-- Marketing/corporate: controlled max width with intentional full-bleed media when appropriate.
-- Mobile: one-column task flow with fixed/sticky action zones only when they do not hide content.
+- 工作台/管理：带约束内部面板的全宽外壳；避免营销式的居中容器。
+- 数据控制台：为表格、筛选器、日志、图表和右侧详情面板预留宽度。
+- 文档/散文：约 60-75 字符的可读内容宽度加导航/目录。
+- 营销/企业：受控最大宽度，适当时有意使用全出血媒体。
+- 移动：单列任务流，仅在不隐藏内容时使用固定/粘性操作区域。
 
-## Grid Patterns
+## 网格模式
 
-- Sidebar + topbar + content for repeated operational workflows.
-- Table/list + detail panel for record management.
-- Filter bar + result table + pagination for searchable datasets.
-- Split primary/editor preview only when both panes are used continuously.
-- Docs shell with left nav, content, and optional right TOC.
-- Scene-first layout for 3D/canvas experiences, with controls overlaid or docked without covering the scene.
+- 侧边栏 + 顶栏 + 内容用于重复操作工作流。
+- 表格/列表 + 详情面板用于记录管理。
+- 筛选栏 + 结果表格 + 分页用于可搜索数据集。
+- 仅当两个面板持续使用时拆分主要/编辑器预览。
+- 带左侧导航、内容和可选右侧目录的文档外壳。
+- 3D/画布体验的场景优先布局，控件覆盖或停靠而不覆盖场景。
 
-## Container And Overflow Decisions
+## 容器和溢出决策
 
-- Use a centered max-width container for prose, marketing, and corporate surfaces;
-  use a full-width shell for operational surfaces and constrain only the panels
-  that need readable content or comparison width.
-- Use `minmax(0, 1fr)` for grid tracks that contain user or API text. Without it,
-  long identifiers can force the page wider than the viewport.
-- Give a table, code block, chart, or log its own scroll boundary and accessible
-  label when horizontal overflow is necessary. Never hide page overflow to mask a
-  child layout defect.
-- Use container queries only when a component genuinely changes by its available
-  panel width rather than by viewport width. Keep the fallback readable when the
-  project tooling does not support them.
-- Reserve a minimum width for comparison tables and define the mobile fallback in
-  the scenario or data reference. A minimum width alone is not a responsive plan.
+- 对散文、营销和企业界面使用居中最大宽度容器；对操作界面使用全宽外壳并仅约束需要可读内容或比较宽度的面板。
+- 为包含用户或 API 文本的网格轨道使用 `minmax(0, 1fr)`。没有它，长标识符可能迫使页面比视口更宽。
+- 当水平溢出必要时为表格、代码块、图表或日志提供自己的滚动边界和可访问标签。永远不要隐藏页面溢出以掩盖子布局缺陷。
+- 仅当组件真正按其可用面板宽度而非视口宽度变化时使用容器查询。当项目工具不支持时保持回退可读。
+- 为比较表格预留最小宽度并在场景或数据参考中定义移动回退。仅最小宽度不是响应式计划。
 
-## Layer And Safe-Area Rules
+## 层级和安全区域规则
 
-- Keep a single layer scale for dropdown, sticky, fixed, modal, popover, tooltip,
-  and notification surfaces. Do not create local z-index values for each screen.
-- Add `env(safe-area-inset-*)` to fixed mobile actions and headers when the target
-  device posture includes an edge-to-edge viewport.
-- Test sticky headers, drawers, tables, and bottom actions together. A layout passes
-  only when the primary content and action remain reachable while layers are open.
+- 为下拉、粘性、固定、模态、弹出框、工具提示和通知界面保持单一层级比例。不要为每个屏幕创建本地 z-index 值。
+- 当目标设备姿态包含边到边视口时，将 `env(safe-area-inset-*)` 添加到固定移动操作和页眉。
+- 一起测试粘性页眉、抽屉、表格和底部操作。仅当主要内容和操作在层打开时保持可达时布局才通过。
 
-## Workbench Shell
+## 工作台外壳
 
 ```css
 .workbench-shell {
@@ -104,37 +93,36 @@ Do not scale font size directly with viewport width. Use breakpoint-specific lay
 }
 ```
 
-Use this pattern for operational pages. Marketing/corporate/docs/3D scenarios have their own layout baselines and should not inherit a workbench shell by accident.
+将此模式用于操作页面。营销/企业/文档/3D 场景有各自的布局基线，不应意外继承工作台外壳。
 
-## Stable Dimensions
+## 稳定尺寸
 
-Define stable dimensions for:
+为以下定义稳定尺寸：
 
-- Navigation rails and sidebars.
-- Topbars and sticky action bars.
-- Table row height and pagination.
-- Icon buttons and segmented controls.
-- Cards or tiles in fixed-format grids.
-- Canvas/media/chart regions.
-- Modal/drawer widths and scroll boundaries.
+- 导航导轨和侧边栏。
+- 顶栏和粘性操作栏。
+- 表格行高和分页。
+- 图标按钮和分段控件。
+- 固定格式网格中的卡片或磁贴。
+- 画布/媒体/图表区域。
+- 模态/抽屉宽度和滚动边界。
 
-Stable dimensions prevent hover, loading text, validation text, and long labels from resizing the whole interface.
+稳定尺寸防止悬停、加载文本、验证文本和长标签调整整个界面的尺寸。
 
-## Responsive Behavior
+## 响应式行为
 
-- Sidebar becomes drawer or bottom navigation on smaller screens.
-- Dense tables become horizontally scrollable tables, list/detail cards, or drill-down views based on task needs.
-- Detail side panels become drawers or full-screen detail routes on mobile.
-- Toolbars wrap predictably; primary action remains visible.
-- Charts keep legends readable and avoid cramped axes.
-- Fixed side panels become drawers or route details before they squeeze the main workflow below usable width.
-- Header, toolbar, and action regions may wrap, but they must not push the primary task below non-functional explanation content.
+- 侧边栏在较小屏幕上变为抽屉或底部导航。
+- 密集表格根据任务需求变为可水平滚动表格、列表/详情卡片或下钻视图。
+- 详情侧面板在移动端变为抽屉或全屏详情路由。
+- 工具栏可预测地换行；主要操作保持可见。
+- 图表保持图例可读并避免拥挤的坐标轴。
+- 固定侧面板在将主要工作流挤到可用宽度以下之前变为抽屉或路由详情。
+- 页眉、工具栏和操作区域可以换行，但不得将主要任务推到非功能性说明内容下方。
 
-## Self-Check
+## 自检
 
-- The selected layout baseline matches the product scenario and density.
-- Content does not overlap navigation, sticky bars, side panels, or mobile safe areas.
-- Wide desktop does not stretch text or forms into unreadable lines.
-- The implemented page contains the actual task surface in the first visible viewport for its scenario.
-- The chosen container, overflow boundary, layer level, and mobile fallback are
-  recorded in implementation evidence when they are part of the changed surface.
+- 选定的布局基线匹配产品场景和密度。
+- 内容不与导航、粘性栏、侧面板或移动安全区域重叠。
+- 宽桌面不将文本或表单拉伸到不可读的行。
+- 实现的页面在其场景的首个可见视口中包含实际任务界面。
+- 当容器、溢出边界、层级和移动回退是变更界面的一部分时，在实现证据中记录它们。

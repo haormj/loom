@@ -1,48 +1,48 @@
-# Loom API Contract Core
+# Loom API 契约核心
 
-API work in Loom is not a standalone specification exercise. It is a task-verifiable contract that connects interface design, task planning, implementation, evidence, review, and later deploy/runtime probes.
+Loom 中的 API 工作不是独立的规范练习。它是一个可由任务验证的契约，连接接口设计、任务规划、实现、证据、评审以及后续的部署/运行时探针。
 
-## Operating Model
+## 运作模型
 
-1. Use the confirmed delivery contract and current task scope as the authority for API ownership, ids, and boundaries.
-2. Model only current-phase APIs whose structured Foundation application interaction is `http_api` or references an accepted HTTP interface. Business prose, a backend-capable language/framework, or a generic runtime probe must not activate API work.
-3. Express API decisions through the current architecture/API contract artifacts; use references to make concrete decisions rather than copying reference prose.
-4. Keep API quality evidence concrete: changed files, endpoint paths, status/error behavior, request/response DTOs, tests, runtime probes, or contract files.
+1. 以确认的交付契约和当前任务范围作为 API 所有权、标识符和边界的权威。
+2. 仅对结构化 Foundation 应用交互为 `http_api` 或引用了已接受 HTTP 接口的当前阶段 API 进行建模。业务描述、具备后端能力的语言/框架或通用运行时探针不得激活 API 工作。
+3. 通过当前的架构/API 契约工件表达 API 决策；使用引用做出具体决策，而非复制参考文档的描述。
+4. 保持 API 质量证据具体：变更的文件、端点路径、状态/错误行为、请求/响应 DTO、测试、运行时探针或契约文件。
 
-## Required API Contract Assets
+## 必需的 API 契约资产
 
-| Asset | Purpose | Used By |
+| 资产 | 用途 | 使用方 |
 |---|---|---|
-| Interface record | Names API ownership, method, path, resource, operation kind, schemas, status codes, and refs. | Task planning and implementation. |
-| Request model | Describes accepted body/query/path fields and validation. | Implementation and tests. |
-| Response model | Describes success body shape and readback fields. | Frontend binding, runtime probes, and review. |
-| Error model | Describes business, validation, auth, conflict, and not-found responses. | UI feedback and implementation evidence. |
-| Pagination/filtering policy | Defines bounded collection behavior when collection endpoints are unbounded. | API task verification and performance NFRs. |
-| Auth policy | States actor/permission requirements when current scope includes protected operations. | Security-sensitive implementation and review. |
-| Evolution policy | Captures compatibility constraints only when existing/public clients or explicit versioning requirements exist. | Architecture risk and API repair ownership. |
-| Operational policy | Captures idempotency, cache validators, rate limiting, retry behavior, and request tracing only when selected or already used by the repository. | Implementation evidence and production behavior review. |
+| 接口记录 | 命名 API 所有权、方法、路径、资源、操作类型、模式、状态码和引用。 | 任务规划和实现。 |
+| 请求模型 | 描述接受的 body/query/path 字段和校验。 | 实现和测试。 |
+| 响应模型 | 描述成功 body 形态和回读字段。 | 前端绑定、运行时探针和评审。 |
+| 错误模型 | 描述业务、校验、认证、冲突和未找到响应。 | UI 反馈和实现证据。 |
+| 分页/过滤策略 | 在集合端点无界时定义有界集合行为。 | API 任务验证和性能 NFR。 |
+| 认证策略 | 在当前范围包含受保护操作时声明参与者/权限要求。 | 安全敏感的实现和评审。 |
+| 演进策略 | 仅在存在已有/公开客户端或明确版本化要求时记录兼容性约束。 | 架构风险和 API 修复所有权。 |
+| 运维策略 | 仅在已被选择或仓库已使用时记录幂等性、缓存验证器、速率限制、重试行为和请求追踪。 | 实现证据和生产行为评审。 |
 
-## Contract Discipline
+## 契约纪律
 
-- Identify HTTP endpoints with compact, stable ids.
-- Use resource-oriented paths for REST APIs. Do not use command names as paths unless the domain operation is genuinely command-like and cannot be represented as a resource state transition.
-- For every write API, specify request validation, success status, business-blocking errors, and state/readback proof.
-- For every collection API, declare pagination/filtering only when the collection can grow beyond a bounded current-phase dataset.
-- Do not require OpenAPI files unless selected by the contract file reference or explicitly required by user/repo context.
-- Do not invent `/v1` or deprecation policy by default.
-- Do not invent idempotency keys, ETags, rate limits, retry headers, or request-id infrastructure by default; apply operations semantics only when explicitly selected for the current API work or already owned by the repository.
+- 使用紧凑、稳定的标识符标识 HTTP 端点。
+- REST API 使用面向资源的路径。不要将命令名称用作路径，除非领域操作确实是命令式的，且无法表示为资源状态转换。
+- 对于每个写 API，指定请求校验、成功状态、业务阻断错误和状态/回读证明。
+- 对于每个集合 API，仅在集合可能超出当前阶段有界数据集时声明分页/过滤。
+- 除非契约文件引用选择了 OpenAPI 文件，或用户/仓库上下文明确要求，否则不要要求 OpenAPI 文件。
+- 默认不要编造 `/v1` 或弃用策略。
+- 默认不要编造幂等键、ETag、速率限制、重试头或 request-id 基础设施；仅在为当前 API 工作明确选择或仓库已拥有时应用运维语义。
 
-## Minimum Quality Bar
+## 最低质量标准
 
-A usable API contract lets a later agent answer:
+一个可用的 API 契约能让后续 agent 回答：
 
-- Which endpoint or service method should this task implement?
-- Which request fields are accepted and validated?
-- Which response fields prove the business result?
-- Which business errors must be actionable for the UI/client?
-- Which status codes are expected for success, validation, conflict, missing resource, auth, and unexpected failure?
-- Which verification evidence proves this endpoint is not a mock or silent failure?
+- 该任务应实现哪个端点或服务方法？
+- 哪些请求字段被接受和校验？
+- 哪些响应字段证明业务结果？
+- 哪些业务错误必须对 UI/客户端可操作？
+- 成功、校验、冲突、资源缺失、认证和意外失败分别期望哪些状态码？
+- 哪些验证证据证明该端点不是 mock 或静默失败？
 
-Loom stores one project-level current API contract under the delivery contract area. The accepted Architecture artifact carries only its `apiContractRef` and current-phase interface ids. Task planning, execution, review, runtime delivery, and deploy consume task-scoped projections from that contract; they must not copy a second full API contract or reconstruct a public prefix from `/api`.
+Loom 在交付契约区域下存储一个项目级当前 API 契约。已接受的架构工件仅携带其 `apiContractRef` 和当前阶段接口标识符。任务规划、执行、评审、运行时交付和部署消费该契约的任务范围投影；它们不得复制第二个完整 API 契约或从 `/api` 重构公共前缀。
 
-If those answers are missing, repair upstream design or task planning instead of leaving implementation to guess.
+如果这些答案缺失，应修复上游设计或任务规划，而非让实现自行猜测。

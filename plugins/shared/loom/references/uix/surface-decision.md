@@ -1,26 +1,24 @@
-# UIX Surface Decision
+# UIX 界面决策
 
-Load this file when a task includes a structured surface decision, custom UI
-pattern work, or any page/screen whose product shape does not fit a single
-obvious scenario.
+当任务包含结构化界面决策、自定义 UI 模式工作或任何产品形态不适合单一明显场景的页面/屏幕时加载此文件。
 
-This file explains how to turn a surface decision into implementation. It does not ask you to derive reference plans, quality rules, or schema fields. Those arrive in the task context. Your job is to make the rendered product surface match the selected decision.
+此文件解释如何将界面决策转化为实现。它不要求你推导参考计划、质量规则或模式字段。这些在任务上下文中提供。你的职责是使渲染的产品界面匹配选定的决策。
 
 ## Decision Modes
 
-Use the selected mode as an implementation strategy:
+将选定模式用作实现策略：
 
-| Mode | Implementation meaning |
+| 模式 | 实现含义 |
 | --- | --- |
-| `known` | Use the named pattern as the dominant structure. Keep scenario anatomy intact, then adapt labels, data, actions, and states to the product. |
-| `hybrid` | Use the primary known pattern for layout ownership and combine only the declared secondary patterns for specific regions or interactions. |
-| `custom` | Build a product-specific surface from semantic facts, nearest known patterns, layout model, regions, actions, states, and content boundary. Custom is stricter than known mode because nothing can be hand-waved to a canned scenario. |
+| `known` | 使用命名模式作为主导结构。保持场景解剖完整，然后将标签、数据、操作和状态适配到产品。 |
+| `hybrid` | 使用主要已知模式进行布局归属，仅组合声明的次要模式用于特定区域或交互。 |
+| `custom` | 根据语义事实、最近已知模式、布局模型、区域、操作、状态和内容边界构建产品特定界面。custom 比 known 模式更严格，因为没有任何东西可以归咎于预设场景。 |
 
-Known patterns are not page templates. A `collection_workbench` can be implemented with React, Vue, native mobile, server-rendered HTML, or another stack. The pattern controls regions and workflow, not class names.
+已知模式不是页面模板。一个 `collection_workbench` 可以用 React、Vue、原生移动端、服务端渲染 HTML 或其他技术栈实现。模式控制区域和工作流，而非类名。
 
 ## Pattern Matching
 
-Before editing visible UI, map the contract into a short working model:
+在编辑可见 UI 之前，将契约映射为一个简短的工作模型：
 
 ```text
 user job -> information shape -> operation model -> risk factors
@@ -29,32 +27,32 @@ content boundary -> copy tone -> forbidden visible content
 nearest known patterns -> reusable anatomy -> custom differences
 ```
 
-Choose the layout that supports the dominant job:
+选择支持主导工作的布局：
 
-- Collection or queue work: list/table/card stream plus filters, selection, detail, and scoped actions.
-- Form flow: grouped form, validation, review/submit feedback, and recovery path.
-- Analytics monitor: time/range controls, chart/table pairing, anomaly/status explanation, and drill-down.
-- Editor workspace: persistent canvas/editor, inspector, command/action region, save/version state.
-- Support inbox: queue, conversation/detail, assignment/status, reply/action state.
-- Developer console: technical object explorer, request/result surfaces, logs only when the product task needs them.
-- Content or marketing surface: narrative hierarchy, proof, media, and conversion path rather than operational density.
-- Mobile task flow: one primary task per screen, bottom/inline actions, touch-safe controls, and list-to-detail navigation.
+- 集合或队列工作：列表/表格/卡片流，加上筛选、选择、详情和作用域操作。
+- 表单流：分组表单、验证、审查/提交反馈和恢复路径。
+- 分析监控：时间/范围控制、图表/表格配对、异常/状态说明和下钻。
+- 编辑工作区：持久画布/编辑器、检查器、命令/操作区域、保存/版本状态。
+- 支持收件箱：队列、对话/详情、分配/状态、回复/操作状态。
+- 开发者控制台：技术对象浏览器、请求/结果界面、仅在产品任务需要时显示日志。
+- 内容或营销界面：叙事层次、证明、媒体和转化路径，而非操作密度。
+- 移动任务流：每屏一个主要任务、底部/内联操作、触摸安全控件和列表到详情导航。
 
 ## Custom Mode Rules
 
-For `custom`, do all of the following:
+对于 `custom`，执行以下所有操作：
 
-- Name the nearest known patterns in your own implementation notes, then implement only the parts the task actually owns.
-- Build every declared region. If a region is not visible in this task, record why it is out of scope instead of silently dropping it.
-- Implement every task-owned action with pending, success, error, disabled, and business-blocking behavior when those states are in scope.
-- Put state feedback near the affected region or control. A global toast is never enough for validation, loading, empty, or business-blocking states.
-- Convert abstract information shapes into concrete labels, fields, summaries, tables, charts, cards, or detail panels.
-- Keep visual style production-grade for the product mode. Do not use "custom" as permission for decorative experiments, generic demo cards, or unstructured page sections.
-- Use semantic tokens or the existing design system before creating new styles.
+- 在你自己的实现说明中命名最近的已知模式，然后仅实现任务实际拥有的部分。
+- 构建每个声明的区域。如果某个区域在此任务中不可见，记录其超出范围的原因，而不是默默丢弃它。
+- 在这些状态在范围内时，为每个任务归属的操作实现待处理、成功、错误、禁用和业务阻塞行为。
+- 将状态反馈放在受影响区域或控件附近。全局 toast 永远不足以处理验证、加载、空或业务阻塞状态。
+- 将抽象的信息形态转化为具体的标签、字段、摘要、表格、图表、卡片或详情面板。
+- 为产品模式保持视觉风格达到生产级。不要将"custom"用作装饰性实验、通用演示卡片或非结构化页面分区的许可。
+- 在创建新样式之前使用语义令牌或现有设计系统。
 
 ## Region Implementation
 
-Treat the declared task-owned regions as the visible work map.
+将声明的任务归属区域视为可见工作地图。
 
 ```html
 <main data-surface="task">
@@ -65,57 +63,57 @@ Treat the declared task-owned regions as the visible work map.
 </main>
 ```
 
-The names above are placeholders. Use the contract's region ids and the project's component style, but preserve these responsibilities:
+上述名称是占位符。使用契约的区域 ID 和项目的组件风格，但保留这些职责：
 
-- Context region: current object, section, search/filter context, user/workspace context when relevant.
-- Primary work region: list, table, form, editor, chart, or task canvas where the main job happens.
-- Support/detail region: selected record, explanation, history, preview, inspector, or secondary controls.
-- Feedback region: scoped loading, validation, empty, error, success, disabled, and business-blocking states.
+- 上下文区域：当前对象、部分、搜索/筛选上下文、用户/工作区上下文（相关时）。
+- 主要工作区域：列表、表格、表单、编辑器、图表或任务画布——主要工作发生的地方。
+- 支持/详情区域：选定记录、说明、历史记录、预览、检查器或辅助控件。
+- 反馈区域：作用域内的加载、验证、空、错误、成功、禁用和业务阻塞状态。
 
 ## Action Implementation
 
-Actions must be placed where the user decides:
+操作必须放置在用户决策的位置：
 
-- Primary actions belong near the work region or sticky action bar, not in a decorative header far away.
-- Row/detail actions stay attached to the row/detail they affect.
-- Destructive actions need confirmation, undo, or a clear recovery path based on severity.
-- Async actions need pending state, double-submit protection, success update, and recoverable error message.
-- Disabled actions need a visible reason when the user can fix the block.
+- 主要操作应靠近工作区域或粘性操作栏，而非远离的装饰性页眉。
+- 行/详情操作应与其影响的行/详情保持关联。
+- 破坏性操作根据严重程度需要确认、撤销或明确的恢复路径。
+- 异步操作需要待处理状态、重复提交保护、成功更新和可恢复的错误消息。
+- 当用户可以解除阻塞时，禁用操作需要可见的原因。
 
 ## State Implementation
 
-Use the surface contract states as acceptance targets:
+将界面契约状态用作验收目标：
 
-| State | Implementation proof |
+| 状态 | 实现证据 |
 | --- | --- |
-| loading | Stable region skeleton/progress without layout jump. |
-| empty | Business reason plus next valid action or explanation. |
-| error | Recoverable message, retry/correction path, no stack trace. |
-| validation | Field/control-level message, preserved input, focus path. |
-| success | Updated affected object plus confirmation near the change. |
-| disabled | Reason or eligibility hint, not silent opacity alone. |
-| business_blocking | Product rule explanation tied to the affected action or object. |
+| loading | 稳定的区域骨架/进度，无布局跳动。 |
+| empty | 业务原因加上下一个有效操作或说明。 |
+| error | 可恢复的消息，重试/修正路径，无堆栈跟踪。 |
+| validation | 字段/控件级消息，保留的输入，焦点路径。 |
+| success | 更新受影响对象加上变更附近的确认。 |
+| disabled | 原因或资格提示，而非仅静默透明度。 |
+| business_blocking | 与受影响操作或对象关联的产品规则说明。 |
 
 ## Evidence Mapping
 
-When writing UI quality evidence:
+编写 UI 质量证据时：
 
-- Region evidence names changed UI files and the region implemented.
-- Action evidence names changed UI files and how the action behaves through pending/success/error/disabled states.
-- State evidence names changed UI files and where each state is rendered.
-- Quality-rule evidence names changed UI files or rendered checks that prove each quality rule.
-- Content-boundary evidence states what product copy was checked and whether forbidden internal/process content appears.
-- Read-reference evidence lists only the selected UIX files actually read for this task.
+- 区域证据指明变更的 UI 文件和实现的区域。
+- 操作证据指明变更的 UI 文件以及操作如何通过待处理/成功/错误/禁用状态表现。
+- 状态证据指明变更的 UI 文件以及每个状态的渲染位置。
+- 质量规则证据指明变更的 UI 文件或证明每个质量规则的渲染检查。
+- 内容边界证据说明检查了哪些产品文案以及是否出现了禁止的内部/流程内容。
+- 读取参考证据仅列出为此任务实际读取的 UIX 文件。
 
-Evidence is not a prose compliment. It must point to concrete files, states, actions, or rendered checks.
+证据不是散文式的赞美。它必须指向具体的文件、状态、操作或渲染检查。
 
 ## Quality Bar
 
-A surface decision is satisfied only when:
+界面决策仅在以下情况满足时才算完成：
 
-- The implemented first visible surface is the product surface for the selected job.
-- Layout regions are visible, useful, and responsive for the declared device posture.
-- Information density matches the usage pattern: repeat work is compact; narrative surfaces are readable; immersive surfaces are intentionally framed.
-- Actions and states are complete enough for a user to finish the workflow and recover from failure.
-- Content stays inside the product boundary and avoids delivery/runtime/build/verification language.
-- The design system or token source is reused or extended consistently.
+- 实现的首个可见界面是选定工作的产品界面。
+- 布局区域对声明的设备姿态可见、有用且响应式。
+- 信息密度匹配使用模式：重复工作是紧凑的；叙事界面是可读的；沉浸式界面是有意构图的。
+- 操作和状态足够完整，让用户能完成工作流并从失败中恢复。
+- 内容保持在产品边界内，避免使用交付/运行时/构建/验证语言。
+- 设计系统或令牌源被一致地重用或扩展。

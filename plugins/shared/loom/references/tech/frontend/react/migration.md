@@ -1,76 +1,76 @@
-# React Migration
+# React 迁移
 
-Migrate only the task-owned React boundary and preserve observable behavior. A migration is not permission to modernize adjacent components, replace established libraries, or adopt APIs unsupported by the accepted React/framework version.
+仅迁移任务所属的 React 边界并保留可观察行为。迁移不是现代化相邻组件、替换已建立库或采用已接受 React/框架版本不支持的 API 的许可。
 
-## Migration Inventory
+## 迁移清单
 
-Before editing, identify the component public props, rendered states, events, route/store/context dependencies, subscriptions, timers, refs, error behavior, and tests. Record which behaviors must remain equivalent and which change is explicitly required.
+编辑前，标识组件的公共 props、渲染状态、事件、路由/store/context 依赖、订阅、定时器、refs、错误行为和测试。记录哪些行为必须保持等价以及哪些变更是明确要求的。
 
-Keep a class component when it is an error boundary, depends on class inheritance, or cannot be converted inside the task boundary without changing public behavior.
+当类组件是错误边界、依赖类继承或在不改变公共行为的情况下无法在任务边界内转换时，保留类组件。
 
-Prioritize changed, reusable, or correctness-sensitive components. Stable components outside the owned feature are not migration candidates.
+优先处理已变更的、可复用的或正确性敏感的组件。所属功能之外的稳定组件不是迁移候选。
 
-## Lifecycle Mapping
+## 生命周期映射
 
-Map behavior by purpose rather than translating each lifecycle mechanically:
+按目的映射行为而非机械翻译每个生命周期：
 
-| Class behavior | Functional design |
+| 类行为 | 函数式设计 |
 | --- | --- |
-| constructor state | `useState` lazy initialization or `useReducer` |
-| `componentDidMount` subscription | effect setup plus symmetric cleanup |
-| prop-sensitive update | render derivation, event handling, or dependency-complete effect |
-| `componentWillUnmount` | effect cleanup that cancels/disposes real work |
-| previous-state `setState` | functional update or reducer transition |
-| `shouldComponentUpdate` | measured `memo` boundary, often no replacement |
-| `getDerivedStateFromProps` | derive during render unless an editable draft is required |
-| `componentDidCatch` | retain a class error boundary or repository wrapper |
+| constructor state | `useState` 惰性初始化或 `useReducer` |
+| `componentDidMount` 订阅 | effect setup 加对称 cleanup |
+| prop 敏感更新 | 渲染派生、事件处理或依赖完整的 effect |
+| `componentWillUnmount` | 取消/释放真实工作的 effect cleanup |
+| previous-state `setState` | 函数式更新或 reducer 转换 |
+| `shouldComponentUpdate` | 已测量的 `memo` 边界，通常无需替代 |
+| `getDerivedStateFromProps` | 渲染期间派生，除非需要可编辑草稿 |
+| `componentDidCatch` | 保留类错误边界或仓库包装器 |
 
-Do not combine unrelated mount/update/unmount logic into one large effect. Separate subscriptions, browser integration, and replaceable async work so each has correct dependencies and cleanup.
+不要将不相关的 mount/update/unmount 逻辑合并到一个大 effect 中。将订阅、浏览器集成和可替换异步工作分开，使每个都有正确的依赖和清理。
 
-## State And Instance Fields
+## 状态与实例字段
 
-Use separate state for independent values and a reducer for coupled transitions such as idle/loading/success/failure or multi-field editing. Preserve class `setState` merge semantics explicitly; hook setters replace values.
+为独立值使用独立 state，为耦合转换（如 idle/loading/success/failure 或多字段编辑）使用 reducer。显式保留类 `setState` 合并语义；hook setter 替换值。
 
-Move mutable non-render fields such as timer IDs, DOM handles, previous values, and third-party instances to refs. UI-visible values remain state. Convert callbacks that depend on previous state to functional updates so rapid events do not lose transitions.
+将定时器 ID、DOM 句柄、先前值和第三方实例等可变非渲染字段移到 refs。UI 可见值保持为 state。将依赖先前状态的回调转换为函数式更新，使快速事件不会丢失转换。
 
-Do not mirror incoming props into state during conversion. Preserve a separate draft only when the user can edit independently of refreshed server data, and define reset/rebase behavior.
+转换期间不要将传入 props 镜像到 state。仅当用户可以独立于刷新的服务端数据进行编辑时保留单独草稿，并定义重置/rebase 行为。
 
-## HOC And Render-Prop Conversion
+## HOC 与 Render-Prop 转换
 
-Replace a HOC or render prop only when the resulting hook has a clear typed input/output contract and removes real nesting or duplication. Preserve provider order, subscription lifetime, ref forwarding, static metadata, display names used by tooling, and error/loading semantics.
+仅当结果 hook 有清晰的类型化输入/输出契约且移除真实嵌套或重复时才替换 HOC 或 render prop。保留 provider 顺序、订阅生命周期、ref 转发、静态元数据、工具使用的显示名称和错误/加载语义。
 
-Do not hide routing, authorization, tenant selection, API policy, or global side effects in a generic convenience hook. Keep those dependencies visible at the feature boundary.
+不要在通用便利 hook 中隐藏路由、授权、租户选择、API 策略或全局副作用。在功能边界保持这些依赖可见。
 
-## Context And Refs
+## Context 与 Refs
 
-When replacing legacy context, preserve provider scope and default-value failure behavior. A permissive fake default can make missing providers silently run with invalid state; use an explicit nullable context plus an invariant when absence is an error.
+替换遗留 context 时，保留 provider 范围和默认值失败行为。宽松的假默认值可能使缺失 provider 以无效状态静默运行；在缺失为错误时使用显式可空 context 加 invariant。
 
-Preserve the repository's ref convention. Use `forwardRef` for versions that require it; adopt ref-as-prop only when the accepted React version and types support it.
+保留仓库的 ref 约定。在需要它的版本上使用 `forwardRef`；仅在已接受 React 版本和类型支持时采用 ref-as-prop。
 
-## Incremental Delivery
+## 增量交付
 
-Keep public exports, routes, API payloads, selectors, analytics events, accessible names, focus behavior, and user-visible copy stable unless the requirement changes them. Avoid mixing migration with state-library, router, styling, or test-runner replacement.
+除非需求变更，否则保持公共导出、路由、API 载荷、选择器、分析事件、可访问名称、焦点行为和用户可见文案稳定。避免将迁移与状态库、路由、样式或测试 runner 替换混合。
 
-Migrate in a buildable slice. If old and new implementations coexist temporarily, keep a single source of truth and remove the temporary adapter inside the task when the cutover is complete.
+在可构建的切片中迁移。如果旧和新实现暂时共存，保持单一真相来源，并在切换完成后在任务内移除临时适配器。
 
 ## Verification
 
-- Capture focused behavior tests before conversion when existing coverage is absent or implementation-sensitive.
-- Prove initial render, prop changes, user events, validation/error states, and emitted payloads remain equivalent.
-- Exercise subscription/listener/timer disposal and replacement of stale async work on dependency change and unmount.
-- Run the repository typecheck, lint rules for hooks, focused component tests, and production build affected by changed exports.
-- Verify error-boundary behavior separately when a class boundary is intentionally retained.
+- 当现有覆盖缺失或实现敏感时，在转换前捕获聚焦行为测试。
+- 证明初始渲染、prop 变更、用户事件、验证/错误状态和发出的载荷保持等价。
+- 练习订阅/监听器/定时器释放和依赖变更及卸载时过期异步工作的替换。
+- 运行仓库 typecheck、hooks lint 规则、聚焦的组件测试和受变更导出影响的生产构建。
+- 在有意保留类边界时单独验证错误边界行为。
 
-## Delivery Evidence
+## 交付证据
 
-Name the migrated boundary, the lifecycle/state mapping decisions, the retained exceptions, and the behavior assertions proving parity. A successful compile or smaller component file does not prove lifecycle, cleanup, focus, error, or data-flow equivalence.
+命名迁移的边界、生命周期/状态映射决策、保留的例外和证明等价的行为断言。成功编译或更小的组件文件不能证明生命周期、清理、焦点、错误或数据流等价。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Repository-wide class conversion attached to a feature task.
-- One effect that imitates several unrelated lifecycle methods.
-- Mounted flags used instead of cancellation or stale-result ordering.
-- Hook dependency lint suppression introduced to preserve old behavior.
-- HOCs replaced with hooks that hide broader global dependencies.
-- Error boundaries removed because no hook equivalent exists.
-- Memoization added mechanically during migration without a measured boundary.
+- 附着在功能任务上的全仓库类转换。
+- 一个模仿多个不相关生命周期方法的 effect。
+- 用挂载标志代替取消或过期结果排序。
+- 为保留旧行为而引入的 hook 依赖 lint 抑制。
+- 用隐藏更广泛全局依赖的 hook 替换 HOC。
+- 因为没有 hook 等价物而移除错误边界。
+- 迁移期间在无已测量边界的情况下机械添加记忆化。

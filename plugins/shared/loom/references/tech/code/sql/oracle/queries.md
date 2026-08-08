@@ -1,64 +1,64 @@
-# Oracle Query Semantics
+# Oracle 查询语义
 
-Use this file with `tech/code/sql/queries.md` when an Oracle task owns query behavior, repository queries, CRUD reads/writes, pagination, JSON access, or query-plan changes.
+当 Oracle 任务拥有查询行为、repository 查询、CRUD 读写、分页、JSON 访问或查询计划变更时，将此文件与 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Confirm Oracle version, compatibility mode, driver/ORM query mode, optimizer assumptions, and existing indexes before using provider-specific syntax.
-- Preserve the common SQL result shape, authorization filters, and deterministic ordering.
-- Do not add an Oracle-only feature when a portable query satisfies the accepted behavior without a measured need.
+- 在使用提供者特定语法之前，确认 Oracle 版本、兼容模式、驱动程序/ORM 查询模式、优化器假设和现有索引。
+- 保持公共 SQL 结果形态、授权过滤和确定性排序。
+- 当可移植查询在没有测量需求的情况下满足已接受行为时，不要添加 Oracle 专有特性。
 
 ## Implementation Focus
 
-- Use `OFFSET ... FETCH` when supported by the accepted Oracle version; keep older `ROWNUM` pagination isolated and prove its ordering semantics.
-- Use `COALESCE` or `NVL` deliberately, including datatype conversion and null behavior. Character empty strings are `NULL` and must not be treated as a separate value.
-- Use analytic functions for ranking, top-N-per-group, and comparisons when they preserve the result contract. Keep partition, order, tie-breaker, and frame explicit.
-- Use JSON functions, `LISTAGG`, or `MERGE` only when Oracle version, overflow/conflict behavior, and result shape are accepted. For upserts, define conflict key, update columns, no-op behavior, and retry safety explicitly.
-- Keep casts, NLS-sensitive conversions, functions on indexed columns, and collation visible because they can change results and access plans.
+- 当已接受的 Oracle 版本支持时使用 `OFFSET ... FETCH`；将较旧的 `ROWNUM` 分页隔离并证明其排序语义。
+- 有意使用 `COALESCE` 或 `NVL`，包括数据类型转换和 null 行为。字符空字符串为 `NULL`，不得视为单独值。
+- 当分析函数保留结果契约时，用于排名、每组 top-N 和比较。保持分区、排序、决胜键和框架显式。
+- 仅当 Oracle 版本、溢出/冲突行为和结果形态被接受时才使用 JSON 函数、`LISTAGG` 或 `MERGE`。对于 upsert，显式定义冲突键、更新列、无操作行为和重试安全性。
+- 保持转换、NLS 敏感转换、索引列上的函数和排序规则可见，因为它们可能改变结果和访问计划。
 
 ## Index And Pagination Alignment
 
-- Design indexes from equality, range, join, and ordering predicates. Function-based indexes must match the query expression and migration contract.
-- Inspect the Oracle execution plan for performance work. A correct result or a new index is not proof of lower scan, join, or sort cost.
-- Record representative data assumptions when cardinality, bind variables, or plan selection depends on distribution.
+- 从等值、范围、连接和排序谓词设计索引。基于函数的索引必须匹配查询表达式和迁移契约。
+- 为性能工作检查 Oracle 执行计划。正确结果或新索引不是更低扫描、连接或排序成本的证明。
+- 当基数、绑定变量或计划选择依赖分布时，记录代表性数据假设。
 
 ## Plan Review
 
-- Check access path, estimated versus actual rows where available, join cardinality, sort work, implicit conversions, and function-based index use.
-- Compare the plan with the expected filter and ordering path. Do not force a plan or hint until provider evidence shows the optimizer choice is harmful for the owned workload.
+- 检查访问路径、估计与实际行（如可用）、连接基数、排序工作、隐式转换和基于函数的索引使用。
+- 将计划与预期过滤和排序路径比较。在提供者证据显示优化器选择对拥有的工作负载有害之前，不要强制计划或提示。
 
 ## Read And Write Boundary
 
-- Return only fields required by the service or API contract; do not expose storage-only columns.
-- Keep authorization, tenant, and soft-delete predicates in the query boundary that owns the read or write.
-- For retries, preserve the uniqueness/conflict rule and make duplicate execution observable and safe.
+- 仅返回服务或 API 契约所需的字段；不暴露仅存储列。
+- 将授权、租户和软删除谓词保留在拥有读取或写入的查询边界中。
+- 为重试保留唯一性/冲突规则并使重复执行可观察且安全。
 
 ## Review Questions
 
-- What exact behavior requires this query?
-- Which Oracle feature and version support it?
-- Which index, ordering, cast, JSON path, NLS rule, or affected-row behavior does it depend on?
-- Which empty-string/null, duplicate, timestamp, and boundary cases prove the result shape?
+- 什么确切行为需要此查询？
+- 哪个 Oracle 特性和版本支持它？
+- 查询依赖哪个索引、排序、转换、JSON 路径、NLS 规则或受影响行行为？
+- 哪些空字符串/null、重复、时间戳和边界情况证明了结果形态？
 
 ## Transactions And Mutations
 
-- Keep multi-row mutations inside the application transaction boundary defined by Architecture.
-- Define `SELECT FOR UPDATE` or other locking only for a named invariant, with timeout and retry behavior owned by the application layer.
-- Handle serialization, deadlock, and transient failures with bounded retry and idempotency.
+- 将多行变更保留在 Architecture 定义的应用事务边界内。
+- 仅对命名不变式定义 `SELECT FOR UPDATE` 或其他锁定，超时和重试行为由应用层拥有。
+- 以有界重试和幂等性处理序列化、死锁和瞬态失败。
 
 ## Verification Focus
 
-- Test empty results, null and empty-string values, duplicate-prone joins, boundary dates/numbers, stable pagination, JSON extraction, and business filters relevant to the query.
-- For a plan or index change, record Oracle version/mode, query shape, relevant index, and plan observation.
-- For writes, prove affected-row behavior and read-back against Oracle when provider behavior is part of the change.
+- 测试空结果、null 和空字符串值、易重复连接、边界日期/数字、稳定分页、JSON 提取和与查询相关的业务过滤。
+- 对于计划或索引变更，记录 Oracle 版本/模式、查询形态、相关索引和计划观察。
+- 对于写入，当提供者行为是变更的一部分时，针对 Oracle 证明受影响行行为和回读。
 
 ## Evidence Focus
 
-- Name the query decision proved: result shape, predicate/index alignment, pagination, provider function, null semantics, affected-row behavior, or read-back proof.
+- 说明已证明的查询决策：结果形态、谓词/索引对齐、分页、提供者函数、null 语义、受影响行行为或回读证明。
 
 ## Risks To Avoid
 
-- Treating empty strings as ordinary non-null values.
-- Relying on session NLS settings or implicit conversion in a query contract.
-- Using `MERGE`, hints, or provider functions without version-specific evidence.
-- Claiming Oracle compatibility from a different provider's query test.
+- 将空字符串视为普通非 null 值。
+- 在查询契约中依赖会话 NLS 设置或隐式转换。
+- 在没有版本特定证据的情况下使用 `MERGE`、提示或提供者函数。
+- 从不同提供者的查询测试声称 Oracle 兼容性。

@@ -1,104 +1,104 @@
-# Data Architecture
+# 数据架构
 
-Use this reference when Architecture needs to describe data ownership, transactions, invariants, migrations, and consistency. Do not use it to choose a concrete database product; Technical Baseline owns that selection.
+当架构需要描述数据所有权、事务、不变量、迁移和一致性时使用本引用。不要用它选择具体数据库产品；技术基线拥有该选择。
 
-## Inputs
+## 输入
 
-Read the confirmed technical baseline for selected persistence technologies and frameworks. Then decide how the current phase should use them.
+读取已确认的技术基线以获取已选持久化技术和框架。然后决定当前阶段应如何使用它们。
 
-Examples:
+示例：
 
-- If the baseline selected relational storage, define table/entity ownership, constraints, transaction boundaries, and migration expectations.
-- If the baseline selected document storage, define aggregate boundaries, document shape ownership, query shape, and update consistency.
-- If the baseline selected key-value/cache storage, define source of truth, cache invalidation, TTL, and fallback behavior.
-- If the baseline selected search storage, define source-of-truth sync, indexed fields, stale index behavior, and rebuild expectations.
-- If the baseline selected time-series storage, define timestamp ownership, retention, rollups, late-arriving data, and query windows.
-- If the baseline selected graph storage, define node/edge ownership, traversal boundaries, and consistency with source entities.
-- If the baseline selected object/file storage, define metadata ownership, lifecycle, access control, cleanup, and link persistence.
-- If the baseline selected no persistence for this phase, record why state is derived, in-memory, or deferred.
+- 如果基线选择了关系存储，定义表/实体所有权、约束、事务边界和迁移期望。
+- 如果基线选择了文档存储，定义聚合边界、文档形态所有权、查询形态和更新一致性。
+- 如果基线选择了键值/缓存存储，定义事实来源、缓存失效、TTL 和回退行为。
+- 如果基线选择了搜索存储，定义事实来源同步、索引字段、陈旧索引行为和重建期望。
+- 如果基线选择了时序存储，定义时间戳所有权、保留、聚合、迟到数据和查询窗口。
+- 如果基线选择了图存储，定义节点/边所有权、遍历边界和与源实体的一致性。
+- 如果基线选择了对象/文件存储，定义元数据所有权、生命周期、访问控制、清理和链接持久性。
+- 如果基线选择本阶段不做持久化，记录为何状态是派生的、内存中的或推迟的。
 
-## Required Decisions
+## 必需决策
 
-| Area | Architecture Output |
+| 领域 | 架构输出 |
 |---|---|
-| Ownership | Which module owns each entity, aggregate, or table/document. |
-| Invariants | Which rules must be enforced before data is written or state changes. |
-| Transactions | Which operations must be atomic and what can be eventually consistent. |
-| Relationships | Which relationships are strong references, weak references, denormalized values, or derived views. |
-| Migrations | What schema/data change is needed and which module or component owns it. |
-| Read models | Which list/detail/search/query views are required and what fields they expose. |
-| Failure behavior | How duplicate, stale, invalid, or partial writes are handled. |
-| Retention and cleanup | Which records/files/events expire, archive, or require manual cleanup when current scope creates durable data. |
-| Derived data | How indexes, projections, cached values, or denormalized fields are rebuilt and verified. |
+| 所有权 | 哪个模块拥有每个实体、聚合或表/文档。 |
+| 不变量 | 在数据写入或状态变更前必须执行哪些规则。 |
+| 事务 | 哪些操作必须原子化，哪些可以最终一致。 |
+| 关系 | 哪些关系是强引用、弱引用、反规范化值或派生视图。 |
+| 迁移 | 需要什么 schema/数据变更以及哪个模块或组件拥有它。 |
+| 读取模型 | 需要哪些列表/详情/搜索/查询视图以及它们暴露哪些字段。 |
+| 失败行为 | 如何处理重复、陈旧、无效或部分写入。 |
+| 保留和清理 | 当当前范围创建持久数据时，哪些记录/文件/事件过期、归档或需要手动清理。 |
+| 派生数据 | 如何重建和验证索引、投影、缓存值或反规范化字段。 |
 
-## Store-Specific Modeling
+## 存储特定建模
 
-Use selected storage facts from Technical Baseline; do not select a new product here.
+使用技术基线中已选的存储事实；不要在此选择新产品。
 
-| Store Shape | Architecture Should Define |
+| 存储形态 | 架构应定义 |
 |---|---|
-| Relational | entity/table owner, constraints, joins, transaction boundary, migration owner, index expectation. |
-| Document | aggregate document owner, embedded vs referenced data, update atomicity, schema compatibility, query projections. |
-| Key-value/cache | source of truth, key namespace, TTL, invalidation, fallback, cache miss behavior. |
-| Search | indexed fields, analyzer/search behavior if relevant, sync trigger, stale result tolerance, rebuild strategy. |
-| Time-series | timestamp semantics, retention, aggregation/rollup, late data handling, query window limits. |
-| Graph | node/edge ownership, traversal depth, consistency with source records, cycle or orphan handling. |
-| Object/file | metadata record, storage key ownership, access policy, cleanup on failed writes, orphan detection. |
+| 关系 | 实体/表拥有者、约束、join、事务边界、迁移拥有者、索引期望。 |
+| 文档 | 聚合文档拥有者、嵌入 vs 引用数据、更新原子性、schema 兼容性、查询投影。 |
+| 键值/缓存 | 事实来源、键命名空间、TTL、失效、回退、缓存未命中行为。 |
+| 搜索 | 索引字段、分析器/搜索行为（如相关）、同步触发器、陈旧结果容忍度、重建策略。 |
+| 时序 | 时间戳语义、保留、聚合/rollup、迟到数据处理、查询窗口限制。 |
+| 图 | 节点/边所有权、遍历深度、与源记录的一致性、循环或孤立处理。 |
+| 对象/文件 | 元数据记录、存储键所有权、访问策略、写入失败时清理、孤立检测。 |
 
-## Concurrency And Evolution
+## 并发和演进
 
-- Define identifier generation and uniqueness ownership when records can be created concurrently or imported from another system.
-- State whether conflicting writes use serialization, optimistic concurrency, explicit version checks, idempotency, or a domain-level rejection.
-- Keep migration steps compatible with the selected provider and the runtime versions that may overlap during rollout.
-- Separate schema creation, data backfill, constraint activation, and cleanup when they cannot complete safely in one change.
-- Define rollback or forward-repair behavior for destructive, long-running, or partially applied migrations.
-- Treat seed/reference data as versioned business data when behavior depends on it; name its owner and update rule.
+- 当记录可能被并发创建或从另一系统导入时，定义标识符生成和唯一性所有权。
+- 说明冲突写入是使用序列化、乐观并发、显式版本检查、幂等性还是领域级拒绝。
+- 保持迁移步骤与所选 provider 和部署期间可能重叠的运行时版本兼容。
+- 当 schema 创建、数据回填、约束激活和清理无法在一次变更中安全完成时，将它们分开。
+- 为破坏性、长时间运行或部分应用的迁移定义回滚或前向修复行为。
+- 当行为依赖种子/引用数据时，将其视为版本化业务数据；命名其拥有者和更新规则。
 
-## Current Phase Fit
+## 当前阶段适配
 
-Keep data architecture scoped to the active phase:
+将数据架构保持在活跃阶段范围内：
 
-- Do not model future entities just because later phases may use them.
-- Do not create generic "User", "Config", or "Audit" entities unless the phase requires them.
-- Do not add cache/search/queue storage unless a current requirement depends on it.
-- Do not weaken domain invariants to simplify scaffolding.
+- 不要仅因为后续阶段可能使用就建模未来实体。
+- 不要创建通用"User"、"Config"或"Audit"实体，除非阶段需要它们。
+- 不要添加缓存/搜索/队列存储，除非当前需求依赖它。
+- 不要为简化脚手架而削弱领域不变量。
 
-## NFR Hooks
+## NFR 钩子
 
-Create NFR entries when data architecture creates quality obligations:
+当数据架构产生质量义务时创建 NFR 条目：
 
-- data integrity: constraints, uniqueness, lifecycle safety
-- reliability: transactional boundary, retry, idempotency
-- performance: index/query expectation, pagination, bounded reads
-- maintainability: migration readability, provider-compatible mappings
-- observability: lifecycle events or error logging for critical transitions
+- 数据完整性：约束、唯一性、生命周期安全
+- 可靠性：事务边界、重试、幂等性
+- 性能：索引/查询期望、分页、有界读取
+- 可维护性：迁移可读性、provider 兼容映射
+- 可观测性：关键转换的生命周期事件或错误日志
 
-## Risk Hooks
+## 风险钩子
 
-Create risk entries for:
+为以下情况创建风险条目：
 
-- schema and domain model drift
-- provider type mismatch
-- validation existing only in UI
-- partial write across multiple stores
-- read model exposing stale or incomplete business state
-- hidden dependency on default ORM/framework behavior
-- orphaned files, stale search indexes, expired cache surviving source updates, or graph edges drifting from source records
+- schema 和领域模型漂移
+- provider 类型不匹配
+- 校验仅存在于 UI
+- 跨多个存储的部分写入
+- 读取模型暴露陈旧或不完整的业务状态
+- 对默认 ORM/框架行为的隐藏依赖
+- 孤立文件、陈旧搜索索引、过期缓存在源更新后仍存活，或图边与源记录漂移
 
-## Anti-Patterns
+## 反模式
 
-- Re-selecting the database in Architecture.
-- Writing entities without owner modules.
-- Treating DTO fields, entity fields, and persistence columns as unrelated.
-- Deferring validation until UI or tests only.
-- Omitting migration impact for persistent fields.
+- 在架构中重新选择数据库。
+- 编写没有拥有者模块的实体。
+- 将 DTO 字段、实体字段和持久化列视为不相关的。
+- 直到 UI 或测试才推迟校验。
+- 对持久化字段省略迁移影响。
 
-## Verification Evidence
+## 验证证据
 
-Useful evidence connects the architecture rule to the selected store and code path:
+有用的证据将架构规则连接到所选存储和代码路径：
 
-- constraint and mapping agreement
-- transaction or concurrency behavior under the declared conflict
-- migration behavior against the selected provider
-- bounded query/read-model behavior
-- cleanup, rebuild, or forward-repair behavior for lifecycle and derived data
+- 约束和映射一致性
+- 声明冲突下的事务或并发行为
+- 针对所选 provider 的迁移行为
+- 有界查询/读取模型行为
+- 生命周期和派生数据的清理、重建或前向修复行为

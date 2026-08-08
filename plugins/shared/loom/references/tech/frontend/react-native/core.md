@@ -1,71 +1,71 @@
-# React Native Screen And Component Delivery
+# React Native 屏幕与组件交付
 
-Implement task-owned mobile workflows within the repository's Expo or bare React Native runtime, renderer version, navigation, styling system, state/data libraries, native-module policy, and mobile UI contract. Do not transfer DOM/CSS/browser patterns into native components.
+在仓库的 Expo 或裸 React Native 运行时、渲染器版本、导航、样式系统、状态/数据库、原生模块策略和移动 UI 契约内实现任务所属的移动工作流。不要将 DOM/CSS/浏览器模式转移到原生组件中。
 
-## Runtime Boundary
+## 运行时边界
 
-Confirm whether the app uses Expo managed/prebuild, bare React Native, Expo Router, React Navigation, the new architecture, Hermes, and platform-specific native projects. Keep dependencies and APIs compatible with those accepted versions.
+确认应用使用 Expo managed/prebuild、裸 React Native、Expo Router、React Navigation、新架构、Hermes 还是平台特定原生项目。保持依赖和 API 与那些已接受版本兼容。
 
-Use the repository package manager and framework-aware installer where required. Adding a JavaScript import is not enough when a library needs an Expo config plugin, native linking, CocoaPods/Gradle work, permissions, or a development-client rebuild.
+在需要时使用仓库包管理器和框架感知安装器。当库需要 Expo config plugin、原生链接、CocoaPods/Gradle 工作、权限或 development-client 重建时，仅添加 JavaScript 导入是不够的。
 
-Keep secrets and privileged policy out of the bundle. Native applications are distributed client code; hidden screens, local flags, and device storage do not enforce authorization.
+将密钥和特权策略排除在包之外。原生应用是分发的客户端代码；隐藏屏幕、本地标志和设备存储不执行授权。
 
-## Screen And Component Ownership
+## 屏幕与组件所有权
 
-Screens orchestrate route params, task-owned data/state, product states, and navigation intent. Reusable components receive typed values and emit commands with stable target identity; they should not hide routing, storage, API, permissions, or analytics work.
+屏幕编排路由参数、任务所属的数据/状态、产品状态和导航意图。可复用组件接收类型化值并发出带稳定目标标识的命令；它们不应隐藏路由、存储、API、权限或分析工作。
 
-Split at independent workflow, state, platform, or reuse boundaries. Avoid monolithic screens combining list/detail/form/sheet/transport and avoid generic components controlled by many unrelated boolean props.
+在独立工作流、状态、平台或复用边界拆分。避免组合列表/详情/表单/sheet/传输的单一屏幕，避免由许多不相关布尔 prop 控制的通用组件。
 
-Use `View`, `Text`, `Pressable`, `TextInput`, list primitives, and established design-system components according to their native semantics. Web elements, CSS selectors, hover-only behavior, and browser globals are not portable substitutes.
+按其原生语义使用 `View`、`Text`、`Pressable`、`TextInput`、列表原语和已建立的设计系统组件。Web 元素、CSS 选择器、仅 hover 行为和浏览器全局变量不是可移植替代。
 
-## Workflow State And Forms
+## 工作流状态与表单
 
-Represent owned initial loading, refreshing, empty, ready, offline/unavailable, validation, forbidden, conflict/stale, submitting, success, disabled, and retry states near the affected region.
+在受影响区域附近表示所属的初始加载、刷新、空、就绪、离线/不可用、验证、禁止、冲突/过期、提交中、成功、禁用和重试状态。
 
-Keep editable drafts separate from persisted/server records. Preserve valid values after rejection, associate field/global errors, block duplicate submit, and reconcile returned identity/version/status before navigating or replacing visible data.
+将可编辑草稿与持久化/服务端记录分开。拒绝后保留有效值，关联字段/全局错误，阻止重复提交，并在导航或替换可见数据之前协调返回的标识/版本/状态。
 
-Configure keyboard/input behavior deliberately: capitalization, autocorrect, content type, keyboard type, return key, secure entry, multiline behavior, submit sequence, and dismissal. Do not rely on placeholder text as the only label.
+有意识地配置键盘/输入行为：大小写、自动更正、内容类型、键盘类型、返回键、安全输入、多行行为、提交序列和关闭。不要依赖占位文本作为唯一标签。
 
-## Identity And Interaction
+## 标识与交互
 
-Use stable record IDs for keys, navigation params, selected records, optimistic operations, and action payloads. Bind a press/swipe/menu action to the displayed item rather than mutable global selection or row index.
+为键、导航参数、选定记录、乐观操作和操作载荷使用稳定的记录 ID。将按压/滑动/菜单操作绑定到显示的条目而非可变全局选择或行索引。
 
-Respect minimum touch targets, pressed/disabled feedback, gesture conflicts, and screen-reader names/roles/state. An icon-only action needs an accessible label; decorative elements should not create noisy focus stops.
+尊重最小触摸目标、按下/禁用反馈、手势冲突和屏幕阅读器名称/角色/状态。仅图标操作需要可访问标签；装饰元素不应创建嘈杂的焦点停止。
 
-Preserve focus and announcement behavior for validation errors, completed actions, dialogs/sheets, and navigation transitions. Product copy must remain user-facing rather than exposing framework, runtime, delivery, or verification instructions.
+为验证错误、完成的操作、对话框/sheet 和导航转换保留焦点和宣告行为。产品文案必须面向用户而非暴露框架、运行时、交付或验证指令。
 
-## Styling And Layout
+## 样式与布局
 
-Use the repository token/theme/style system. `StyleSheet.create` is useful for stable reusable styles, but inline styles are acceptable for small dynamic values; optimize allocation only on measured hot paths.
+使用仓库令牌/主题/样式系统。`StyleSheet.create` 适用于稳定可复用样式，但内联样式适用于小型动态值；仅在已测量的热路径上优化分配。
 
-Use flex, measured/window dimensions, safe-area insets, and responsive breakpoints appropriate to phones, tablets, split screen, font scaling, and orientation. Avoid hardcoded screen dimensions and assumptions based on one simulator.
+使用适合手机、平板、分屏、字体缩放和方向的 flex、已测量/窗口尺寸、安全区域 inset 和响应式断点。避免硬编码屏幕尺寸和基于一个模拟器的假设。
 
-Provide image dimensions/aspect behavior, loading/failure fallback, memory-aware sizing, and established caching. Do not ship oversized source assets for small list thumbnails.
+提供图像尺寸/宽高行为、加载/失败回退、内存感知大小调整和已建立的缓存。不要为小型列表缩略图发布过大源资源。
 
-## Effects And Native Resources
+## Effect 与原生资源
 
-Dispose listeners, timers, observers, sensors, app-state subscriptions, deep-link handlers, and native module instances. Cancel or order replaceable requests so navigation/filter changes cannot let stale work overwrite current state.
+释放监听器、定时器、观察者、传感器、app 状态订阅、深链接处理器和原生模块实例。取消或排序可替换请求，使导航/筛选变更不能让过期工作覆盖当前状态。
 
-Treat app background/foreground, interrupted permissions, process recreation, and navigation remounts as normal lifecycle events when the task owns those integrations.
+当任务拥有那些集成时，将 app 后台/前台、中断的权限、进程重建和导航重新挂载视为正常生命周期事件。
 
 ## Verification
 
-- Run focused type, lint, component/screen test, Metro, and native build checks supplied by the repository.
-- Exercise owned product states, form draft/error/readback, stable action targets, accessibility, font scaling, and representative phone/tablet dimensions.
-- Verify native dependency/config changes through the affected Expo prebuild/development-client or native project boundary.
-- Check both platforms when the task owns platform differences; otherwise report the actual platform/runtime evidence without claiming parity.
-- Confirm listener/resource cleanup by leaving and re-entering the screen or changing the owning dependency.
+- 运行仓库提供的聚焦类型、lint、组件/屏幕测试、Metro 和原生构建检查。
+- 练习所属的产品状态、表单草稿/错误/回读、稳定操作目标、可访问性、字体缩放和代表性手机/平板尺寸。
+- 通过受影响的 Expo prebuild/development-client 或原生项目边界验证原生依赖/配置变更。
+- 当任务拥有平台差异时检查两个平台；否则报告实际平台/运行时证据而不声称对等。
+- 通过离开和重新进入屏幕或变更所属依赖来确认监听器/资源清理。
 
-## Delivery Evidence
+## 交付证据
 
-Name the screen/component boundary, runtime, stable target, native dependency or lifecycle decision, and visible assertion proving it. Metro startup or one simulator screenshot cannot prove form recovery, platform behavior, accessibility, native integration, or lifecycle safety.
+命名屏幕/组件边界、运行时、稳定目标、原生依赖或生命周期决策和证明它的可见断言。Metro 启动或一张模拟器截图不能证明表单恢复、平台行为、可访问性、原生集成或生命周期安全。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Web DOM/CSS/browser APIs used inside native surfaces.
-- Expo and bare-native installation steps mixed without checking the repository runtime.
-- Screens hiding infrastructure and navigation behind generic components.
-- Row index or mutable selection used as command identity.
-- Fixed dimensions copied from one device.
-- Every style/callback memoized without a measured boundary.
-- Native subscriptions or modules left active after navigation.
+- 在原生界面内使用 Web DOM/CSS/浏览器 API。
+- 在不检查仓库运行时的情况下混合 Expo 和裸原生安装步骤。
+- 屏幕在通用组件后隐藏基础设施和导航。
+- 行索引或可变选择用作命令标识。
+- 从一个设备复制的固定尺寸。
+- 在无已测量边界的情况下每个样式/回调都记忆化。
+- 导航后仍活跃的原生订阅或模块。

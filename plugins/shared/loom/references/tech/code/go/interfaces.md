@@ -1,82 +1,82 @@
-# Go Consumer Interfaces And Adapters
+# Go 消费者接口与适配器
 
 ## When To Use
 
-Use this reference only when the task explicitly owns a dependency seam, interface/protocol contract, adapter, constructor, functional options, or testable boundary. Do not create an interface only because one implementation exists.
+仅当任务显式拥有依赖接缝、接口/协议契约、适配器、构造函数、函数选项或可测试边界时才使用此参考。不要仅因为存在一个实现就创建接口。
 
 ## Implementation Focus
 
 ### Define At The Consumer
 
-Define the smallest interface in the package that consumes behavior when practical. The provider may expose a concrete type; consumers describe only methods they need.
+在可行时在消费行为的包中定义最小接口。提供者可以暴露具体类型；消费者仅描述它们需要的方法。
 
-Name interfaces by behavior/capability (`Reader`, `Store`, `Clock`, `Sender`) and avoid broad `Service`/repository interfaces mirroring every concrete method.
+按行为/能力命名接口（`Reader`、`Store`、`Clock`、`Sender`），避免镜像每个具体方法的宽泛 `Service`/repository 接口。
 
-Accept interfaces and return concrete types by default so callers retain capabilities without forcing mocks/factories. Return interfaces only for intentional hidden implementations/plugins or established APIs.
+默认接受接口并返回具体类型，使调用者保留能力而不被迫使用 mock/工厂。仅为有意的隐藏实现/插件或已建立的 API 返回接口。
 
 ### Standard Interfaces
 
-Reuse `io.Reader`, `io.Writer`, `io.Closer`, `fs.FS`, `http.Handler`, `error`, encoding interfaces, `sort.Interface`, or repository-standard contracts before inventing equivalents.
+在发明等效方案之前复用 `io.Reader`、`io.Writer`、`io.Closer`、`fs.FS`、`http.Handler`、`error`、编码接口、`sort.Interface` 或仓库标准契约。
 
-Compose small standard/local interfaces only when the consumer truly needs the combined capability. Embedding can accidentally expand API compatibility requirements.
+仅当消费者真正需要组合能力时组合小型标准/本地接口。嵌入可能意外扩大 API 兼容性要求。
 
-Honor semantic contracts beyond method signatures: short writes/reads, EOF, Close idempotency, context cancellation, ownership, and concurrency safety.
+遵守方法签名之外的语义契约：短写/短读、EOF、Close 幂等性、context 取消、所有权和并发安全。
 
 ### Method Sets And Satisfaction
 
-Choose pointer/value receivers deliberately because method sets determine which type satisfies an interface. Avoid changing receiver kind on published types without consumer compatibility review.
+有意选择指针/值接收者，因为方法集决定哪个类型满足接口。避免在已发布类型上更改接收者类型而不进行消费者兼容性审查。
 
-Compile-time satisfaction assertions are useful for important exported adapters/framework contracts and can document intended implementation; do not add boilerplate for every private fake.
+编译时满足断言对重要的导出适配器/框架契约有用，可以记录预期实现；不要为每个私有 fake 添加样板。
 
-Type assertions/switches belong at dynamic integration/plugin/serialization boundaries with checked failure. Normal domain behavior usually belongs in interface methods or explicit variants.
+类型断言/switch 属于动态集成/插件/序列化边界并带有检查过的失败。正常领域行为通常属于接口方法或显式变体。
 
 ### Nil Interface Safety
 
-An interface containing a typed nil pointer is non-nil. Constructors should reject missing dependencies, and methods should not rely on `if dep == nil` after accepting arbitrary implementations.
+包含类型化 nil 指针的接口是非 nil 的。构造函数应拒绝缺失依赖，方法不应在接受任意实现后依赖 `if dep == nil`。
 
-Avoid returning typed-nil concrete pointers as errors/interfaces. Test nil/typed-nil behavior when an adapter can produce it.
+避免返回类型化 nil 具体指针作为 error/interface。当适配器可能产生它时测试 nil/类型化 nil 行为。
 
-Do not use pointer-to-interface; interfaces already carry dynamic type/value.
+不要使用指向接口的指针；接口已经携带动态类型/值。
 
 ### Constructors And Options
 
-Constructors accept required dependencies/config and validate them. Return an error when configuration can be invalid; avoid partially usable objects.
+构造函数接受必需的依赖/配置并验证它们。当配置可能无效时返回错误；避免部分可用的对象。
 
-Functional options fit many optional settings with stable defaults and composability. They must not hide required dependencies, order-sensitive conflicts, mutable shared config, or validation.
+函数选项适合许多可选设置且具有稳定默认值和可组合性。它们不得隐藏必需依赖、顺序敏感冲突、可变共享配置或验证。
 
-For simple few options, an explicit config struct is clearer. Copy caller-owned slices/maps or document retention/immutability.
+对于简单的少量选项，显式配置结构体更清晰。拷贝调用者拥有的 slice/map 或记录保留/不可变性。
 
 ### Adapters And Boundaries
 
-Adapters translate provider types/errors/lifecycle into consumer contracts. Keep provider clients and DTOs from leaking into domain packages.
+适配器将提供者类型/错误/生命周期转换为消费者契约。保持提供者客户端和 DTO 不泄露到领域包。
 
-Preserve context, cancellation, idempotency, transactions, retries, and resource ownership. Do not make a thin interface that hides critical semantics callers need.
+保留 context、取消、幂等性、事务、重试和资源所有权。不要制作隐藏调用者需要的关键语义的薄接口。
 
-Keep observability/logging at suitable adapter/application boundaries without wrapping every method solely to log.
+在合适的适配器/应用边界保持可观测性/日志，而不是仅为记录而包装每个方法。
 
 ### Testing Seams
 
-Prefer small hand-written fakes/stubs for narrow interfaces. Generate mocks only with repository tooling and keep generated files/version commands owned.
+为窄接口优先使用小型手写 fake/stub。仅使用仓库工具生成 mock 并保持生成文件/版本命令被拥有。
 
-Do not add production interfaces solely to mock internal pure logic. Test concrete behavior directly when substitution is not needed.
+不要仅为 mock 内部纯逻辑而添加生产接口。当不需要替换时直接测试具体行为。
 
 ## Verification Focus
 
-- Compile important implementations against the consumer interface.
-- Test constructor required/default/invalid options and typed-nil traps.
-- Exercise adapter translation of success, typed/provider errors, cancellation, partial results, and cleanup.
-- Verify only consumer-used methods remain and dependency direction avoids cycles.
-- Run downstream consumer builds when exported method sets/interfaces change.
+- 针对消费者接口编译重要实现。
+- 测试构造函数必需/默认/无效选项和类型化 nil 陷阱。
+- 演练适配器对成功、类型化/提供者错误、取消、部分结果和清理的转换。
+- 验证仅保留消费者使用的方法且依赖方向避免循环。
+- 当导出方法集/接口变更时运行下游消费者构建。
 
 ## Evidence Focus
 
-Name consumer, required behavior/semantics, concrete adapters, constructor/options policy, and consumer/adapter tests. Interface existence or generated mocks do not establish a useful abstraction.
+说明消费者、必需行为/语义、具体适配器、构造函数/选项策略和消费者/适配器测试。接口存在或生成 mock 不建立有用的抽象。
 
 ## Unsafe Defaults
 
-- Interface created beside provider to mirror one concrete type.
-- God interface combining unrelated capabilities.
-- Pointer-to-interface or typed-nil dependency accepted silently.
-- Functional options hiding required dependencies or invalid combinations.
-- Provider types/errors/lifecycle leaking through adapter contract.
-- Production abstraction added only to satisfy a mocking tool.
+- 在提供者旁边创建接口以镜像一个具体类型。
+- 组合不相关能力的 God 接口。
+- 指向接口的指针或类型化 nil 依赖被静默接受。
+- 函数选项隐藏必需依赖或无效组合。
+- 提供者类型/错误/生命周期通过适配器契约泄露。
+- 仅为满足 mock 工具而添加生产抽象。

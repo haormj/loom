@@ -1,20 +1,20 @@
-# UIX Token: Radius And Elevation
+# UIX 令牌：圆角和阴影
 
-Load this file when styling cards, panels, inputs, buttons, modals, drawers, menus, popovers, charts, or layered surfaces.
+在样式化卡片、面板、输入、按钮、模态、抽屉、菜单、弹出框、图表或分层界面时加载此文件。
 
-## Radius
+## 圆角
 
-Use radius as a system:
+将圆角作为系统使用：
 
-- `radius-none`: tables, sharp enterprise surfaces, code/log panels when appropriate.
-- `radius-sm`: 4px for dense inputs, table chips, compact controls.
-- `radius-md`: 6-8px for buttons, cards, fields, panels.
-- `radius-lg`: 10-12px for modals, drawers, mobile cards.
-- Larger radii only when the brand or mobile-native platform expects it.
+- `radius-none`：表格、锐利的企业界面、代码/日志面板（适当时）。
+- `radius-sm`：4px，用于密集输入、表格芯片、紧凑控件。
+- `radius-md`：6-8px，用于按钮、卡片、字段、面板。
+- `radius-lg`：10-12px，用于模态、抽屉、移动卡片。
+- 仅当品牌或移动原生平台期望时使用更大圆角。
 
-Cards should usually be 8px or less unless an existing design system says otherwise.
+除非现有设计系统另有说明，卡片通常应为 8px 或更小。
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
 ```css
 :root {
@@ -32,57 +32,52 @@ Cards should usually be 8px or less unless an existing design system says otherw
 }
 ```
 
-## Elevation
+## 阴影
 
-Prefer borders and surface contrast for normal workbench hierarchy. Use shadow/elevation for true layering:
+正常工作台层次优先使用边框和表面对比。仅在真正分层时使用阴影/阴影：
 
-- Base surface: no shadow.
-- Raised panel/card: subtle border or very soft shadow.
-- Sticky topbar/sidebar: border plus surface.
-- Dropdown/popover/menu: shadow + border.
-- Modal/drawer: scrim plus clear elevation.
-- Toast/notification: elevated, but never blocks core workflow longer than necessary.
+- 基础表面：无阴影。
+- 凸起面板/卡片：微妙边框或非常柔和的阴影。
+- 粘性顶栏/侧边栏：边框加表面。
+- 下拉/弹出框/菜单：阴影 + 边框。
+- 模态/抽屉：遮罩加清晰阴影。
+- Toast/通知：凸起，但绝不超过必要时间阻塞核心工作流。
 
-## Component Combinations
+## 组件组合
 
-| Component | Radius direction | Elevation direction |
+| 组件 | 圆角方向 | 阴影方向 |
 | --- | --- | --- |
-| Dense table/list | none or small | border and row contrast |
-| Form field/control | small or medium | normally none; focus uses ring |
-| Workbench panel | medium | border or subtle raised surface |
-| Dropdown/popover | medium | border plus popover shadow |
-| Drawer/sheet | large only when the product style supports it | scrim plus directional elevation |
-| Modal/dialog | medium | scrim plus modal elevation |
-| Toast | medium | elevated and time-bounded |
+| 密集表格/列表 | 无或小 | 边框和行对比 |
+| 表单字段/控件 | 小或中 | 通常无；焦点使用环 |
+| 工作台面板 | 中 | 边框或微妙凸起表面 |
+| 下拉/弹出框 | 中 | 边框加弹出框阴影 |
+| 抽屉/面板 | 仅当产品风格支持时使用大 | 遮罩加方向性阴影 |
+| 模态/对话框 | 中 | 遮罩加模态阴影 |
+| Toast | 中 | 凸起且有时间限制 |
 
-Do not use elevation to compensate for weak layout hierarchy. First establish
-region ownership, spacing, and surface contrast; then add a layer effect only when
-the component is actually above another interactive surface.
+不要用阴影补偿弱布局层次。首先建立区域归属、间距和表面对比；然后仅在组件确实在另一个交互界面之上时添加层效果。
 
-## Layering Rules
+## 分层规则
 
-- A card inside a card is usually a layout mistake. Use sections, tables, rows, or panels instead.
-- Modals and drawers must have a clear close route and focus behavior.
-- Floating controls must not cover table rows, form submit buttons, chart legends, or mobile safe areas.
-- Elevation must communicate interaction depth, not decoration.
-- Use scrims for modals/sheets when background interaction is blocked. Do not use blurred glass as the default surface style.
-- Keep the active layer's focus and scroll boundary visible. A shadow that visually
-  separates a drawer but leaves its close action unreachable is not a usable layer.
+- 卡片中的卡片通常是布局错误。改用部分、表格、行或面板。
+- 模态和抽屉必须有清晰的关闭路由和焦点行为。
+- 浮动控件不得覆盖表格行、表单提交按钮、图表图例或移动安全区域。
+- 阴影必须传达交互深度，而非装饰。
+- 当背景交互被阻塞时为模态/面板使用遮罩。不要将模糊玻璃作为默认表面风格。
+- 保持活动层的焦点和滚动边界可见。视觉上分离抽屉但使其关闭操作不可达的阴影不是可用层。
 
-## Implementation
+## 实现
 
-- Define radius and shadow tokens once.
-- Keep border color tied to color tokens.
-- Avoid random shadow values per component.
-- Use z-index tokens for dropdown, sticky, fixed, modal, popover, tooltip, and notification layers.
-- Keep the z-index scale shared by shell, data surfaces, overlays, and notifications;
-  document an intentional exception in the existing system asset instead of a page file.
+- 一次定义圆角和阴影令牌。
+- 保持边框颜色与颜色令牌关联。
+- 避免每个组件使用随机阴影值。
+- 为下拉、粘性、固定、模态、弹出框、工具提示和通知层使用 z-index 令牌。
+- 保持 z-index 比例由外壳、数据界面、覆盖和通知共享；在现有系统资产而非页面文件中记录有意例外。
 
-## Self-Check
+## 自检
 
-- Radius and elevation are consistent across controls.
-- Layered surfaces remain readable on light and dark backgrounds.
-- Component combinations use the declared radius/elevation role instead of a local
-  shadow or radius value that creates a new visual dialect.
-- Modals, drawers, and popovers do not create hidden scroll traps.
-- Nested cards are absent from normal page sections unless there is a clear repeated item structure.
+- 圆角和阴影在控件间一致。
+- 分层界面在浅色和深色背景上保持可读。
+- 组件组合使用声明的圆角/阴影角色而非创建新视觉方言的本地阴影或圆角值。
+- 模态、抽屉和弹出框不创建隐藏的滚动陷阱。
+- 正常页面部分中不存在嵌套卡片，除非有清晰的重复项目结构。

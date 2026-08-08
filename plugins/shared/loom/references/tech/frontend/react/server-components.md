@@ -1,80 +1,80 @@
 # React Server Components
 
-Apply this guidance only in a repository whose accepted framework/runtime supports React Server Components and when the task owns a server/client composition boundary. A React dependency alone does not imply RSC support.
+仅在已接受框架/运行时支持 React Server Components 的仓库中，且当任务拥有服务端/客户端组合边界时应用此指导。仅有 React 依赖不意味着支持 RSC。
 
-## Boundary Design
+## 边界设计
 
-Keep data access, secrets, server-only dependencies, and non-interactive composition on the server side. Introduce a Client Component at the smallest boundary that needs state, effects, browser APIs, event handlers, or a client-only library.
+将数据访问、密钥、仅服务端依赖和非交互组合保留在服务端。在需要状态、effects、浏览器 API、事件处理器或仅客户端库的最小边界引入 Client Component。
 
-`'use client'` marks a module boundary and pulls its client import graph into the browser bundle. Do not place it on a page/layout/root merely to make one nested control interactive.
+`'use client'` 标记模块边界并将其客户端导入图拉入浏览器包。不要仅为了使一个嵌套控件可交互而将其放在页面/布局/根上。
 
-Use a server-only guard supported by the framework for modules that must never enter a client graph. Treat imported environment/config data as public once it crosses a client boundary.
+对绝不能进入客户端图的模块使用框架支持的仅服务端守卫。一旦配置数据跨越客户端边界，就将其视为公开的。
 
-## Serializable Handoff
+## 可序列化交接
 
-Pass serializable, minimal view data to Client Components. Convert database models, dates, decimals, maps/sets, class instances, ORM proxies, and provider objects into explicit transport/view models as required by the framework serializer.
+向 Client Component 传递可序列化的、最小化的视图数据。根据框架序列化器的要求，将数据库模型、日期、小数、Map/Set、类实例、ORM 代理和 provider 对象转换为显式传输/视图模型。
 
-Do not pass server functions to clients except through the framework's explicit server-action mechanism. Never serialize secrets, authorization internals, connection objects, or full records when the client needs only identity and display fields.
+不要通过框架的显式 server-action 机制之外的方式将服务端函数传递给客户端。当客户端仅需标识和显示字段时，绝不要序列化密钥、授权内部、连接对象或完整记录。
 
-Preserve stable target identity and version/concurrency fields needed by client actions. Revalidate authorization server-side for every mutation; serialized permission hints control presentation, not access.
+保留客户端操作所需的稳定目标标识和版本/并发字段。对每次变更在服务端重新验证授权；序列化的权限提示控制展示，而非访问。
 
-## Server Data Access
+## 服务端数据访问
 
-Fetch at the closest server owner and parallelize independent reads. Avoid sequential waterfalls caused by awaiting unrelated data before constructing child work.
+在最近的服务端所有者处获取数据并并行化独立读取。避免因在构造子工作前等待不相关数据而导致的顺序瀑布。
 
-Use framework request memoization and data caching deliberately. Include tenant, user, locale, permissions, filters, and other isolation dimensions in cached data ownership; do not place request-specific data in process-global caches.
+有意识地使用框架请求记忆化和数据缓存。在缓存数据所有权中包含租户、用户、区域设置、权限、筛选器和其他隔离维度；不要将请求特定数据放在进程全局缓存中。
 
-Keep HTTP/API access when it is the accepted architecture boundary. Do not replace an existing service contract with direct database access merely because a Server Component can access the server runtime.
+当 HTTP/API 是已接受的架构边界时保留它。不要仅因为 Server Component 能访问服务端运行时就用直接数据库访问替换现有服务契约。
 
-## Streaming And Suspense
+## 流式传输与 Suspense
 
-Place Suspense around an independently slow region with a fallback matching its final dimensions and information hierarchy. Keep critical navigation, titles, and primary actions available when possible.
+在独立慢速区域周围放置 Suspense，回退内容匹配其最终尺寸和信息层级。尽可能保持关键导航、标题和主要操作可用。
 
-Pair rejected server work with the framework's error boundary/recovery route. A loading fallback alone does not handle authorization, not-found, or service failure states.
+将被拒绝的服务端工作与框架的错误边界/恢复路由配对。仅加载回退不处理授权、未找到或服务失败状态。
 
-Avoid many tiny boundaries that flash independently or reorder the page incoherently. Streaming order should support the workflow rather than expose implementation timing.
+避免许多独立闪烁或混乱重排页面的微小边界。流式传输顺序应支持工作流而非暴露实现时序。
 
-## Client Composition
+## 客户端组合
 
-Prefer passing server-rendered content as `children`/slots into a focused Client Component instead of converting the whole subtree to client code. Keep providers as deep as practical and scope them to consumers.
+优先将服务端渲染的内容作为 `children`/slot 传递到聚焦的 Client Component 中，而非将整个子树转换为客户端代码。将 provider 保持在实际所需的最深层，并限定到消费者。
 
-Client state must not assume that a server-rendered parent will update without navigation, refresh, cache invalidation, or returned action state. Define the readback path after mutation.
+客户端状态不得假设服务端渲染的父组件在没有导航、刷新、缓存失效或返回的操作状态的情况下会更新。定义变更后的回读路径。
 
-Hydration output must be deterministic. Do not branch initial markup on `window`, current time, random values, browser storage, or locale differences without a stable server snapshot and explicit post-hydration update.
+Hydration 输出必须是确定性的。不要在 `window`、当前时间、随机值、浏览器存储或区域设置差异上分支初始标记，除非有稳定的服务端快照和显式的 hydration 后更新。
 
-## Mutations
+## 变更
 
-Use the framework's server action only when it is part of the accepted interface/runtime contract. Validate input, authenticate, authorize the target, enforce concurrency/idempotency policy, and return actionable state.
+仅当框架的 server action 是已接受接口/运行时契约的一部分时使用它。验证输入、认证、授权目标、执行并发/幂等策略，并返回可操作状态。
 
-After success, reconcile returned data and invalidate/revalidate only affected cache/route ownership. Broad global invalidation hides ownership and increases load.
+成功后，协调返回数据并仅失效/重新验证受影响的缓存/路由所有权。宽泛的全局失效隐藏所有权并增加负载。
 
-Keep server-action details in the framework-specific reference when Next.js or another framework defines the transport and deployment behavior.
+当 Next.js 或其他框架定义传输和部署行为时，将 server-action 细节保留在框架特定参考中。
 
-## Runtime Constraints
+## 运行时约束
 
-Confirm whether the component executes in Node, edge, worker, or another runtime. Filesystem, native packages, sockets, database drivers, crypto APIs, and environment access differ by runtime and deployment target.
+确认组件在 Node、edge、worker 还是其他运行时中执行。文件系统、原生包、套接字、数据库驱动、crypto API 和环境访问因运行时和部署目标而异。
 
-Do not rely on development-only co-location. The production build must include required server modules while excluding them from browser chunks.
+不要依赖仅开发环境的共置。生产构建必须包含所需服务端模块，同时将它们排除在浏览器分块之外。
 
 ## Verification
 
-- Run the framework production build and inspect server/client boundary errors.
-- Assert server-only modules and secrets are absent from client bundles.
-- Exercise serializable handoff for real dates/decimals/nullable/provider-backed values.
-- Test loading, not-found, forbidden, service failure, and retry/recovery at owned boundaries.
-- Verify mutation authorization, validation, concurrency, readback, and targeted cache invalidation.
-- Check hydration without mismatch suppression and test the production runtime target.
+- 运行框架生产构建并检查服务端/客户端边界错误。
+- 断言仅服务端模块和密钥不存在于客户端包中。
+- 对真实日期/小数/可空/provider 支持的值练习可序列化交接。
+- 在所属边界测试加载、未找到、禁止、服务失败和重试/恢复。
+- 验证变更授权、验证、并发、回读和定向缓存失效。
+- 检查 hydration 无不匹配抑制并测试生产运行时目标。
 
-## Delivery Evidence
+## 交付证据
 
-Identify each server/client boundary, serialized handoff, runtime, cache/isolation key, streaming/error boundary, and mutation readback assertion. A page rendering in development does not prove bundle separation, serialization, hydration, or production runtime compatibility.
+标识每个服务端/客户端边界、序列化交接、运行时、缓存/隔离键、流式/错误边界和变更回读断言。在开发环境中渲染页面不能证明包分离、序列化、hydration 或生产运行时兼容性。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Treating every React project as RSC-capable.
-- Root-level `'use client'` added for a nested interaction.
-- ORM/domain/provider objects passed directly across the boundary.
-- Direct database access replacing an accepted service/API architecture.
-- User-specific results cached without identity dimensions.
-- Hydration mismatch hidden with suppression instead of deterministic markup.
-- Mutation success without targeted readback or cache reconciliation.
+- 将每个 React 项目视为支持 RSC。
+- 为嵌套交互添加根级 `'use client'`。
+- 直接跨边界传递 ORM/领域/provider 对象。
+- 用直接数据库访问替换已接受的服务/API 架构。
+- 无标识维度缓存用户特定结果。
+- 用抑制而非确定性标记隐藏 hydration 不匹配。
+- 变更成功而无定向回读或缓存协调。

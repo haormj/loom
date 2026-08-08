@@ -1,95 +1,95 @@
-# Cross-Stack Defect Patterns
+# 跨栈缺陷模式
 
-Use this reference after spec compliance to inspect implementation risks that recur across languages and frameworks. Apply only patterns relevant to changed files and selected technology guidance.
+在规范合规之后使用本引用，检查在语言和框架间反复出现的实现风险。仅应用与变更文件和所选技术指导相关的模式。
 
-## Functional Correctness
+## 功能正确性
 
-- Boundary values: empty/missing/null, zero/negative, max/min, overflow, duplicate, unknown ID, invalid enum, stale version, malformed encoding, timezone/day boundary.
-- Branch completeness: success plus validation, forbidden, conflict, not-found, unavailable, cancellation, timeout, partial result, and retry where behavior differs.
-- Identity: commands, rows, cache keys, route params, updates, and deletes act on the displayed/requested stable target rather than index or mutable selection.
-- Ordering: sorting, pagination, cursor continuation, deduplication, tie breakers, locale/collation, and date ordering remain deterministic.
-- State transitions: illegal moves blocked, terminal states preserved, repeated/reopen/retry behavior defined, and history/audit corresponds to committed state.
+- 边界值：空/缺失/null、零/负值、最大/最小值、溢出、重复、未知 ID、无效枚举、陈旧版本、格式错误编码、时区/日期边界。
+- 分支完整性：成功加校验、禁止、冲突、未找到、不可用、取消、超时、部分结果和重试（行为不同时）。
+- 标识：命令、行、缓存键、路由参数、更新和删除作用于显示/请求的稳定目标，而非索引或可变选择。
+- 排序：排序、分页、cursor 续读、去重、决胜键、locale/排序规则和日期排序保持确定性。
+- 状态转换：非法移动被阻断、终态被保持、重复/重开/重试行为已定义、历史/审计与提交状态对应。
 
-Trace invariants across every write path, not only the primary endpoint or screen.
+跨每个写入路径追踪不变量，而非仅主端点或界面。
 
-## Concurrency And Repetition
+## 并发和重复
 
-- Read-check-write races allow duplicate or invalid transitions without transaction/constraint/version checks.
-- Retries, double clicks, callbacks, message redelivery, or process restart repeat durable/external effects.
-- Old async responses overwrite newer route/filter/account state.
-- Locks cover too much, deadlock in inconsistent order, or fail to protect process/distributed boundaries.
-- Optimistic updates lack operation identity, rollback, conflict handling, or server reconciliation.
+- 读-检查-写竞态在没有事务/约束/版本检查时允许重复或无效转换。
+- 重试、双击、回调、消息重投递或进程重启重复持久/外部效果。
+- 旧异步响应覆盖较新的路由/过滤/账户状态。
+- 锁覆盖太多、以不一致顺序死锁或未能保护进程/分布式边界。
+- 乐观更新缺少操作标识、回滚、冲突处理或服务端对账。
 
-Check idempotency scope/key storage/expiry and whether failures before/after side effects produce a safe retry.
+检查幂等范围/键存储/过期以及副作用前后失败是否产生安全重试。
 
-## Data And Persistence
+## 数据和持久化
 
-- Constraints/defaults/nullability/indexes/foreign keys do not match domain and migration behavior.
-- Multi-write invariants cross a transaction boundary or external effect without reconciliation/outbox/compensation.
-- Migration fails on existing data, is not reversible/cutover-safe as required, or runtime starts before schema compatibility.
-- N+1 queries, unbounded reads, offset/cursor bugs, missing deterministic order, or filtering after loading all data.
-- ORM lifecycle/cascade/lazy behavior causes unexpected deletion, serialization, connection use, or startup validation failure.
+- 约束/默认值/可空性/索引/外键与领域和迁移行为不匹配。
+- 多写入不变量跨事务边界或外部效果而无对账/outbox/补偿。
+- 迁移在已有数据上失败、不可逆/不可安全切换（如需要），或运行时在 schema 兼容前启动。
+- N+1 查询、无界读取、offset/cursor bug、缺少确定性排序或加载所有数据后过滤。
+- ORM 生命周期/级联/惰性行为导致意外删除、序列化、连接使用或启动校验失败。
 
-Check provider/dialect semantics through the selected persistence references rather than generic SQL assumptions.
+通过所选持久化引用检查 provider/dialect 语义，而非通用 SQL 假设。
 
-## Interfaces And Integration
+## 接口和集成
 
-- Method/path/body/query/status/error/auth/exposure differs between producer, consumer, tests, and runtime routing.
-- Validation occurs after side effects or accepts fields/statuses the contract rejects.
-- Raw provider exceptions/messages leak while actionable errors collapse into one generic failure.
-- External calls lack timeout/cancellation, retry unsafe operations, or retry without jitter/budget/classification.
-- Webhook/event consumers do not authenticate, deduplicate, validate version, or handle out-of-order delivery.
+- 方法/路径/body/query/状态/错误/认证/暴露在生产者、消费者、测试和运行时路由间不同。
+- 校验在副作用后发生或接受契约拒绝的字段/状态。
+- 原始 provider 异常/消息泄露而可操作错误折叠为一个通用失败。
+- 外部调用缺少超时/取消、重试不安全操作或无 jitter/budget/分类地重试。
+- Webhook/事件消费者不认证、不去重、不校验版本或不处理乱序投递。
 
-Inspect serialization of dates, decimals, large integers, nullable/optional fields, enums, and unknown fields.
+检查日期、小数、大整数、可空/可选字段、枚举和未知字段的序列化。
 
-## Security And Privacy
+## 安全和隐私
 
-- Authentication/authorization/ownership/tenant checks exist only in UI or one endpoint path.
-- User input reaches SQL, shell, path, template/HTML, redirect, URL fetch, deserialization, regex, or logging without appropriate validation/encoding/parameterization.
-- Secrets or sensitive records enter client bundles, logs, errors, test fixtures, version control, telemetry, caches, or broad DTOs.
-- CSRF/CORS/cookie/token/session configuration trusts unsafe origins, forwarding headers, algorithms, issuers, audiences, or redirect targets.
-- Mass assignment/object binding lets callers control identity, owner, role, status, price, audit, or version fields.
+- 认证/授权/所有权/租户检查仅存在于 UI 或一个端点路径。
+- 用户输入到达 SQL、shell、路径、模板/HTML、重定向、URL fetch、反序列化、正则或日志而无适当校验/编码/参数化。
+- 密钥或敏感记录进入客户端 bundle、日志、错误、测试 fixture、版本控制、遥测、缓存或宽泛 DTO。
+- CSRF/CORS/cookie/token/session 配置信任不安全来源、转发头、算法、签发者、受众或重定向目标。
+- 批量赋值/对象绑定让调用方控制标识、拥有者、角色、状态、价格、审计或版本字段。
 
-Review deny paths and cross-user/tenant reads as carefully as privileged writes.
+以与特权写入相同的严谨度审查拒绝路径和跨用户/租户读取。
 
-## Reliability And Resource Lifecycle
+## 可靠性和资源生命周期
 
-- Errors are swallowed, logged and ignored, transformed twice, or retried indefinitely.
-- Files, sockets, streams, DB connections, transactions, workers, goroutines/tasks/threads, listeners, timers, observers, or temp resources leak on cancellation/error.
-- Startup/config failure appears late at request time or silently uses a local/insecure production fallback.
-- Health/readiness reports healthy before migrations/dependencies/routes are usable or couples liveness to transient downstream failure.
-- Partial external/database operations have no cleanup, reconciliation, or observable recovery state.
+- 错误被吞没、记录后忽略、两次转换或无限重试。
+- 文件、socket、stream、DB 连接、事务、worker、goroutine/task/线程、监听器、定时器、观察者或临时资源在取消/错误时泄露。
+- 启动/配置失败在请求时才显现或静默使用本地/不安全的生产回退。
+- 健康/就绪报告在迁移/依赖/路由可用前报告健康，或将存活耦合到瞬态下游失败。
+- 部分外部/数据库操作没有清理、对账或可观测恢复状态。
 
-## Performance And Capacity
+## 性能和容量
 
-- Work or payload is unbounded by pagination, size, rate, timeout, memory, queue depth, concurrency, or cache policy.
-- Hot paths allocate/copy/serialize repeatedly, block event loops/executors, or perform synchronous I/O unexpectedly.
-- Cache key omits identity/input/version, invalidation is incomplete, TTL contradicts correctness, or stampede behavior is uncontrolled.
-- Frontend changes cause broad subscriptions/rerenders, large eager bundles/assets, leaked resources, or inaccessible virtualization.
-- Batch processing loads all records, commits per item, or cannot resume safely.
+- 工作或载荷不受分页、大小、速率、超时、内存、队列深度、并发或缓存策略约束。
+- 热路径反复分配/复制/序列化、阻塞事件循环/执行器或意外执行同步 I/O。
+- 缓存键缺少标识/输入/版本、失效不完整、TTL 与正确性矛盾或惊群行为不受控。
+- 前端变更导致宽泛订阅/重渲染、大型急切 bundle/资产、资源泄露或不可访问的虚拟化。
+- 批处理加载所有记录、逐项提交或无法安全恢复。
 
-Require measurement or plausible workload impact before blocking on optimization.
+在以优化阻塞之前要求度量或合理的工作负载影响。
 
-## Maintainability And Architecture
+## 可维护性和架构
 
-- Domain/application rules duplicated across API, UI, persistence, jobs, or integrations.
-- Dependency direction crosses accepted ownership or generic helpers hide auth/tenant/transaction/runtime behavior.
-- New abstractions have no clear complexity boundary, while one function/module combines unrelated policy and infrastructure.
-- Names differ from established business concepts or misleadingly imply guarantees the code does not provide.
-- Production source retains tutorial or placeholder namespaces such as `com.example`, `org.example`, `com.company`, `com.demo`, or `com.sample`; use the repository/project identity or its documented safe fallback.
-- Comments repeat syntax while non-obvious invariants, ordering, compatibility, or recovery decisions remain unexplained.
+- 领域/应用规则在 API、UI、持久化、作业或集成间重复。
+- 依赖方向跨越已接受所有权或通用 helper 隐藏认证/租户/事务/运行时行为。
+- 新抽象没有清晰的复杂性边界，而一个函数/模块组合了不相关的策略和基础设施。
+- 名称与已建立的业务概念不同或误导性地暗示代码不提供的保证。
+- 生产源码保留教程或占位符命名空间，如 `com.example`、`org.example`、`com.company`、`com.demo` 或 `com.sample`；使用仓库/项目标识或其文档化的安全回退。
+- 注释重复语法而不解释非显而易见的不变量、排序、兼容性或恢复决策。
 
-## Tests And Configuration
+## 测试和配置
 
-- Tests pass only because significant collaborators/authorization/transactions are mocked away.
-- Shared state/time/random/network/order leaks between tests or creates flaky timing sleeps.
-- Configuration keys are defined but not consumed, consumed under different names, or use unsafe environment defaults.
-- Generated artifacts/lockfiles/migrations are stale relative to source declarations.
+- 测试仅因重要的协作者/授权/事务被 mock 掉而通过。
+- 共享状态/时间/随机/网络/顺序在测试间泄露或创建不稳定的定时 sleep。
+- 配置键已定义但未被消费、以不同名称被消费或使用不安全的环境默认值。
+- 生成的工件/lockfile/迁移相对于源声明已陈旧。
 
-## Unsafe Review Defaults
+## 不安全的评审默认
 
-- Flagging every possible edge case without requirement or plausible impact.
-- Recommending caching, abstractions, or retries without correctness policy.
-- Applying one ORM/framework/runtime rule to another stack.
-- Reporting symptoms separately when one ownership defect explains them.
-- Calling maintainability preference a major defect without concrete risk.
+- 在没有需求或合理影响的情况下标记每个可能的边界情况。
+- 没有正确性策略就推荐缓存、抽象或重试。
+- 将一个 ORM/框架/运行时规则应用于另一个栈。
+- 当一个所有权缺陷能解释时分别报告症状。
+- 没有具体风险就将可维护性偏好称为重大缺陷。

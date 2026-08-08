@@ -1,42 +1,42 @@
-# PHP Laravel Quality
+# PHP Laravel 质量
 
-This file applies Laravel conventions to task-owned behavior.
+本文件将 Laravel 约定应用于任务拥有的行为。
 
 ## When To Use
 
-- The task changes Laravel controllers, Form Requests, Eloquent models, migrations, resources, policies, events/listeners, jobs, queues, service providers, or feature tests.
-- Use this when Laravel's request validation, authorization, ORM, serialization, or queue lifecycle affects correctness.
-- If the PHP project is not Laravel, do not borrow Laravel-specific structure.
+- 任务变更了 Laravel 控制器、Form Request、Eloquent 模型、迁移、Resource、Policy、事件/监听器、Job、队列、服务提供者或功能测试。
+- 当 Laravel 的请求验证、授权、ORM、序列化或队列生命周期影响正确性时使用此参考。
+- 如果 PHP 项目不是 Laravel，不要借用 Laravel 特定结构。
 
 ## Implementation Focus
 
-- Keep controllers as orchestration only: authorize, validate, call an application service/action, and return a resource/response. Do not put business workflows in controllers.
-- Use Form Request classes for HTTP validation and authorization when the repository follows that convention. Convert validated input into a DTO or explicit service arguments before business logic.
-- Use API Resources for response shape control. Do not return raw Eloquent models from public API paths when hidden fields, casts, relations, or timestamps can leak.
-- Keep Eloquent model state explicit: guarded/fillable fields, casts for enums/dates/value-like columns, relationship ownership, and soft-delete behavior when present.
-- Do not add a repository layer only to wrap trivial Eloquent CRUD if the project does not already use repositories. Add one only when it owns query complexity, external persistence variation, or a clear local pattern.
-- Put multi-row writes, status transitions, and side effects inside service/action transaction boundaries. Use `afterCommit` semantics for events/jobs that should not run on rolled-back data.
-- Avoid N+1 query paths by selecting relation loading for the exact read case: eager load, count aggregate, scoped query, or dedicated read model. Do not globally eager-load relationships to hide a local issue.
-- Use policies/gates for user authorization and keep business eligibility checks in domain/application services when they are not user permission decisions.
-- Queue jobs should carry stable identifiers or serialized DTOs, not large Eloquent object graphs. Define retry, timeout, and idempotency expectations for externally visible side effects.
-- Migrations should encode database constraints that protect important business invariants, not rely only on request validation.
+- 保持控制器仅做编排：授权、验证、调用应用服务/动作并返回 Resource/响应。不要在控制器中放业务工作流。
+- 当仓库遵循该约定时使用 Form Request 类进行 HTTP 验证和授权。在业务逻辑之前将验证输入转换为 DTO 或显式服务参数。
+- 使用 API Resource 控制响应形态。当隐藏字段、转换、关系或时间戳可能泄露时不要从公共 API 路径返回原始 Eloquent 模型。
+- 保持 Eloquent 模型状态显式：guarded/fillable 字段、enum/日期/类值列的转换、关系所有权和软删除行为（当存在时）。
+- 如果项目尚未使用 repository 则不要仅为包装琐碎 Eloquent CRUD 而添加 repository 层。仅当它拥有查询复杂性、外部持久化变化或清晰的本地模式时才添加。
+- 将多行写入、状态转换和副作用放在服务/动作事务边界内。对不应在回滚数据上运行的事件/Job 使用 `afterCommit` 语义。
+- 通过为确切读取用例选择关系加载避免 N+1 查询路径：eager 加载、count 聚合、作用域查询或专用读取模型。不要全局 eager 加载关系来隐藏局部问题。
+- 为用户授权使用 policy/gate，当业务资格检查不是用户权限决策时将其保留在领域/应用服务中。
+- 队列 Job 应携带稳定标识符或序列化 DTO，而非大型 Eloquent 对象图。为外部可见副作用定义重试、超时和幂等性期望。
+- 迁移应编码保护重要业务不变式的数据库约束，而非仅依赖请求验证。
 
 ## Delivery Decisions
 
-- Keep the request pipeline ordered: authentication/authorization, Form Request validation, DTO or action conversion, domain/service execution, and Resource serialization. Do not use a controller as the place where these boundaries are implicitly mixed.
-- Choose Eloquent eager loading, `withCount`, scoped queries, or a read model from the exact endpoint result shape. Prove that the selected relation strategy avoids both N+1 queries and over-fetching.
-- Keep transaction scope around durable state transitions and required side effects. Dispatch jobs/events after commit only when consumers must not observe rolled-back state; make pre-commit behavior explicit when the event is part of the transaction contract.
-- Keep queue payloads versionable and small. Load current state by stable identifier in the handler and classify missing, stale, duplicate, and retryable cases.
-- Use policies/gates for who may act and services/actions for whether the business state allows the action. A policy should not become a second state machine.
+- 保持请求管道有序：认证/授权、Form Request 验证、DTO 或动作转换、领域/服务执行和 Resource 序列化。不要将控制器作为这些边界被隐式混合的地方。
+- 从确切的端点结果形态选择 Eloquent eager 加载、`withCount`、作用域查询或读取模型。证明选中的关系策略既避免 N+1 查询又避免过度获取。
+- 在持久状态转换和必需副作用周围保持事务范围。仅当消费者不得观察回滚状态时在提交后分派 Job/事件；当事件是事务契约的一部分时使提交前行为显式。
+- 保持队列载荷可版本化和小。在处理器中通过稳定标识符加载当前状态并分类缺失、过期、重复和可重试情况。
+- 为谁可以行动使用 policy/gate，为业务状态是否允许行动使用服务/动作。Policy 不应成为第二个状态机。
 
 ## Verification Focus
 
-- Run Laravel feature tests for API/controller changes and unit tests for service/action changes.
-- Prove validation failure, authorization denial, successful write/read response shape, and relevant database state with assertions.
-- For queues/events, use the repository's fake/test helpers to prove dispatch timing and payload, and test handler behavior when the handler owns business work.
-- For Eloquent queries, test filters, pagination, sorting, relationship loading/counts, and empty/not-found behavior touched by the task.
-- For a migration or state transition, verify database constraints and read-back behavior instead of accepting only a successful request response.
+- 为 API/控制器变更运行 Laravel 功能测试，为服务/动作变更运行单元测试。
+- 用断言证明验证失败、授权拒绝、成功写入/读取响应形态和相关数据库状态。
+- 对于队列/事件，使用仓库的 fake/测试辅助证明分派时机和载荷，并在处理器拥有业务工作时测试处理器行为。
+- 对于 Eloquent 查询，测试任务涉及的过滤、分页、排序、关系加载/计数和空/未找到行为。
+- 对于迁移或状态转换，验证数据库约束和回读行为而非仅接受成功的请求响应。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Laravel decision: Form Request, DTO conversion, resource shape, transaction boundary, Eloquent query, policy/gate, migration constraint, job/event, or feature-test proof.
+- 在证据总结中，说明 Laravel 决策：Form Request、DTO 转换、Resource 形态、事务边界、Eloquent 查询、policy/gate、迁移约束、Job/事件或功能测试证明。

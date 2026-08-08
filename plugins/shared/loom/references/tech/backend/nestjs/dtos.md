@@ -1,40 +1,40 @@
-# NestJS DTOs, Validation, And Serialization
+# NestJS DTO、验证与序列化
 
-DTOs define the HTTP transport shape. They validate and transform untrusted transport values into an application-call boundary and shape safe responses; they are not persistence entities or a substitute for domain invariants.
+DTO 定义 HTTP 传输形态。它们验证和转换不受信任的传输值为应用调用边界，并塑造安全响应；它们不是持久化实体或 domain 不变量的替代品。
 
-## Separate DTO Responsibilities
+## 分离 DTO 职责
 
-Use distinct DTOs when the contracts differ:
+当契约不同时使用不同的 DTO：
 
-- create/input DTO for client-writable fields
-- update DTO for patch/replace semantics
-- query DTO for filters, ordering, search, and pagination
-- response DTO for public fields and representation-specific values
-- event or external-adapter DTO when a non-HTTP contract is separately owned
+- create/input DTO 用于客户端可写字段
+- update DTO 用于 patch/replace 语义
+- query DTO 用于过滤、排序、搜索和分页
+- response DTO 用于公共字段和表示特定的值
+- 当非 HTTP 契约被单独拥有时的 event 或外部适配器 DTO
 
-Do not reuse ORM entities as request or response DTOs. Persistence nullability, relations, decorators, generated columns, and internal metadata are not an API contract.
+不要将 ORM 实体复用为请求或响应 DTO。持久化可空性、关系、装饰器、生成列和内部元数据不是 API 契约。
 
-`PartialType`, `PickType`, `OmitType`, and `IntersectionType` are useful only when the derived validation and schema remain correct. A PATCH DTO must still reject immutable/server-owned fields, and PUT replacement semantics should not be modeled as an indiscriminate partial type.
+`PartialType`、`PickType`、`OmitType` 和 `IntersectionType` 仅当派生的验证和 schema 保持正确时才有用。PATCH DTO 仍须拒绝不可变/服务端拥有的字段，PUT 替换语义不应建模为不加区分的 partial 类型。
 
-## Validation Semantics
+## 验证语义
 
-Express accepted field rules with `class-validator`: presence, string length, numeric range, enum membership, UUID/date/email format, array cardinality, and nested structure. Distinguish missing, `null`, empty string, and false/zero according to the interface contract.
+用 `class-validator` 表达已接受的字段规则：存在性、字符串长度、数字范围、enum 成员资格、UUID/date/email 格式、数组基数和嵌套结构。根据接口契约区分缺失、`null`、空字符串和 false/zero。
 
-For nested objects and arrays, combine `@ValidateNested` with `@Type(() => ChildDto)` and use `{ each: true }` where required. Validation decorators on a TypeScript interface do nothing; runtime validation requires classes and emitted metadata.
+对于嵌套对象和数组，将 `@ValidateNested` 与 `@Type(() => ChildDto)` 组合，并在需要时使用 `{ each: true }`。TypeScript 接口上的验证装饰器不起作用；运行时验证需要类和生成的元数据。
 
-Keep database uniqueness, ownership, lifecycle transitions, and cross-record checks in the application/persistence boundary. Async custom validators that query storage can create hidden N+1 work and race conditions; use them only for transport-local lookups where their limitations are accepted.
+将数据库唯一性、归属、生命周期转换和跨记录检查保持在 application/persistence 边界。查询存储的异步自定义验证器可能产生隐藏的 N+1 工作和竞态条件；仅在其局限性已接受的传输局部查找中使用它们。
 
-## Transformation And Query Values
+## 转换与 Query 值
 
-HTTP query and path values arrive as strings. Use explicit `@Type`, focused `@Transform`, or parse pipes for numbers, booleans, dates, enums, and arrays. Avoid broad implicit conversion when values such as `"false"`, empty strings, repeated query keys, or invalid dates could be misinterpreted.
+HTTP query 和 path 值以字符串到达。对数字、布尔值、日期、enum 和数组使用显式 `@Type`、聚焦的 `@Transform` 或 parse pipe。当 `"false"`、空字符串、重复 query key 或无效日期等值可能被误解时，避免宽泛的隐式转换。
 
-Transforms must be deterministic, side-effect free, and ordered with validation intentionally. Do not normalize credentials, opaque identifiers, signatures, or case-sensitive values. Trim/case-normalize only fields whose contract declares that behavior.
+转换必须是确定性的、无副作用的，并与验证有意排序。不要规范化凭证、不透明标识符、签名或大小写敏感的值。仅对契约声明该行为的字段进行 trim/大小写规范化。
 
-Bound page size, offset, sort fields, and filter operators. Convert client ordering keys through an allowlist rather than passing arbitrary strings to an ORM.
+限定分页大小、offset、排序字段和过滤操作符。通过允许列表转换客户端排序 key，而非将任意字符串传给 ORM。
 
-## Global ValidationPipe Contract
+## 全局 ValidationPipe 契约
 
-Preserve the application's accepted `ValidationPipe` settings. A production-oriented baseline usually considers:
+保留应用已接受的 `ValidationPipe` 设置。面向生产的基线通常考虑：
 
 ```typescript
 new ValidationPipe({
@@ -45,40 +45,40 @@ new ValidationPipe({
 })
 ```
 
-These settings change public behavior and must match E2E tests and the error envelope. `whitelist` silently strips only when `forbidNonWhitelisted` is false. `transform` does not make every implicit conversion safe.
+这些设置改变公共行为，必须与 E2E 测试和错误 envelope 匹配。`whitelist` 仅在 `forbidNonWhitelisted` 为 false 时静默剥离。`transform` 不会使每个隐式转换安全。
 
-If per-route pipes differ from the global pipe, document the intentional contract difference in code and test the actual route.
+如果按路由 pipe 与全局 pipe 不同，在代码中记录有意的契约差异并测试实际路由。
 
-## Response Serialization
+## 响应序列化
 
-Map application results to explicit response DTOs or the established serializer/interceptor. Exclude secrets, password hashes, refresh tokens, internal authorization attributes, tenant internals, soft-delete markers, and provider-only columns.
+将应用结果映射到显式响应 DTO 或已建立的 serializer/interceptor。排除密钥、密码哈希、refresh token、内部授权属性、tenant 内部、软删除标记和 provider 专属列。
 
-Be deliberate about date, decimal, bigint, enum, and nullable serialization. `JSON.stringify` cannot serialize `bigint` directly, and ORM decimal objects may not match the accepted JSON number/string representation.
+对日期、decimal、bigint、enum 和可空序列化保持慎重。`JSON.stringify` 不能直接序列化 `bigint`，ORM decimal 对象可能不匹配已接受的 JSON number/string 表示。
 
-Avoid relying on `class-transformer` exclusion decorators unless the real response path invokes serialization. Returning a plain object or using `@Res()` can bypass the expected transform behavior.
+避免依赖 `class-transformer` 排除装饰器，除非真实响应路径调用序列化。返回普通对象或使用 `@Res()` 可能绕过预期的转换行为。
 
-## OpenAPI Consistency
+## OpenAPI 一致性
 
-When OpenAPI is published, ensure required/optional status, enum values, nested arrays, formats, defaults, examples, and response types match runtime validation. Import mapped types from the repository's established package (`@nestjs/swagger` or `@nestjs/mapped-types`) so both runtime metadata and generated schemas behave as intended.
+当发布 OpenAPI 时，确保必需/可选状态、enum 值、嵌套数组、格式、默认值、示例和响应类型与运行时验证匹配。从仓库已建立的包（`@nestjs/swagger` 或 `@nestjs/mapped-types`）导入 mapped type，使运行时元数据和生成的 schema 都按预期工作。
 
-## Verification
+## 验证
 
-- Test valid input and each changed boundary: missing, null, malformed, out-of-range, unknown, nested, and array cases.
-- Prove PATCH/PUT behavior for omitted, explicit-null, immutable, and server-owned fields.
-- Exercise query conversion and allowlists through the real global `ValidationPipe`.
-- Assert the exact validation envelope without exposing rejected values or internal targets.
-- Verify sensitive-field exclusion and date/decimal/bigint representation on the real response path.
-- Compare generated OpenAPI only when the published schema is task-owned.
+- 测试有效输入和每个变更的边界：缺失、null、格式错误、超出范围、未知、嵌套和数组案例。
+- 证明 PATCH/PUT 对省略、显式 null、不可变和服务端拥有字段的行为。
+- 通过真实全局 `ValidationPipe` 执行 query 转换和允许列表。
+- 断言精确的验证 envelope，不暴露被拒绝的值或内部目标。
+- 在真实响应路径上验证敏感字段排除和 date/decimal/bigint 表示。
+- 仅当已发布的 schema 是任务拥有时比较生成的 OpenAPI。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the input/query/response DTO and the runtime HTTP assertion proving validation, transformation, or serialization. TypeScript compilation and decorator presence alone do not prove that the global pipe or response serializer executes.
+标识 input/query/response DTO 以及证明验证、转换或序列化的运行时 HTTP 断言。TypeScript 编译和装饰器存在本身不能证明全局 pipe 或响应 serializer 执行。
 
-## Unsafe Defaults
+## 不安全默认
 
-- One DTO reused for create, update, persistence, and response.
-- `PartialType` allowing immutable or server-owned fields.
-- Implicit conversion relied on for booleans, arrays, or dates without HTTP tests.
-- Database checks hidden in reusable validators.
-- ORM entities serialized directly.
-- Sensitive-field exclusion assumed without exercising the response path.
+- 一个 DTO 复用于 create、update、持久化和响应。
+- `PartialType` 允许不可变或服务端拥有字段。
+- 在没有 HTTP 测试的情况下依赖布尔值、数组或日期的隐式转换。
+- 数据库检查隐藏在可复用验证器中。
+- ORM 实体直接序列化。
+- 在不执行响应路径的情况下假设敏感字段排除。

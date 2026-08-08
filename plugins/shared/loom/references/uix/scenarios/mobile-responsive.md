@@ -1,15 +1,15 @@
-# UIX Scenario: Mobile Responsive Web
+# UIX 场景：移动响应式 Web
 
-Use when a web product must work well on phones and tablets without being a native app. Mobile is a first-class layout, not a shrunken desktop.
+当 Web 产品必须在手机和平板上良好工作而非原生应用时使用。移动是一等布局，而非缩小的桌面。
 
-## Baseline
+## 基线
 
-- Density is usually `comfortable`.
-- Critical actions must be reachable by touch and keyboard.
-- Safe areas, sticky bars, and browser viewport changes must be considered.
-- Hover-only behavior is invalid.
+- 密度通常为 `comfortable`。
+- 关键操作必须可通过触摸和键盘到达。
+- 必须考虑安全区域、粘性栏和浏览器视口变化。
+- 仅悬停行为无效。
 
-## Mobile Layout Skeleton
+## 移动布局骨架
 
 ```css
 .mobile-page {
@@ -43,15 +43,15 @@ Use when a web product must work well on phones and tablets without being a nati
 }
 ```
 
-## Required Patterns
+## 必需模式
 
-- Mobile navigation: drawer, bottom nav, compact tabs, or simplified topbar.
-- Forms: single-column, visible labels, correct input types, validation near fields.
-- Tables: convert to cards/detail routes or allow scoped horizontal scroll only where data comparison requires it.
-- Primary action: visible and safe-area-aware, but not covering content.
-- Feedback: inline plus toast when appropriate.
+- 移动导航：抽屉、底部导航、紧凑标签页或简化的顶栏。
+- 表单：单列、可见标签、正确输入类型、字段附近验证。
+- 表格：转换为卡片/详情路由或仅在数据比较需要时允许作用域水平滚动。
+- 主要操作：可见且安全区域感知，但不覆盖内容。
+- 反馈：适当时内联加 toast。
 
-## Responsive Upgrade
+## 响应式升级
 
 ```css
 @media (min-width: 768px) {
@@ -72,41 +72,39 @@ Use when a web product must work well on phones and tablets without being a nati
 }
 ```
 
-## Mobile Interaction
+## 移动交互
 
-- Touch targets should be at least 44px.
-- Use bottom sheets for short secondary flows; use full-screen routes for complex forms.
-- Keep keyboard-open behavior usable for forms.
-- Use `100dvh` for app-like full-height pages.
-- Preserve scroll position when closing drawers/sheets where possible.
+- 触摸目标应至少 44px。
+- 对简短次要流程使用底部面板；对复杂表单使用全屏路由。
+- 保持表单的键盘打开行为可用。
+- 对类应用全高页面使用 `100dvh`。
+- 可能时关闭抽屉/面板时保留滚动位置。
 
-## Web-Specific Checks
+## Web 特定检查
 
-- Viewport meta must not disable user zoom.
-- Sticky headers/action bars must not cover focused inputs when the software keyboard opens.
-- Scroll locking for drawers/sheets must release correctly.
-- Table/list/detail fallbacks should preserve the same business actions as desktop.
-- Desktop-only hover affordances need visible mobile equivalents.
+- 视口 meta 不得禁用用户缩放。
+- 软键盘打开时粘性页眉/操作栏不得覆盖焦点输入。
+- 抽屉/面板的滚动锁定必须正确释放。
+- 表格/列表/详情回退应保留与桌面相同的业务操作。
+- 仅桌面悬停功能需要可见的移动等价物。
 
-## Verification Signals
+## 验证信号
 
-- Check at least one narrow viewport and one desktop/tablet viewport when responsive behavior is in scope.
-- Long labels, validation messages, and business-blocking copy wrap without hiding actions.
-- Primary action remains reachable after scrolling and after validation errors.
+- 响应式行为在范围内时至少检查一个窄视口和一个桌面/平板视口。
+- 长标签、验证消息和业务阻塞文案换行而不隐藏操作。
+- 主要操作在滚动和验证错误后保持可达。
 
-## Avoid
+## 避免
 
-- Horizontal page scroll.
-- Fixed desktop widths.
-- Font sizes below 16px for primary mobile inputs.
-- Desktop-style centered modals for important mobile actions.
-- Disabling user zoom.
+- 水平页面滚动。
+- 固定桌面宽度。
+- 主要移动输入的字体小于 16px。
+- 重要移动操作的桌面式居中模态。
+- 禁用用户缩放。
 
-## Keyboard, Orientation, And Recovery
+## 键盘、方向和恢复
 
-Responsive behavior includes transient device states, not only a breakpoint. The
-primary task must remain recoverable while the keyboard, orientation, or browser
-chrome changes the available space.
+响应式行为包括瞬态设备状态，而非仅断点。主要任务必须在键盘、方向或浏览器 chrome 改变可用空间时保持可恢复。
 
 ```css
 .mobile-task {
@@ -121,9 +119,9 @@ chrome changes the available space.
 }
 ```
 
-- Focused inputs scroll into view above the virtual keyboard; the submit or next action must not be covered.
-- Preserve draft values, filters, and selected item when the device rotates or the viewport changes.
-- Recalculate fixed or sticky regions after orientation changes instead of relying on an initial viewport height.
-- Keep tap targets, labels, error messages, and confirmation results usable at the narrowest supported width.
-- Replace hover-dependent disclosure with tap/focus disclosure and provide a clear back path from detail to list.
-- When network loss or a request failure occurs, keep the user's context and expose retry or correction near the affected action.
+- 焦点输入在虚拟键盘上方滚动到视图中；提交或下一步操作不得被覆盖。
+- 设备旋转或视口变化时保留草稿值、筛选器和选定项目。
+- 方向变化后重新计算固定或粘性区域，而非依赖初始视口高度。
+- 在最窄支持宽度下保持点击目标、标签、错误消息和确认结果可用。
+- 用点击/焦点展示替换依赖悬停的展示，并提供从详情到列表的清晰返回路径。
+- 当网络丢失或请求失败时，保留用户上下文并在受影响操作附近暴露重试或修正。

@@ -1,40 +1,40 @@
-# TypeScript Type Modeling Quality
+# TypeScript 类型建模质量
 
 ## When To Use
 
-- Load only when the task owns generic APIs, reusable type helpers, mapped or conditional types, template literal domains, complex DTO variants, or public declarations.
-- Ordinary interfaces, unions, and local annotations belong to `typescript.core`; do not introduce advanced type machinery for routine fields.
-- The runtime contract and business invariant must be known before selecting a type-level technique.
+- 仅当任务拥有泛型 API、可复用类型辅助、映射或条件类型、模板字面量领域、复杂 DTO 变体或公共声明时才加载。
+- 普通接口、联合和本地注解属于 `typescript.core`；不要为常规字段引入高级类型机制。
+- 在选择类型级技术之前必须知道运行时契约和业务不变式。
 
 ## Decision Rules
 
-- Start with a named interface or discriminated union. Add a constrained generic only when the same invariant is reused across real call sites.
-- Use `Partial`, `Pick`, `Omit`, `Required`, and `Record` only when their semantics match the operation. A patch payload with immutable fields or coupled fields needs a named update type.
-- Hide conditional and mapped types behind business names such as `UpdateOrder` or `ApiResult<T>`; do not expose dense anonymous expressions at call sites.
-- Use template literal types for stable route keys, event names, feature flags, or tokens only when runtime construction validates the same shape.
-- Keep recursive or distributive types bounded and local to configuration, JSON, or fixtures. Prefer explicit API and persistence types when fields are part of a durable contract.
-- Use `satisfies` for route tables, configuration maps, status dictionaries, and metadata where literal values must remain narrow while the shape is checked.
-- If a helper requires repeated casts, deep compiler work, or type-level debugging to use, replace it with a simpler type and a runtime check.
+- 从命名接口或可辨识联合开始。仅当相同不变式在真实调用点间复用时才添加受约束泛型。
+- 仅当 `Partial`、`Pick`、`Omit`、`Required` 和 `Record` 的语义匹配操作时才使用它们。具有不可变字段或耦合字段的补丁载荷需要命名更新类型。
+- 将条件和映射类型隐藏在业务名之后，如 `UpdateOrder` 或 `ApiResult<T>`；不要在调用点暴露密集的匿名表达式。
+- 仅当运行时构造验证相同形态时，才为稳定路由键、事件名、功能标志或令牌使用模板字面量类型。
+- 保持递归或分布式类型有界且局限于配置、JSON 或夹具。当字段是持久契约的一部分时优先使用显式 API 和持久化类型。
+- 对路由表、配置映射、状态字典和元数据使用 `satisfies`，其中字面量值必须保持窄化同时形态被检查。
+- 如果辅助函数需要重复 cast、深度编译器工作或类型级调试才能使用，用更简单的类型和运行时检查替换它。
 
 ## Implementation Focus
 
-- Generic constraints must express a capability such as `HasId` or `Serializable`; reject unconstrained object bags and `T extends any`.
-- Keep public helper types stable and usable from emitted declarations. Internal helpers should not leak into package APIs by accident.
-- Keep type definitions close to the contract they protect and avoid duplicating the same DTO shape in feature modules.
+- 泛型约束必须表达能力如 `HasId` 或 `Serializable`；拒绝无约束对象包和 `T extends any`。
+- 保持公共辅助类型稳定且可从发出的声明中使用。内部辅助不应意外泄露到包 API 中。
+- 保持类型定义接近它们保护的契约，避免在功能模块中复制相同 DTO 形态。
 
 ## Failure Modes
 
-- Do not make every property optional with `Partial` when the server requires a meaningful field combination.
-- Do not encode arbitrary user input as a finite template literal union without a runtime parser.
-- Do not accept a recursive type that slows every editor operation when an explicit bounded shape is sufficient.
-- Keep generated contract types and hand-written domain types separated when their release cadence differs.
+- 当服务器要求有意义的字段组合时，不要用 `Partial` 使每个属性可选。
+- 没有运行时解析器时，不要将任意用户输入编码为有限模板字面量联合。
+- 当显式有界形态足够时，不要接受使每个编辑器操作变慢的递归类型。
+- 当生成契约类型和手写领域类型的发布节奏不同时，保持它们分离。
 
 ## Verification Focus
 
-- Run the package typecheck and test representative valid and invalid usages of every public helper.
-- When declarations are emitted, inspect that `.d.ts` output exposes usable names and no private path or helper implementation.
-- Watch typecheck time and editor responsiveness after adding recursive, distributive, or very large union types.
+- 运行包类型检查并测试每个公共辅助的代表性有效和无效用法。
+- 当发出声明时，检查 `.d.ts` 输出暴露可用的名称且没有私有路径或辅助实现。
+- 在添加递归、分布式或非常大的联合类型后注意类型检查时间和编辑器响应性。
 
 ## Evidence Focus
 
-- Record the modeling choice and the invariant it protects: constrained generic, utility DTO, discriminated result, template key, config map, recursive type, or declaration shape.
+- 记录建模选择及其保护的不变式：受约束泛型、工具 DTO、可辨识结果、模板键、配置映射、递归类型或声明形态。

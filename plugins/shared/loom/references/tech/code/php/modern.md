@@ -1,33 +1,33 @@
-# Modern PHP Feature Quality
+# 现代 PHP 特性质量
 
 ## When To Use
 
-- The task intentionally adopts or changes PHP language features such as strict typing, enums, readonly classes, attributes, first-class callables, `match`, `never`, fibers, or typed properties.
-- Load this only for a task that owns the language-version or feature decision. Core PHP guidance remains the baseline for ordinary application code.
+- 任务有意采用或变更 PHP 语言特性如严格类型、enum、readonly class、属性、一等可调用、`match`、`never`、Fiber 或类型化属性。
+- 仅为拥有语言版本或特性决策的任务加载此参考。核心 PHP 指导仍是普通应用代码的基线。
 
 ## Implementation Focus
 
-- Confirm the repository's PHP version, Composer platform constraint, runtime images, and supported static-analysis version before using a feature. Do not infer support from the local interpreter alone.
-- Add `declare(strict_types=1);` consistently to new PHP files when the repository uses it, and validate data crossing weakly typed boundaries before the strict API is called.
-- Use backed enums for finite values that have stable storage or transport representations. Define unknown-value behavior and avoid serializing enum labels when the contract requires enum values.
-- Use readonly classes or properties for immutable DTOs/value objects. Do not mark Doctrine/Eloquent entities or proxy-managed framework objects readonly without verifying hydration, mutation, and serialization behavior.
-- Use attributes only where the active framework reads them. Keep routing, validation, serialization, and DI metadata in one authoritative representation.
-- Use first-class callables and `match` when they make dispatch or exhaustive branching clearer. Keep exceptions and default/unknown cases explicit at external boundaries.
-- Use `never` only for functions that truly cannot return, such as a typed terminator or exception boundary. Do not use it to hide an incomplete result path.
-- Treat Fibers as a low-level primitive. Load the async reference for scheduling, I/O, cancellation, and lifecycle; this reference alone does not make code concurrent.
+- 在使用特性之前确认仓库的 PHP 版本、Composer 平台约束、运行时镜像和受支持的静态分析版本。不要仅从本地解释器推断支持。
+- 当仓库使用时一致地为新 PHP 文件添加 `declare(strict_types=1);`，并在调用严格 API 之前验证跨越弱类型边界的数据。
+- 对具有稳定存储或传输表示的有限值使用 backed enum。定义未知值行为并在契约要求 enum 值时避免序列化 enum 标签。
+- 对不可变 DTO/值对象使用 readonly class 或 property。在未验证 hydration、变更和序列化行为之前不要将 Doctrine/Eloquent 实体或代理管理的框架对象标记为 readonly。
+- 仅在活动框架读取属性的地方使用属性。将路由、验证、序列化和 DI 元数据保留在一个权威表示中。
+- 当一等可调用和 `match` 能使分派或穷尽分支更清晰时使用它们。在外部边界保持异常和默认/未知情况显式。
+- 仅对真正不能返回的函数使用 `never`，如类型化终止器或异常边界。不要用它隐藏不完整的结果路径。
+- 将 Fiber 视为低级原语。为调度、I/O、取消和生命周期加载异步参考；此参考单独不使代码并发。
 
 ## Verification Focus
 
-- Run the repository's configured PHP test and static-analysis commands for the changed module, plus the narrowest runtime check for the selected PHP version.
-- Verify enum persistence/serialization, readonly hydration, attribute discovery, callable dispatch, exhaustive `match`, and unknown-input behavior when touched.
-- Check Composer autoloading and the supported runtime/container path, not just syntax parsing with a newer local PHP binary.
+- 为变更模块运行仓库配置的 PHP 测试和静态分析命令，加上选中 PHP 版本的最窄运行时检查。
+- 在涉及时验证 enum 持久化/序列化、readonly hydration、属性发现、可调用分派、穷尽 `match` 和未知输入行为。
+- 检查 Composer 自动加载和受支持的运行时/容器路径，而非仅用较新的本地 PHP 二进制文件进行语法解析。
 
 ## Evidence Focus
 
-- In the evidence summary, name the feature decision, supported PHP/Composer constraint, integration boundary, and behavior tested.
+- 在证据总结中，说明特性决策、受支持的 PHP/Composer 约束、集成边界和已测试行为。
 
 ## Failure Modes
 
-- Do not copy PHP 8.3 syntax into a project whose Composer/runtime constraints are older.
-- Do not use readonly, attributes, enums, or Fibers as decoration; each must solve an owned contract or lifecycle problem.
-- Do not treat PHPStan/Psalm suppression, `mixed`, or a passing syntax check as proof of runtime compatibility.
+- 不要将 PHP 8.3 语法复制到 Composer/运行时约束较旧的项目中。
+- 不要将 readonly、属性、enum 或 Fiber 用作装饰；每个都必须解决拥有的契约或生命周期问题。
+- 不要将 PHPStan/Psalm 抑制、`mixed` 或通过的语法检查视为运行时兼容性的证明。

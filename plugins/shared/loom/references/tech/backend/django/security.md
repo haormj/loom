@@ -1,47 +1,47 @@
-# Django And DRF Security
+# Django 与 DRF 安全
 
-Implement the accepted authentication and authorization model using Django/DRF's established mechanisms. Do not add SimpleJWT, registration, roles, API keys, or account workflows when the phase does not own them.
+使用 Django/DRF 已确立的机制实现已接受的认证和授权模型。当阶段不拥有 SimpleJWT、注册、role、API key 或账户工作流时，不要添加它们。
 
-The accepted JWT algorithm, claims, and HTTP behavior live in `tech/api/jwt.md`; this file owns Django/DRF authentication classes, permission wiring, and framework-specific settings.
+已接受的 JWT 算法、claim 和 HTTP 行为在 `tech/api/jwt.md` 中；本文件负责 Django/DRF 认证类、权限配置和框架特定的 settings。
 
-## When To Use
+## 何时使用
 
-Use this reference for Django authentication, DRF authentication classes, sessions, SimpleJWT, password/account flows, permission classes, queryset/object ownership, CSRF/CORS, hosts/proxy security, or protected endpoint errors.
+对 Django 认证、DRF 认证类、session、SimpleJWT、密码/账户流程、权限类、queryset/对象归属、CSRF/CORS、host/proxy 安全或受保护端点错误使用此参考。
 
 ## Implementation Focus
 
-### Identity Mechanism
+### Identity 机制
 
-Preserve the selected client/trust model:
+保留所选的客户端/信任模型：
 
-| Client | Django/DRF Boundary |
+| 客户端 | Django/DRF 边界 |
 |---|---|
-| Same-origin browser | Django session authentication, secure cookies, CSRF |
-| Bearer-token API | Trusted issuer/token validation or configured SimpleJWT contract |
-| Service client | Existing API key, gateway identity, mTLS-aware, or service token boundary |
-| Public endpoint | Explicit `AllowAny` only where accepted |
+| 同源浏览器 | Django session 认证、安全 cookie、CSRF |
+| Bearer-token API | 受信任的 issuer/token 验证或已配置的 SimpleJWT 契约 |
+| 服务客户端 | 现有 API key、gateway identity、mTLS 感知或 service token 边界 |
+| 公共端点 | 仅在已接受处显式 `AllowAny` |
 
-Keep global `DEFAULT_AUTHENTICATION_CLASSES` and `DEFAULT_PERMISSION_CLASSES` conservative. Use per-view/action overrides only where the contract differs, and make public exceptions visible and tested.
+保持全局 `DEFAULT_AUTHENTICATION_CLASSES` 和 `DEFAULT_PERMISSION_CLASSES` 保守。仅在契约不同时使用按 view/action 覆盖，并使公共例外可见且经过测试。
 
-### Django Security Settings
+### Django 安全设置
 
-Load secret key, allowed hosts, trusted origins, proxy SSL header, CORS origins, database credentials, and token settings from environment-aware validated configuration. Keep `DEBUG` off outside local development and never commit production credentials.
+从环境感知的已验证配置中加载 secret key、allowed host、trusted origin、proxy SSL header、CORS origin、数据库凭证和 token 设置。在本地开发之外保持 `DEBUG` 关闭，切勿提交生产凭证。
 
-Configure secure/HTTP-only/SameSite cookies, HTTPS redirect/HSTS, and proxy trust according to the actual hosting boundary. Do not trust forwarded host/proto headers from arbitrary clients.
+根据实际 hosting 边界配置 secure/HTTP-only/SameSite cookie、HTTPS 重定向/HSTS 和 proxy 信任。不要信任来自任意客户端的 forwarded host/proto header。
 
-### Passwords And User Model
+### 密码与用户模型
 
-Use `set_password`, `check_password`, `create_user`, Django validators, and the selected password hashers. Never assign raw passwords to model fields or expose hashes through serializers/admin logs.
+使用 `set_password`、`check_password`、`create_user`、Django 验证器和所选的密码 hasher。切勿将原始密码赋值给模型字段或通过 serializer/admin 日志暴露哈希。
 
-Choose a custom user model before initial migrations when the project requires one. Late replacement is a migration project, not a routine field edit. Registration, email verification, reset, lockout, and recovery each need explicit workflow ownership.
+当项目需要自定义用户模型时，在初始迁移之前选择。后期替换是迁移项目，而非常规字段编辑。注册、email 验证、重置、锁定和恢复各自需要显式的工作流归属。
 
-### JWT And Refresh Tokens
+### JWT 与 Refresh Token
 
-When the accepted profile selects JWT, map `tech/api/jwt.md` into SimpleJWT or the repository's existing verifier. Refresh, rotation, blacklist, and logout behavior remain separate capabilities and must not be added unless the API contract owns them.
+当已接受的 profile 选择 JWT 时，将 `tech/api/jwt.md` 映射到 SimpleJWT 或仓库已有的验证器。Refresh、轮转、黑名单和登出行为是独立的能力，除非 API 契约拥有它们否则不得添加。
 
-### Permissions And Ownership
+### 权限与归属
 
-Use `has_permission` for operation-level access and `has_object_permission` for a retrieved object. Also scope querysets for list isolation and to avoid leaking object existence.
+对操作级访问使用 `has_permission`，对已检索对象使用 `has_object_permission`。同时为列表隔离限定 queryset 范围以避免泄漏对象存在性。
 
 ```python
 class IsOrderOwnerOrApprover(permissions.BasePermission):
@@ -51,37 +51,37 @@ class IsOrderOwnerOrApprover(permissions.BasePermission):
         return order.requester_id == request.user.id
 ```
 
-Keep tenant, ownership, and lifecycle checks in reusable policy/query/service boundaries when multiple entry points must enforce them. UI visibility and serializer field omission are not authorization.
+当多个入口点必须强制执行 tenant、归属和生命周期检查时，将它们保持在可复用的 policy/query/service 边界中。UI 可见性和 serializer 字段省略不是授权。
 
-### Sessions, CSRF, And CORS
+### Session、CSRF 与 CORS
 
-Session-authenticated unsafe requests require CSRF protection. Do not exempt an endpoint merely because it returns JSON. Token-only clients and browser sessions may need separate routes or explicit authentication classes.
+Session 认证的不安全请求需要 CSRF 保护。不要仅因为端点返回 JSON 就豁免它。仅 token 的客户端和浏览器 session 可能需要独立的路由或显式认证类。
 
-CORS permits browser origins; it is not authentication. Use explicit origins/methods/headers and never wildcard credentialed origins. Test middleware ordering and preflight for protected writes.
+CORS 允许浏览器 origin；它不是认证。使用显式的 origin/method/header，切勿对带凭证的 origin 使用通配符。测试中间件顺序和受保护写入的 preflight。
 
-### Error And Data Disclosure
+### 错误与数据披露
 
-Preserve safe `401`/`403`/not-found behavior according to the accepted disclosure policy. Avoid account enumeration in login/reset/registration and never expose token parser, database, permission internals, or stack traces.
+根据已接受的披露策略保留安全的 `401`/`403`/not-found 行为。在 login/reset/registration 中避免账户枚举，切勿暴露 token 解析器、数据库、权限内部信息或堆栈跟踪。
 
 ## Verification Focus
 
-- Test allowed, anonymous, invalid-session/token, expired/wrong token, forbidden, wrong-owner, and admin/approver paths.
-- Verify list queryset scoping independently from object permissions.
-- Test password hashing and user-manager behavior without exposing credentials.
-- Exercise refresh rotation/blacklist/revocation only when owned.
-- Verify CSRF and CORS against the real session/bearer browser model.
-- Run Django deployment/security checks when security settings change, alongside focused behavioral tests.
+- 测试允许、匿名、无效 session/token、过期/错误 token、禁止、错误归属者和 admin/approver 路径。
+- 独立于对象权限验证列表 queryset 范围限定。
+- 在不暴露凭证的情况下测试密码哈希和 user-manager 行为。
+- 仅当拥有时执行 refresh 轮转/黑名单/撤销。
+- 针对真实的 session/bearer 浏览器模型验证 CSRF 和 CORS。
+- 当安全 settings 变更时运行 Django 部署/安全检查，以及聚焦的行为测试。
 
 ## Evidence Focus
 
-Identify the authentication class, permission/ownership rule, queryset scope, and exact allowed/denied assertions. A permission class declaration or successful token creation alone does not prove endpoint protection.
+标识认证类、权限/归属规则、queryset 范围和精确的允许/拒绝断言。仅凭权限类声明或成功创建 token 不能证明端点保护。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Adding SimpleJWT because it is common in DRF tutorials.
-- `AllowAny` or empty permission classes used to make tests pass.
-- Object permission without list queryset scoping.
-- Raw password assignment or password hashes in API output.
-- Wildcard credentialed CORS or session writes exempted from CSRF.
-- Hardcoded secret key, allowed hosts, origins, or token lifetimes.
-- Trusting forwarded headers without a controlled proxy boundary.
+- 因为 DRF 教程中常见就添加 SimpleJWT。
+- 使用 `AllowAny` 或空权限类让测试通过。
+- 对象权限没有列表 queryset 范围限定。
+- 原始密码赋值或 API 输出中的密码哈希。
+- 通配符带凭证的 CORS 或豁免 CSRF 的 session 写入。
+- 硬编码的 secret key、allowed host、origin 或 token 生命周期。
+- 在没有受控 proxy 边界的情况下信任 forwarded header。

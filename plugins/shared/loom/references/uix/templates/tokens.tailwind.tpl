@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 // UIX gate: token.semantic_roles.coverage
-// Pass when this template is adapted into the project Tailwind/theme layer and
-// covers semantic surface, text, border, primary, status, focus, control,
-// shell, table/list, and detail/action roles consumed by the UI.
-// Fail when copied as an unused parallel config or page-local style substitute.
+// 当此模板适配到项目 Tailwind/主题层并覆盖 UI 消费的语义 surface、text、
+// border、primary、status、focus、control、shell、table/list 和 detail/action
+// 角色时通过。
+// 当被复制为未使用的并行配置或页面本地样式替代时失败。
 module.exports = {
   content: ['./src/**/*.{html,js,jsx,ts,tsx,vue,svelte}', './app/**/*.{js,jsx,ts,tsx}'],
   darkMode: ['class', '[data-theme="dark"]'],
@@ -163,7 +163,7 @@ module.exports = {
     },
   },
   plugins: [
-    // Enable only when these dependencies already exist in package.json:
+    // 仅当这些依赖已存在于 package.json 时才启用：
     // require('@tailwindcss/forms')({ strategy: 'class' }),
     // require('@tailwindcss/typography'),
   ],

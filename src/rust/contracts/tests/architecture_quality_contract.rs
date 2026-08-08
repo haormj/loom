@@ -69,31 +69,13 @@ fn tech_architecture_references_cover_structural_landing_without_mcp_workflow_du
         .join("../../..")
         .join("plugins/shared/loom/references/tech/arch");
     let expected = [
-        ("core.md", ["Architecture Judgment", "Decision Discipline"]),
-        (
-            "patterns.md",
-            ["Hybrid Or Custom Structure", "Pattern Decision Evidence"],
-        ),
-        (
-            "system.md",
-            [
-                "Context And Trust Boundaries",
-                "Capacity And Growth Triggers",
-            ],
-        ),
-        (
-            "data.md",
-            ["Concurrency And Evolution", "Verification Evidence"],
-        ),
-        ("nfr.md", ["measurement context", "workload or condition"]),
-        (
-            "adr.md",
-            ["Decision Quality", "At least one positive and one negative"],
-        ),
-        (
-            "failure.md",
-            ["state before the failure", "correlation evidence"],
-        ),
+        ("core.md", ["架构判断", "决策纪律"]),
+        ("patterns.md", ["混合或自定义结构", "模式决策证据"]),
+        ("system.md", ["上下文和信任边界", "容量和增长触发器"]),
+        ("data.md", ["并发和演进", "验证证据"]),
+        ("nfr.md", ["度量上下文", "工作负载或条件"]),
+        ("adr.md", ["决策质量", "至少需要一个正面和一个负面后果"]),
+        ("failure.md", ["失败前的状态", "关联证据"]),
     ];
     for (file, required) in expected {
         let content = fs::read_to_string(root.join(file)).unwrap();

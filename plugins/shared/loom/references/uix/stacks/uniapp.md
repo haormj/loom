@@ -1,14 +1,14 @@
-# UIX Stack: UniApp And Mini-App
+# UIX 技术栈：UniApp 和小程序
 
-Use for UniApp, WeChat/Alipay mini-programs, H5/mobile hybrid targets, and similar cross-platform mobile surfaces.
+用于 UniApp、微信/支付宝小程序、H5/移动混合目标和类似跨平台移动界面。
 
-## Structure
+## 结构
 
-- Follow the target platform's page, component, store, and routing conventions.
-- Keep platform-specific capabilities behind small adapters when multiple targets are in scope.
-- Design for mobile task flows first; desktop web patterns should not leak into mini-app screens.
+- 遵循目标平台的页面、组件、store 和路由约定。
+- 当多个目标在范围内时将平台特定能力放在小适配器之后。
+- 优先为移动任务流设计；桌面 Web 模式不应泄漏到小程序屏幕中。
 
-## Suggested Split
+## 建议的拆分
 
 ```text
 pages/
@@ -19,17 +19,17 @@ styles/
   tokens
 ```
 
-## Implementation Rules
+## 实现规则
 
-- Respect safe areas, native navigation bars, tab bars, and platform gesture expectations.
-- Use platform-compatible units and components according to the repo's existing stack.
-- Keep forms single-column, touch-friendly, and explicit about validation.
-- Avoid hover-only interactions and tiny table layouts.
-- Handle loading, empty, error, permission, and business-blocking states on the page that triggers them.
-- Translate token template intent into the project's UniApp style variables or theme file; do not add web-only CSS that the target cannot consume.
-- Keep page actions reachable with thumb-friendly spacing and platform keyboard behavior.
+- 尊重安全区域、原生导航栏、标签栏和平台手势期望。
+- 根据仓库现有技术栈使用平台兼容的单位 和组件。
+- 保持表单单列、触摸友好并明确验证。
+- 避免仅悬停交互和微小的表格布局。
+- 在触发它们的页面上处理加载、空、错误、权限和业务阻塞状态。
+- 将令牌模板意图转换为项目的 UniApp 样式变量或主题文件；不要添加目标无法消费的仅 Web CSS。
+- 保持页面操作通过拇指友好的间距和平台键盘行为可达。
 
-## Page Pattern
+## 页面模式
 
 ```html
 <view class="page">
@@ -39,27 +39,25 @@ styles/
 </view>
 ```
 
-Use project-native syntax and components; the pattern is about regions, not exact markup.
+使用项目原生语法和组件；此模式关于区域，而非确切标记。
 
-## Verification
+## 验证
 
-- Use the available mini-app/H5 preview target when present.
-- Check safe areas, keyboard behavior, scroll, and platform permission flows.
-- Verify target-specific API limitations or permission prompts do not leave the user on a blank page.
+- 存在时使用可用的小程序/H5 预览目标。
+- 检查安全区域、键盘行为、滚动和平台权限流程。
+- 验证目标特定 API 限制或权限提示不会让用户停留在空白页面。
 
-## Cross-Target Page Boundary
+## 跨目标页面边界
 
-UIX owns the page regions and mobile task flow. Platform conditionals, package
-configuration, API adapters, and target build rules remain in the repository's
-UniApp engineering boundary.
+UIX 拥有页面区域和移动任务流。平台条件编译、包配置、API 适配器和目标构建规则保留在仓库的 UniApp 工程边界中。
 
 ```text
 pages.json route -> page shell -> scroll/content region -> action bar
 -> validation/permission -> platform result -> updated page or next route
 ```
 
-- Keep one page identity and one primary task across H5, mini-app, and native builds; adapt controls where platform capability requires it.
-- Use platform-native safe areas, navigation bars, tab bars, and keyboard behavior rather than importing desktop web layout assumptions.
-- Put loading, empty, permission, error, success, and business-blocking feedback in the page region that owns the action.
-- Keep conditional compilation around platform adapters or capability-specific controls, not around duplicated business workflow markup.
-- Extend the existing `uni.scss` or theme variables for semantic tokens. Do not create a web-only CSS layer that the target renderer cannot consume.
+- 在 H5、小程序和原生构建间保持一个页面标识和一个主要任务；在平台能力需要时适配控件。
+- 使用平台原生安全区域、导航栏、标签栏和键盘行为，而非导入桌面 Web 布局假设。
+- 将加载、空、权限、错误、成功和业务阻塞反馈放在拥有操作的页面区域中。
+- 围绕平台适配器或能力特定控件使用条件编译，而非围绕重复的业务工作流标记。
+- 扩展现有 `uni.scss` 或主题变量以获取语义令牌。不要创建目标渲染器无法消费的仅 Web CSS 层。

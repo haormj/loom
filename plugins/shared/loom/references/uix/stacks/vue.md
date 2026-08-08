@@ -1,14 +1,14 @@
-# UIX Stack: Vue
+# UIX 技术栈：Vue
 
-Use for Vue, Nuxt, Vite Vue, and related component-driven Vue projects.
+用于 Vue、Nuxt、Vite Vue 和相关组件驱动的 Vue 项目。
 
-## Structure
+## 结构
 
-- Follow existing Nuxt/Vue routing, layout, composable, and component conventions.
-- Separate app shell/layout, page views, business components, composables, and reusable UI primitives.
-- Use the existing design system or token approach before adding a new one.
+- 遵循现有的 Nuxt/Vue 路由、布局、composable 和组件约定。
+- 分离应用外壳/布局、页面视图、业务组件、composable 和可重用 UI 原语。
+- 在添加新系统之前使用现有设计系统或令牌方法。
 
-## Suggested Split
+## 建议的拆分
 
 ```text
 components/
@@ -23,17 +23,17 @@ assets|styles/
   tokens
 ```
 
-## Implementation Rules
+## 实现规则
 
-- Keep reactive state scoped: page/query state, form state, selected record, and modal/drawer state should not conflict.
-- Use computed values for derived UI labels, eligibility, and filtered data.
-- Keep async loading/error states near the view that depends on them.
-- Use slots/components for repeated table actions, status badges, field rows, and empty/error states.
-- Preserve accessibility attributes on custom controls.
-- Adapt token templates into the existing Vue/Nuxt CSS, app config, Tailwind config, or theme plugin. Do not create a second visual system beside existing assets.
-- Keep business formatting and validation in composables/helpers when reused across views.
+- 保持响应式状态作用域化：页面/查询状态、表单状态、选定记录和模态/抽屉状态不应冲突。
+- 对派生 UI 标签、资格和筛选数据使用计算值。
+- 保持异步加载/错误状态靠近依赖它们的视图。
+- 对重复的表格操作、状态徽章、字段行和空/错误状态使用 slot/组件。
+- 在自定义控件上保留可访问性属性。
+- 将令牌模板适配到现有 Vue/Nuxt CSS、应用配置、Tailwind 配置或主题插件中。不要在现有资产旁边创建第二个视觉系统。
+- 当跨视图重用时将业务格式化和验证保留在 composable/助手中。
 
-## Template Pattern
+## 模板模式
 
 ```vue
 <template>
@@ -48,32 +48,30 @@ assets|styles/
 </template>
 ```
 
-## Nuxt Notes
+## Nuxt 说明
 
-- Use layouts for persistent shells.
-- Keep server/client-only code separated.
-- Avoid putting delivery commands, build notes, or stack explanations into pages.
+- 使用布局作为持久外壳。
+- 保持服务端/仅客户端代码分离。
+- 避免将交付命令、构建说明或技术栈说明放入页面。
 
-## Verification
+## 验证
 
-- Run focused build/type/lint commands when present.
-- Render and check responsive behavior.
-- Verify forms and transitions preserve user input and focus.
-- Confirm selected UIX references are reflected in changed view/component files, not only in result prose.
+- 存在时运行聚焦的构建/类型/lint 命令。
+- 渲染并检查响应式行为。
+- 验证表单和过渡保留用户输入和焦点。
+- 确认选定的 UIX 参考反映在变更的视图/组件文件中，而非仅结果散文中。
 
-## Page, Composable, And Runtime Boundary
+## 页面、Composable 和运行时边界
 
-Vue UIX owns visible composition and state placement. Vue/Nuxt engineering
-references own route, SSR, data fetching, runtime configuration, and server
-handler boundaries.
+Vue UIX 拥有可见组合和状态放置。Vue/Nuxt 工程参考拥有路由、SSR、数据获取、运行时配置和服务端处理边界。
 
 ```text
 layout/shell -> page view -> feature component -> composable/data adapter
-                                      \\-> loading/empty/error/action feedback
+                                      \-> loading/empty/error/action feedback
 ```
 
-- Use layouts for persistent product chrome and pages for route-owned workflow composition.
-- Keep composables focused on reusable state or behavior; do not hide unrelated navigation, API, and presentation logic in one composable.
-- Separate query state, editable draft, selected record, and action status so a refresh cannot overwrite user input or mutate the wrong record.
-- For Nuxt, preserve SSR determinism, hydration-safe browser access, route middleware, server/client boundaries, and direct deep-link behavior.
-- After a mutation, update or invalidate the exact affected data and keep the user's filter, selection, scroll, and return path when the workflow requires it.
+- 使用布局作为持久产品 chrome，使用页面作为路由拥有的工作流组合。
+- 保持 composable 聚焦于可重用状态或行为；不要在一个 composable 中隐藏无关的导航、API 和展示逻辑。
+- 分离查询状态、可编辑草稿、选定记录和操作状态，以便刷新不能覆盖用户输入或变更错误记录。
+- 对于 Nuxt，保留 SSR 确定性、水合安全的浏览器访问、路由中间件、服务端/客户端边界和直接深度链接行为。
+- 变更后，更新或使确切受影响数据无效，并在工作流需要时保留用户的筛选器、选择、滚动和返回路径。

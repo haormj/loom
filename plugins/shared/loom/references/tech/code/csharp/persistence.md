@@ -1,84 +1,84 @@
-# C# Entity Framework Core Outside ASP.NET
+# C# ASP.NET 之外的 Entity Framework Core
 
 ## When To Use
 
-Use this reference for EF Core persistence tasks in C# workers, services, CLIs, desktop applications, or libraries where the ASP.NET Core data reference is not already selected. Apply provider-specific SQL references alongside it when available.
+此参考用于 C# worker、服务、CLI、桌面应用或库中尚未选中 ASP.NET Core 数据参考的 EF Core 持久化任务。在可用时与提供者特定的 SQL 参考一起应用。
 
 ## Implementation Focus
 
 ### Context Ownership
 
-Treat `DbContext` as a short-lived unit of work and not thread-safe. Web scopes are handled by ASP.NET guidance; workers/parallel jobs create/dispose contexts per unit through `IDbContextFactory` or an explicit scope.
+将 `DbContext` 视为短生命周期的工作单元且非线程安全。Web 作用域由 ASP.NET 指导处理；worker/并行作业通过 `IDbContextFactory` 或显式作用域按单元创建/销毁上下文。
 
-Do not keep contexts/entities attached across long jobs, threads, UI sessions, queues, or retries. Clear/recreate tracking when lifetime changes.
+不要跨长作业、线程、UI 会话、队列或重试保持上下文/实体附加。当生命周期变更时清除/重建跟踪。
 
-Configure provider/connection/retry/logging/migrations in composition code, not domain entities or repositories.
+在组合代码中配置提供者/连接/重试/日志/迁移，而非领域实体或 repository。
 
 ### Model And Mapping
 
-Configure required/nullability, lengths, precision/scale, Unicode/collation, indexes/uniqueness, alternate keys, foreign keys, cardinality, owned/complex/value-converted types, delete behavior, generated/default/computed values, concurrency tokens, and global filters according to invariants.
+根据不变式配置必需/可空、长度、精度/标度、Unicode/排序规则、索引/唯一性、备用键、外键、基数、拥有/复杂/值转换类型、删除行为、生成/默认/计算值、并发令牌和全局过滤器。
 
-Keep domain/API/UI models separate from EF entities when navigation, persistence metadata, serialization, mutation, or lifecycle differs.
+当导航、持久化元数据、序列化、变更或生命周期不同时将领域/API/UI 模型与 EF 实体分开。
 
-Be explicit about provider semantics. In-memory provider cannot prove relational constraints, transactions, SQL translation, case sensitivity, or type behavior.
+对提供者语义保持显式。内存中提供者不能证明关系约束、事务、SQL 翻译、大小写敏感性或类型行为。
 
 ### Query Shape
 
-Project read models at the database boundary and use `AsNoTracking`/identity resolution according to object reuse needs. Avoid loading full graphs for summaries.
+在数据库边界投影读取模型并根据对象复用需求使用 `AsNoTracking`/标识解析。避免为摘要加载完整图。
 
-Prevent N+1 with projection, targeted Include, split/single query choice, or explicit loading. Do not globally eager-load to conceal one path.
+用投影、有针对性的 Include、拆分/单查询选择或显式加载防止 N+1。不要全局 eager 加载来隐藏一个路径。
 
-Keep filtering/sorting/pagination server-translatable and deterministic with tie breakers. Inspect generated SQL/query plans for claimed query improvements.
+保持过滤/排序/分页可服务器翻译且用决胜键确定。为声称的查询改善检查生成的 SQL/查询计划。
 
-Avoid client evaluation, accidental multiple enumeration/query execution, cartesian explosion, unbounded `ToList`, and lazy loading outside context lifetime.
+避免客户端评估、意外多次枚举/查询执行、笛卡尔爆炸、无界 `ToList` 和上下文生命周期外的延迟加载。
 
 ### Writes And Transactions
 
-Place `SaveChanges` at an application/unit-of-work boundary. Helpers/repositories should not commit independently when writes must be atomic.
+将 `SaveChanges` 放在应用/工作单元边界。当写入必须原子时辅助函数/repository 不应独立提交。
 
-Use explicit transactions for multiple saves/commands or external coordination when the implicit transaction is insufficient. Integrate execution strategies correctly so the whole retryable unit is replayed safely.
+当隐式事务不够时对多次保存/命令或外部协调使用显式事务。正确集成执行策略使整个可重试单元安全重放。
 
-Database retries can repeat application code; require idempotency for generated identifiers, external calls, messages, and side effects. Use outbox/reconciliation for DB plus external effects when architecture requires it.
+数据库重试可能重复应用代码；为生成的标识符、外部调用、消息和副作用要求幂等性。当架构需要时为 DB 加外部效果使用发件箱/对账。
 
 ### Concurrency
 
-Use rowversion/timestamp or another accepted token for stale-update protection. Catch `DbUpdateConcurrencyException`, inspect current/original/database values, and choose reject/merge/retry explicitly.
+使用 rowversion/timestamp 或其他已接受的令牌进行过期更新保护。捕获 `DbUpdateConcurrencyException`，检查当前/原始/数据库值并显式选择拒绝/合并/重试。
 
-Do not blindly retry business updates after conflict. Return actionable state and preserve user work where relevant.
+冲突后不要盲目重试业务更新。返回可操作状态并在相关时保留用户工作。
 
-Unique/FK/check constraint violations remain race-safe enforcement; map provider exceptions without brittle message parsing where provider APIs expose codes.
+唯一/FK/检查约束违反保持竞争安全执行；在提供者 API 暴露代码时映射提供者异常而非脆弱的消息解析。
 
 ### Migrations And Existing Data
 
-Review generated migration operations and model snapshot. Hand-edit intentionally for data backfill, rename, online/batched changes, defaults, constraint rollout, and provider SQL.
+审查生成的迁移操作和模型快照。为数据回填、重命名、在线/批量变更、默认值、约束推出和提供者 SQL 有意手动编辑。
 
-Plan expand/backfill/contract when old and new application versions overlap. Avoid destructive drop/recreate or non-null addition without existing-data handling.
+当新旧应用版本重叠时规划扩展/回填/收缩。避免在没有现有数据处理的情况下破坏性删除/重建或非空添加。
 
-Generate idempotent/scripted artifacts according to deployment policy and do not auto-migrate concurrently at every worker instance unless startup ownership is explicit.
+根据部署策略生成幂等/脚本化产物，除非启动所有权显式否则不要在每个 worker 实例并发自动迁移。
 
 ### Bulk And Raw Operations
 
-`ExecuteUpdate/Delete`, bulk libraries, raw SQL, and compiled queries bypass or alter tracking/interceptors/domain behavior. Use them for measured/bounded needs and reconcile tracked/cache state.
+`ExecuteUpdate/Delete`、批量库、原始 SQL 和编译查询绕过或改变跟踪/拦截器/领域行为。为测量/有界需求使用它们并协调跟踪/缓存状态。
 
-Parameterize raw SQL and validate dynamic identifiers/order clauses through allowlists. Preserve tenant/global-filter and concurrency behavior deliberately.
+参数化原始 SQL 并通过允许列表验证动态标识符/排序子句。有意保留租户/全局过滤器和并发行为。
 
 ## Verification Focus
 
-- Run integration tests against the selected relational provider/container/database for changed translation/mapping/migration semantics.
-- Apply migrations to representative existing data and inspect generated SQL/model snapshot.
-- Test write/read, rollback, constraint violation, concurrency conflict, retry/idempotency, global filter, and context lifetime when owned.
-- Assert query shape/count/order/pagination and no client/N+1/unbounded behavior.
-- Verify worker scopes/factories dispose contexts and never share one concurrently.
+- 对选中的关系提供者/容器/数据库运行集成测试以验证变更的翻译/映射/迁移语义。
+- 将迁移应用于代表性现有数据并检查生成的 SQL/模型快照。
+- 在拥有时测试写入/读取、回滚、约束违反、并发冲突、重试/幂等性、全局过滤器和上下文生命周期。
+- 断言查询形态/计数/顺序/分页且无客户端/N+1/无界行为。
+- 验证 worker 作用域/工厂销毁上下文且从不并发共享一个。
 
 ## Evidence Focus
 
-Name provider, context/unit-of-work owner, mapping/query/transaction/concurrency/migration decision, and provider-backed assertion. Passing EF InMemory tests or migration generation alone does not prove relational behavior or existing-data safety.
+说明提供者、上下文/工作单元所有者、映射/查询/事务/并发/迁移决策和提供者支持的断言。通过 EF InMemory 测试或迁移生成单独不证明关系行为或现有数据安全。
 
 ## Unsafe Defaults
 
-- This file loaded alongside duplicate ASP.NET Core data guidance.
-- Long-lived/shared DbContext in workers or parallel tasks.
-- EF InMemory used as relational proof.
-- SaveChanges scattered across repository/helper calls.
-- Execution-strategy retry repeating non-idempotent side effects.
-- Destructive migration accepted without existing-data/cutover plan.
+- 此文件与重复的 ASP.NET Core 数据指导一起加载。
+- worker 或并行任务中长生命/共享的 DbContext。
+- EF InMemory 用作关系证明。
+- SaveChanges 分散在 repository/辅助调用中。
+- 执行策略重试重复非幂等副作用。
+- 没有现有数据/切换计划就接受破坏性迁移。

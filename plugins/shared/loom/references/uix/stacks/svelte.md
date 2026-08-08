@@ -1,14 +1,14 @@
-# UIX Stack: Svelte
+# UIX 技术栈：Svelte
 
-Use for Svelte, SvelteKit, and related component-driven projects.
+用于 Svelte、SvelteKit 和相关组件驱动的项目。
 
-## Structure
+## 结构
 
-- Follow existing route, layout, store, and component conventions.
-- Keep page orchestration, business components, reusable UI primitives, and data modules separated.
-- Use SvelteKit load/actions or the repo's data approach consistently.
+- 遵循现有的路由、布局、store 和组件约定。
+- 保持页面编排、业务组件、可重用 UI 原语和数据模块分离。
+- 一致使用 SvelteKit load/actions 或仓库的数据方法。
 
-## Suggested Split
+## 建议的拆分
 
 ```text
 src/routes/
@@ -18,17 +18,17 @@ src/lib/server|services/
 src/lib/styles/tokens.css
 ```
 
-## Implementation Rules
+## 实现规则
 
-- Represent loading, empty, error, validation, success, and business-blocking states directly in the template.
-- Use stores only when state is shared across surfaces; keep local state local.
-- Use semantic tokens in CSS variables, app CSS, Tailwind, or the existing styling system.
-- Keep transitions purposeful and respect reduced motion.
-- Avoid hiding product behavior inside overly clever reactive statements.
-- Merge token templates into existing app CSS, Tailwind config, or SvelteKit layout assets. Do not create per-component parallel token blocks.
-- Keep business actions close to the component that displays the affected object, so success/error can update in place.
+- 直接在模板中表示加载、空、错误、验证、成功和业务阻塞状态。
+- 仅在状态跨界面共享时使用 stores；保持本地状态本地。
+- 在 CSS 变量、应用 CSS、Tailwind 或现有样式系统中使用语义令牌。
+- 保持过渡有目的并尊重减弱动效。
+- 避免在过于聪明的响应式语句中隐藏产品行为。
+- 将令牌模板合并到现有应用 CSS、Tailwind 配置或 SvelteKit 布局资产中。不要创建每组件的并行令牌块。
+- 将业务操作靠近显示受影响对象的组件，以便成功/错误可以就地更新。
 
-## Template Pattern
+## 模板模式
 
 ```svelte
 {#if state.status === 'loading'}
@@ -42,25 +42,23 @@ src/lib/styles/tokens.css
 {/if}
 ```
 
-## Verification
+## 验证
 
-- Run focused build/type/lint commands when present.
-- Render workflows and check state transitions, focus, and responsive behavior.
-- Confirm stores, forms, and transitions preserve task context across loading/error/success states.
+- 存在时运行聚焦的构建/类型/lint 命令。
+- 渲染工作流并检查状态转换、焦点和响应式行为。
+- 确认 stores、表单和过渡在加载/错误/成功状态间保留任务上下文。
 
-## Page Load And Action Boundary
+## 页面加载和操作边界
 
-For SvelteKit, page data, form actions, layouts, and server/client boundaries
-belong to the framework engineering contract. UIX owns how their states appear
-and how the user keeps context while moving through the surface.
+对于 SvelteKit，页面数据、表单操作、布局和服务端/客户端边界属于框架工程契约。UIX 拥有它们的状态如何出现以及用户如何在界面中移动时保持上下文。
 
 ```text
 layout shell -> page data state -> feature region -> form/action
 -> pending/validation/result -> invalidate or reconcile affected region
 ```
 
-- Keep a persistent shell in the layout and keep route-owned content in the page or feature component.
-- Render `loading`, `empty`, `error`, `validation`, `success`, and `business-blocking` states beside the region or action they explain.
-- Use stores for genuinely shared UI state such as navigation or cross-route filters; keep selected records and drafts local to the owning surface when possible.
-- After an action, invalidate or update the exact affected data and preserve filters, selection, and return context.
-- Keep transitions purposeful and bounded. A transition must not hide a state change, move the primary action, or block keyboard focus.
+- 在布局中保持持久外壳，在页面或功能组件中保持路由拥有的内容。
+- 在它们解释的区域或操作旁边渲染 `loading`、`empty`、`error`、`validation`、`success` 和 `business-blocking` 状态。
+- 对真正共享的 UI 状态（如导航或跨路由筛选器）使用 stores；可能时将选定记录和草稿保留在拥有界面本地。
+- 操作后，使确切受影响数据无效或更新，并保留筛选器、选择和返回上下文。
+- 保持过渡有目的且有界。过渡不得隐藏状态变化、移动主要操作或阻止键盘焦点。

@@ -1,62 +1,62 @@
-# SQL Server Schema Mapping
+# SQL Server Schema 映射
 
-Use this file with `tech/code/sql/schema.md` when the accepted persistence provider is SQL Server and the task owns schema, migration, entity mapping, or database-backed invariants.
+当已接受的持久化提供者是 SQL Server 且任务拥有 schema、迁移、实体映射或数据库支持的不变式时，将此文件与 `tech/code/sql/schema.md` 一起使用。
 
 ## When To Use
 
-- Read the SQL Server version, compatibility level, driver, ORM, migration tool, and existing migration style before choosing syntax.
-- Apply provider rules only to fields, constraints, indexes, and migrations owned by the task.
-- Keep instance administration and unrelated platform work outside this implementation reference.
+- 在选择语法之前，阅读 SQL Server 版本、兼容级别、驱动程序、ORM、迁移工具和现有迁移风格。
+- 仅将提供者规则应用于任务拥有的字段、约束、索引和迁移。
+- 将实例管理和不相关的平台工作排除在此实现参考之外。
 
 ## Implementation Focus
 
-- Choose `IDENTITY`, sequences, application-generated UUIDs, or another key strategy from domain scale, migration policy, ORM support, and existing schema.
-- Use `DECIMAL` with explicit precision and scale for exact quantities. Match the database definition to the application and API representation.
-- Use `datetime2` for timestamps without offset and `datetimeoffset` when the stored value represents an instant with offset semantics. Do not let driver conversion choose the business meaning.
-- Use `nvarchar` for user-visible Unicode text and define length only when it is a business, storage, or index constraint. Treat `bit` as a boolean mapping decision rather than a general integer.
-- Use JSON functions over validated text only when the flexible shape and query path are part of the accepted contract. Keep stable, frequently queried fields typed.
+- 从领域规模、迁移策略、ORM 支持和现有 schema 中选择 `IDENTITY`、序列、应用生成的 UUID 或其他键策略。
+- 对精确量使用具有显式精度和标度的 `DECIMAL`。将数据库定义与应用和 API 表示匹配。
+- 对不带偏移的时间戳使用 `datetime2`，当存储值表示带偏移语义的时刻时使用 `datetimeoffset`。不要让驱动程序转换选择业务含义。
+- 对用户可见的 Unicode 文本使用 `nvarchar`，仅当长度是业务、存储或索引约束时才定义长度。将 `bit` 视为布尔映射决策而非通用整数。
+- 仅当灵活结构和查询路径是已接受契约的一部分时才对已验证文本使用 JSON 函数。保持稳定的、频繁查询的字段类型化。
 
 ## Constraints And Indexes
 
-- Define primary keys, foreign keys, unique constraints, check constraints, and nullability at the database layer for durable invariants.
-- Use filtered indexes only when the filter predicate exactly matches the active-record or query contract. Use included columns only for a named read path that benefits from covering behavior.
-- Choose clustered/nonclustered key placement from access patterns and write behavior; do not apply a universal clustered-key rule.
-- Keep cascade behavior aligned with domain ownership and migration safety.
+- 为持久不变式在数据库层定义主键、外键、唯一约束、检查约束和可空性。
+- 仅当筛选谓词与活动记录或查询契约完全匹配时才使用筛选索引。仅对受益于覆盖行为的命名读取路径使用包含列。
+- 从访问模式和写入行为选择聚集/非聚集键放置；不要应用通用聚集键规则。
+- 保持级联行为与领域所有权和迁移安全性对齐。
 
 ## Migration And ORM Alignment
 
-- Keep migration DDL, ORM mappings, generated values, enum/state conversion, nullability, defaults, and API DTOs aligned.
-- Review compatibility level and generated migration SQL before using provider-specific functions, filtered indexes, computed columns, or temporal features.
-- Verify clean installation and upgrade behavior when existing rows, indexes, constraints, or computed values are in scope.
+- 保持迁移 DDL、ORM 映射、生成值、枚举/状态转换、可空性、默认值和 API DTO 对齐。
+- 在使用提供者特定函数、筛选索引、计算列或时态特性之前，审查兼容级别和生成的迁移 SQL。
+- 当现有行、索引、约束或计算值在范围内时，验证干净安装和升级行为。
 
 ## Compatibility Checklist
 
-- Confirm SQL Server version and compatibility level for JSON, string aggregation, filtered indexes, computed columns, and pagination syntax.
-- Check `datetime2`/`datetimeoffset` conversion, precision, and application serialization.
-- Check identity/sequence behavior and generated-key retrieval through the actual driver or ORM.
-- Check foreign-key types, length, collation, and nullability on both sides of every relationship.
-- Check computed-column determinism and indexability before using it as an access path.
-- Keep row-level security, temporal tables, and columnstore choices in an explicit architecture or data decision; they are not default schema features.
+- 确认 JSON、字符串聚合、筛选索引、计算列和分页语法的 SQL Server 版本和兼容级别。
+- 检查 `datetime2`/`datetimeoffset` 转换、精度和应用序列化。
+- 通过实际驱动程序或 ORM 检查标识/序列行为和生成键检索。
+- 检查每个关系两侧的外键类型、长度、排序规则和可空性。
+- 在将其用作访问路径之前，检查计算列的确定性和可索引性。
+- 将行级安全、时态表和列存储选择保留在显式架构或数据决策中；它们不是默认 schema 特性。
 
 ## Persistence Shape Review
 
-- Name the table owner, durable invariant, migration owner, and query path affected by the change.
-- State whether the change is additive, compatible with existing rows, or requires a backfill.
-- Keep API read/write models separate from computed columns, internal flags, and storage-only values.
-- Verify that a failed migration or partial write does not leave a state the application cannot read.
+- 说明受变更影响的表所有者、持久不变式、迁移所有者和查询路径。
+- 说明变更是添加性的、与现有行兼容的，还是需要回填。
+- 将 API 读写模型与计算列、内部标志和仅存储值分开。
+- 验证失败的迁移或部分写入不会留下应用无法读取的状态。
 
 ## Verification Focus
 
-- Run the changed migration or application startup against SQL Server or the repository's provider-compatible path.
-- Prove generated identity, Unicode/length behavior, decimal precision, timestamp semantics, constraints, filtered/indexed paths, and mappings touched by the task.
-- Record SQL Server version, compatibility level, and provider behavior verified.
+- 针对 SQL Server 或仓库的提供者兼容路径运行变更的迁移或应用启动。
+- 证明任务涉及的生成标识、Unicode/长度行为、decimal 精度、时间戳语义、约束、筛选/索引路径和映射。
+- 记录 SQL Server 版本、兼容级别和验证的提供者行为。
 
 ## Evidence Focus
 
-- Name the schema decision proved: type mapping, identity, collation, constraint, index, computed value, migration compatibility, or ORM alignment.
+- 说明已证明的 schema 决策：类型映射、标识、排序规则、约束、索引、计算值、迁移兼容性或 ORM 对齐。
 
 ## Risks To Avoid
 
-- Treating `datetime`, `bit`, implicit conversions, or collation defaults as portable semantics.
-- Adding filtered indexes or computed columns without verifying the exact predicate and compatibility level.
-- Testing SQL Server-specific behavior only with SQLite, H2, or an in-memory mock.
+- 将 `datetime`、`bit`、隐式转换或排序规则默认值视为可移植语义。
+- 在未验证确切谓词和兼容级别的情况下添加筛选索引或计算列。
+- 仅用 SQLite、H2 或内存 mock 测试 SQL Server 特定行为。

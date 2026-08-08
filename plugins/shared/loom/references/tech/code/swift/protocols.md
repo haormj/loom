@@ -1,40 +1,40 @@
-# Swift Protocol Quality
+# Swift Protocol 质量
 
-This file applies protocol-oriented design to Swift task changes.
+本文件将面向 protocol 的设计应用于 Swift 任务变更。
 
 ## When To Use
 
-- The task changes Swift abstractions, dependency boundaries, test doubles, generic APIs, associated types, protocol extensions, type erasure, conditional conformance, or reusable capabilities.
-- Use this when a protocol can make a real domain, platform, persistence, networking, or test boundary clearer.
-- If there is only one concrete type and no current variability or test boundary, do not add a protocol just for ceremony.
+- 任务变更了 Swift 抽象、依赖边界、测试替身、泛型 API、关联类型、protocol 扩展、类型擦除、条件一致性或可复用能力。
+- 当 protocol 能使真实的领域、平台、持久化、网络或测试边界更清晰时使用此参考。
+- 如果只有一个具体类型且当前没有可变性或测试边界，不要仅为仪式而添加 protocol。
 
 ## Implementation Focus
 
-- Design small capability protocols around behavior the caller needs, not around every method on a concrete type.
-- Use associated types and generics when the concrete associated value matters at compile time. Use type erasure only when values with different concrete types must be stored or passed uniformly.
-- Prefer protocol composition over broad umbrella protocols. Keep constraints visible at call sites so requirements remain understandable.
-- Put shared default behavior in protocol extensions only when it is correct for all conformers. Do not hide stateful or surprising behavior in an extension.
-- Use opaque return types (`some Protocol`) when the implementation can stay hidden and callers do not need heterogeneous storage.
-- Keep dependency-injection protocols near the boundary they abstract unless the repository has a central module for shared contracts.
-- Retroactive conformances for external types should be rare and local. Avoid making standard/library types conform globally when it can conflict with other modules.
-- Conditional conformance is useful for collection/wrapper types, but only when the behavior truly depends on element constraints.
+- 围绕调用者需要的行为设计小型能力 protocol，而非围绕具体类型的每个方法。
+- 当具体关联值在编译时重要时使用关联类型和泛型。仅当具有不同具体类型的值必须统一存储或传递时才使用类型擦除。
+- 优先使用 protocol 组合而非宽泛伞式 protocol。在调用点保持约束可见使需求保持可理解。
+- 仅当对所有遵循者都正确时才将共享默认行为放在 protocol 扩展中。不要在扩展中隐藏有状态或令人意外的行为。
+- 当实现可以保持隐藏且调用者不需要异构存储时使用不透明返回类型（`some Protocol`）。
+- 将依赖注入 protocol 保持在其抽象的边界附近，除非仓库有共享契约的中心模块。
+- 外部类型的追溯一致性应该罕见且局部。避免在全局上使标准/库类型一致，当它可能与其他模块冲突时。
+- 条件一致性对集合/包装器类型有用，但仅当行为真正依赖于元素约束时。
 
 ## Decision Rules
 
-- Define a capability protocol around the methods the consumer needs. Do not reproduce every method on a concrete service or create a protocol when there is no substitution, platform, or test boundary.
-- Use associated types/generics when the concrete type relationship matters at compile time; use type erasure only when heterogeneous values must be stored or passed uniformly.
-- Prefer protocol composition and visible constraints over broad inheritance. Keep default behavior in extensions only when it is valid for every conformer and does not hide state or invariants.
-- Use `some Protocol` when implementation identity can remain hidden and heterogeneous storage is not required. Use `any Protocol`/type erasure when the runtime needs a value with unknown concrete type.
-- Keep dependency protocols near the boundary they abstract, and keep retroactive conformances local and justified to avoid global behavior conflicts.
-- Verify conditional conformance and associated-type constraints with representative conformers, not only by compiling the protocol declaration.
+- 围绕消费者需要的方法定义能力 protocol。不要复制具体服务上的每个方法，或在没有替代、平台或测试边界时创建 protocol。
+- 当具体类型关系在编译时重要时使用关联类型/泛型；仅当异构值必须统一存储或传递时才使用类型擦除。
+- 优先使用 protocol 组合和可见约束而非宽泛继承。仅当默认行为对每个遵循者有效且不隐藏状态或不变式时才将其保留在扩展中。
+- 当实现标识可以保持隐藏且不需要异构存储时使用 `some Protocol`。当运行时需要具有未知具体类型的值时使用 `any Protocol`/类型擦除。
+- 将依赖 protocol 保持在其抽象的边界附近，并保持追溯一致性局部且有理由以避免全局行为冲突。
+- 用代表性遵循者验证条件一致性和关联类型约束，而非仅编译 protocol 声明。
 
 ## Verification Focus
 
-- Compile all conformers and call sites after protocol changes; generic/protocol errors often surface away from the edited file.
-- Test with at least one alternate implementation, fake, or mock when the protocol exists for substitution.
-- For type erasure, test forwarding of success and failure behavior and ensure identity/equality semantics are intentional.
-- Verify protocol extension defaults do not bypass concrete type invariants.
+- 在 protocol 变更后编译所有遵循者和调用点；泛型/protocol 错误通常在远离编辑文件处出现。
+- 当 protocol 用于替代时用至少一个替代实现、fake 或 mock 测试。
+- 对于类型擦除，测试成功和失败行为的转发并确保标识/相等语义是有意的。
+- 验证 protocol 扩展默认值不会绕过具体类型不变式。
 
 ## Evidence Focus
 
-- In the evidence summary, name the protocol decision: capability boundary, associated type/generic constraint, composition, default extension, type erasure, opaque return, conditional conformance, or substitution test.
+- 在证据总结中，说明 protocol 决策：能力边界、关联类型/泛型约束、组合、默认扩展、类型擦除、不透明返回、条件一致性或替代测试。

@@ -1,12 +1,12 @@
-# ASP.NET Core Runtime And Hosting
+# ASP.NET Core 运行时与 Hosting
 
-This reference owns application runtime configuration, hosting, middleware, dependency health, outbound clients, background services, and diagnostics. Docker, Compose, Kubernetes, proxy topology, registry, and deployment asset generation remain in Loom deploy guidance.
+本参考负责应用运行时配置、hosting、中间件、依赖健康、出站客户端、后台服务和诊断。Docker、Compose、Kubernetes、proxy 拓扑、registry 和部署资产生成仍在 Loom deploy 指引中。
 
-## Configuration And Options
+## 配置与选项
 
-Use the existing configuration precedence across base settings, environment settings, environment variables, user secrets/local overrides, and external providers. Never put production secrets or environment-specific URLs in committed defaults.
+使用现有的配置优先级，涵盖基础设置、环境设置、环境变量、user secret/本地覆盖和外部 provider。切勿将生产密钥或环境特定的 URL 放入已提交的默认配置中。
 
-Bind cohesive settings to typed options and validate required values at startup:
+将内聚设置绑定到类型化选项，并在启动时验证必需值：
 
 ```csharp
 builder.Services
@@ -18,78 +18,78 @@ builder.Services
     .ValidateOnStart();
 ```
 
-Use `IOptions<T>` for stable settings, `IOptionsSnapshot<T>` for scoped reload semantics, and `IOptionsMonitor<T>` only when live updates are supported safely. Do not read scattered configuration keys in business methods.
+对稳定设置使用 `IOptions<T>`，对 scoped 重载语义使用 `IOptionsSnapshot<T>`，仅当安全支持实时更新时使用 `IOptionsMonitor<T>`。不要在业务方法中读取分散的配置键。
 
-Keep local defaults runnable and production defaults safe. A missing mandatory dependency should fail startup clearly; an optional capability should expose an explicit disabled/degraded state.
+保持本地默认可运行且生产默认安全。缺少强制依赖应使启动明确失败；可选能力应暴露显式的禁用/降级状态。
 
-## Middleware And Host Pipeline
+## 中间件与 Host 管道
 
-Keep exception handling before response-producing middleware and preserve the repository's routing, forwarded headers, HTTPS, static files, CORS, authentication, authorization, rate limiting, caching, and endpoint order.
+将异常处理放在产生响应的中间件之前，保留仓库的路由、forwarded header、HTTPS、静态文件、CORS、认证、授权、限流、缓存和端点顺序。
 
-Trust forwarded headers only from configured proxies/networks. Do not force HTTPS redirects inside a topology where TLS termination and forwarded proto are not configured correctly.
+仅从已配置的 proxy/网络信任 forwarded header。不要在 TLS 终止和 forwarded proto 未正确配置的拓扑中强制 HTTPS 重定向。
 
-Use graceful shutdown and propagate `ApplicationStopping`/cancellation to hosted work. Configure request/body limits, timeouts, and server endpoints from accepted runtime requirements, not tutorial constants.
+使用优雅关闭并将 `ApplicationStopping`/取消传播到 hosted 工作。从已接受的运行时需求而非教程常量配置请求/body 限制、超时和服务器端点。
 
-## Health And Readiness
+## 健康与就绪
 
-Separate lightweight process liveness from dependency-aware readiness when the runtime platform consumes both. Liveness should not fail because a database or provider is temporarily unavailable; repeated restarts can worsen an outage.
+当运行时平台同时消费两者时，将轻量级进程 liveness 与依赖感知的 readiness 分开。Liveness 不应因数据库或 provider 暂时不可用而失败；反复重启可能加剧故障。
 
-Tag readiness checks and include only dependencies required to serve the advertised capability. Bound health-check timeouts and avoid heavy business queries, migrations, writes, or fan-out calls.
+为 readiness 检查打标签，仅包含服务所声明能力所需的依赖。限定健康检查超时，避免繁重的业务查询、迁移、写入或扇出调用。
 
-Map health paths and response detail according to the runtime contract. Do not expose credentials, internal hostnames, exception text, or dependency topology publicly.
+根据运行时契约映射健康路径和响应详情。不要公开暴露凭证、内部主机名、异常文本或依赖拓扑。
 
-## Outbound HTTP And Resilience
+## 出站 HTTP 与弹性
 
-Use `IHttpClientFactory`/typed clients with validated base address, bounded timeout, authentication handler, serialization, and provider error translation. Propagate cancellation and dispose response streams correctly.
+使用 `IHttpClientFactory`/typed client，配以已验证的 base address、有界超时、认证 handler、序列化和 provider 错误翻译。正确传播取消并释放响应流。
 
-Apply retry, circuit breaking, hedging, and timeout policies only when the accepted interaction owns them. Retry only transient/idempotent operations or use an explicit idempotency mechanism. Keep total timeout budget and retry count bounded; do not stack client, library, proxy, and application retries blindly.
+仅当已接受的交互拥有重试、断路、对冲和超时策略时才应用它们。仅重试瞬时/幂等操作或使用显式幂等机制。保持总超时预算和重试次数有界；不要盲目叠加 client、库、proxy 和应用的重试。
 
-Refresh tokens/credentials through a concurrency-safe handler/provider and redact headers/bodies from logs. DNS/handler lifetime should follow platform behavior rather than manually creating `HttpClient` per request.
+通过并发安全的 handler/provider 刷新 token/凭证，并从日志中脱敏 header/body。DNS/handler 生命周期应遵循平台行为，而非每次请求手动创建 `HttpClient`。
 
-Service discovery or gateway routing must follow the accepted runtime architecture. Resolve logical service names through the selected platform/client configuration and keep browser/public paths distinct from internal service addresses. Do not hardcode Compose or cluster hostnames in application code.
+Service discovery 或 gateway 路由必须遵循已接受的运行时架构。通过所选平台/client 配置解析逻辑服务名，保持浏览器/公共路径与内部服务地址区分。不要在应用代码中硬编码 Compose 或集群主机名。
 
-## Application Caching
+## 应用缓存
 
-Add `IMemoryCache`, `IDistributedCache`, HybridCache, or a provider adapter only when an application-cache requirement owns source of truth, key dimensions, TTL/freshness, invalidation, consistency, size, and failure behavior.
+仅当应用缓存需求拥有真值来源、键维度、TTL/新鲜度、失效、一致性、大小和失败行为时，才添加 `IMemoryCache`、`IDistributedCache`、HybridCache 或 provider 适配器。
 
-Include tenant/authorization/locale/version dimensions in keys when they affect values. Never cache credentials, unsafe mutations, or user-specific data under shared keys. Distributed-cache loss should follow the accepted degradation policy; it must not become a second source of truth.
+当 tenant/authorization/locale/version 维度影响值时，将它们包含在键中。切勿在共享键下缓存凭证、不安全变更或用户特定数据。分布式缓存丢失应遵循已接受的降级策略；它不得成为第二个真值来源。
 
-HTTP output caching is a separate transport concern. Do not add Redis merely because an endpoint has `Cache-Control` or ETag semantics.
+HTTP 输出缓存是独立的传输关注点。不要仅因为端点有 `Cache-Control` 或 ETag 语义就添加 Redis。
 
-## Background Services
+## 后台服务
 
-Implement `BackgroundService`/`IHostedService` only for accepted jobs, consumers, or maintenance work. Create service scopes per iteration/message when scoped dependencies are needed.
+仅对已接受的作业、消费者或维护工作实现 `BackgroundService`/`IHostedService`。当需要 scoped 依赖时，每次迭代/消息创建 service scope。
 
-Honor `stoppingToken`, handle partial failures, and define retry/dead-letter/idempotency/concurrency behavior. Avoid unbounded in-memory queues and arbitrary `Task.Delay` loops when a scheduler or broker owns timing.
+遵守 `stoppingToken`，处理部分失败，并定义重试/死信/幂等/并发行为。当调度器或 broker 拥有时间控制时，避免无界的内存队列和任意 `Task.Delay` 循环。
 
-Startup must not launch duplicate workers under test, design-time migrations, or hot reload. Shutdown should stop intake, finish/cancel bounded work, and close clients cleanly.
+启动不得在测试、design-time 迁移或热重载下启动重复 worker。关闭应停止摄入、完成/取消有界工作并干净地关闭 client。
 
-## AOT, Trimming, And Serialization
+## AOT、Trimming 与序列化
 
-Enable native AOT/trimming only when the selected runtime and dependencies support it. Verify reflection-heavy serializers, DI scanning, validators, EF provider behavior, OpenAPI generation, dynamic proxies, and configuration binding.
+仅当所选运行时和依赖支持时才启用 native AOT/trimming。验证重度依赖反射的序列化器、DI 扫描、验证器、EF provider 行为、OpenAPI 生成、动态代理和配置绑定。
 
-Use source-generated serialization/metadata where required and run the published artifact, not only `dotnet build`, before claiming AOT/trimming support.
+在需要时使用 source-generated 序列化/metadata，并在声称 AOT/trimming 支持之前运行发布产物，而非仅 `dotnet build`。
 
-## Verification
+## 验证
 
-- Start the application with valid and invalid required options and assert the intended startup outcome.
-- Exercise middleware ordering, forwarded-header, CORS/auth, limits, and exception behavior through the real host when changed.
-- Probe liveness/readiness and dependency transitions without exposing internals.
-- Test outbound timeout, cancellation, transient mapping, and retry/idempotency boundaries with a controllable provider.
-- Verify cache key isolation, invalidation/freshness, miss/degraded behavior, and source-of-truth recovery when caching is owned.
-- Verify background service scope, shutdown, duplicate prevention, and failure handling.
-- Validate structured telemetry fields and run the published artifact for AOT/trimming claims.
+- 使用有效和无效的必需选项启动应用，并断言预期的启动结果。
+- 当变更时通过真实 host 验证中间件顺序、forwarded-header、CORS/auth、限制和异常行为。
+- 探测 liveness/readiness 和依赖状态转换，不暴露内部信息。
+- 使用可控的 provider 测试出站超时、取消、瞬时映射和重试/幂等边界。
+- 当拥有缓存时，验证缓存键隔离、失效/新鲜度、miss/降级行为和真值来源恢复。
+- 验证后台 service scope、关闭、重复预防和失败处理。
+- 验证结构化遥测字段，并对 AOT/trimming 声明运行发布产物。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the runtime boundary and the startup/host/probe/client/worker assertion proving it. A configuration file, registered health check, or successful build cannot prove precedence, middleware order, dependency transitions, cancellation, shutdown, or published-runtime compatibility.
+标识运行时边界以及证明它的启动/host/probe/client/worker 断言。配置文件、注册的健康检查或成功构建不能证明优先级、中间件顺序、依赖状态转换、取消、关闭或发布运行时兼容性。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Docker/Kubernetes assets duplicated in application runtime guidance.
-- Secrets or production URLs committed to `appsettings.json`.
-- Dependency checks included in liveness.
-- `HttpClient` created per request or retries added to non-idempotent writes.
-- Hosted services ignoring cancellation or resolving scoped services from the root provider.
-- Sensitive/high-cardinality data emitted as telemetry labels.
-- AOT/trimming claimed from compilation without running the published artifact.
+- 在应用运行时指引中重复 Docker/Kubernetes 资产。
+- 密钥或生产 URL 提交到 `appsettings.json`。
+- Liveness 中包含依赖检查。
+- 每次请求创建 `HttpClient` 或对非幂等写入添加重试。
+- Hosted service 忽略取消或从根 provider 解析 scoped service。
+- 敏感/高基数数据作为遥测 label 输出。
+- 仅从编译声称 AOT/trimming 而未运行发布产物。

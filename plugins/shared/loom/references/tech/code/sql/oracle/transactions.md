@@ -1,60 +1,60 @@
-# Oracle Transaction Behavior
+# Oracle 事务行为
 
-Use this file with `tech/code/sql/schema.md` or `tech/code/sql/queries.md` when a task owns Oracle transaction boundaries, locking, retry behavior, or multi-row persistence changes.
+当任务拥有 Oracle 事务边界、锁定、重试行为或多行持久化变更时，将此文件与 `tech/code/sql/schema.md` 或 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Apply these rules to transactional application code and persistence tests.
-- Confirm the actual Oracle transaction boundary, isolation configuration, driver behavior, and connection scope used by the application.
+- 将这些规则应用于事务性应用代码和持久化测试。
+- 确认应用使用的实际 Oracle 事务边界、隔离配置、驱动程序行为和连接范围。
 
 ## Implementation Focus
 
-- Keep each transaction limited to state changes that must commit or roll back together.
-- Select isolation beyond Oracle's default only when the business invariant requires it. Record the reason and verify it against Oracle.
-- Define row-lock ownership, acquisition order, timeout, and release behavior for `SELECT FOR UPDATE` or equivalent locking.
-- Handle serialization error ORA-08177, deadlock ORA-00060, and transient failures at the application boundary with bounded retry and idempotency.
-- Do not use autonomous transactions to hide an unclear transaction boundary or to publish business effects outside the owning workflow.
+- 将每个事务限制在必须一起提交或回滚的状态变更内。
+- 仅当业务不变式需要超出 Oracle 默认值的行为时才选择隔离。记录原因并针对 Oracle 验证。
+- 为 `SELECT FOR UPDATE` 或等效锁定定义行锁所有权、获取顺序、超时和释放行为。
+- 在应用边界以有界重试和幂等性处理序列化错误 ORA-08177、死锁 ORA-00060 和瞬态失败。
+- 不要使用自治事务隐藏不清晰的事务边界或在拥有的工作流之外发布业务效果。
 
 ## Verification Focus
 
-- Test commit, rollback, duplicate submission, invalid transition, lock conflict, deadlock/serialization, and retry branches owned by the task.
-- Run transaction-sensitive tests against Oracle or the repository's provider-compatible path.
-- Record transaction boundary, isolation/locking decision, retry behavior, and provider evidence.
+- 测试提交、回滚、重复提交、无效转换、锁冲突、死锁/序列化和任务拥有的重试分支。
+- 针对 Oracle 或仓库的提供者兼容路径运行事务敏感测试。
+- 记录事务边界、隔离/锁定决策、重试行为和提供者证据。
 
 ## Evidence Focus
 
-- Name the transaction boundary, invariant, retry classification, rollback behavior, or Oracle lock result verified.
+- 说明已验证的事务边界、不变式、重试分类、回滚行为或 Oracle 锁结果。
 
 ## Failure Matrix
 
-- Constraint violation: return the repository's validation or conflict error and do not retry blindly.
-- Serialization, deadlock, or transient lock failure: retry only when the operation is idempotent and the owning application layer has a bounded policy.
-- Duplicate request: preserve declared uniqueness or idempotency and avoid a second durable effect.
-- Partial downstream failure: keep the transaction limited to database state and record compensation outside it when required.
-- Request cancellation: release the transaction and connection through the existing framework boundary.
+- 约束违反：返回 repository 的验证或冲突错误，不要盲目重试。
+- 序列化、死锁或瞬态锁失败：仅当操作幂等且拥有的应用层有有界策略时才重试。
+- 重复请求：保留声明的唯一性或幂等性并避免第二次持久效果。
+- 部分下游失败：将事务限制在数据库状态，并在需要时在其外部记录补偿。
+- 请求取消：通过现有框架边界释放事务和连接。
 
 ## ORM And Driver Boundary
 
-- Confirm that the transaction annotation, unit-of-work, or connection scope includes every write that must be atomic.
-- Do not open a second unmanaged connection inside a transaction-owned service method.
-- Verify rollback, generated-key, and affected-row behavior through the actual data-access path, not only a mocked service.
+- 确认事务注解、工作单元或连接范围包含每个必须原子的写入。
+- 不要在事务拥有的服务方法内打开第二个未管理的连接。
+- 通过实际数据访问路径验证回滚、生成键和受影响行行为，而非仅通过 mock 服务。
 
 ## Review Questions
 
-- Which writes must commit together, and which are intentionally outside the boundary?
-- What errors are permanent, transient, or retryable?
-- What makes retry or lock acquisition safe for this mutation?
-- Which Oracle behavior, version, or compatibility mode was verified rather than assumed?
+- 哪些写入必须一起提交，哪些有意在边界之外？
+- 哪些错误是永久的、瞬态的或可重试的？
+- 什么使此变更的重试或锁获取安全？
+- 哪个 Oracle 行为、版本或兼容模式是已验证而非假设的？
 
 ## Boundary Checklist
 
-- Identify the application operation that owns the transaction.
-- Identify durable constraints protecting the same invariant during retries.
-- Keep external calls and user interaction outside the database transaction.
-- State expected behavior after rollback and retry.
+- 标识拥有事务的应用操作。
+- 标识在重试期间保护同一不变式的持久约束。
+- 将外部调用和用户交互保持在数据库事务之外。
+- 说明回滚后和重试后的预期行为。
 
 ## Risks To Avoid
 
-- Using a mock transaction as the only proof of Oracle locking or isolation behavior.
-- Retrying every database exception without classifying permanent and transient failures.
-- Holding transactions open across HTTP calls, browser actions, or unbounded loops.
+- 使用 mock 事务作为 Oracle 锁定或隔离行为的唯一证明。
+- 在不分类永久和瞬态失败的情况下重试每个数据库异常。
+- 在 HTTP 调用、浏览器操作或无界循环间保持事务打开。

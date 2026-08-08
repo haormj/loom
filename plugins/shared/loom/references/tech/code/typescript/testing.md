@@ -1,40 +1,40 @@
-# TypeScript Testing Quality
+# TypeScript 测试质量
 
 ## When To Use
 
-- Load only when the task owns TypeScript tests, fixtures, test utilities, typecheck scripts, generated contract checks, or runtime behavior that must be proven in TypeScript.
-- Typechecking is not a substitute for runtime tests of HTTP handling, validation, reducers, UI states, or persistence behavior.
-- Follow the repository's existing runner and test environment unless the task explicitly owns test infrastructure.
+- 仅当任务拥有 TypeScript 测试、夹具、测试工具、类型检查脚本、生成的契约检查或必须在 TypeScript 中证明的运行时行为时才加载。
+- 类型检查不替代 HTTP 处理、验证、reducer、UI 状态或持久化行为的运行时测试。
+- 遵循仓库现有的运行器和测试环境，除非任务显式拥有测试基础设施。
 
 ## Decision Rules
 
-- Test through stable public boundaries: exported functions, service methods, hooks, reducers, components, API clients, or domain operations.
-- Keep fixtures typed as real DTOs or domain objects. Do not use `as any` to bypass the contract under test.
-- Mock external or slow boundaries such as network, filesystem, timers, browser storage, and third-party services; keep domain logic real.
-- For component tests, assert visible outcomes and user-dependent state: loading, empty, error, disabled, submitted, and success. Snapshot-only coverage is insufficient for interactions.
-- For async tests, await the operation or return its promise. Restore fake timers and leave no floating promises or unhandled rejections.
-- Add negative cases for guards, malformed API or storage data, invalid transitions, unsupported discriminants, permission blocks, and status rules when those paths changed.
+- 通过稳定的公共边界测试：导出函数、服务方法、hook、reducer、组件、API 客户端或领域操作。
+- 保持夹具类型化为真实 DTO 或领域对象。不要使用 `as any` 绕过被测契约。
+- Mock 外部或慢边界如网络、文件系统、定时器、浏览器存储和第三方服务；保持领域逻辑真实。
+- 对于组件测试，断言可见结果和用户依赖状态：加载中、空、错误、禁用、已提交和成功。仅快照覆盖对交互不充分。
+- 对于异步测试，等待操作或返回其 promise。恢复假定时器且不留下浮动 promise 或未处理拒绝。
+- 当这些路径变更时，为守卫、格式错误的 API 或存储数据、无效转换、不支持的判别式、权限阻止和状态规则添加反面用例。
 
 ## Implementation Focus
 
-- Pair the configured typecheck with focused runtime tests for changed public behavior.
-- Keep test helpers and fixtures in the same contract vocabulary as production code so they do not normalize away the failure being tested.
-- Use the configured DOM or browser environment for browser-facing code; Node, jsdom, happy-dom, and real browser checks prove different things.
-- Respect existing coverage thresholds when present. Do not exclude changed files to make a threshold pass.
+- 将配置的类型检查与变更公共行为的聚焦运行时测试配对。
+- 保持测试辅助函数和夹具使用与生产代码相同的契约词汇，这样它们不会将正在测试的失败规范化掉。
+- 对面向浏览器的代码使用配置的 DOM 或浏览器环境；Node、jsdom、happy-dom 和真实浏览器检查证明不同的事情。
+- 在存在时尊重现有覆盖率阈值。不要为使阈值通过而排除变更的文件。
 
 ## Failure Modes
 
-- Do not treat a passing typecheck as proof that a server returned valid JSON or that a component renders the required state.
-- Do not make snapshots the only evidence for an interactive flow whose loading, error, disabled, or success behavior changed.
-- Do not leave a test green by mocking the domain rule or by sharing mutable fixture objects between cases.
-- Keep setup deterministic so a failure identifies the changed boundary rather than test order.
+- 不要将通过的类型检查视为服务器返回有效 JSON 或组件渲染了所需状态的证明。
+- 当交互流程的加载、错误、禁用或成功行为变更时，不要使快照成为唯一证据。
+- 不要通过 mock 领域规则或在用例之间共享可变夹具对象来保持测试绿色。
+- 保持设置确定性，使失败能识别变更的边界而非测试顺序。
 
 ## Verification Focus
 
-- Run the changed package's test command and its configured typecheck or build command.
-- When a test uses fake timers, prove that timers are advanced and restored; when it uses a browser API, verify that the selected environment supports the exercised path.
-- Record an untested gap only when it is outside the task boundary or blocked by missing infrastructure.
+- 运行变更包的测试命令及其配置的类型检查或构建命令。
+- 当测试使用假定时器时，证明定时器被推进和恢复；当使用浏览器 API 时，验证所选环境支持演练的路径。
+- 仅当未测试的缺口在任务边界之外或因缺少基础设施而被阻塞时才记录它。
 
 ## Evidence Focus
 
-- Record the behavior verified, the invalid path covered, and the exact focused commands run.
+- 记录已验证的行为、覆盖的无效路径，以及运行的确切聚焦命令。

@@ -1,15 +1,15 @@
-# UIX Scenario: Mobile Native
+# UIX 场景：移动原生
 
-Use for iOS, Android, React Native, Flutter, Swift, Kotlin, or native-like mobile app surfaces.
+用于 iOS、Android、React Native、Flutter、Swift、Kotlin 或类原生移动应用界面。
 
-## Baseline
+## 基线
 
-- Respect platform navigation, safe areas, touch targets, and system conventions.
-- Density is `comfortable`.
-- Screens support one clear user task and preserve navigation context.
-- Native UI must not look like a desktop web table squeezed into a phone.
+- 尊重平台导航、安全区域、触摸目标和系统约定。
+- 密度为 `comfortable`。
+- 屏幕支持一个清晰的用户任务并保留导航上下文。
+- 原生 UI 不得看起来像压缩到手机中的桌面 Web 表格。
 
-## Screen Anatomy
+## 屏幕解剖结构
 
 ```text
 Root navigation
@@ -20,28 +20,28 @@ Root navigation
     -> sheet/dialog only for focused secondary work
 ```
 
-## Required Patterns
+## 必需模式
 
-- Stack/tab navigation matching platform expectations.
-- Safe-area-aware headers, bottom bars, sheets, and actions.
-- Large enough touch targets and reachable primary actions.
-- Offline/loading/error/permission states when relevant.
-- Form inputs with mobile keyboards, validation, and preserved values.
+- 匹配平台预期的栈/标签导航。
+- 安全区域感知的页眉、底部栏、面板和操作。
+- 足够大的触摸目标和可达的主要操作。
+- 相关时的离线/加载/错误/权限状态。
+- 带移动键盘、验证和保留值的表单输入。
 
-## Component Guidance
+## 组件指导
 
-- Lists use native list/card patterns with clear row identity and status.
-- Forms use grouped sections, visible labels, and input-specific keyboards.
-- Bottom sheets are for short choices or confirmations; complex flows get full screens.
-- Destructive or financial actions need confirmation, review, or undo based on severity.
-- Empty states should offer the next native action.
+- 列表使用带清晰行标识和状态的原生列表/卡片模式。
+- 表单使用分组部分、可见标签和输入特定键盘。
+- 底部面板用于简短选择或确认；复杂流程使用全屏。
+- 破坏性或金融操作根据严重程度需要确认、审查或撤销。
+- 空状态应提供下一个原生操作。
 
-## Native State Handling
+## 原生状态处理
 
-- Loading should use platform-appropriate progress indicators or skeleton/list placeholders.
-- Permission states should explain the missing permission and route to recovery when possible.
-- Offline states should separate unavailable network from empty data.
-- Keyboard-aware layouts must keep active fields and submit actions reachable.
+- 加载应使用平台合适的进度指示器或骨架/列表占位符。
+- 权限状态应说明缺失的权限并在可能时路由到恢复。
+- 离线状态应将不可用网络与空数据分离。
+- 键盘感知布局必须保持活动字段和提交操作可达。
 
 ```text
 screen -> loading/empty/error/content
@@ -49,39 +49,36 @@ action -> pending/success/failure
 navigation -> back/cancel/restore context
 ```
 
-## Verification
+## 验证
 
-- Use simulator/device or framework preview when available.
-- Check safe areas, keyboard behavior, scroll, and touch targets.
-- Check platform back behavior and focus/voiceover labels when possible.
-- Check dark/light mode only when the app supports both.
+- 可用时使用模拟器/设备或框架预览。
+- 检查安全区域、键盘行为、滚动和触摸目标。
+- 可能时检查平台返回行为和焦点/语音标签。
+- 仅当应用支持两者时才检查暗色/亮色模式。
 
-## Avoid
+## 避免
 
-- Web-only hover interactions.
-- Tiny table cells, cramped toolbars, and desktop sidebars.
-- Ignoring platform back behavior or safe areas.
-- Hiding critical action state in transient toast only.
+- 仅 Web 的悬停交互。
+- 微小的表格单元格、拥挤的工具栏和桌面侧边栏。
+- 忽略平台返回行为或安全区域。
+- 仅在瞬态 toast 中隐藏关键操作状态。
 
-## Platform Resolution
+## 平台解析
 
-Resolve platform behavior before styling the screen. The same product action can
-need different navigation, permission, keyboard, and feedback behavior on iOS,
-Android, or a cross-platform runtime.
+在样式化屏幕之前解析平台行为。同一产品操作在 iOS、Android 或跨平台运行时上可能需要不同的导航、权限、键盘和反馈行为。
 
-| Concern | Required decision |
+| 关注点 | 必需决策 |
 | --- | --- |
-| Navigation | Platform back gesture/button, deep link, tab/stack ownership, and restoration after relaunch. |
-| Safe area | Insets for status bars, notches, home indicators, sheets, and keyboard. |
-| Input | Keyboard type, focus order, scroll-to-focused-field, autofill, and dismissal behavior. |
-| Permission | Pre-permission explanation, denied state, retry/settings route, and feature fallback. |
-| Feedback | Native or platform-consistent pending, success, error, and destructive confirmation behavior. |
-| Touch | Minimum target size, gesture conflict resolution, and reachable primary action. |
+| 导航 | 平台返回手势/按钮、深度链接、标签/栈归属和重新启动后的恢复。 |
+| 安全区域 | 状态栏、刘海、主指示器、面板和键盘的插入。 |
+| 输入 | 键盘类型、焦点顺序、滚动到焦点字段、自动填充和关闭行为。 |
+| 权限 | 权限前说明、拒绝状态、重试/设置路由和功能回退。 |
+| 反馈 | 原生或平台一致的待处理、成功、错误和破坏性确认行为。 |
+| 触摸 | 最小目标尺寸、手势冲突解决方案和可达的主要操作。 |
 
 ```text
 screen shell -> platform header/back -> task content -> validation/permission
 -> bottom or inline action -> success route or recoverable failure
 ```
 
-Do not hide a platform limitation in a generic error. Explain what the user can
-do next and keep already entered data when recovery is possible.
+不要将平台限制隐藏在通用错误中。说明用户下一步可以做什么并在恢复可能时保留已输入数据。

@@ -1,22 +1,22 @@
-# Django REST Framework Views And Routers
+# Django REST Framework View 与 Router
 
-Implement accepted HTTP behavior through the smallest DRF/Django view abstraction that preserves queryset scoping, permissions, serializers, statuses, and error contracts.
+通过保留 queryset 范围限定、权限、serializer、状态和错误契约的最小 DRF/Django view 抽象来实现已接受的 HTTP 行为。
 
-## When To Use
+## 何时使用
 
-Use this reference for DRF ViewSets, generic/API views, routers, custom actions, queryset scoping, per-action serializers/permissions, filtering, pagination, throttling integration, or Django async views.
+对 DRF ViewSet、generic/API view、router、自定义 action、queryset 范围限定、按 action 的 serializer/permission、过滤、分页、throttling 集成或 Django async view 使用此参考。
 
 ## Implementation Focus
 
-### Choose The View Boundary
+### 选择 View 边界
 
-Use `ModelViewSet` when the accepted surface genuinely owns the complete resource operation set. Use read-only viewsets or generic views for narrower resources, and `APIView`/function views for behavior that does not fit model CRUD cleanly.
+当已接受的外表确实拥有完整的资源操作集时使用 `ModelViewSet`。对较窄的资源使用只读 viewset 或 generic view，对不适合模型 CRUD 的行为使用 `APIView`/函数 view。
 
-Do not expose create/update/delete merely because `ModelViewSet` supplies them. Router-generated paths, names, lookup fields, and trailing slashes must match the accepted interface.
+不要仅因为 `ModelViewSet` 提供了 create/update/delete 就暴露它们。Router 生成的路径、name、lookup 字段和 trailing slash 必须与已接受的接口一致。
 
-### Queryset Scoping
+### Queryset 范围限定
 
-Scope every queryset by tenant, actor, visibility, lifecycle state, and soft-delete policy before object lookup. A class-level `queryset = Model.objects.all()` is unsafe when access varies by request.
+在对象查找之前按 tenant、actor、可见性、生命周期状态和软删除策略限定每个 queryset。当访问因请求而异时，类级 `queryset = Model.objects.all()` 是不安全的。
 
 ```python
 class OrderViewSet(viewsets.ModelViewSet):
@@ -32,57 +32,57 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
 ```
 
-Object permissions run after object retrieval; they do not automatically filter list results. Apply both queryset scoping and object-level checks where required.
+对象权限在对象检索之后运行；它们不会自动过滤列表结果。在需要的地方同时应用 queryset 范围限定和对象级检查。
 
-### Per-Action Contracts
+### 按 Action 契约
 
-Use explicit mappings in `get_serializer_class`, `get_permissions`, and parser/renderer behavior when actions differ. Avoid branches spread across many hooks with no visible action contract.
+当 action 不同时，在 `get_serializer_class`、`get_permissions` 和 parser/renderer 行为中使用显式映射。避免分散在许多 hook 中且没有可见 action 契约的分支。
 
-Server-owned fields such as actor, tenant, audit identity, and initial state are assigned from trusted request context in `perform_create` or, for multi-step behavior, an application service. Never trust them from request payloads.
+服务端拥有的字段（如 actor、tenant、审计 identity 和初始状态）在 `perform_create` 中从受信任的请求上下文赋值，或多步行为时由应用 service 赋值。切勿从请求 payload 中信任它们。
 
-### Custom Actions And State Changes
+### 自定义 Action 与状态变更
 
-Custom `@action` endpoints need explicit detail/list scope, method, path, serializer, permissions, status, idempotency, and failure behavior. Put state transitions and multi-row writes in a transactional service rather than mutating fields directly in the view.
+自定义 `@action` 端点需要显式的 detail/list scope、method、path、serializer、permission、status、幂等和失败行为。将状态转换和多行写入放在事务性 service 中，而非在 view 中直接变更字段。
 
-Return `201`/`202`/`204` only when their semantics are actually met. A `204` response has no body. Preserve location, retry, pagination, and conditional headers when declared by the API contract.
+仅在语义实际满足时返回 `201`/`202`/`204`。`204` 响应没有 body。当 API 契约声明时保留 location、retry、分页和条件 header。
 
-### Filtering, Search, Ordering, Pagination
+### 过滤、搜索、排序、分页
 
-Use `django-filter` or explicit filter sets for typed allowlisted filtering. Restrict search and ordering fields; never pass arbitrary client fields into ORM ordering. Keep list endpoints bounded with deterministic default ordering and maximum page size.
+使用 `django-filter` 或显式 filter set 进行类型化的允许列表过滤。限制搜索和排序字段；切勿将任意客户端字段传入 ORM 排序。使用确定性默认排序和最大页大小保持列表端点有界。
 
-Match queryset loading and annotations to the selected list/detail serializer. Avoid applying expensive prefetches to actions that do not serialize those relationships.
+将 queryset 加载和 annotation 与所选的 list/detail serializer 匹配。避免对不序列化那些关系的 action 应用昂贵的 prefetch。
 
-### Exceptions And Errors
+### 异常与错误
 
-Translate expected domain/integrity failures to the accepted DRF error envelope through focused exceptions/handlers. Distinguish validation, not found, conflict, authentication, authorization, throttling, temporary dependency failure, and unexpected errors.
+通过聚焦的 exception/handler 将预期的领域/完整性失败转换为已接受的 DRF 错误 envelope。区分验证、not found、冲突、认证、授权、throttling、临时依赖失败和意外错误。
 
-Do not catch `Exception` in every action or expose database/provider messages. Route unexpected failures to the one boundary selected by `tech/code/observability.md` when this task owns observability.
+不要在每个 action 中捕获 `Exception` 或暴露数据库/provider 消息。当此任务拥有可观测性时，将意外失败路由到 `tech/code/observability.md` 选择的唯一边界。
 
-### Django Async Views
+### Django Async View
 
-Use async views only when the full I/O path benefits and supported APIs are awaited correctly. Do not wrap broad ORM workflows in repeated `sync_to_async` calls and call them concurrent by accident. Preserve thread-sensitive database behavior and transaction boundaries.
+仅当完整 I/O 路径受益且受支持的 API 被正确 await 时才使用 async view。不要将宽泛的 ORM 工作流包装在重复的 `sync_to_async` 调用中并误称为并发。保留线程敏感的数据库行为和事务边界。
 
-DRF support and middleware may still be synchronous depending on the repository version/configuration. Measure before converting views and keep blocking work off the event loop.
+根据仓库版本/配置，DRF 支持和中间件可能仍然是同步的。在转换 view 之前进行测量，并将阻塞工作排除在事件循环之外。
 
 ## Verification Focus
 
-- Exercise success, validation, not-found, conflict, unauthenticated, forbidden, and ownership paths owned by the task.
-- Assert queryset scoping for list, retrieve, update, delete, and custom actions.
-- Verify router names/paths, lookup fields, action methods, serializers, permissions, and statuses.
-- Test filters, search, ordering allowlists, pagination metadata, and empty results.
-- Use query-count evidence for changed related-object loading.
-- Test async views through the actual ASGI path when async behavior is owned.
+- 执行任务拥有的成功、验证、not-found、冲突、未认证、禁止和归属路径。
+- 断言 list、retrieve、update、delete 和自定义 action 的 queryset 范围限定。
+- 验证 router name/path、lookup 字段、action method、serializer、permission 和 status。
+- 测试过滤器、搜索、排序允许列表、分页元数据和空结果。
+- 对变更的关联对象加载使用查询计数证据。
+- 当拥有 async 行为时通过实际 ASGI 路径测试 async view。
 
 ## Evidence Focus
 
-Identify the view/action, scoped queryset, permission, serializer, and HTTP assertions proving the behavior. Router registration or one successful request does not prove list isolation, object ownership, failure mapping, or query efficiency.
+标识 view/action、限定范围的 queryset、permission、serializer 以及证明行为的 HTTP 断言。Router 注册或一次成功请求不能证明列表隔离、对象归属、失败映射或查询效率。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Full `ModelViewSet` for a read-only or single-action surface.
-- Unscoped class queryset for tenant/user-owned records.
-- Object permission assumed to filter list endpoints.
-- State transitions and external calls directly in view methods.
-- Arbitrary client-controlled ordering/filter fields.
-- One expensive queryset/prefetch used for every action.
-- Async views wrapped around synchronous ORM workflows without a deliberate boundary.
+- 对只读或单 action 外表使用完整的 `ModelViewSet`。
+- tenant/用户拥有记录的未限定范围类 queryset。
+- 假设对象权限会过滤列表端点。
+- 状态转换和外部调用直接在 view 方法中。
+- 任意客户端控制的排序/过滤字段。
+- 每个 action 都使用一个昂贵的 queryset/prefetch。
+- 围绕同步 ORM 工作流包装的 async view，没有明确边界。

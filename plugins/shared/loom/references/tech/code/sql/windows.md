@@ -1,50 +1,50 @@
-# SQL Window Function Quality
+# SQL 窗口函数质量
 
-This file applies to ranking, analytic, and per-partition SQL calculations.
+本文件适用于排名、分析和按分区 SQL 计算。
 
 ## When To Use
 
-- The task changes ranking, top-N-per-group, deduplication, running totals, moving averages, lag/lead comparisons, cohort analysis, sessionization, percentiles, or other analytic SQL.
-- Use this when a window function can replace self-joins, repeated subqueries, or application-side row-by-row calculations.
-- If the query is a simple aggregate grouped query with no row-level analytic result, do not add windows unnecessarily.
+- 任务变更了排名、每组 top-N、去重、运行总计、移动平均、lag/lead 比较、队列分析、会话化、百分位或其他分析 SQL。
+- 当窗口函数可以替换自连接、重复子查询或应用端逐行计算时使用此参考。
+- 如果查询是没有行级分析结果的简单分组聚合查询，不要不必要地添加窗口。
 
 ## Implementation Focus
 
-- Define `PARTITION BY`, `ORDER BY`, and frame semantics explicitly. The default frame is often wrong for `LAST_VALUE`, running totals, and centered windows.
-- Choose ranking functions deliberately: `ROW_NUMBER` for one deterministic row, `RANK` when ties leave gaps, `DENSE_RANK` when ties share rank without gaps, and `NTILE` for buckets.
-- For top-N-per-group and deduplication, include a stable tie-breaker in the window `ORDER BY` so results do not change between executions.
-- Use `LAG`/`LEAD` for previous/next row comparisons and handle first/last row nulls deliberately.
-- Use aggregate windows for running totals, rolling averages, percent-of-total, and cohort metrics when you need both detail rows and aggregate context.
-- Filter at the correct stage. Predicates before the window change the partition; predicates after the window select from ranked/calculated results.
-- Avoid multiple expensive window passes when the same partition/order can serve several calculations. Consolidate compatible windows where it improves clarity and cost.
-- Check dialect support for frame syntax, filtered aggregates, percentile functions, and date-range windows before using them.
-- Keep large partitions and sort requirements visible. Add or verify supporting indexes when window calculations are on hot paths.
+- 显式定义 `PARTITION BY`、`ORDER BY` 和框架语义。默认框架对 `LAST_VALUE`、运行总计和居中窗口通常是错误的。
+- 有意选择排名函数：`ROW_NUMBER` 用于一个确定性行，`RANK` 当并列留间隙，`DENSE_RANK` 当并列共享排名无间隙，`NTILE` 用于分桶。
+- 对于每组 top-N 和去重，在窗口 `ORDER BY` 中包含稳定决胜键使结果在执行之间不变。
+- 使用 `LAG`/`LEAD` 进行前/后行比较并刻意处理首/末行 null。
+- 当需要同时有明细行和聚合上下文时使用聚合窗口进行运行总计、滚动平均、占总百分比和队列指标。
+- 在正确阶段过滤。窗口之前的谓词改变分区；窗口之后的谓词从排名/计算结果中选择。
+- 当相同分区/排序可以服务于多个计算时避免多次昂贵的窗口遍历。在改善清晰度和成本的地方合并兼容窗口。
+- 在使用之前检查方言对框架语法、过滤聚合、百分位函数和日期范围窗口的支持。
+- 保持大分区和排序要求可见。当窗口计算在热路径上时添加或验证支持索引。
 
 ### Function And Frame Selection
 
-| Need | Preferred rule | Detail to make explicit |
+| 需求 | 首选规则 | 需显式的细节 |
 |---|---|---|
-| One deterministic row per group | `ROW_NUMBER` | unique tie-breaker in the window order |
-| Ranking with ties | `RANK` or `DENSE_RANK` | whether gaps after ties are meaningful |
-| Previous/next comparison | `LAG`/`LEAD` | first/last row null or default behavior |
-| First/last value in a partition | `FIRST_VALUE`/`LAST_VALUE` | full-partition frame when the default frame is insufficient |
-| Running or rolling metric | aggregate window | `ROWS` versus `RANGE`, boundary, and duplicate sort values |
-| Percentile or cohort metric | percentile/aggregate window | dialect support, null policy, and population definition |
+| 每组一个确定性行 | `ROW_NUMBER` | 窗口排序中的唯一决胜键 |
+| 带并列的排名 | `RANK` 或 `DENSE_RANK` | 并列后的间隙是否有意义 |
+| 前/后比较 | `LAG`/`LEAD` | 首/末行 null 或默认行为 |
+| 分区中首/末值 | `FIRST_VALUE`/`LAST_VALUE` | 当默认框架不足时的全分区框架 |
+| 运行或滚动指标 | 聚合窗口 | `ROWS` vs `RANGE`、边界和重复排序值 |
+| 百分位或队列指标 | 百分位/聚合窗口 | 方言支持、null 策略和总体定义 |
 
-Filter rows after calculating the window when the filter depends on the window result. Filter before the window only when excluded rows must not participate in the partition or frame.
+当过滤依赖窗口结果时在计算窗口后过滤行。仅当排除的行不得参与分区或框架时才在窗口之前过滤。
 
 ### Analytic Cost Boundary
 
-Reuse compatible partition/order definitions where it improves the plan, but do not merge windows when it makes frame or result semantics ambiguous. Large partitions, repeated sorts, generated series, and materialized analytic results require a named workload, supporting index or provider feature, and plan evidence. Keep provider-specific percentile, filtered aggregate, and time-series functions in the dialect overlay when portability is not established.
+在改善计划的地方复用兼容的分区/排序定义，但当框架或结果语义变得模糊时不要合并窗口。大分区、重复排序、生成序列和物化分析结果需要命名的工作负载、支持索引或提供者特性以及计划证据。在未建立可移植性时将提供者特定的百分位、过滤聚合和时间序列函数保留在方言覆盖中。
 
 ## Verification Focus
 
-- Test fixtures with ties, empty partitions, first/last row edges, null values, and multiple rows sharing the same order value.
-- For running/rolling calculations, verify the exact frame behavior at partition boundaries.
-- For deduplication/top-N, prove deterministic selection with tie-breakers.
-- For large analytic paths, review query plan or timing evidence when feasible.
-- Compare row counts and values at partition boundaries, including ties and nulls, after a window rewrite.
+- 用并列、空分区、首/末行边界、null 值和共享相同排序值的多行测试夹具。
+- 对于运行/滚动计算，验证分区边界处的确切框架行为。
+- 对于去重/top-N，用决胜键证明确定性选择。
+- 对于大型分析路径，在可行时审查查询计划或时间证据。
+- 在窗口重写后比较分区边界处的行数和值，包括并列和 null。
 
 ## Evidence Focus
 
-- In the evidence summary, name the window decision: partition/order/frame, ranking choice, tie-breaker, lag/lead null handling, running/rolling aggregate, filter stage, dialect support, or plan proof.
+- 在证据总结中，说明窗口决策：分区/排序/框架、排名选择、决胜键、lag/lead null 处理、运行/滚动聚合、过滤阶段、方言支持或计划证明。

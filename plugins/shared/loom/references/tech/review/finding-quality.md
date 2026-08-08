@@ -1,101 +1,101 @@
-# Actionable Review Findings
+# 可操作的评审发现
 
-Use this reference when converting verified observations into concise findings. Exact schema, enum values, references, and next actions are supplied by the active review request; this file owns finding quality.
+当将已验证的观察转化为简洁发现时使用本引用。确切的 schema、枚举值、引用和后续动作由活跃评审请求提供；本文件拥有发现质量。
 
-## Finding Content
+## 发现内容
 
-Each finding should make five facts clear:
+每个发现应明确五个事实：
 
-1. What concrete behavior, contract, safety property, or evidence is wrong.
-2. Where it occurs in a changed file or other narrow inspected source.
-3. Under which input/state/lifecycle it manifests.
-4. What user/system impact follows.
-5. What smallest responsible correction would close it.
+1. 什么具体行为、契约、安全属性或证据是错误的。
+2. 它出现在哪个变更文件或其他狭窄检查的源码中。
+3. 在什么输入/状态/生命周期下它会显现。
+4. 什么用户/系统影响随之而来。
+5. 什么最小负责任修正能关闭它。
 
-Write the title as the defect, not a category label: “Concurrent retries can create duplicate charges,” not “Concurrency issue.”
+将标题写为缺陷，而非类别标签："并发重试可能创建重复扣款"，而非"并发问题"。
 
-Lead with impact and evidence. Keep background only when it is needed to understand why the code is wrong.
+以影响和证据开头。仅在需要理解代码为何错误时保留背景。
 
-## Evidence And Location
+## 证据和位置
 
-Cite the narrowest changed location that demonstrates the defect. Include related consumer/test/config locations only when they establish the mismatch.
+引用展示缺陷的最窄变更位置。仅在相关消费者/测试/配置位置建立不匹配时才包含它们。
 
-Explain the causal path from code to impact. A linter warning, failed test, matrix signal, or suspicious line is evidence to investigate, not always the root defect.
+解释从代码到影响的因果路径。linter 警告、失败的测试、矩阵信号或可疑行是要调查的证据，不总是根因缺陷。
 
-Do not cite an entire module, broad summary object, or old snapshot when a current file/function/check is available.
+当有当前文件/函数/检查可用时，不要引用整个模块、宽泛摘要对象或旧快照。
 
-When the defect is omission, anchor to the changed owner where behavior should exist and state the missing branch/contract.
+当缺陷是遗漏时，锚定到行为应存在的变更拥有者，并说明缺失的分支/契约。
 
-## Severity By Impact
+## 按影响的严重性
 
-Choose severity from realistic impact and reach:
+根据现实影响和范围选择严重性：
 
-- Highest: exploitable authorization/security, data loss/corruption, irreversible external effect, crash/unavailable primary path, or impossible required delivery.
-- High: accepted behavior missing/wrong, serious integration/concurrency/reliability defect, or evidence absent for a must-level high-risk behavior.
-- Low: localized non-blocking maintainability/readability/performance risk with a plausible future or secondary impact.
-- Informational: limitation, question, neutral observation, or positive context that does not require code repair.
+- 最高：可利用的授权/安全、数据丢失/损坏、不可逆外部效果、崩溃/不可用的主路径，或不可能的必需交付。
+- 高：已接受行为缺失/错误、严重的集成/并发/可靠性缺陷，或必须级高风险行为缺少证据。
+- 低：局部非阻断的可维护性/可读性/性能风险，有合理的未来或次要影响。
+- 信息性：限制、问题、中性观察或不需要代码修复的正面上下文。
 
-Do not inflate severity to force prioritization. Do not downgrade a deterministic product defect because a workaround exists.
+不要为强制优先级而夸大严重性。不要因存在变通方法而降低确定性产品缺陷的严重性。
 
-## Category And Root Cause
+## 类别和根因
 
-Classify by the root defect rather than the visible symptom. A UI “Not Found” caused by a rewritten API path is an integration/API routing defect; a missing test is secondary if source already proves the bug.
+按根因缺陷而非可见症状分类。UI"未找到"由重写 API 路径引起的是集成/API 路由缺陷；如果源码已证明 bug，缺少测试是次要的。
 
-Combine symptoms that share one repair. Split findings that have independent causes, owners, or fixes.
+合并共享一个修复的症状。拆分有独立原因、拥有者或修复的发现。
 
-Separate:
+分开：
 
-- missing/wrong implementation,
-- accepted behavior not satisfied,
-- insufficient evidence,
-- environment/review limitation,
-- architecture/planning ownership gap,
-- current scope mismatch.
+- 缺失/错误的实现，
+- 已接受行为未满足，
+- 证据不充分，
+- 环境/评审限制，
+- 架构/规划所有权差距，
+- 当前范围不匹配。
 
-## Actionability
+## 可操作性
 
-Describe the invariant or behavior the repair must establish, not a speculative rewrite. Mention an implementation technique only when it is necessary or the safe correction is unambiguous.
+描述修复必须建立的不变量或行为，而非推测性重写。仅在必要时或安全修正明确时才提及实现技术。
 
-Examples should be short and adapted to the repository. Do not paste generic replacement code that ignores local framework, error, transaction, or test conventions.
+示例应简短并适配仓库。不要粘贴忽略本地框架、错误、事务或测试约定的通用替换代码。
 
-A finding should let the repair owner answer: what to change, what not to expand, and what evidence will prove closure.
+发现应让修复方回答：改什么、不扩展什么、什么证据将证明关闭。
 
-## Questions And Ambiguity
+## 问题和歧义
 
-Ask a question only when the accepted behavior is genuinely unresolved. First inspect requirements, surrounding code, analogous features, types, tests, and configuration.
+仅在已接受行为确实未解决时才提问。首先检查需求、周围代码、类似功能、类型、测试和配置。
 
-State the conflicting interpretations and why the choice changes implementation. Do not phrase a known defect as a question to soften it.
+说明冲突的解释以及为何选择会改变实现。不要将已知缺陷表述为问题来软化它。
 
-## Non-Blocking Notes
+## 非阻断注释
 
-Use notes sparingly for actual limitations, useful follow-up, or a pattern worth preserving. Do not require speculative refactors, unmeasured optimization, stylistic preferences, or future scope.
+谨慎使用注释于实际限制、有用的后续或值得保持的模式。不要要求推测性重构、未衡量的优化、风格偏好或未来范围。
 
-Positive feedback should be specific and brief; it must not bury findings or become a required quota.
+正面反馈应具体且简短；它不得淹没发现或成为配额要求。
 
-## Repair Ownership
+## 修复所有权
 
-Identify the smallest boundary able to correct the root cause: current implementation, missing verification, plan/task ownership, architecture/interface contract, environment capability, or user-owned decision.
+识别能纠正根因的最小边界：当前实现、缺失验证、计划/任务所有权、架构/接口契约、环境能力或用户拥有的决策。
 
-Do not send clear code defects to human review, and do not ask implementation repair to invent an unresolved product decision.
+不要将清晰的代码缺陷发送到人工评审，不要要求实现修复来发明未解决的产品决策。
 
-## Final Consistency
+## 最终一致性
 
-Before submitting findings, verify:
+在提交发现之前，验证：
 
-- Every blocking finding has current evidence and concrete impact.
-- Severity matches impact and overall decision.
-- Location belongs to the reviewed change or explains a direct changed interaction.
-- Duplicate root causes are consolidated.
-- Suggested correction does not expand scope unnecessarily.
-- Evidence gaps are not mislabeled as confirmed product defects, or vice versa.
-- No finding depends only on personal preference.
+- 每个阻断性发现都有当前证据和具体影响。
+- 严重性与影响和整体决策匹配。
+- 位置属于被评审变更或解释了直接的变更交互。
+- 重复根因已合并。
+- 建议的修正不必要地扩大范围。
+- 证据差距未被误标为已确认的产品缺陷，反之亦然。
+- 没有发现仅依赖个人偏好。
 
-## Anti-Patterns
+## 反模式
 
-- “Needs more tests” without naming unproved behavior and assertion.
-- “Code is messy” without a concrete risk.
-- Repeating automated output without root-cause analysis.
-- Writing a markdown report template instead of the required structured result.
-- Bundling unrelated defects into one large item.
-- Empty praise, apology, or agreement language that adds no technical information.
-- Using human review to avoid assigning a clear repair owner.
+- "需要更多测试"而不指名未证明的行为和断言。
+- "代码混乱"而没有具体风险。
+- 重复自动输出而不做根因分析。
+- 编写 Markdown 报告模板而非所需的结构化结果。
+- 将不相关缺陷捆绑为一个大条目。
+- 不添加技术信息的空赞美、道歉或同意语言。
+- 使用人工评审来避免分配清晰的修复方。

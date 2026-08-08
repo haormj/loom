@@ -1,74 +1,74 @@
-# Java Security Fundamentals
+# Java 安全基础
 
-This reference owns Java-level secure handling of secrets, credentials, cryptographic material, sensitive values, and failure disclosure. Spring Security filter chains, OAuth2 Resource Server, method authorization, CSRF, and CORS belong to the Spring Boot security reference.
+此参考拥有 Java 级别的密钥、凭据、加密材料、敏感值和失败披露的安全处理。Spring Security 过滤器链、OAuth2 Resource Server、方法授权、CSRF 和 CORS 属于 Spring Boot 安全参考。
 
 ## When To Use
 
-Use this reference when Java implementation work handles secrets, credentials, tokens, cryptographic material, sensitive serialization, untrusted deserialization, or security-sensitive failure disclosure. It applies below the web/framework authorization layer.
+当 Java 实现工作处理密钥、凭据、令牌、加密材料、敏感序列化、不可信反序列化或安全敏感的失败披露时使用此参考。它适用于 web/框架授权层之下。
 
-Do not use it to invent authentication infrastructure or endpoint authorization policy. Framework filter chains, identity providers, method authorization, CSRF, and CORS require an accepted security task and the selected backend security reference.
+不要用于发明认证基础设施或端点授权策略。框架过滤器链、身份提供者、方法授权、CSRF 和 CORS 需要已接受的安全任务和选中的后端安全参考。
 
 ## Implementation Focus
 
 ### Secret Handling
 
-- Never embed production credentials, API keys, signing keys, private keys, or passwords in source.
-- Keep secrets out of logs, exception messages, `toString`, metrics tags, traces, and serialized DTOs.
-- Prefer typed secret/config providers over scattered environment lookups.
-- Avoid retaining sensitive character/byte arrays longer than required; do not copy them unnecessarily.
-- Treat test credentials as test-only fixtures, never production defaults.
+- 永远不要在源码中嵌入生产凭据、API 密钥、签名密钥、私钥或密码。
+- 将密钥排除在日志、异常消息、`toString`、指标标签、追踪和序列化 DTO 之外。
+- 优先使用类型化的密钥/配置提供者而非分散的环境查找。
+- 避免超过所需时间地保留敏感字符/字节数组；不要不必要地拷贝它们。
+- 将测试凭据视为仅测试夹具，永远不要作为生产默认值。
 
-Configuration files may contain placeholders and non-secret defaults. The unsafe behavior is committing secret values, not using a configuration file format.
+配置文件可能包含占位符和非密钥默认值。不安全的行为是提交密钥值，而非使用配置文件格式。
 
 ### Passwords And Credentials
 
-Use an adaptive password hashing function through the selected security framework. Do not implement password hashing, salting, or comparison manually. Do not store plaintext, reversible passwords, password hints, or password values in audit records.
+通过选中的安全框架使用自适应密码哈希函数。不要手动实现密码哈希、加盐或比较。不要在审计记录中存储明文、可逆密码、密码提示或密码值。
 
-Credential comparison and token/signature checks must use trusted libraries and constant-time operations where relevant.
+凭据比较和令牌/签名检查必须使用受信任的库和相关时的恒定时间操作。
 
 ### Cryptography
 
-Use standard JCA/JCE or vetted libraries with an accepted algorithm and key-management model. Avoid custom cryptography, insecure random sources, ECB mode, static IVs/nonces, deprecated hashes, or algorithm selection from untrusted input.
+使用标准 JCA/JCE 或经过审查的库并具有已接受的算法和密钥管理模型。避免自定义密码学、不安全的随机源、ECB 模式、静态 IV/nonce、已弃用的哈希或从不可信输入选择算法。
 
-Use `SecureRandom` for security-sensitive tokens. Define encoding and key formats explicitly. Key generation, storage, rotation, expiry, and revocation are part of the security contract.
+对安全敏感令牌使用 `SecureRandom`。显式定义编码和密钥格式。密钥生成、存储、轮换、过期和撤销是安全契约的一部分。
 
 ### Sensitive Data Boundaries
 
-Represent sensitive values with types that limit accidental exposure where useful. Keep credential/token fields out of records used for broad JSON serialization. Redact at logging boundaries and avoid logging entire request/response objects.
+在有用的地方用限制意外暴露的类型表示敏感值。将凭据/令牌字段排除在用于广泛 JSON 序列化的 record 之外。在日志边界脱敏并避免记录整个请求/响应对象。
 
-Validate file paths, URLs, class names, templates, and expression inputs before using APIs that can access the filesystem, network, reflection, deserialization, or code execution.
+在使用可能访问文件系统、网络、反射、反序列化或代码执行的 API 之前验证文件路径、URL、类名、模板和表达式输入。
 
 ### Error Disclosure
 
-Return stable safe error categories. Preserve detailed causes server-side only where authorized logs can protect them. Do not reveal whether a sensitive account/resource exists unless the accepted policy permits it.
+返回稳定的安全错误类别。仅在授权日志可以保护的服务器端保留详细原因。除非已接受策略允许，否则不要揭示敏感账户/资源是否存在。
 
-Avoid catching broad exceptions and returning the exception message. Keep security failures distinct from business validation and unexpected runtime failure.
+避免捕获宽泛异常并返回异常消息。将安全失败与业务验证和意外运行时失败区分开。
 
 ### Serialization And Deserialization
 
-Use explicit DTO types for untrusted input. Avoid native Java serialization for untrusted data. Configure polymorphic JSON deserialization only with strict allowlists and a concrete need.
+对不可信输入使用显式 DTO 类型。对不可信数据避免原生 Java 序列化。仅在有严格允许列表和具体需求时配置多态 JSON 反序列化。
 
 ## Verification Focus
 
-Useful Java security evidence includes:
+有用的 Java 安全证据包括：
 
-- no committed secret values or sensitive logging
-- adaptive password encoder use through the selected framework
-- secure random/token generation through vetted APIs
-- safe DTO/serialization boundaries for sensitive fields
-- safe error disclosure
-- dependency/static analysis findings for changed security code when available
+- 无提交的密钥值或敏感日志
+- 通过选中框架使用自适应密码编码器
+- 通过经过审查的 API 的安全随机/令牌生成
+- 敏感字段的安全 DTO/序列化边界
+- 安全的错误披露
+- 在可用时变更安全代码的依赖/静态分析发现
 
 ## Evidence Focus
 
-Evidence must prove the owned security boundary, not merely that the code compiles. Use focused tests for redaction, safe serialization, password/token verification, malformed input, and stable public failures. Include static or dependency analysis only when it evaluates the changed security code and does not replace behavioral proof.
+证据必须证明拥有的安全边界，而非仅代码编译。对脱敏、安全序列化、密码/令牌验证、格式错误输入和稳定的公共失败使用聚焦测试。仅当静态或依赖分析评估变更的安全代码且不替代行为证明时才包含它们。
 
-Never place real secret values in test output or evidence. Demonstrate configuration key presence, provider wiring, redaction behavior, and failure classification with synthetic values.
+永远不要在测试输出或证据中放置真实密钥值。用合成值演示配置键存在、提供者接线、脱敏行为和失败分类。
 
 ## Unsafe Defaults
 
-- Custom password hashing or token signatures.
-- `Random` for security tokens.
-- Secrets in constants, source configuration values, or logs.
-- Broad object serialization containing credentials.
-- Returning raw exception messages to callers.
+- 自定义密码哈希或令牌签名。
+- 安全令牌使用 `Random`。
+- 常量、源配置值或日志中的密钥。
+- 包含凭据的宽泛对象序列化。
+- 向调用者返回原始异常消息。

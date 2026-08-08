@@ -1,72 +1,72 @@
-# API Resource Design
+# API 资源设计
 
-## Resource Modeling
+## 资源建模
 
-Model APIs around business resources and state transitions.
+围绕业务资源和状态转换建模 API。
 
-| Operation Kind | Typical Method | Path Shape | Required Contract |
+| 操作类型 | 典型方法 | 路径形态 | 必需契约 |
 |---|---|---|---|
-| Create | `POST` | `/resources` | request body, `201` or accepted status, created response/readback |
-| Read list | `GET` | `/resources` | filters, pagination policy when needed, stable response collection |
-| Read detail | `GET` | `/resources/{id}` | path id, not-found behavior, detail response |
-| Replace | `PUT` | `/resources/{id}` | full replacement fields and idempotency expectation |
-| Update | `PATCH` | `/resources/{id}` | partial fields and validation |
-| Delete/close/cancel | `DELETE` or `POST` subresource | `/resources/{id}` or `/resources/{id}/cancellations` | state transition, conflict/blocking errors |
-| Domain action | `POST` subresource | `/resources/{id}/actions` | use only when the domain operation is not a simple CRUD state mutation |
+| 创建 | `POST` | `/resources` | 请求体、`201` 或接受状态、创建响应/回读 |
+| 读取列表 | `GET` | `/resources` | 过滤器、需要时的分页策略、稳定响应集合 |
+| 读取详情 | `GET` | `/resources/{id}` | path id、未找到行为、详情响应 |
+| 替换 | `PUT` | `/resources/{id}` | 完整替换字段和幂等期望 |
+| 更新 | `PATCH` | `/resources/{id}` | 部分字段和校验 |
+| 删除/关闭/取消 | `DELETE` 或 `POST` 子资源 | `/resources/{id}` 或 `/resources/{id}/cancellations` | 状态转换、冲突/阻断错误 |
+| 领域操作 | `POST` 子资源 | `/resources/{id}/actions` | 仅当领域操作不是简单 CRUD 状态变更时使用 |
 
-Name domain-action subresources for the business result when possible, such as `/orders/{id}/cancellations` or `/requests/{id}/approvals`. Avoid a generic `/actions` endpoint that moves command names into an untyped request body.
+尽可能以业务结果命名领域操作子资源，如 `/orders/{id}/cancellations` 或 `/requests/{id}/approvals`。避免使用通用 `/actions` 端点将命令名称移入无类型请求体。
 
-## Method Semantics
+## 方法语义
 
-- `GET` and `HEAD` must not change durable business state. `HEAD` should expose the same metadata headers as the corresponding `GET` without a response body.
-- Use `POST` for creation or a non-idempotent domain operation. For retry-sensitive writes, select the operations reference and define the idempotency behavior explicitly.
-- Use `PUT` only when the client supplies the complete replacement representation or the repository already defines PUT as an idempotent upsert. Document omitted-field behavior.
-- Use `PATCH` for partial changes and declare the patch shape. A normal partial DTO, JSON Merge Patch, and JSON Patch have different null, removal, and validation semantics.
-- Define repeated `DELETE` behavior according to the existing contract: stable `204`, later `404`, or another documented idempotent end-state response.
-- Use `OPTIONS` and CORS metadata through the framework/runtime convention. Do not implement business behavior in preflight handling.
+- `GET` 和 `HEAD` 不得更改持久业务状态。`HEAD` 应暴露与对应 `GET` 相同的元数据头，但不带响应体。
+- 使用 `POST` 进行创建或非幂等领域操作。对于重试敏感的写操作，选择运维引用并明确定义幂等行为。
+- 仅当客户端提供完整替换表示或仓库已将 PUT 定义为幂等 upsert 时才使用 `PUT`。文档化省略字段的行为。
+- 使用 `PATCH` 进行部分更改并声明 patch 形态。普通部分 DTO、JSON Merge Patch 和 JSON Patch 有不同的 null、移除和校验语义。
+- 按已有契约定义重复 `DELETE` 行为：稳定 `204`、后续 `404` 或其他文档化的幂等终态响应。
+- 通过框架/运行时约定使用 `OPTIONS` 和 CORS 元数据。不要在预检处理中实现业务行为。
 
-## Success Status And Headers
+## 成功状态和头
 
-| Behavior | Typical Result | Additional Contract |
+| 行为 | 典型结果 | 额外契约 |
 |---|---|---|
-| Immediate read or update | `200` | Response schema and current readback fields. |
-| Resource creation | `201` | Created representation or readback; `Location` when a canonical URI exists. |
-| Accepted asynchronous work | `202` | Status/result lookup or another concrete completion mechanism. |
-| Successful operation with no body | `204` | No response schema or body. |
+| 立即读取或更新 | `200` | 响应 schema 和当前回读字段。 |
+| 资源创建 | `201` | 创建表示或回读；存在规范 URI 时使用 `Location`。 |
+| 接受异步工作 | `202` | 状态/结果查询或其他具体完成机制。 |
+| 成功操作无响应体 | `204` | 无响应 schema 或响应体。 |
 
-Do not select a success status by habit. The status, body, headers, and frontend/client expectation must describe the same completion state.
+不要凭习惯选择成功状态。状态、响应体、头和前端/客户端期望必须描述同一完成状态。
 
-## Interface Shape
+## 接口形态
 
-For HTTP APIs, the accepted API contract should preserve the semantic fields known in the current phase:
+对于 HTTP API，已接受 API 契约应保留当前阶段已知的语义字段：
 
-- stable endpoint id and human-readable operation name
-- resource name and operation kind
-- HTTP method and path
-- request body, query, and path fields
-- success response fields and readback fields
-- success, validation, business-blocking, not-found, and auth status behavior
-- stable error body fields such as code and user-actionable message
-- requirement or acceptance links when the delivery contract provides them
+- 稳定的端点 id 和人类可读的操作名称
+- 资源名称和操作类型
+- HTTP 方法和路径
+- 请求体、query 和 path 字段
+- 成功响应字段和回读字段
+- 成功、校验、业务阻断、未找到和认证状态行为
+- 稳定的错误体字段，如 code 和用户可操作消息
+- 交付契约提供的需​​求或验收链接
 
-Use project conventions for exact JSON field naming. The contract should preserve the semantic fields even when the implementation uses framework-specific DTO names.
+使用项目约定确定 JSON 字段命名。即使实现使用框架特定的 DTO 名称，契约也应保留语义字段。
 
-## Path Rules
+## 路径规则
 
-- Use plural, stable resource names for collections.
-- Keep nesting shallow; prefer `/orders/{orderId}/items` over deeply nested chains.
-- Use query parameters for filtering, sorting, and pagination.
-- Do not expose table names, ORM names, package names, or implementation class names as API resources.
-- Use the existing route prefix when the repository already has one.
-- Keep field selection, search, filter, and sort parameters limited to declared fields and operators. Do not let clients pass raw database column names or query fragments.
+- 集合使用复数、稳定的资源名称。
+- 保持浅层嵌套；优先使用 `/orders/{orderId}/items` 而非深层嵌套链。
+- 使用 query parameter 进行过滤、排序和分页。
+- 不要将表名、ORM 名称、包名或实现类名暴露为 API 资源。
+- 当仓库已有路由前缀时使用已有前缀。
+- 将字段选择、搜索、过滤和排序参数限制在已声明的字段和操作符。不要让客户端传入原始数据库列名或查询片段。
 
-## Representation And Media Types
+## 表示和 Media Type
 
-- Keep request `Content-Type` and response `Content-Type` aligned with supported serializers.
-- Return or document `415` when a task explicitly rejects unsupported request media types. Use `406` only when the API performs real response content negotiation.
-- Add multipart, binary, CSV, event-stream, or other media types only for interfaces that own those representations.
-- Preserve the repository's JSON field naming convention. Do not rename fields merely to match an unrelated example.
+- 保持请求 `Content-Type` 和响应 `Content-Type` 与支持的序列化器对齐。
+- 当任务明确拒绝不支持的请求 media type 时返回或文档化 `415`。仅当 API 执行真实响应内容协商时才使用 `406`。
+- 仅对拥有这些表示的接口添加 multipart、binary、CSV、event-stream 或其他 media type。
+- 保留仓库的 JSON 字段命名约定。不要仅为匹配无关示例而重命名字段。
 
-## Verification Hooks
+## 验证钩子
 
-Task verification should prove at least one representative success path and one important blocking/error path for write APIs. Verify the declared status, response body or absence of body, required headers, and readback behavior together. For read APIs, verification should prove the endpoint returns the declared fields and does not silently return fake/static data when the task owns backend implementation.
+任务验证应至少证明写 API 的一个代表性成功路径和一个重要阻断/错误路径。同时验证声明的状态、响应体或响应体缺失、必需头和回读行为。对于读 API，验证应证明端点返回声明的字段，且当任务拥有后端实现时不静默返回假/静态数据。

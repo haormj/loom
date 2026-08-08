@@ -1,77 +1,77 @@
-# Next.js Application Implementation
+# Next.js 应用实现
 
-Implement the accepted frontend experience within the repository's Next.js/React version, router mode, rendering/runtime architecture, design system, API contract, and hosting boundary. Do not migrate Pages/App Router or introduce server features from examples unless the technical baseline and task own them.
+在仓库的 Next.js/React 版本、路由模式、渲染/运行时架构、设计系统、API 契约和托管边界内实现已接受的前端体验。除非技术基线和任务拥有它们，否则不要迁移 Pages/App Router 或从示例引入服务端特性。
 
-## Router And Rendering Baseline
+## 路由与渲染基线
 
-Confirm App Router versus Pages Router, React version, server/client runtime, package manager, build scripts, aliases, CSS/component system, and deployment mode before changing files.
+在变更文件之前，确认 App Router 还是 Pages Router、React 版本、服务端/客户端运行时、包管理器、构建脚本、别名、CSS/组件系统和部署模式。
 
-For App Router, Server Components are available by default; for Pages Router, use its established page/data APIs. Keep router-specific guidance out of generic component tasks.
+对于 App Router，Server Components 默认可用；对于 Pages Router，使用其已建立的页面/数据 API。将路由特定的指导排除在通用组件任务之外。
 
-Choose rendering and freshness per surface/data lifecycle: static generation, revalidation, dynamic server rendering, streaming, or client-owned refresh. Do not label a page "SSR" merely because it lives in Next.js.
+按界面/数据生命周期选择渲染和新鲜度：静态生成、重新验证、动态服务端渲染、流式传输或客户端拥有的刷新。不要仅因为页面在 Next.js 中就将其标记为"SSR"。
 
-## Server And Client Security Boundary
+## 服务端与客户端安全边界
 
-Server modules may access secrets, database/internal clients, cookies/headers, and private environment values according to accepted architecture. Client modules are public bundles and may receive only serializable, safe values.
+服务端模块可根据已接受架构访问密钥、数据库/内部 client、cookie/header 和私有环境值。客户端模块是公开包，仅可接收可序列化的安全值。
 
-Keep `'use client'` at the smallest interactive boundary. Do not mark an entire layout/page client-side to use one hook/button. Use `server-only`/repository guards where appropriate and prevent server dependencies from entering client import graphs.
+将 `'use client'` 保持在最小交互边界。不要为了使用一个 hook/按钮而将整个布局/页面标记为客户端。在适当时使用 `server-only`/仓库守卫，防止服务端依赖进入客户端导入图。
 
-`NEXT_PUBLIC_*` values are embedded for the browser and are not secrets. Validate required server environment at startup/build/runtime according to when it is consumed.
+`NEXT_PUBLIC_*` 值为浏览器嵌入，不是密钥。根据消费时机在启动/构建/运行时验证所需的服务端环境。
 
-## Feature Composition
+## 功能组合
 
-Pages/layouts orchestrate route data, boundaries, metadata, and feature components. Split reusable UI, client islands, server data helpers, mutations, schemas, and formatters by ownership rather than creating generic `utils`/`actions` dumping grounds.
+页面/布局编排路由数据、边界、元数据和功能组件。按所有权拆分可复用 UI、客户端岛屿、服务端数据助手、变更、schema 和格式化器，而非创建通用的 `utils`/`actions` 倾倒场。
 
-Preserve the accepted API ownership. A separate backend API remains authoritative when selected; do not replace it with route handlers/Server Actions. Full-stack Next features still require clear transaction, auth, validation, and persistence boundaries.
+保留已接受的 API 所有权。当选择独立的后端 API 时它仍是权威；不要用 route handler/Server Action 替换它。全栈 Next 特性仍需要清晰的事务、认证、验证和持久化边界。
 
-Use typed request/response/view models and stable IDs. Keep database/ORM entities and credentials out of props and responses.
+使用类型化的请求/响应/视图模型和稳定 ID。将数据库/ORM 实体和凭据排除在 props 和响应之外。
 
-## Product UI State
+## 产品 UI 状态
 
-Render loading, empty, ready, validation, business conflict, forbidden, not-found, unavailable, submitting, success, disabled, and stale states at their owning region/control.
+在所属区域/控件处渲染加载、空、就绪、验证、业务冲突、禁止、未找到、不可用、提交中、成功、禁用和过期状态。
 
-Do not collapse expected failures into thrown generic errors when the user can recover. Error boundaries own unexpected segment failures; form/action state owns expected validation/business outcomes.
+当用户可恢复时，不要将预期失败折叠为抛出的通用错误。错误边界拥有意外片段失败；表单/action 状态拥有预期的验证/业务结果。
 
-Keep drafts separate from persisted data, prevent duplicate writes, and reconcile server-returned identity/version/state. Do not rely only on a toast after mutation.
+将草稿与持久化数据分开，防止重复写入，并协调服务端返回的标识/版本/状态。变更后不要仅依赖 toast。
 
-## Metadata, Images, Fonts, And Assets
+## 元数据、图像、字体与资源
 
-Use the router's metadata APIs when public/product metadata is owned. Avoid duplicate data reads between page and `generateMetadata`; share a safe request-scoped/cache helper when accepted.
+当拥有公共/产品元数据时使用路由的元数据 API。避免页面和 `generateMetadata` 之间的重复数据读取；在已接受时共享安全的请求范围/缓存助手。
 
-Use `next/image` for inspectable content images where its optimization model fits; configure actual remote patterns, sizes, dimensions/aspect ratio, priority, loading, and error behavior. Do not hide poor source media behind cropping/blur.
+当 `next/image` 的优化模型适合时，用于可检查的内容图像；配置实际的远程模式、尺寸、维度/宽高比、优先级、加载和错误行为。不要用裁剪/模糊隐藏差的源媒体。
 
-Use `next/font` or the repository font pipeline. Keep static assets under the established public/import boundary and verify base path/CDN behavior.
+使用 `next/font` 或仓库字体管道。将静态资源保持在已建立的 public/import 边界下，验证 base path/CDN 行为。
 
-## Middleware And Route Handlers
+## 中间件与 Route Handler
 
-Middleware is for lightweight request routing/security/header behavior compatible with its runtime. It must not become a broad business/data layer or accidentally intercept assets, internal Next paths, health, or API routes.
+中间件用于与其运行时兼容的轻量级请求路由/安全/header 行为。它不得成为广泛的业务/数据层或意外拦截资源、内部 Next 路径、健康或 API 路由。
 
-Route handlers implement accepted interfaces only when architecture assigns them. Parse/validate input, authenticate/authorize, invoke an application boundary, and map exact status/body/headers. Do not create duplicate API versions.
+仅当架构分配时，route handler 实现已接受的接口。解析/验证输入、认证/授权、调用应用边界并映射精确的 status/body/header。不要创建重复的 API 版本。
 
-## Accessibility, UIX, And Content
+## 可访问性、UIX 与内容
 
-Use semantic HTML, labels, focus behavior, keyboard interaction, reduced motion, long/localized content, and the repository's UIX tokens/components. Server rendering does not make inaccessible client interactions acceptable.
+使用语义 HTML、标签、焦点行为、键盘交互、减少动画、长/本地化内容和仓库的 UIX 令牌/组件。服务端渲染不会使不可访问的客户端交互变得可接受。
 
-Keep product UI free of runtime commands, framework explanations, delivery notes, verification instructions, debug payloads, and implementation progress.
+保持产品 UI 不含运行时命令、框架说明、交付备注、验证指令、调试载荷和实现进度。
 
 ## Verification
 
-- Run focused type/tests and production build when server/client/router/config boundaries change.
-- Verify no secret/server-only/database module enters client bundles.
-- Exercise task-owned loading/error/not-found/business states and mutation readback.
-- Test metadata/image/font/asset behavior only where changed.
-- Verify accepted API paths/base binding and middleware exclusions.
-- Use browser evidence for real hydration, responsive rendering, navigation, and deployed binding when assigned.
+- 当服务端/客户端/路由/配置边界变更时运行聚焦的类型/测试和生产构建。
+- 验证无密钥/仅服务端/数据库模块进入客户端包。
+- 练习任务所属的加载/错误/未找到/业务状态和变更回读。
+- 仅在变更处测试元数据/图像/字体/资源行为。
+- 验证已接受的 API 路径/base 绑定和中间件排除。
+- 在分配时使用浏览器证据验证真实 hydration、响应式渲染、导航和部署绑定。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the Next.js router/rendering/server-client/API decision and the build/route/component/browser assertion proving it. A successful dev render or generated route alone cannot prove production build, secret isolation, hydration, runtime compatibility, or API ownership.
+标识 Next.js 路由/渲染/服务端-客户端/API 决策以及证明它的构建/路由/组件/浏览器断言。仅开发环境渲染成功或生成的路由不能证明生产构建、密钥隔离、hydration、运行时兼容性或 API 所有权。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- App Router/Server Components imposed on a Pages Router task.
-- Whole pages/layouts marked `'use client'` for one interaction.
-- Server-only values exposed through public env/props/imports.
-- Separate backend contracts reimplemented as route handlers/actions.
-- Expected business failures collapsed into generic error boundaries/toasts.
-- Middleware matching every path or containing business/database work.
+- 将 App Router/Server Components 强加于 Pages Router 任务。
+- 为一个交互将整个页面/布局标记为 `'use client'`。
+- 通过公共 env/props/导入暴露仅服务端值。
+- 将独立后端契约重新实现为 route handler/action。
+- 将预期业务失败折叠为通用错误边界/toast。
+- 中间件匹配每条路径或包含业务/数据库工作。

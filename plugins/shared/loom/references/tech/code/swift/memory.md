@@ -1,40 +1,40 @@
-# Swift Memory Quality
+# Swift 内存质量
 
-This file applies ARC, ownership, and performance guidance to Swift changes.
+本文件将 ARC、所有权和性能指导应用于 Swift 变更。
 
 ## When To Use
 
-- The task changes closures that capture `self`, delegates, timers, observers, tasks, caches, image/data processing, large collections, performance-sensitive paths, or memory-warning behavior.
-- Use this when ARC ownership, retain cycles, value-vs-reference semantics, collection cost, or profiling evidence affects correctness or responsiveness.
-- If the change is not memory/performance-sensitive, do not add speculative micro-optimizations.
+- 任务变更了捕获 `self` 的闭包、委托、定时器、观察器、任务、缓存、图像/数据处理、大型集合、性能敏感路径或内存警告行为。
+- 当 ARC 所有权、保留循环、值 vs 引用语义、集合成本或 profiling 证据影响正确性或响应性时使用此参考。
+- 如果变更不敏感于内存/性能，不要添加推测性微优化。
 
 ## Implementation Focus
 
-- Use weak references for delegates and parent/back references that must not keep the target alive. Use `unowned` only when the lifetime guarantee is absolute.
-- Review every escaping closure, callback, notification observer, timer, Combine/async subscription, and task for retain cycles. Use capture lists deliberately and cancel/remove observers when the owner deinitializes.
-- Prefer value semantics for data models and state snapshots. Use reference types when identity, shared mutation, or framework requirements are real.
-- Avoid copying large values repeatedly in hot paths. Reserve collection capacity when size is known and avoid string concatenation in tight loops.
-- Keep caches bounded or clearable, and define whether cached data is memory-only, disk-backed, or lifecycle-scoped.
-- Do not optimize based on guesswork. For user-visible performance work, use Instruments, XCTest metrics, or a representative measurement before and after the change.
-- Handle iOS memory warnings or scene lifecycle events when the task owns memory-heavy resources.
-- Use `autoreleasepool` only for known Objective-C/Foundation-heavy loops where measurement or local convention supports it.
+- 对不应保持目标存活的委托和父/反向引用使用弱引用。仅当生命周期保证绝对时使用 `unowned`。
+- 审查每个逃逸闭包、回调、通知观察器、定时器、Combine/异步订阅和任务的保留循环。有意使用捕获列表并在所有者析构时取消/移除观察器。
+- 对数据模型和状态快照优先使用值语义。当标识、共享变更或框架要求是真实时使用引用类型。
+- 避免在热路径中反复拷贝大值。在大小已知时预留集合容量并避免在紧密循环中拼接字符串。
+- 保持缓存有界或可清除，并定义缓存数据是仅内存、磁盘支持还是生命周期作用域的。
+- 不要基于猜测优化。对于用户可见的性能工作，在变更前后使用 Instruments、XCTest 指标或代表性测量。
+- 当任务拥有内存重度资源时处理 iOS 内存警告或场景生命周期事件。
+- 仅在测量或本地约定支持的已知 Objective-C/Foundation 密集循环中使用 `autoreleasepool`。
 
 ## Decision Rules
 
-- Audit every escaping closure, observer, timer, subscription, and task for the ownership cycle it creates. Use `weak` for non-owning delegates/back-references and `unowned` only when the lifetime proof is absolute.
-- Cancel or remove observers, timers, Combine subscriptions, and tasks in the same owner teardown that releases the resource. Do not rely on a view disappearing or a process ending as cleanup.
-- Keep caches bounded, clearable, and lifecycle-scoped. State whether the cache is memory-only, persisted, shared across scenes, or invalidated by an external version/identity.
-- Preserve value semantics for snapshots and models unless identity/shared mutation is required. Avoid repeatedly copying large values in hot paths, but confirm the cost before introducing reference wrappers.
-- Require a representative measurement before claiming an optimization. Use Instruments, XCTest metrics, or another repository-approved measurement and record before/after data when feasible.
-- Handle memory warnings or scene lifecycle events for resources owned by the task; do not add platform-specific cleanup to unrelated code.
+- 审查每个逃逸闭包、观察器、定时器、订阅和任务创建的所有权循环。对非拥有委托/反向引用使用 `weak`，仅当生命周期证明绝对时使用 `unowned`。
+- 在释放资源的相同所有者拆卸中取消或移除观察器、定时器、Combine 订阅和任务。不要依赖视图消失或进程结束作为清理。
+- 保持缓存有界、可清除和生命周期作用域。说明缓存是仅内存、持久化、跨场景共享还是被外部版本/标识失效。
+- 除非需要标识/共享变更否则为快照和模型保留值语义。避免在热路径中反复拷贝大值，但在引入引用包装器之前确认成本。
+- 在声称优化之前要求代表性测量。使用 Instruments、XCTest 指标或其他仓库批准的测量，并在可行时记录前后数据。
+- 为任务拥有的资源处理内存警告或场景生命周期事件；不要将平台特定清理添加到不相关的代码。
 
 ## Verification Focus
 
-- Build and run tests for the changed path. Add tests for deallocation or cancellation when the repository has patterns for that.
-- For retain-cycle risks, inspect lifecycle manually or with existing leak tests/instruments and record the result when feasible.
-- For performance claims, record measured timing/memory or explicitly state that the change is structural and not benchmarked.
-- Verify observers, timers, tasks, and subscriptions are cancelled or released in owner teardown.
+- 为变更路径构建和运行测试。当仓库有相关模式时为析构或取消添加测试。
+- 对于保留循环风险，手动或用现有泄漏测试/instrument 检查生命周期并在可行时记录结果。
+- 对于性能声明，记录测量的时间/内存或明确声明变更是结构性的且未基准测试。
+- 验证观察器、定时器、任务和订阅在所有者拆卸中被取消或释放。
 
 ## Evidence Focus
 
-- In the evidence summary, name the memory decision: weak/unowned ownership, closure capture, observer/task cleanup, value semantics, collection allocation, cache boundary, memory warning, or profiling proof.
+- 在证据总结中，说明内存决策：weak/unowned 所有权、闭包捕获、观察器/任务清理、值语义、集合分配、缓存边界、内存警告或 profiling 证明。

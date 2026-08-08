@@ -1,78 +1,78 @@
-# C++ Runtime Performance And Memory Layout
+# C++ 运行时性能与内存布局
 
 ## When To Use
 
-Use this reference only for an explicit measured CPU, allocation, memory, throughput, latency, binary-size, cache, SIMD, or runtime-resource bottleneck owned by the task.
+仅用于任务拥有的显式测量的 CPU、分配、内存、吞吐量、延迟、二进制大小、缓存、SIMD 或运行时资源瓶颈。
 
 ## Implementation Focus
 
 ### Establish The Measurement
 
-Name workload, input distribution/size, concurrency, build type, compiler/flags, hardware/platform, warmup, repetitions, statistic, and correctness output before changing code.
+在变更代码之前命名工作负载、输入分布/大小、并发、构建类型、编译器/标志、硬件/平台、预热、重复、统计和正确性输出。
 
-Profile first with the repository's tools. Avoid optimizing debug builds, synthetic tiny data, or a microbenchmark whose work is removed/constant-folded.
+先用仓库工具 profiling。避免优化调试构建、合成微小数据或工作被移除/常量折叠的微基准。
 
-Set a target or regression bound. Keep benchmark setup/I/O out of the measured section and use anti-optimization facilities.
+设定目标或回归边界。将基准设置/I/O 排除在测量段之外并使用反优化设施。
 
 ### Algorithm And Data Movement
 
-Improve complexity, reduce redundant work/I/O/serialization, and localize state before micro-optimization.
+在微优化之前改善复杂度、减少冗余工作/I/O/序列化并局部化状态。
 
-Use values/moves/copy elision naturally. Measure copies and allocations before replacing clear ownership with views/references. Mark safe moves `noexcept` when containers otherwise copy.
+自然地使用值/移动/拷贝消除。在用视图/引用替换清晰所有权之前测量拷贝和分配。当容器否则拷贝时将安全移动标记为 `noexcept`。
 
-Reserve/pre-size only when cardinality is known and capacity/memory tradeoff is acceptable. Avoid repeated shrink/growth churn.
+仅当基数已知且容量/内存权衡可接受时才 reserve/预分配大小。避免反复收缩/增长搅动。
 
 ### Layout And Locality
 
-Choose contiguous/flat/node/SoA/AoS layout from access pattern, mutation, iteration, stable-address, and memory requirements. Account for padding, alignment, false sharing, NUMA, and object lifetime.
+从访问模式、变更、迭代、稳定地址和内存要求选择连续/扁平/节点/SoA/AoS 布局。考虑填充、对齐、false sharing、NUMA 和对象生命周期。
 
-Do not use `#pragma pack` or over-alignment casually; misalignment can be undefined/slow and layout changes can break ABI/file/wire contracts.
+不要随意使用 `#pragma pack` 或过度对齐；未对齐可能是未定义/慢的且布局变更可能破坏 ABI/文件/线上契约。
 
-Bound caches/pools/arenas and define reset/destruction/thread safety. Custom allocators must satisfy allocator semantics and object alignment/construction/destruction.
+绑定缓存/池/arena 并定义重置/销毁/线程安全。自定义分配器必须满足分配器语义和对象对齐/构造/销毁。
 
 ### SIMD And Hardware Features
 
-Prefer compiler auto-vectorization and portable algorithms first. Intrinsics require feature detection/dispatch, scalar or lower-ISA fallback, correct alignment/unaligned loads, edge/tail handling, NaN/overflow/rounding semantics, and supported architectures.
+优先使用编译器自动向量化和可移植算法。内联函数需要特性检测/分派、标量或低 ISA 回退、正确的对齐/未对齐加载、边缘/尾部处理、NaN/溢出/舍入语义和受支持的架构。
 
-Do not compile an AVX/NEON path as the only binary path unless the deployment CPU baseline guarantees it. Keep dispatch initialization thread-safe.
+不要将 AVX/NEON 路径编译为唯一二进制路径，除非部署 CPU 基线保证它。保持分派初始化线程安全。
 
-Inspect generated code only to answer a measured question, not as a substitute for end-to-end benchmarks.
+仅为了回答测量问题而检查生成代码，而非作为端到端基准的替代。
 
 ### Branching, Virtual Dispatch, And Indirection
 
-Change branch layout, virtual dispatch, function wrappers, indirection, or polymorphism only when profiles attribute meaningful cost. Type erasure/devirtualization/template expansion can trade runtime for code size/instruction cache/build time.
+仅当 profile 归因有意义成本时才变更分支布局、虚分派、函数包装器、间接或多态。类型擦除/去虚化/模板展开可以用运行时换取代码大小/指令缓存/构建时间。
 
-Preserve domain/error clarity; fast paths require equivalent slow/error behavior and exception/resource safety.
+保留领域/错误清晰度；快速路径需要等效的慢速/错误行为和异常/资源安全。
 
 ### Parallelism And Offload
 
-Parallelism must exceed scheduling/synchronization/data-transfer overhead and define deterministic/reduction semantics. More threads do not guarantee lower latency.
+并行性必须超过调度/同步/数据传输开销并定义确定性/归约语义。更多线程不保证更低延迟。
 
-GPU/accelerator/SIMD offload requires transfer/setup/fallback/error/device-lifetime behavior and representative end-to-end measurement.
+GPU/加速器/SIMD 卸载需要传输/设置/回退/错误/设备生命周期行为和代表性的端到端测量。
 
 ### Memory And Resource Pressure
 
-Measure peak/resident/allocated bytes, fragmentation, retained capacity, and leaks according to the problem. A faster implementation that grows unbounded memory or leaks is not acceptable.
+根据问题测量峰值/驻留/分配字节、碎片化、保留容量和泄漏。增长无界内存或泄漏的更快实现不可接受。
 
-Avoid owning large buffers in long-lived closures/caches; release resources at task/request lifecycle boundaries.
+避免在长生命闭包/缓存中拥有大缓冲区；在任务/请求生命周期边界释放资源。
 
 ## Verification Focus
 
-- Run correctness tests before and after optimization under normal and optimized builds.
-- Record repeatable baseline/after benchmark/profile with environment and variability.
-- Run ASan/UBSan and relevant platform tools for custom allocation, alignment, pointer arithmetic, SIMD, or lifetime changes.
-- Test empty/small/large/unaligned/tail/fallback/feature-dispatch/error cases.
-- Check memory, code size, compile time, and concurrency regressions affected by the optimization.
+- 在优化前后在普通和优化构建下运行正确性测试。
+- 记录可重复的基线/优化后基准/profile 及环境和变异性。
+- 对自定义分配、对齐、指针算术、SIMD 或生命周期变更运行 ASan/UBSan 和相关平台工具。
+- 测试空/小/大/未对齐/尾部/回退/特性分派/错误情况。
+- 检查受优化影响的内存、代码大小、编译时间和并发回归。
 
 ## Evidence Focus
 
-Report bottleneck, workload/environment, profile, intervention, measured result, variability, and correctness/fallback proof. Source-level “fewer copies” or intrinsic presence does not establish user-relevant improvement.
+报告瓶颈、工作负载/环境、profile、干预、测量结果、变异性和正确性/回退证明。源码级"更少拷贝"或内联函数存在不建立用户相关的改善。
 
 ## Unsafe Defaults
 
-- Optimization selected from prose without measured ownership.
-- Views/references/custom pools replacing clear ownership prematurely.
-- ISA-specific code without runtime/deploy support and fallback.
-- Microbenchmark optimized away or unrepresentative of production.
-- Faster median hiding tail latency, memory, correctness, or code-size regression.
-- Cache/layout changes made without invalidation/lifetime/ABI analysis.
+- 从正文选择优化而没有测量所有权。
+- 视图/引用/自定义池过早替换清晰所有权。
+- 没有运行时/部署支持和回退的 ISA 特定代码。
+- 被优化掉或不代表生产的微基准。
+- 更快的中位数隐藏尾延迟、内存、正确性或代码大小回归。
+- 没有失效/生命周期/ABI 分析的缓存/布局变更。

@@ -1,14 +1,14 @@
-# UIX Stack: Three.js
+# UIX 技术栈：Three.js
 
-Use for Three.js, React Three Fiber, WebGL, canvas-heavy 3D, configurators, games, simulations, and immersive scenes.
+用于 Three.js、React Three Fiber、WebGL、画布密集型 3D、配置器、游戏、模拟和沉浸式场景。
 
-## Structure
+## 结构
 
-- Keep scene setup, asset loading, controls, UI overlay, and business state separated.
-- Use the repo's existing Three.js/R3F conventions when present.
-- The scene should be the primary surface for immersive tasks, not a decorative preview inside a card.
+- 保持场景设置、资产加载、控件、UI 覆盖和业务状态分离。
+- 存在时使用仓库现有的 Three.js/R3F 约定。
+- 场景应是沉浸式任务的主要界面，而非卡片内的装饰性预览。
 
-## Scene Module Split
+## 场景模块拆分
 
 ```text
 scene/
@@ -24,18 +24,18 @@ ui/
   LoadingOverlay
 ```
 
-## Implementation Rules
+## 实现规则
 
-- Define stable canvas dimensions and resize behavior.
-- Provide loading and fallback states for assets, WebGL, and shader failures.
-- Keep camera, lighting, controls, and object framing intentional.
-- Overlay UI must remain readable and must not cover the subject.
-- Dispose resources and avoid runaway animation loops.
-- Respect reduced motion or provide lower-motion controls when practical.
-- Keep DOM overlay controls styled through the same semantic tokens as the rest of the UI.
-- Do not let scene code own business form/table/detail state that belongs in UI overlay components.
+- 定义稳定的画布尺寸和调整大小行为。
+- 为资产、WebGL 和着色器失败提供加载和回退状态。
+- 保持相机、光照、控件和对象构图有意。
+- 覆盖 UI 必须保持可读且不覆盖主体。
+- 处置资源并避免失控的动画循环。
+- 可行时尊重减弱动效或提供低动效控件。
+- 通过与 UI 其余部分相同的语义令牌样式化 DOM 覆盖控件。
+- 不要让场景代码拥有属于 UI 覆盖组件的业务表单/表格/详情状态。
 
-## Render Pattern
+## 渲染模式
 
 ```css
 .scene-root { position: relative; width: 100vw; height: 100dvh; overflow: hidden; }
@@ -44,28 +44,26 @@ ui/
 .scene-overlay > * { pointer-events: auto; }
 ```
 
-## Verification
+## 验证
 
-- Check nonblank canvas pixels.
-- Check desktop and mobile framing.
-- Confirm assets load and controls respond.
-- Verify the app remains interactive after resizing or route changes.
-- For generated scenes, inspect both canvas pixels and overlay controls; one without the other is incomplete.
+- 检查非空白画布像素。
+- 检查桌面和移动构图。
+- 确认资产加载和控件响应。
+- 验证应用在调整大小或路由变化后保持可交互。
+- 对于生成的场景，检查画布像素和覆盖控件两者；缺少任一都不完整。
 
-## Scene, Asset, And Overlay Boundary
+## 场景、资产和覆盖边界
 
-Keep the render loop, assets, controls, and product UI as separate owners. The
-scene provides spatial context; DOM or native overlay components provide labels,
-forms, status, and business actions.
+将渲染循环、资产、控件和产品 UI 保持为独立所有者。场景提供空间上下文；DOM 或原生覆盖组件提供标签、表单、状态和业务操作。
 
 ```text
 scene root -> canvas/camera/controls -> selected object
-                                   \\-> overlay context/action/feedback
+                                   \-> overlay context/action/feedback
 asset lifecycle -> loading -> ready | fallback | retry
 ```
 
-- Scene state owns camera, selection, framing, and interaction mode; business records and form drafts stay in the UI/data boundary.
-- Overlay panels must preserve readable contrast, pointer/keyboard access, safe placement, and the same semantic tokens as the surrounding product.
-- Loading and capability failure need a stable, actionable fallback that keeps the product task understandable without the canvas.
-- Asset URLs, preload policy, pixel ratio, disposal, and animation throttling follow the repository's rendering/runtime conventions; do not invent a second asset registry in a component.
-- A resize or route change must reconcile camera framing and overlay dimensions without losing selected identity or pending action state.
+- 场景状态拥有相机、选择、构图和交互模式；业务记录和表单草稿保留在 UI/数据边界中。
+- 覆盖面板必须保留可读对比度、指针/键盘访问、安全放置和与周围产品相同的语义令牌。
+- 加载和能力失败需要稳定、可操作的回退，使产品任务在没有画布的情况下也可理解。
+- 资产 URL、预加载策略、像素比、处置和动画节流遵循仓库的渲染/运行时约定；不要在组件中发明第二个资产注册表。
+- 调整大小或路由变化必须协调相机构图和覆盖尺寸而不丢失选定标识或待处理操作状态。

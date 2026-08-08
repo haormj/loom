@@ -1,79 +1,79 @@
-# React Native Platform Behavior
+# React Native 平台行为
 
-Apply this reference only when the task owns iOS/Android-specific behavior, safe areas, keyboard/status-bar/system navigation, permissions, device APIs, native modules, gestures, or lifecycle differences.
+仅当任务拥有 iOS/Android 特定行为、安全区域、键盘/状态栏/系统导航、权限、设备 API、原生模块、手势或生命周期差异时应用此参考。
 
-## Choose The Smallest Split
+## 选择最小拆分
 
-Keep shared behavior shared. Use `Platform.select` or a narrow runtime branch for small values and `.ios`/`.android` modules for substantial implementations with distinct dependencies or behavior.
+保持共享行为共享。对小型值使用 `Platform.select` 或窄运行时分支，对具有不同依赖或行为的大量实现使用 `.ios`/`.android` 模块。
 
-Do not scatter `Platform.OS` checks throughout feature logic. Put platform policy behind a component/hook/adapter with one typed contract so common workflow code remains testable.
+不要在功能逻辑中散布 `Platform.OS` 检查。将平台策略放在具有一个类型化契约的组件/hook/adapter 之后，使通用工作流代码保持可测试。
 
-Confirm platform file resolution in Metro, TypeScript, tests, and native builds. A shared fallback should exist when desktop/web is a supported React Native target.
+确认 Metro、TypeScript、测试和原生构建中的平台文件解析。当桌面/Web 是支持的 React Native 目标时，应存在共享回退。
 
-## Safe Areas And System Chrome
+## 安全区域与系统壳
 
-Use the repository safe-area provider/insets and apply each edge at the correct layout owner. Avoid double padding when navigation headers/tab bars already consume an inset.
+使用仓库安全区域 provider/inset 并在每个边界的正确布局所有者处应用。当导航头/标签栏已消耗 inset 时避免双重填充。
 
-Coordinate status bar style/background, Android navigation bar, translucent system bars, modals, and orientation with the active surface. Hardcoded inset heights fail across notches, islands, tablets, rotation, and immersive modes.
+协调状态栏样式/背景、Android 导航栏、半透明系统栏、模态和方向与活动界面。硬编码 inset 高度在刘海、岛屿、平板、旋转和沉浸模式中失败。
 
-Keep primary actions and dismiss controls clear of system gestures/home indicators at large font sizes and compact heights.
+在大字体尺寸和紧凑高度下保持主要操作和关闭控件远离系统手势/主页指示器。
 
-## Keyboard And Forms
+## 键盘与表单
 
-Choose keyboard avoidance/scroll behavior based on navigation header, tabs, modal presentation, and focused control position. A copied `keyboardVerticalOffset` is not portable.
+基于导航头、标签、模态呈现和聚焦控件位置选择键盘避让/滚动行为。复制的 `keyboardVerticalOffset` 不可移植。
 
-Keep the focused input and validation message visible, preserve submit access, define tap-to-dismiss and `keyboardShouldPersistTaps`, and avoid nested scroll containers fighting for gestures.
+保持聚焦输入和验证消息可见，保留提交访问，定义点击关闭和 `keyboardShouldPersistTaps`，避免嵌套滚动容器争夺手势。
 
-Test hardware and software keyboards where relevant, including multiline, autofill/password manager, return-key sequencing, and orientation changes.
+在相关处测试硬件和软件键盘，包括多行、自动填充/密码管理器、返回键排序和方向变更。
 
-## Back, Gestures, And Overlays
+## 返回、手势与覆盖层
 
-Android hardware back should dismiss the topmost owned overlay or confirm unsaved work, then delegate to navigation. Return the correct handled state and remove listeners when focus changes.
+Android 硬件返回应关闭最顶层所属覆盖层或确认未保存工作，然后委托给导航。返回正确的 handled 状态并在焦点变更时移除监听器。
 
-Coordinate edge-swipe/back gestures, drawers, bottom sheets, Reanimated/Gesture Handler roots, and scroll gestures. Do not disable platform navigation globally to solve a local conflict.
+协调边缘滑动/返回手势、抽屉、底部 sheet、Reanimated/Gesture Handler 根和滚动手势。不要全局禁用平台导航来解决局部冲突。
 
-Honor reduced-motion settings and avoid animation completion as the only way critical state advances.
+尊重减少动画设置，避免动画完成成为关键状态推进的唯一方式。
 
-## Permissions And Device Capabilities
+## 权限与设备能力
 
-Model undetermined, granted, denied, blocked/permanently denied, restricted, unavailable, and interrupted states according to the installed permission API. Explain why before prompting when product context requires it.
+按已安装权限 API 建模未确定、已授予、已拒绝、已阻止/永久拒绝、受限、不可用和已中断状态。在产品上下文需要时在提示前解释原因。
 
-Request only at the user action that needs access, provide a safe fallback, and link to settings only when the platform state supports it. Never loop permission prompts.
+仅在需要访问的用户操作时请求，提供安全回退，仅在平台状态支持时链接到设置。永远不要循环权限提示。
 
-Validate device capability separately from permission: camera, biometrics, notifications, location services, files, Bluetooth, and sensors may be unavailable or disabled despite granted permission.
+将设备能力与权限分开验证：相机、生物识别、通知、位置服务、文件、Bluetooth 和传感器可能在已授予权限的情况下不可用或禁用。
 
-## Native Modules And Lifecycle
+## 原生模块与生命周期
 
-Use the repository's Expo module/config-plugin or native-linking path. Confirm SDK/RN/platform version compatibility, Pod/Gradle configuration, required manifest/plist entries, and rebuild requirements.
+使用仓库的 Expo module/config-plugin 或原生链接路径。确认 SDK/RN/平台版本兼容性、Pod/Gradle 配置、所需 manifest/plist 条目和重建需求。
 
-Handle module initialization failure and unsupported environments without crashing the entire screen. Clean up listeners/resources and account for app active/background/inactive transitions.
+处理模块初始化失败和不支持环境而不崩溃整个屏幕。清理监听器/资源并考虑 app active/background/inactive 转换。
 
-Do not invoke native APIs during render. Sequence async results so a response from a prior screen/account/request cannot update current UI.
+不要在渲染期间调用原生 API。排序异步结果，使先前屏幕/账户/请求的响应不能更新当前 UI。
 
-## Platform Presentation
+## 平台呈现
 
-Use platform-appropriate shadows/elevation, typography, pickers, feedback, date/time behavior, file access, and share intents while preserving the product design system. Avoid forced visual sameness that breaks native expectations.
+在保留产品设计系统的同时使用平台适当的阴影/elevation、排版、picker、反馈、日期/时间行为、文件访问和分享意图。避免破坏原生期望的强制视觉一致。
 
-Account for locale, dynamic type/font scaling, RTL, contrast, screen reader, switch control, and touch exploration on affected controls.
+在受影响控件上考虑区域设置、动态类型/字体缩放、RTL、对比度、屏幕阅读器、开关控制和触摸探索。
 
 ## Verification
 
-- Run affected iOS/Android compile or Expo development-client checks for native/config changes.
-- Exercise safe-area/system chrome at representative devices, rotation, large text, and modal/tab/header combinations.
-- Verify keyboard focus/visibility/submit/dismiss behavior and back/gesture ownership.
-- Test every owned permission/capability state and app lifecycle transition.
-- Confirm platform modules resolve correctly and listeners/resources are released after leaving the surface.
+- 为原生/配置变更运行受影响的 iOS/Android 编译或 Expo development-client 检查。
+- 在代表性设备、旋转、大文本和模态/标签/头组合处练习安全区域/系统壳。
+- 验证键盘焦点/可见性/提交/关闭行为和返回/手势所有权。
+- 测试每个拥有的权限/能力状态和 app 生命周期转换。
+- 确认平台模块正确解析且离开界面后监听器/资源被释放。
 
-## Delivery Evidence
+## 交付证据
 
-Name the platform split, device/system API, lifecycle/permission states, and actual platform/runtime evidence. One simulator success does not prove both platforms, physical-device capability, production signing, or unavailable-state behavior; record those limits accurately.
+命名平台拆分、设备/系统 API、生命周期/权限状态和实际平台/运行时证据。一个模拟器成功不能证明两个平台、物理设备能力、生产签名或不可用状态行为；准确记录那些限制。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Platform reference loaded for every React Native task.
-- Hardcoded safe-area or keyboard offsets copied from an example.
-- Platform checks spread through business logic.
-- Permission prompt issued on mount or repeated after denial.
-- Native module import assumed to complete installation/configuration.
-- Global back/gesture behavior changed for a local screen.
-- Platform parity claimed without matching evidence.
+- 为每个 React Native 任务加载平台参考。
+- 从示例复制的硬编码安全区域或键盘偏移。
+- 平台检查散布在业务逻辑中。
+- 挂载时发出或拒绝后重复的权限提示。
+- 原生模块导入假设完成安装/配置。
+- 为局部屏幕更改全局返回/手势行为。
+- 在无匹配证据的情况下声称平台对等。

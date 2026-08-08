@@ -809,7 +809,7 @@ fn opencode_commands_expose_mcp_result_discipline() {
         "RunLoomToolNext",
         "retryTool",
         "DeployRepairAssetsNext",
-        "Do not copy field-level contracts",
+        "不要将字段级约定",
     ] {
         assert!(
             loom.contains(required),
@@ -822,17 +822,17 @@ fn opencode_commands_expose_mcp_result_discipline() {
     );
 
     for required in [
-        "Reference profiles:",
-        "Reference discipline:",
+        "引用配置文件：",
+        "引用纪律：",
         "referenceLoadPlan",
-        "Resolve `path` relative to `../references/loom/`",
-        "Load exactly the listed paths",
-        "Do not derive paths from group names",
-        "scan reference directories",
-        "external language/API/architecture/UI skills",
-        "do not paste reference prose or template bodies",
-        "Delivery planning, design, review, repair, and handoff rules are supplied by the current MCP request/result",
-        "Do not load separate delivery reference files",
+        "解析 `path`",
+        "仅加载当前操作列出的路径",
+        "不要从字段组名称派生路径",
+        "扫描引用目录",
+        "外部语言/API/架构/UI 技能",
+        "不要粘贴引用正文或模板内容",
+        "交付规划、设计、审查、修复和交接规则由当前 MCP 请求/结果提供",
+        "不要加载单独的交付引用文件",
     ] {
         assert!(
             loom.contains(required),
@@ -857,14 +857,14 @@ fn opencode_commands_expose_mcp_result_discipline() {
     for required in [
         "active_operation",
         "DeployRepairAssetsNext",
-        "deploy execution repair",
+        "部署执行修复",
         "loom.inspectRequest",
         "loom.readFieldGroup",
         "deployReferenceProfile",
         "../references/loom-deploy/",
         "referenceLoadPlan",
         "requestReadPlan.groups",
-        "Do not copy deployment stack rules",
+        "不要将部署栈规则",
     ] {
         assert!(
             deploy.contains(required),
@@ -890,16 +890,16 @@ fn agent_templates_expose_reference_loading_protocol() {
             "{file} must not keep the old broad UIX references section"
         );
         for required in [
-            "## Reference Loading",
-            "Protocol:",
-            "Reference discipline:",
-            "After reading the current request group",
+            "## 引用加载",
+            "协议：",
+            "引用纪律：",
+            "读取当前请求字段组后",
             "referenceLoadPlan",
-            "Reference profiles:",
-            "Do not derive paths from group names",
-            "scan reference directories",
-            "If a referenced file is not selected by the MCP contract",
-            "do not paste reference prose or template bodies",
+            "引用配置文件：",
+            "不要从字段组名称派生路径",
+            "扫描引用目录",
+            "如果引用文件未被 MCP 约定选定",
+            "不要粘贴引用正文或模板内容",
         ] {
             assert!(
                 content.contains(required),
@@ -930,13 +930,13 @@ fn agent_templates_expose_reference_loading_protocol() {
             "{file} must use Reference Loading instead of Optional References"
         );
         for required in [
-            "## Reference Loading",
-            "Protocol:",
+            "## 引用加载",
+            "协议：",
             "deployReferenceProfile.referenceLoadPlan",
-            "Each `referenceLoadPlan` entry contains `refId`, `path`, and `reason`",
-            "Do not infer extra files",
-            "do not paste reference prose",
-            "If the current deploy action has no `deployReferenceProfile`",
+            "每个 `referenceLoadPlan` 条目包含 `refId`、`path` 和 `reason`",
+            "推断额外文件",
+            "不要将引用正文粘贴",
+            "如果当前部署操作没有 `deployReferenceProfile`",
         ] {
             assert!(
                 content.contains(required),
@@ -970,12 +970,12 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     let frontend_root = repo.join("plugins/shared/loom/references/tech/frontend");
     let common = fs::read_to_string(code_root.join("common.md")).unwrap();
     for required in [
-        "Position In Loom",
-        "Repository Adaptation",
-        "Delivery Rules",
-        "Verification Rules",
-        "Evidence Rules",
-        "Common Anti-Patterns",
+        "在 Loom 中的定位",
+        "仓库适配",
+        "交付规则",
+        "验证规则",
+        "证据规则",
+        "常见反模式",
     ] {
         assert!(
             common.contains(required),
@@ -1054,30 +1054,30 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(java_core.contains("app.generated"));
     assert!(java_core.contains("com.example"));
     let java_spring = fs::read_to_string(code_root.join("java/spring.md")).unwrap();
-    assert!(java_spring.contains("component scanning"));
+    assert!(java_spring.contains("组件扫描"));
     assert!(java_spring.contains("app.<project_slug>"));
     assert!(java_spring.contains("@Qualifier"));
     let cpp_core = fs::read_to_string(code_root.join("cpp/core.md")).unwrap();
     assert!(cpp_core.contains("std::string_view"));
-    assert!(cpp_core.contains("One Definition Rule"));
+    assert!(cpp_core.contains("唯一定义规则"));
     let cpp_modern = fs::read_to_string(code_root.join("cpp/modern.md")).unwrap();
-    assert!(cpp_modern.contains("feature-test macros"));
+    assert!(cpp_modern.contains("特性测试宏"));
     assert!(cpp_modern.contains("std::expected"));
     let cpp_templates = fs::read_to_string(code_root.join("cpp/templates.md")).unwrap();
-    assert!(cpp_templates.contains("reference collapsing"));
-    assert!(cpp_templates.contains("explicit instantiation"));
+    assert!(cpp_templates.contains("引用折叠"));
+    assert!(cpp_templates.contains("显式实例化"));
     let cpp_performance = fs::read_to_string(code_root.join("cpp/performance.md")).unwrap();
-    assert!(cpp_performance.contains("anti-optimization"));
-    assert!(cpp_performance.contains("ISA-specific"));
+    assert!(cpp_performance.contains("反优化"));
+    assert!(cpp_performance.contains("ISA 特定"));
     let cpp_concurrency = fs::read_to_string(code_root.join("cpp/concurrency.md")).unwrap();
     assert!(cpp_concurrency.contains("std::jthread"));
     assert!(cpp_concurrency.contains("happens-before"));
     let cpp_build = fs::read_to_string(code_root.join("cpp/build.md")).unwrap();
-    assert!(cpp_build.contains("generator expressions"));
+    assert!(cpp_build.contains("生成器表达式"));
     assert!(cpp_build.contains("target_compile_features"));
     let cpp_testing = fs::read_to_string(code_root.join("cpp/testing.md")).unwrap();
     assert!(cpp_testing.contains("ASan"));
-    assert!(cpp_testing.contains("Fuzz targets"));
+    assert!(cpp_testing.contains("模糊测试目标"));
     assert!(!code_root.join("csharp/aspnet.md").exists());
     let csharp_core = fs::read_to_string(code_root.join("csharp/core.md")).unwrap();
     assert!(csharp_core.contains("OperationCanceledException"));
@@ -1090,13 +1090,13 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(csharp_persistence.contains("DbUpdateConcurrencyException"));
     let csharp_blazor = fs::read_to_string(code_root.join("csharp/blazor.md")).unwrap();
     assert!(csharp_blazor.contains("JSDisconnectedException"));
-    assert!(csharp_blazor.contains("persistent component state"));
+    assert!(csharp_blazor.contains("持久组件状态"));
     let csharp_performance = fs::read_to_string(code_root.join("csharp/performance.md")).unwrap();
     assert!(csharp_performance.contains("BenchmarkDotNet"));
     assert!(csharp_performance.contains("ArrayPool"));
     let csharp_testing = fs::read_to_string(code_root.join("csharp/testing.md")).unwrap();
     assert!(csharp_testing.contains("HttpMessageHandler"));
-    assert!(csharp_testing.contains("Mutation testing"));
+    assert!(csharp_testing.contains("变异测试"));
     let go_core = fs::read_to_string(code_root.join("go/core.md")).unwrap();
     assert!(go_core.contains("errors.Join"));
     assert!(go_core.contains("rows.Err"));
@@ -1104,11 +1104,11 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(go_concurrency.contains("errgroup.WithContext"));
     assert!(go_concurrency.contains("SetLimit"));
     let go_interfaces = fs::read_to_string(code_root.join("go/interfaces.md")).unwrap();
-    assert!(go_interfaces.contains("typed nil"));
-    assert!(go_interfaces.contains("pointer-to-interface"));
+    assert!(go_interfaces.contains("类型化 nil"));
+    assert!(go_interfaces.contains("指向接口的指针"));
     let go_generics = fs::read_to_string(code_root.join("go/generics.md")).unwrap();
     assert!(go_generics.contains("~T"));
-    assert!(go_generics.contains("Methods cannot introduce"));
+    assert!(go_generics.contains("方法不能独立引入"));
     let go_structure = fs::read_to_string(code_root.join("go/structure.md")).unwrap();
     assert!(go_structure.contains("go.work"));
     assert!(go_structure.contains("//go:build"));
@@ -1117,13 +1117,13 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(go_testing.contains("t.Setenv"));
     let spring_runtime = fs::read_to_string(backend_root.join("springboot/runtime.md")).unwrap();
     assert!(spring_runtime.contains("@ConfigurationProperties"));
-    assert!(spring_runtime.contains("graceful shutdown"));
+    assert!(spring_runtime.contains("优雅关闭"));
     let spring_async = fs::read_to_string(backend_root.join("springboot/async.md")).unwrap();
     assert!(spring_async.contains("@Async"));
-    assert!(spring_async.contains("same-class self-invocation"));
+    assert!(spring_async.contains("同类自调用"));
     let spring_cache = fs::read_to_string(backend_root.join("springboot/cache.md")).unwrap();
     assert!(spring_cache.contains("@Cacheable"));
-    assert!(spring_cache.contains("source of truth"));
+    assert!(spring_cache.contains("真值来源"));
 
     let mut backend_files = Vec::new();
     collect_markdown_files(&backend_root, &mut backend_files);
@@ -1155,7 +1155,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
             path.display()
         );
         if is_spring_boot {
-            for required in ["Verification Focus", "Unsafe Defaults"] {
+            for required in ["Verification Focus", "不安全默认"] {
                 assert!(
                     content.contains(required),
                     "{} missing Spring Boot engineering section {required}",
@@ -1163,11 +1163,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
                 );
             }
         } else if is_nestjs || is_aspnet_core {
-            for required in [
-                "## Verification",
-                "## Delivery Evidence",
-                "## Unsafe Defaults",
-            ] {
+            for required in ["验证", "## 交付证据", "不安全默认"] {
                 assert!(
                     content.contains(required),
                     "{} missing enhanced backend engineering section {required}",
@@ -1176,7 +1172,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
             }
         } else {
             for required in [
-                "When To Use",
+                "何时使用",
                 "Implementation Focus",
                 "Verification Focus",
                 "Evidence Focus",
@@ -1210,7 +1206,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
         }
     }
     let spring_web = fs::read_to_string(backend_root.join("springboot/web.md")).unwrap();
-    assert!(spring_web.contains("real Spring Boot base package"));
+    assert!(spring_web.contains("真实 Spring Boot 基础包"));
     assert!(spring_web.contains("com.example"));
     let fastapi_routing = fs::read_to_string(backend_root.join("fastapi/routing.md")).unwrap();
     assert!(fastapi_routing.contains("APIRouter"));
@@ -1229,7 +1225,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(fastapi_testing.contains("dependency_overrides"));
     let fastapi_migration = fs::read_to_string(backend_root.join("fastapi/migration.md")).unwrap();
     assert!(fastapi_migration.contains("ViewSet"));
-    assert!(fastapi_migration.contains("parity"));
+    assert!(fastapi_migration.contains("对齐"));
     let django_models = fs::read_to_string(backend_root.join("django/models.md")).unwrap();
     assert!(django_models.contains("select_related"));
     assert!(django_models.contains("apps.get_model"));
@@ -1239,7 +1235,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(django_serializers.contains("partial=True"));
     let django_views = fs::read_to_string(backend_root.join("django/views.md")).unwrap();
     assert!(django_views.contains("get_queryset"));
-    assert!(django_views.contains("object-level checks"));
+    assert!(django_views.contains("对象级检查"));
     let django_security = fs::read_to_string(backend_root.join("django/security.md")).unwrap();
     assert!(django_security.contains("SimpleJWT"));
     assert!(django_security.contains("CSRF"));
@@ -1262,8 +1258,8 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(nest_testing.contains("TestingModule"));
     assert!(nest_testing.contains("app.getHttpServer()"));
     let nest_migration = fs::read_to_string(backend_root.join("nestjs/migration.md")).unwrap();
-    assert!(nest_migration.contains("parity matrix"));
-    assert!(nest_migration.contains("routing owner"));
+    assert!(nest_migration.contains("对齐矩阵"));
+    assert!(nest_migration.contains("路由归属"));
     let aspnet_architecture =
         fs::read_to_string(backend_root.join("aspnetcore/architecture.md")).unwrap();
     assert!(aspnet_architecture.contains("MediatR"));
@@ -1313,11 +1309,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
             path.display()
         );
         if is_enhanced_frontend {
-            for required in [
-                "## Verification",
-                "## Delivery Evidence",
-                "## Unsafe Defaults",
-            ] {
+            for required in ["验证", "## 交付证据", "不安全默认"] {
                 assert!(
                     content.contains(required),
                     "{} missing enhanced frontend engineering section {required}",
@@ -1386,7 +1378,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(flutter_widgets.contains("SliverList"));
     let flutter_structure = fs::read_to_string(frontend_root.join("flutter/structure.md")).unwrap();
     assert!(flutter_structure.contains("build_runner"));
-    assert!(flutter_structure.contains("conditional imports"));
+    assert!(flutter_structure.contains("条件导入"));
     let flutter_navigation =
         fs::read_to_string(frontend_root.join("flutter/navigation.md")).unwrap();
     assert!(flutter_navigation.contains("stateful shell"));
@@ -1396,10 +1388,10 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(flutter_riverpod.contains("copyWithPrevious"));
     let flutter_bloc = fs::read_to_string(frontend_root.join("flutter/bloc.md")).unwrap();
     assert!(flutter_bloc.contains("BlocProvider.value"));
-    assert!(flutter_bloc.contains("event transformers"));
+    assert!(flutter_bloc.contains("事件 transformer"));
     let flutter_performance =
         fs::read_to_string(frontend_root.join("flutter/performance.md")).unwrap();
-    assert!(flutter_performance.contains("profile mode"));
+    assert!(flutter_performance.contains("profile 模式"));
     assert!(flutter_performance.contains("RepaintBoundary"));
     let flutter_testing = fs::read_to_string(frontend_root.join("flutter/testing.md")).unwrap();
     assert!(flutter_testing.contains("ProviderContainer"));
@@ -1408,18 +1400,18 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(next_core.contains("NEXT_PUBLIC_*"));
     assert!(next_core.contains("server-only"));
     let next_router = fs::read_to_string(frontend_root.join("nextjs/app-router.md")).unwrap();
-    assert!(next_router.contains("intercepting routes"));
+    assert!(next_router.contains("intercepting 路由"));
     assert!(next_router.contains("notFound()"));
     let next_server_components =
         fs::read_to_string(frontend_root.join("nextjs/server-components.md")).unwrap();
-    assert!(next_server_components.contains("Serializable Handoff"));
+    assert!(next_server_components.contains("可序列化交接"));
     assert!(next_server_components.contains("suppressHydrationWarning"));
     let next_actions = fs::read_to_string(frontend_root.join("nextjs/actions.md")).unwrap();
     assert!(next_actions.contains("useActionState"));
     assert!(next_actions.contains("revalidateTag"));
     let next_data = fs::read_to_string(frontend_root.join("nextjs/data.md")).unwrap();
     assert!(next_data.contains("React `cache()`"));
-    assert!(next_data.contains("cross-user/tenant"));
+    assert!(next_data.contains("跨用户/租户"));
     let next_runtime = fs::read_to_string(frontend_root.join("nextjs/runtime.md")).unwrap();
     assert!(next_runtime.contains("output: 'standalone'"));
     assert!(next_runtime.contains("Edge"));
@@ -1427,52 +1419,52 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(next_testing.contains("production `next build`"));
     assert!(next_testing.contains("Server Action"));
     let react_core = fs::read_to_string(frontend_root.join("react/core.md")).unwrap();
-    assert!(react_core.contains("stable domain keys"));
+    assert!(react_core.contains("稳定的领域键"));
     assert!(react_core.contains("dangerouslySetInnerHTML"));
     let react_hooks = fs::read_to_string(frontend_root.join("react/hooks.md")).unwrap();
     assert!(react_hooks.contains("AbortController"));
     assert!(react_hooks.contains("useSyncExternalStore"));
     let react_state = fs::read_to_string(frontend_root.join("react/state.md")).unwrap();
     assert!(react_state.contains("TanStack Query"));
-    assert!(react_state.contains("query keys"));
+    assert!(react_state.contains("query key"));
     let react_migration = fs::read_to_string(frontend_root.join("react/migration.md")).unwrap();
     assert!(react_migration.contains("componentDidCatch"));
-    assert!(react_migration.contains("behavior assertions proving parity"));
+    assert!(react_migration.contains("证明等价的行为断言"));
     let react_performance = fs::read_to_string(frontend_root.join("react/performance.md")).unwrap();
-    assert!(react_performance.contains("representative workload"));
-    assert!(react_performance.contains("Virtualized rows"));
+    assert!(react_performance.contains("代表性工作负载"));
+    assert!(react_performance.contains("虚拟化行"));
     let react_19 = fs::read_to_string(frontend_root.join("react/react19.md")).unwrap();
     assert!(react_19.contains("useActionState"));
-    assert!(react_19.contains("stable operation identity"));
+    assert!(react_19.contains("稳定操作标识"));
     let react_server =
         fs::read_to_string(frontend_root.join("react/server-components.md")).unwrap();
-    assert!(react_server.contains("Serializable Handoff"));
-    assert!(react_server.contains("server-only"));
+    assert!(react_server.contains("可序列化交接"));
+    assert!(react_server.contains("仅服务端"));
     let react_testing = fs::read_to_string(frontend_root.join("react/testing.md")).unwrap();
     assert!(react_testing.contains("userEvent"));
     assert!(react_testing.contains("Strict Mode"));
     let rn_core = fs::read_to_string(frontend_root.join("react-native/core.md")).unwrap();
-    assert!(rn_core.contains("development-client rebuild"));
-    assert!(rn_core.contains("stable target identity"));
+    assert!(rn_core.contains("development-client 重建"));
+    assert!(rn_core.contains("稳定目标标识"));
     let rn_structure = fs::read_to_string(frontend_root.join("react-native/structure.md")).unwrap();
-    assert!(rn_structure.contains("generated native output"));
+    assert!(rn_structure.contains("生成的原生输出"));
     assert!(rn_structure.contains("Metro"));
     let rn_navigation =
         fs::read_to_string(frontend_root.join("react-native/navigation.md")).unwrap();
-    assert!(rn_navigation.contains("singular/array forms"));
-    assert!(rn_navigation.contains("hardware back"));
+    assert!(rn_navigation.contains("单数/数组形式"));
+    assert!(rn_navigation.contains("硬件返回"));
     let rn_platform = fs::read_to_string(frontend_root.join("react-native/platform.md")).unwrap();
     assert!(rn_platform.contains("Platform.select"));
-    assert!(rn_platform.contains("permanently denied"));
+    assert!(rn_platform.contains("永久拒绝"));
     let rn_lists = fs::read_to_string(frontend_root.join("react-native/lists.md")).unwrap();
     assert!(rn_lists.contains("getItemLayout"));
     assert!(rn_lists.contains("onEndReached"));
     let rn_storage = fs::read_to_string(frontend_root.join("react-native/storage.md")).unwrap();
     assert!(rn_storage.contains("schemaVersion"));
-    assert!(rn_storage.contains("late hydration"));
+    assert!(rn_storage.contains("晚期 hydration"));
     let rn_testing = fs::read_to_string(frontend_root.join("react-native/testing.md")).unwrap();
     assert!(rn_testing.contains("React Native Testing Library"));
-    assert!(rn_testing.contains("both-platform coverage"));
+    assert!(rn_testing.contains("双平台覆盖"));
     let vue_core = fs::read_to_string(frontend_root.join("vue/core.md")).unwrap();
     assert!(vue_core.contains("watchEffect"));
     assert!(vue_core.contains("effectScope"));
@@ -1481,7 +1473,7 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(vue_components.contains("InjectionKey"));
     let vue_state = fs::read_to_string(frontend_root.join("vue/state.md")).unwrap();
     assert!(vue_state.contains("storeToRefs"));
-    assert!(vue_state.contains("process-global"));
+    assert!(vue_state.contains("进程全局"));
     let vue_typescript = fs::read_to_string(frontend_root.join("vue/typescript.md")).unwrap();
     assert!(vue_typescript.contains("vue-tsc"));
     assert!(vue_typescript.contains("defineExpose"));
@@ -1490,13 +1482,13 @@ fn loom_code_references_are_operational_and_load_plan_driven() {
     assert!(vue_nuxt.contains("runtimeConfig.public"));
     let vue_build = fs::read_to_string(frontend_root.join("vue/build.md")).unwrap();
     assert!(vue_build.contains("VITE_*"));
-    assert!(vue_build.contains("Manual chunks"));
+    assert!(vue_build.contains("手动分块"));
     let vue_mobile = fs::read_to_string(frontend_root.join("vue/mobile.md")).unwrap();
     assert!(vue_mobile.contains("Capacitor"));
     assert!(vue_mobile.contains("network-only"));
     let vue_testing = fs::read_to_string(frontend_root.join("vue/testing.md")).unwrap();
     assert!(vue_testing.contains("Vue Test Utils"));
-    assert!(vue_testing.contains("testing Pinia"));
+    assert!(vue_testing.contains("测试 Pinia"));
 }
 
 #[test]
@@ -1504,11 +1496,11 @@ fn loom_review_references_are_operational_without_protocol_duplication() {
     let repo = repo_root();
     let review_root = repo.join("plugins/shared/loom/references/tech/review");
     let expected = [
-        ("core.md", "Review Posture"),
-        ("spec-compliance.md", "Missing Requirement Checks"),
-        ("defect-patterns.md", "Functional Correctness"),
-        ("test-evidence.md", "Strong Evidence"),
-        ("finding-quality.md", "Finding Content"),
+        ("core.md", "评审姿态"),
+        ("spec-compliance.md", "缺失需求检查"),
+        ("defect-patterns.md", "功能正确性"),
+        ("test-evidence.md", "强证据"),
+        ("finding-quality.md", "发现内容"),
     ];
 
     for (file, required_section) in expected {
@@ -1521,7 +1513,7 @@ fn loom_review_references_are_operational_without_protocol_duplication() {
             "{} is too thin to guide review decisions: {line_count} lines",
             path.display()
         );
-        for required in ["Use this reference", required_section] {
+        for required in ["使用本引用", required_section] {
             assert!(
                 content.contains(required),
                 "{} missing review reference section {required}",
@@ -1547,22 +1539,22 @@ fn loom_review_references_are_operational_without_protocol_duplication() {
         }
     }
     let defect_patterns = fs::read_to_string(review_root.join("defect-patterns.md")).unwrap();
-    assert!(defect_patterns.contains("placeholder namespaces"));
+    assert!(defect_patterns.contains("占位符命名空间"));
     assert!(defect_patterns.contains("com.example"));
-    assert!(defect_patterns.contains("Mass assignment"));
-    assert!(defect_patterns.contains("idempotency scope"));
+    assert!(defect_patterns.contains("批量赋值"));
+    assert!(defect_patterns.contains("幂等范围"));
     let core = fs::read_to_string(review_root.join("core.md")).unwrap();
-    assert!(core.contains("Risk-Based Depth"));
-    assert!(core.contains("Change Interaction"));
+    assert!(core.contains("基于风险的深度"));
+    assert!(core.contains("变更交互"));
     let spec = fs::read_to_string(review_root.join("spec-compliance.md")).unwrap();
-    assert!(spec.contains("Contract Pair Checks"));
-    assert!(spec.contains("cross-surface closure"));
+    assert!(spec.contains("契约对检查"));
+    assert!(spec.contains("跨面闭环"));
     let evidence = fs::read_to_string(review_root.join("test-evidence.md")).unwrap();
-    assert!(evidence.contains("Claim Mapping"));
-    assert!(evidence.contains("stale evidence"));
+    assert!(evidence.contains("声明映射"));
+    assert!(evidence.contains("陈旧证据"));
     let findings = fs::read_to_string(review_root.join("finding-quality.md")).unwrap();
-    assert!(findings.contains("Severity By Impact"));
-    assert!(findings.contains("Root Cause"));
+    assert!(findings.contains("按影响的严重性"));
+    assert!(findings.contains("根因"));
 }
 
 #[test]
@@ -1570,12 +1562,12 @@ fn loom_api_references_preserve_production_contract_depth_without_policy_duplica
     let root = repo_root().join("plugins/shared/loom/references/tech/api");
     let contract = fs::read_to_string(root.join("contract.md")).unwrap();
     for required in [
-        "Operation Objects",
-        "OpenAPI 3.1 Schema Semantics",
-        "Validation And Generation",
+        "Operation 对象",
+        "OpenAPI 3.1 Schema 语义",
+        "验证和生成",
         "operationId",
         "additionalProperties",
-        "do not use the OpenAPI 3.0 `nullable` keyword",
+        "不要在 3.1 文档中使用 OpenAPI 3.0 的 `nullable` 关键字",
     ] {
         assert!(
             contract.contains(required),
@@ -1585,8 +1577,8 @@ fn loom_api_references_preserve_production_contract_depth_without_policy_duplica
 
     let resource = fs::read_to_string(root.join("resource.md")).unwrap();
     for required in [
-        "Method Semantics",
-        "Success Status And Headers",
+        "方法语义",
+        "成功状态和头",
         "`202`",
         "`204`",
         "JSON Merge Patch",
@@ -1600,11 +1592,11 @@ fn loom_api_references_preserve_production_contract_depth_without_policy_duplica
 
     let pagination = fs::read_to_string(root.join("pagination.md")).unwrap();
     for required in [
-        "Cursor And Keyset Contract",
-        "unique tie-breaker",
-        "opaque client tokens",
-        "cursor/filter or cursor/sort mismatch",
-        "malformed or tampered cursors",
+        "Cursor 和 Keyset 契约",
+        "唯一决胜键",
+        "不透明的客户端 token",
+        "cursor/过滤或 cursor/排序不匹配",
+        "格式错误或篡改的 cursor",
     ] {
         assert!(
             pagination.contains(required),
@@ -1614,8 +1606,8 @@ fn loom_api_references_preserve_production_contract_depth_without_policy_duplica
 
     let errors = fs::read_to_string(root.join("errors.md")).unwrap();
     let operations = fs::read_to_string(root.join("operations.md")).unwrap();
-    assert!(errors.contains("Error Code Ownership"));
-    assert!(errors.contains("This reference owns error categories"));
+    assert!(errors.contains("错误代码所有权"));
+    assert!(errors.contains("本引用拥有错误类别"));
     for duplicated_policy in [
         "## Request Tracking And Retry Guidance",
         "X-Request-ID",
@@ -1626,9 +1618,9 @@ fn loom_api_references_preserve_production_contract_depth_without_policy_duplica
             "errors.md must not duplicate operational policy {duplicated_policy}"
         );
     }
-    assert!(operations.contains("This file owns operational policy"));
-    assert!(operations.contains("Retry And Availability Responses"));
-    assert!(operations.contains("Request Tracing"));
+    assert!(operations.contains("本文件拥有运维策略"));
+    assert!(operations.contains("重试和可用性响应"));
+    assert!(operations.contains("请求追踪"));
 }
 
 #[test]
@@ -1819,9 +1811,9 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
         fs::read_to_string(repo.join("docs/maintainer/deploy-external-research.md")).unwrap();
 
     for required in [
-        "Existing assets are tried first when the user did not force a provider",
-        "may fall back to the generated provider",
-        "When the user explicitly selected `compose-existing` or `dockerfile-existing`, fallback is not allowed",
+        "当用户未强制提供者时，首先尝试现有资产",
+        "回退到生成的提供者",
+        "当用户显式选择了 `compose-existing` 或 `dockerfile-existing` 时，不允许回退",
     ] {
         assert!(
             providers.contains(required),
@@ -1835,14 +1827,14 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
 
     for required in [
         "DeploymentSpec.runtime.ports",
-        "`hostPort` is the real available local port chosen by Loom",
+        "`hostPort` 是 Loom 选择的实际可用本地端口",
         "build.context",
         "build.dockerfile",
-        "Frontend plus backend projects",
-        "Topology-Aware Compose Contract",
+        "前端加后端项目",
+        "拓扑感知 Compose 契约",
         "publicEntryServiceId",
-        "Internal backend",
-        "Multi-port",
+        "内部后端",
+        "多端口",
     ] {
         assert!(
             compose.contains(required),
@@ -1851,9 +1843,9 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
     }
 
     for required in [
-        "Source Root, Build Context, Workdir, And COPY Closure",
-        "Backend-served frontend",
-        "Existing Dockerfile wrapper",
+        "源根目录、构建上下文、Workdir 与 COPY 闭包",
+        "后端服务前端",
+        "现有 Dockerfile 包装",
     ] {
         assert!(
             dockerfile.contains(required),
@@ -1862,10 +1854,10 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
     }
 
     for required in [
-        "Environment Fact Flow",
-        "File database handling is not SQLite-specific",
-        "Service Dependency URLs",
-        "Framework Local Safety Defaults",
+        "环境事实流",
+        "文件数据库处理并非仅针对 SQLite",
+        "服务依赖 URL",
+        "框架本地安全默认值",
     ] {
         assert!(
             environment.contains(required),
@@ -1874,12 +1866,12 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
     }
 
     for required in [
-        "Repair Decision Tree",
-        "Generation-First Repair Posture",
+        "修复决策树",
+        "生成优先修复姿态",
         "sourceModelRef",
         "topologyRef",
-        "Ask the user only when",
-        "Protected Asset Boundary",
+        "才询问用户",
+        "受保护资产边界",
     ] {
         assert!(
             repair.contains(required),
@@ -1888,9 +1880,9 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
     }
 
     for required in [
-        "App Path And Build Context Matrix",
-        "The selected app path is not always the build context",
-        "Source Root Repair Boundary",
+        "应用路径与构建上下文矩阵",
+        "选定的应用路径不总是构建上下文",
+        "源根修复边界",
     ] {
         assert!(
             workspaces.contains(required),
@@ -1902,17 +1894,17 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
         (
             "matrix.md",
             &matrix,
-            "Do not collapse the matrix into a single \"one container serves everything\" assumption",
+            "不要将矩阵折叠为单一“一个容器服务一切”假设",
         ),
         (
             "source-model.md",
             &source_model,
-            "`DeploymentSourceModel` is generated by Loom and is the authority",
+            "`DeploymentSourceModel` 由 Loom 生成，是部署资产生成的权威",
         ),
         (
             "topology.md",
             &topology,
-            "`DeploymentTopology` is generated from Loom deploy facts",
+            "`DeploymentTopology` 从 Loom 部署事实生成",
         ),
     ] {
         assert!(
@@ -1925,11 +1917,8 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
         "node", "java", "python", "go", "dotnet", "php", "ruby", "static",
     ] {
         let content = fs::read_to_string(deploy_refs.join(format!("{name}.md"))).unwrap();
-        for required in [
-            "Scanner Signals To Deploy Facts",
-            "Generated Asset Expectations",
-            "Repair Boundary",
-        ] {
+        for required in ["扫描器信号到部署事实", "生成的资产预期", "修复边界"]
+        {
             assert!(
                 content.contains(required),
                 "{name}.md missing stack deploy closure section {required}"
@@ -1985,10 +1974,10 @@ fn agent_templates_expose_run_loom_tool_next_discipline() {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
         for required in [
             "RunLoomToolNext",
-            "inspect the requestRef",
-            "read only the returned readGroups",
-            "call the returned Loom MCP tool",
-            "retry the returned retryTool",
+            "检查 requestRef",
+            "仅读取返回的 readGroups",
+            "调用返回的 Loom MCP 工具",
+            "重试返回的 retryTool",
         ] {
             assert!(content.contains(required), "{file} missing {required}");
         }
@@ -1998,8 +1987,8 @@ fn agent_templates_expose_run_loom_tool_next_discipline() {
         fs::read_to_string(plugin_root.join("opencode/.opencode/plugins/loom.js")).unwrap();
     for required in [
         "run_loom_tool",
-        "read only the returned readGroups",
-        "retry the returned retryTool",
+        "仅读取返回的 readGroups",
+        "重试返回的 retryTool",
     ] {
         assert!(
             opencode_plugin.contains(required),

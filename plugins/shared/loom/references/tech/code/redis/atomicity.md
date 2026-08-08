@@ -1,45 +1,45 @@
-# Redis Atomicity And Coordination
+# Redis 原子性与协调
 
 ## When To Use
 
-Use this reference when the task owns Redis locks, rate limits, compare-and-set behavior, atomic counters, deduplication, or coordination between workers.
+当任务拥有 Redis 锁、速率限制、比较并设置行为、原子计数器、去重或 worker 间协调时使用此参考。
 
 ## Implementation Focus
 
-- State the key scope, owner identity, lease duration, and release rule before adding a lock.
-- Use `SET key value NX EX` or an equivalent provider-safe primitive for a simple lease.
-- Release a lock only when the stored owner token matches; a blind `DEL` can release another worker's lock.
-- Use MULTI/EXEC, WATCH, or a Lua script only when the operation needs an atomic boundary across multiple Redis commands.
-- Keep Lua scripts short, deterministic, bounded, and versioned with the application code.
-- Add rate-limit keys with an explicit identity and time window; do not use a global key for user-scoped limits.
-- Set expiration on lock, deduplication, and rate-limit keys so abandoned state can recover.
-- Define the behavior when Redis is unavailable, including whether the operation fails closed or uses a bounded fallback.
+- 在添加锁之前说明键范围、所有者标识、租约持续时间和释放规则。
+- 使用 `SET key value NX EX` 或等效的提供者安全原语进行简单租约。
+- 仅当存储的所有者令牌匹配时才释放锁；盲目 `DEL` 可能释放另一个 worker 的锁。
+- 仅当操作需要跨多个 Redis 命令的原子边界时才使用 MULTI/EXEC、WATCH 或 Lua 脚本。
+- 保持 Lua 脚本短、确定性、有界并与应用代码一起版本化。
+- 添加具有显式标识和时间窗口的速率限制键；不要为用户范围限制使用全局键。
+- 在锁、去重和速率限制键上设置过期时间，使被放弃的状态可以恢复。
+- 定义 Redis 不可用时的行为，包括操作是失败关闭还是使用有界回退。
 
 ## Idempotency Boundary
 
-An idempotency key must identify the operation and caller scope. Store a short-lived claim or completed result only when the operation's retry semantics require it. Claiming a key does not make an external side effect atomic; record the side-effect boundary and reconciliation behavior separately.
+幂等键必须标识操作和调用者范围。仅当操作的重试语义需要时才存储短期声明或已完成结果。声明键不使外部副作用原子化；单独记录副作用边界和对账行为。
 
 ## Verification Focus
 
-- Competing workers cannot both acquire the same lease under the declared race.
-- A stale owner cannot release a newer owner's lock.
-- Expired claims, locks, and rate limits recover without manual cleanup.
-- Repeated messages or requests produce one durable business effect where required.
-- Script, transaction, timeout, and unavailable-provider behavior are covered.
+- 在声明的竞争下，竞争 worker 不能同时获取同一租约。
+- 过期所有者不能释放更新所有者的锁。
+- 过期的声明、锁和速率限制无需手动清理即可恢复。
+- 重复消息或请求在需要时产生一个持久业务效果。
+- 脚本、事务、超时和不可用提供者行为被覆盖。
 
 ## Evidence Focus
 
-Record the key scope, owner token, expiration, atomic command boundary, failure mode, and focused concurrency or retry evidence.
+记录键范围、所有者令牌、过期时间、原子命令边界、失败模式和聚焦的并发或重试证据。
 
-Show the command or script boundary in evidence. Do not claim a distributed guarantee from a unit test that never runs two competing workers or exercises expiration.
+在证据中显示命令或脚本边界。不要从从未运行两个竞争 worker 或演练过期的单元测试声称分布式保证。
 
 ## Unsafe Defaults
 
-- Treating a Redis lock as a replacement for a database constraint.
-- Using `SETNX` without expiration.
-- Blind `DEL` for lock release.
-- Retrying a non-idempotent external effect because Redis accepted a claim.
-- Implementing a distributed guarantee with only a process-local mutex.
-- Using a long lease without renewal, cancellation, or an explicit maximum work duration.
-- Treating an expired lock as proof that the previous worker stopped executing.
-- Hiding lock contention and rate-limit rejection as generic server errors.
+- 将 Redis 锁视为数据库约束的替代。
+- 使用没有过期的 `SETNX`。
+- 盲目 `DEL` 释放锁。
+- 因为 Redis 接受了声明而重试非幂等外部效果。
+- 仅用进程本地 mutex 实现分布式保证。
+- 使用长租约而没有续约、取消或显式最大工作持续时间。
+- 将过期锁视为先前 worker 停止执行的证明。
+- 将锁争用和速率限制拒绝隐藏为通用服务器错误。

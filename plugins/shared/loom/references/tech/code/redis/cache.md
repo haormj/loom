@@ -1,45 +1,45 @@
-# Redis Cache Integration
+# Redis 缓存集成
 
 ## When To Use
 
-Use this reference only when the task owns the accepted Redis `cache` capability or changes a cache read/write boundary.
+仅当任务拥有已接受的 Redis `cache` 能力或变更缓存读/写边界时才使用此参考。
 
 ## Implementation Focus
 
-- Define the authoritative source before adding a cache entry.
-- Prefer cache-aside for ordinary reads: read Redis, read the source on a miss, then write the result with a TTL.
-- Choose String for a complete immutable serialized value and Hash for a small object with independently updated fields.
-- Keep cache keys stable, namespaced, identity-aware, and versionable.
-- Set TTL on every cache entry unless the accepted design explicitly owns another eviction boundary.
-- Add jitter for large groups of entries that would otherwise expire together.
-- Invalidate or update cache entries after the source mutation commits.
-- Invalidate list, summary, and detail keys affected by the same mutation; do not clear the whole database by default.
-- Decide whether not-found results are cached and for how long.
-- Treat Redis failure as a cache miss only when the accepted design permits a source read.
+- 在添加缓存条目之前定义权威来源。
+- 对普通读取优先使用 cache-aside：读 Redis，未命中时读来源，然后用 TTL 写入结果。
+- 对完整的不可变序列化值选择 String，对具有独立更新字段的小对象选择 Hash。
+- 保持缓存键稳定、命名空间化、标识感知和可版本化。
+- 除非已接受的设计显式拥有另一个驱逐边界，否则为每个缓存条目设置 TTL。
+- 为否则会一起过期的大组条目添加抖动。
+- 在来源变更提交后失效或更新缓存条目。
+- 失效受同一变更影响的列表、摘要和详情键；不要默认清除整个数据库。
+- 决定未找到结果是否缓存以及缓存多久。
+- 仅当已接受的设计允许读取来源时才将 Redis 失败视为缓存未命中。
 
 ## Invalidation Boundary
 
-The cache must never make a committed source mutation appear successful while returning stale authorization or ownership data. For transactional sources, perform invalidation after commit or use a proven outbox/read-model boundary.
+缓存绝不能在返回过期的授权或所有权数据时使已提交的来源变更看起来成功。对于事务性来源，在提交后执行失效或使用已验证的发件箱/读取模型边界。
 
-Use a Set only when the feature needs a bounded index of related cache keys for tag invalidation. Use `SCAN` for operational cleanup; never use unbounded `KEYS` in application request paths.
+仅当功能需要有界的相关缓存键索引用于标签失效时才使用 Set。使用 `SCAN` 进行操作清理；永远不要在应用请求路径中使用无界 `KEYS`。
 
 ## Verification Focus
 
-- Miss then hit returns the same identity-scoped value.
-- A mutation invalidates or updates every affected key after commit.
-- Tenant, actor, locale, permission, and filter dimensions do not collide.
-- TTL and negative-cache behavior match the contract.
-- Redis unavailable falls back to the source without corrupting the response or mutation.
-- Concurrent same-key loads have a bounded stampede policy.
+- 未命中然后命中返回相同的标识范围值。
+- 变更在提交后失效或更新每个受影响的键。
+- 租户、参与者、locale、权限和过滤维度不冲突。
+- TTL 和负缓存行为匹配契约。
+- Redis 不可用回退到来源而不损坏响应或变更。
+- 并发的同键加载有有界的惊群策略。
 
 ## Evidence Focus
 
-Name the source-of-truth method, cache adapter, key format, TTL configuration, invalidation trigger, fallback behavior, and the test proving each owned rule.
+说明真相来源方法、缓存适配器、键格式、TTL 配置、失效触发、回退行为和证明每个拥有规则的测试。
 
 ## Unsafe Defaults
 
-- Caching a database entity whose authorization is checked only before the first write.
-- Using an implicit argument serialization key for a security-sensitive query.
-- Evicting before a transaction commits.
-- Setting no TTL because the current dataset is small.
-- Treating `DEL cache:*` or `KEYS cache:*` as normal invalidation.
+- 缓存仅在首次写入之前检查授权的数据库实体。
+- 对安全敏感查询使用隐式参数序列化键。
+- 在事务提交之前驱逐。
+- 因为当前数据集小而不设置 TTL。
+- 将 `DEL cache:*` 或 `KEYS cache:*` 视为正常失效。

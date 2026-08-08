@@ -1,53 +1,53 @@
-# Spring Cloud Application Integration
+# Spring Cloud 应用集成
 
-This reference applies only when Technical Baseline selects Spring Cloud and the task owns Config, service discovery, Gateway, or client-side load balancing. Generic outbound HTTP clients and resilience policies have separate references.
+此参考仅在 Technical Baseline 选择 Spring Cloud 且任务拥有 Config、服务发现、Gateway 或客户端负载均衡时适用。通用出站 HTTP 客户端和弹性策略有独立参考。
 
-## Capability Gate
+## 能力门控
 
-Do not introduce a Spring Cloud component because Spring Cloud dependencies are available. Each component requires an accepted runtime or integration role:
+不要因为 Spring Cloud 依赖可用就引入 Spring Cloud 组件。每个组件需要已接受的运行时或集成角色：
 
-| Component | Required Current Capability |
+| 组件 | 所需当前能力 |
 |---|---|
-| Config Client/Server | Central configuration ownership and runtime availability contract |
-| Discovery Client/Registry | Logical service lookup and registration lifecycle |
-| Gateway | Public/internal route ownership, rewrite, security, and failure boundary |
-| LoadBalancer | Discovery-backed client selection with defined health/retry behavior |
+| Config Client/Server | 中心配置归属和运行时可用性契约 |
+| Discovery Client/Registry | 逻辑服务查找和注册生命周期 |
+| Gateway | 公共/内部路由归属、重写、安全和失败边界 |
+| LoadBalancer | 基于发现的客户端选择配以已定义健康/重试行为 |
 
 ## Spring Cloud Config
 
-For Config clients, define:
+对于 Config 客户端，定义：
 
 - application/profile/label identity
-- authentication and transport security
-- fail-fast versus local fallback
-- retry classification and bounded attempts
-- startup behavior when config is unavailable
-- refreshable versus restart-required settings
+- 认证和传输安全
+- fail-fast 与本地回退
+- 重试分类和有界尝试
+- 配置不可用时的启动行为
+- 可刷新与需重启的设置
 
-Do not expose broad refresh endpoints by default. Dynamic refresh can replace bean state while requests are active; use it only for properties proven safe to refresh. Secrets and structural datasource/security changes generally require stronger rotation/restart behavior.
+默认不要暴露宽泛的 refresh 端点。动态刷新可以在请求活跃时替换 bean 状态；仅对证明可安全刷新的属性使用它。密钥和结构性 datasource/安全变更通常需要更强的轮转/重启行为。
 
-Config Server is a separate runtime role. Do not create one inside an application task that only needs an externalized property source.
+Config Server 是独立的运行时角色。不要在仅需外部化属性源的应用任务中创建它。
 
-## Service Discovery
+## 服务发现
 
-Use logical service names only when discovery is the accepted boundary. Define registration name, metadata, health status, lease behavior, lookup failure, and local/test substitution.
+仅当发现是已接受的边界时才使用逻辑服务名。定义注册名、元数据、健康状态、租约行为、查找失败和本地/测试替代。
 
-Do not hardcode instance URLs alongside discovery-backed clients. Do not treat a registry entry as proof that an instance can serve the required endpoint. Registration, readiness, and client-side health semantics must agree.
+不要在基于发现的客户端旁硬编码实例 URL。不要将注册表条目视为实例可以服务所需端点的证明。注册、readiness 和客户端健康语义必须一致。
 
-Avoid adding a registry server when the selected hosting environment already provides service discovery.
+当所选 hosting 环境已提供服务发现时避免添加注册表服务器。
 
-## Gateway Routing
+## Gateway 路由
 
-Gateway routes must preserve the accepted public API contract:
+Gateway 路由必须保留已接受的公共 API 契约：
 
-- route id and ownership
-- host/path/method predicates
-- exact prefix strip/rewrite behavior
-- authentication and trusted header handling
-- CORS boundary
-- request/response size limits when required
-- rate-limit policy when accepted
-- downstream timeout and failure mapping
+- 路由 id 和归属
+- host/path/method 谓词
+- 精确前缀剥离/重写行为
+- 认证和受信任 header 处理
+- CORS 边界
+- 需要时的请求/响应大小限制
+- 已接受时的限流策略
+- 下游超时和失败映射
 
 ```java
 @Bean
@@ -63,36 +63,36 @@ RouteLocator orderRoutes(RouteLocatorBuilder routes) {
 }
 ```
 
-Treat path rewrites as contract behavior. Test the externally visible path and downstream path. Never trust caller-supplied identity headers unless a trusted gateway replaces and signs/controls them.
+将路径重写视为契约行为。测试外部可见路径和下游路径。切勿信任调用者提供的 identity header，除非受信任的 gateway 替换并签名/控制它们。
 
-Gateway retries are disabled unless the accepted operation is retry-safe. Do not retry arbitrary `POST`, `PATCH`, or state-transition traffic. A fallback must not fabricate successful business data.
+除非已接受的操作是重试安全的否则 Gateway 重试禁用。不要重试任意 `POST`、`PATCH` 或状态转换流量。回退不得伪造成功的业务数据。
 
-## Load Balancing
+## 负载均衡
 
-Client-side load balancing requires discovery-backed service instances and a health model. Preserve request timeout and retry ownership in the integration/resilience layer. Do not stack gateway retry, client retry, and library retry without an attempt budget.
+客户端负载均衡需要基于发现的服务实例和健康模型。在集成/弹性层保留请求超时和重试归属。在没有尝试预算的情况下不要叠加 gateway 重试、客户端重试和库重试。
 
-## Local And Test Behavior
+## 本地与测试行为
 
-Provide a deterministic local/test path that does not require a shared registry or config server unless the task explicitly validates those runtime roles. Use test configuration, static service instances, or mocked discovery/config clients at the owned boundary.
+提供确定性的本地/测试路径，除非任务显式验证那些运行时角色否则不需要共享注册表或 config server。在所属边界使用测试配置、静态服务实例或 mock 的发现/config 客户端。
 
 ## Verification Focus
 
-Useful Spring Cloud evidence includes:
+有用的 Spring Cloud 证据包括：
 
-- Config startup with available and unavailable source behavior
-- profile/label/property precedence and refresh-safe properties
-- discovery registration and lookup failure behavior
-- Gateway predicate and path rewrite tests
-- security/header/CORS behavior across the gateway
-- downstream unavailable mapping without false success
-- confirmation that non-idempotent operations are not retried
-- local/test startup without unrelated shared cloud infrastructure
+- 可用和不可用源行为的 Config 启动
+- profile/label/属性优先级和可安全刷新的属性
+- 发现注册和查找失败行为
+- Gateway 谓词和路径重写测试
+- 跨 gateway 的安全/header/CORS 行为
+- 没有假成功的下游不可用映射
+- 非幂等操作不被重试的确认
+- 没有不相关共享云基础设施的本地/测试启动
 
-## Unsafe Defaults
+## 不安全默认
 
-- Creating Config Server, Eureka, or Gateway because the dependency exists.
-- Enabling discovery locator catch-all routes.
-- Wildcard CORS for credentialed traffic.
-- Trusting inbound identity headers.
-- Retrying every route three times.
-- Returning fake domain data from a fallback.
+- 因为依赖存在就创建 Config Server、Eureka 或 Gateway。
+- 启用发现定位器 catch-all 路由。
+- 对带凭证流量使用通配符 CORS。
+- 信任入站 identity header。
+- 每条路由重试三次。
+- 从回退返回假 domain 数据。

@@ -1,83 +1,83 @@
-# Spring Boot Resilience Policies
+# Spring Boot 弹性策略
 
-Resilience policies implement accepted dependency failure behavior. They do not make every external call reliable automatically, and they must not alter business meaning.
+弹性策略实现已接受的依赖失败行为。它们不会自动使每个外部调用可靠，且不得改变业务含义。
 
-## Policy Ownership
+## 策略归属
 
-Start with the failure contract:
+从失败契约开始：
 
-- dependency and operation
-- timeout budget
-- retry safety/idempotency
-- terminal caller-visible result
-- degraded behavior, if truthful
-- concurrency/resource limit
-- recovery signal and observability
+- 依赖和操作
+- 超时预算
+- 重试安全/幂等
+- 终态调用者可见结果
+- 降级行为（如果真实）
+- 并发/资源限制
+- 恢复信号和可观测性
 
-Use Resilience4j, Spring Cloud CircuitBreaker, or the repository's existing library. Do not stack multiple retry/circuit implementations around the same call.
+使用 Resilience4j、Spring Cloud CircuitBreaker 或仓库已有的库。不要在同一调用周围叠加多个重试/断路实现。
 
-## Timeout Budget
+## 超时预算
 
-Set connection, response, and total operation budgets coherently. An outer timeout must account for all attempts and backoff. Avoid a retry policy whose worst-case duration exceeds the caller/runtime budget.
+连贯设置连接、响应和总操作预算。外部超时必须考虑所有尝试和退避。避免最坏情况持续时间超过调用者/运行时预算的重试策略。
 
-Timeout cancellation does not guarantee the downstream operation stopped. Treat timed-out writes as outcome-unknown unless idempotency or provider status lookup resolves them.
+超时取消不保证下游操作已停止。将超时的写入视为结果未知，除非幂等或 provider 状态查找解决它们。
 
-## Retry Safety
+## 重试安全
 
-Retry only classified transient failures and only when the operation is safe:
+仅重试分类的瞬时失败且仅当操作安全时：
 
-| Operation | Retry Position |
+| 操作 | 重试位置 |
 |---|---|
-| Idempotent read | Bounded retry can be valid for connection/selected `5xx` failures |
-| Idempotent update with stable key/version | Retry only under the accepted conditional/idempotency contract |
-| Create/payment/state transition | No automatic retry without idempotency or deduplication |
-| Validation/auth/not-found/conflict | Do not retry without changed input or authorization |
+| 幂等读 | 对连接/选定 `5xx` 失败可以有界重试 |
+| 带稳定 key/版本的幂等更新 | 仅在已接受的条件/幂等契约下重试 |
+| 创建/支付/状态转换 | 没有幂等或去重则不自动重试 |
+| 验证/认证/not-found/冲突 | 不更改输入或授权则不重试 |
 
-Honor `Retry-After` when the provider contract supports it. Use jittered backoff for shared dependencies where coordinated retries could amplify an outage.
+当 provider 契约支持时遵守 `Retry-After`。对协调重试可能放大中断的共享依赖使用抖动退避。
 
-## Circuit Breaker
+## 断路器
 
-A circuit breaker protects callers and resources from repeatedly invoking an unhealthy dependency. Configure failure classification, slow-call threshold, minimum calls, window, open duration, and half-open probes from the current dependency behavior.
+断路器保护调用者和资源免受反复调用不健康依赖。从当前依赖行为配置失败分类、慢调用阈值、最小调用数、窗口、打开持续时间和半开探测。
 
-Do not register every business rejection as a circuit failure. Do not expose circuit state as the product error; translate it to the accepted unavailable/degraded behavior.
+不要将每个业务拒绝注册为断路失败。不要将断路状态暴露为产品错误；将其翻译为已接受的不可用/降级行为。
 
-## Bulkhead And Concurrency
+## 舱壁与并发
 
-Use semaphore/thread-pool bulkheads only when dependency concurrency can exhaust application resources. Define queue/rejection behavior and preserve context deliberately. A thread-pool bulkhead in a reactive chain can reintroduce blocking semantics.
+仅当依赖并发可能耗尽应用资源时才使用信号量/线程池舱壁。定义队列/拒绝行为并慎重保留上下文。响应式链中的线程池舱壁可能重新引入阻塞语义。
 
-## Fallback Semantics
+## 回退语义
 
-A fallback is valid only when it is truthful and safe:
+回退仅在真实且安全时有效：
 
-- cached read within an accepted freshness window
-- reduced optional data with explicit degraded indication
-- queued durable work when asynchronous acceptance is part of the contract
-- actionable unavailable response
+- 已接受新鲜度窗口内的缓存读
+- 带显式降级指示的减少可选数据
+- 当异步接受是契约一部分时的排队持久工作
+- 可操作的不可用响应
 
-Never fabricate domain records, claim a write succeeded, or return stale authorization-sensitive data merely to keep status `200`.
+切勿仅为保持状态 `200` 而伪造 domain 记录、声称写入成功或返回陈旧的授权敏感数据。
 
-## Policy Composition
+## 策略组合
 
-Keep attempt and resource budgets visible when combining timeout, retry, circuit breaker, rate limiter, and bulkhead. Apply metrics/events through the observability boundary without high-cardinality tags.
+组合超时、重试、断路器、限流器和舱壁时保持尝试和资源预算可见。通过可观测性边界应用 metric/事件而不使用高基数 tag。
 
 ## Verification Focus
 
-Useful resilience evidence includes:
+有用的弹性证据包括：
 
-- exact retryable and non-retryable failure classes/statuses
-- total attempts and backoff under deterministic test timing
-- no retry for non-idempotent writes without a key
-- timeout terminal behavior and outcome-unknown handling
-- circuit open and half-open transitions
-- bulkhead saturation/rejection behavior
-- truthful fallback and propagated correlation signal
-- one policy layer rather than duplicated gateway/client retries
+- 精确的可重试和不可重试失败类/状态
+- 确定性测试时序下的总尝试和退避
+- 没有 key 的非幂等写入不重试
+- 超时终态行为和结果未知处理
+- 断路打开和半开转换
+- 舱壁饱和/拒绝行为
+- 真实的回退和传播的关联信号
+- 一层策略而非重复的 gateway/客户端重试
 
-## Unsafe Defaults
+## 不安全默认
 
-- `.retry(3)` on every WebClient call.
-- Retrying validation, auth, conflict, or not-found responses.
-- Combining gateway retry and client retry without an attempt budget.
-- Returning fake successful data from fallback methods.
-- Marking every exception as a circuit failure.
-- Using production-duration sleeps in tests.
+- 每个 WebClient 调用 `.retry(3)`。
+- 重试验证、认证、冲突或 not-found 响应。
+- 没有尝试预算地组合 gateway 重试和客户端重试。
+- 从回退方法返回假成功数据。
+- 将每个异常标记为断路失败。
+- 在测试中使用生产持续时间的 sleep。

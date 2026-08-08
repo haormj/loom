@@ -1,42 +1,42 @@
-# Kotlin Multiplatform Quality
+# Kotlin Multiplatform 质量
 
 ## When To Use
 
-- The task changes Kotlin Multiplatform source sets, common code, platform-specific code, `expect`/`actual`, shared clients, serialization, native interop, Gradle KMP setup, or multiplatform tests.
-- Use this when code must compile or behave across JVM, Android, iOS, JS, Native, or shared modules.
-- If the project is single-platform Kotlin, do not add KMP structure because this reference is available.
+- 任务变更了 Kotlin Multiplatform 源码集、公共代码、平台特定代码、`expect`/`actual`、共享客户端、序列化、原生互操作、Gradle KMP 设置或多平台测试。
+- 当代码必须跨 JVM、Android、iOS、JS、Native 或共享模块编译或运行时使用此参考。
+- 如果项目是单平台 Kotlin，不要因为此参考可用就添加 KMP 结构。
 
 ## Implementation Focus
 
-- Keep platform-neutral business logic in `commonMain`. Do not import Android, JVM, iOS, JS, filesystem, or platform UI APIs from common code.
-- Use `expect`/`actual` only for real platform differences such as time, filesystem, crypto, database drivers, device APIs, or platform clients. Do not split code by platform for convenience.
-- Keep source set hierarchy aligned with actual targets. Do not add intermediate source sets or target dependencies unless multiple targets share implementation.
-- Use shared DTOs and serialization only when all target platforms support the chosen library and configuration.
-- Keep Ktor clients or other shared clients configured with platform engines in platform source sets and common request/response contracts in common code.
-- Treat Ktor client and Ktor server as different ownership boundaries. A shared client owns request/response, engine, timeout, serialization, and platform networking decisions; it must not inherit server routing, server plugin, or server authentication setup.
-- Isolate native interop in platform modules and expose a small common abstraction. Do not leak Objective-C/Swift, Android, or JVM types through common APIs.
-- Avoid platform-specific threading assumptions in common code. Coroutine dispatchers and lifecycle scopes should be provided by platform owners when needed.
-- Keep dependency additions scoped to source sets. Do not add Android-only or JVM-only dependencies to `commonMain`.
-- If publishing a KMP library, keep artifact coordinates, metadata, and version source aligned with existing release conventions.
-- Treat legacy Kotlin/Native memory-model workarounds carefully; do not add obsolete freezing patterns unless the project target requires them.
+- 将平台中立业务逻辑保留在 `commonMain` 中。不要从公共代码导入 Android、JVM、iOS、JS、文件系统或平台 UI API。
+- 仅对真实平台差异（如时间、文件系统、加密、数据库驱动程序、设备 API 或平台客户端）使用 `expect`/`actual`。不要为方便而按平台拆分代码。
+- 保持源码集层次结构与实际目标对齐。不要添加中间源码集或目标依赖，除非多个目标共享实现。
+- 仅当所有目标平台支持选中的库和配置时才使用共享 DTO 和序列化。
+- 将 Ktor 客户端或其他共享客户端配置为在平台源码集中使用平台引擎，在公共代码中使用公共请求/响应契约。
+- 将 Ktor 客户端和 Ktor 服务器视为不同的所有权边界。共享客户端拥有请求/响应、引擎、超时、序列化和平台网络决策；它不得继承服务器路由、服务器插件或服务器认证设置。
+- 在平台模块中隔离原生互操作并暴露小型公共抽象。不要通过公共 API 泄露 Objective-C/Swift、Android 或 JVM 类型。
+- 避免在公共代码中使用平台特定的线程假设。协程调度器和生命周期作用域应在需要时由平台所有者提供。
+- 保持依赖添加限定到源码集。不要将仅 Android 或仅 JVM 的依赖添加到 `commonMain`。
+- 如果发布 KMP 库，保持产物坐标、元数据和版本来源与现有发布约定对齐。
+- 谨慎对待遗留 Kotlin/Native 内存模型变通方案；除非项目目标要求，否则不要添加过时的冻结模式。
 
 ## Decision Rules
 
-- Add a platform target only when the product or existing build matrix owns it. Do not broaden KMP configuration merely because the plugin makes another target easy to declare.
-- Keep common code limited to APIs available to every selected target. Put HTTP engines, file systems, secure storage, clocks, UI toolkits, and native interop behind a small common abstraction with platform-owned implementations.
-- Use `expect`/`actual` for a genuine platform capability, not for business branching. If behavior is shared and only construction differs, inject the dependency instead of duplicating the algorithm.
-- Keep dependency declarations in the narrowest source set that can compile them. A common serialization or client dependency must be supported by every target in the target matrix.
-- Treat `commonTest` as proof of shared behavior and platform tests as proof of actual implementations. A successful JVM test does not prove an iOS, Native, JS, or Android actual implementation compiles or behaves correctly.
-- Keep framework and binary coordinates aligned with the repository's version catalog and release policy; do not copy version numbers from an external example.
+- 仅当产品或现有构建矩阵拥有平台目标时才添加。不要仅因为插件使另一个目标容易声明就扩大 KMP 配置。
+- 将公共代码限制在每个选中目标都可用的 API。将 HTTP 引擎、文件系统、安全存储、时钟、UI 工具包和原生互操作放在具有平台拥有实现的小型公共抽象之后。
+- 为真正的平台能力使用 `expect`/`actual`，而非业务分支。如果行为共享且仅构造不同，注入依赖而非复制算法。
+- 将依赖声明保留在能编译它们的最窄源码集中。公共序列化或客户端依赖必须被目标矩阵中的每个目标支持。
+- 将 `commonTest` 视为共享行为的证明，将平台测试视为实际实现的证明。成功的 JVM 测试不证明 iOS、Native、JS 或 Android actual 实现编译或行为正确。
+- 保持框架和二进制坐标与仓库的版本目录和发布策略对齐；不要从外部示例复制版本号。
 
 ## Verification Focus
 
-- Run the common test target and every platform compile/test target touched by the task.
-- If not all platform targets can run locally, run available compile tasks and record the skipped target reason.
-- Add tests for common behavior and platform-specific actual implementations when they contain logic.
-- Confirm no platform APIs or dependencies leaked into common source sets.
-- Record the target matrix exercised, including compile-only targets and targets unavailable in the current environment, so the evidence does not overclaim portability.
+- 运行公共测试目标和任务涉及的每个平台编译/测试目标。
+- 如果并非所有平台目标都能在本地运行，运行可用的编译任务并记录跳过的目标原因。
+- 当公共行为和平台特定 actual 实现包含逻辑时为它们添加测试。
+- 确认没有平台 API 或依赖泄露到公共源码集中。
+- 记录演练的目标矩阵，包括仅编译目标和当前环境中不可用的目标，使证据不过度声称可移植性。
 
 ## Evidence Focus
 
-- In the evidence summary, name the KMP decision: common/platform split, expect/actual boundary, source set hierarchy, shared serialization/client, native interop isolation, dependency scope, or platform verification.
+- 在证据总结中，说明 KMP 决策：公共/平台拆分、expect/actual 边界、源码集层次结构、共享序列化/客户端、原生互操作隔离、依赖范围或平台验证。

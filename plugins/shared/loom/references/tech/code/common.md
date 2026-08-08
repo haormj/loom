@@ -1,48 +1,48 @@
-# Loom Code Reference Common Rules
+# Loom 代码参考公共规则
 
-This file is selected for every `language_implementation_quality` requirement. It defines how code references are used in Loom; language/topic files define only the implementation details for their selected subject.
+本文件会在每个 `language_implementation_quality` 需求中被选中。它定义了代码参考在 Loom 中的使用方式；语言/主题文件仅定义其所选主题的实现细节。
 
-## Position In Loom
+## 在 Loom 中的定位
 
-- These references are task-scoped implementation aids, not standalone skills and not technology selection documents.
-- TechnicalBaseline remains the source of stack facts. Code references only refine how confirmed languages/frameworks should be implemented.
-- Treat the current task's selected code references as the loading boundary; do not browse sibling language, framework, or database topics unless they are selected for that task.
+- 这些参考是任务级实现辅助，不是独立技能，也不是技术选型文档。
+- TechnicalBaseline 仍然是技术栈事实的来源。代码参考仅细化已确认的语言/框架应如何实现。
+- 将当前任务选中的代码参考视为加载边界；不要浏览同级的语言、框架或数据库主题，除非它们被该任务选中。
 
-## Repository Adaptation
+## 仓库适配
 
-- Start from the existing module layout, naming, formatter, dependency injection style, error contract, and test conventions.
-- Extend a local abstraction when it already exists; do not introduce a parallel architecture for a single task.
-- Add dependencies only when the task-owned behavior needs them and the repository has a clear dependency management path.
-- Keep public contract changes aligned with API, UI, persistence, runtime, and verification artifacts.
+- 从现有的模块布局、命名、格式化工具、依赖注入风格、错误契约和测试约定开始。
+- 当本地抽象已存在时扩展它；不要为单个任务引入并行架构。
+- 仅在任务拥有的行为需要依赖且仓库有明确的依赖管理路径时才添加依赖。
+- 保持公共契约变更与 API、UI、持久化、运行时和验证产物保持一致。
 
-## Delivery Rules
+## 交付规则
 
-- Translate selected references into concrete edits. Do not paste reference prose into source files, delivery evidence, review findings, or user-facing UI.
-- Keep domain behavior in domain/service code and keep transport/UI glue thin.
-- Make invalid states hard to express where the language or framework supports that without excessive ceremony.
-- Remove dead scaffolding after implementation; do not leave demo-only placeholders in production_code_implementation tasks.
+- 将选中的参考转化为具体编辑。不要将参考正文粘贴到源文件、交付证据、审查发现或面向用户的 UI 中。
+- 将领域行为保留在领域/服务代码中，保持传输/UI 胶水层精简。
+- 在语言或框架支持且无需过度繁琐的情况下，使无效状态难以表达。
+- 实现后移除无用的脚手架代码；不要在 production_code_implementation 任务中留下仅用于演示的占位符。
 
-## Verification Rules
+## 验证规则
 
-- Run the smallest existing compile/type/lint/test command that proves the changed files.
-- Add or update tests for new business branches, validation failures, persistence behavior, async lifecycle, or public API behavior touched by the task.
-- Do not claim commands that were not run. Put blocked or unavailable verification in known gaps with the reason.
-- Summarize command outcomes; do not paste large logs into delivery evidence.
+- 运行能证明变更文件的最小现有编译/类型检查/lint/测试命令。
+- 为任务涉及的新业务分支、验证失败、持久化行为、异步生命周期或公共 API 行为添加或更新测试。
+- 不要声称运行了未运行的命令。将受阻或不可用的验证放入已知缺口并注明原因。
+- 总结命令结果；不要将大段日志粘贴到交付证据中。
 
-## Evidence Rules
+## 证据规则
 
-- Use the current result contract and validator messages for exact evidence field names and required values.
-- Evidence summaries should state how changed files followed both repository style and the selected topic references.
+- 使用当前的结果契约和验证器消息获取确切的证据字段名和必需值。
+- 证据总结应说明变更文件如何同时遵循仓库风格和所选主题参考。
 
-## Cross-Cutting Ownership
+## 跨领域所有权
 
-- Load `tech/code/observability.md` only when the task owns a structured observability, request-tracing, async-processing, external-boundary, resilience, or sensitive-error concern. A word such as `log`, `logging`, `monitoring`, or `tracing` in task prose is not an ownership signal.
-- The observability reference owns cross-stack event behavior, task-owned diagnostic boundaries, and deterministic language fallback when no framework overlay applies. A selected framework `logging.md` owns framework provider wiring and configuration mechanics, including async appenders, file output, rotation, compression, and retention. Deploy owns container topology and does not generate those settings.
+- 仅当任务拥有结构化可观测性、请求追踪、异步处理、外部边界、弹性或敏感错误相关问题时才加载 `tech/code/observability.md`。任务正文中出现 `log`、`logging`、`monitoring` 或 `tracing` 等词不是所有权信号。
+- 可观测性参考拥有跨栈事件行为、任务拥有的诊断边界，以及无框架覆盖时的确定性语言回退。选中的框架 `logging.md` 拥有框架提供者接线和配置机制，包括异步追加器、文件输出、轮转、压缩和保留。Deploy 拥有容器拓扑，不生成这些设置。
 
-## Common Anti-Patterns
+## 常见反模式
 
-- Loading sibling language/topic files outside the task-selected reference set.
-- Reselecting the technology stack after TechnicalBaseline is accepted.
-- Adding framework boilerplate without task-owned behavior.
-- Silencing compiler, type, lint, or test failures to make delivery appear complete.
-- Hardcoding secrets, ports, URLs, database paths, or environment-specific values.
+- 加载任务选中参考集之外的同级语言/主题文件。
+- 在 TechnicalBaseline 被接受后重新选择技术栈。
+- 在没有任务拥有行为的情况下添加框架样板代码。
+- 抑制编译器、类型、lint 或测试失败以使交付看起来完整。
+- 硬编码密钥、端口、URL、数据库路径或环境特定值。

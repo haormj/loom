@@ -1,38 +1,38 @@
-# Kotlin Testing Quality
+# Kotlin 测试质量
 
 ## When To Use
 
-- The task adds or changes Kotlin tests, coroutine tests, Flow assertions, Ktor route tests, Compose tests, KMP tests, mocks/fakes, or behavior implemented in Kotlin.
-- Use this when Kotlin behavior needs proof through Gradle, Kotlin test, JUnit, MockK, Turbine, Ktor test, Compose test, or platform test targets.
-- Follow the repository's existing test framework and source-set layout unless the task explicitly owns test infrastructure.
+- 任务添加或变更 Kotlin 测试、协程测试、Flow 断言、Ktor 路由测试、Compose 测试、KMP 测试、mock/fake 或 Kotlin 实现的行为。
+- 当 Kotlin 行为需要通过 Gradle、Kotlin 测试、JUnit、MockK、Turbine、Ktor 测试、Compose 测试或平台测试目标证明时使用此参考。
+- 遵循仓库现有的测试框架和源码集布局，除非任务显式拥有测试基础设施。
 
 ## Implementation Focus
 
-- Test sealed states, validation branches, null handling, and domain transitions through public functions or screen/view-model state, not private implementation order.
-- Use `runTest` for coroutine code and control virtual time for delays, debounce, timeout, and retry behavior. Do not use `runBlocking` in normal unit tests unless the repo already does for legacy reasons.
-- Use Turbine or equivalent for Flow emission order, completion, cancellation, and error assertions when Flow behavior changes.
-- Prefer fakes for repositories, APIs, clocks, dispatchers, and storage when behavior is small. Use MockK or mocks for external dependencies where interaction assertions matter.
-- For Ktor, use application tests that exercise route registration, serialization, auth, validation, status codes, and response bodies.
-- For Compose, assert visible state and interactions: loading, empty, error, input validation, enabled/disabled controls, navigation callbacks, and list rendering.
-- For KMP, place tests in `commonTest` when behavior is shared and platform test source sets when actual implementations contain logic.
-- Keep dispatchers, scopes, temp files, databases, servers, and background jobs cleaned up after tests.
-- Avoid snapshot-only UI tests for meaningful workflow behavior unless the repository already uses snapshots and targeted assertions also cover state.
+- 通过公共函数或屏幕/view-model 状态测试 sealed 状态、验证分支、null 处理和领域转换，而非私有实现顺序。
+- 对协程代码使用 `runTest` 并控制延迟、防抖、超时和重试行为的虚拟时间。不要在普通单元测试中使用 `runBlocking`，除非仓库出于遗留原因已这样做。
+- 当 Flow 行为变更时使用 Turbine 或等效工具进行 Flow 发射顺序、完成、取消和错误断言。
+- 当行为小型时为 repository、API、时钟、调度器和存储优先使用 fake。在交互断言重要时为外部依赖使用 MockK 或 mock。
+- 对于 Ktor，使用应用测试演练路由注册、序列化、认证、验证、状态码和响应体。
+- 对于 Compose，断言可见状态和交互：加载、空、错误、输入验证、启用/禁用控件、导航回调和列表渲染。
+- 对于 KMP，当行为共享时将测试放在 `commonTest` 中，当 actual 实现包含逻辑时放在平台测试源码集中。
+- 测试后保持调度器、作用域、临时文件、数据库、服务器和后台作业清理。
+- 避免对有意义的工作流行为使用仅快照 UI 测试，除非仓库已使用快照且有针对性的断言也覆盖状态。
 
 ## Decision Rules
 
-- Choose the narrowest test layer that proves the changed contract: pure domain/state tests for business rules, `runTest` for coroutine scheduling, `testApplication` for Ktor wiring, Compose tests for visible state and interaction, and platform tests for `actual` implementations.
-- Keep test fixtures aligned with the repository's dependency boundary. Use fakes for owned ports and mocks only where an interaction with an external dependency is itself the contract.
-- Assert failure and recovery behavior, not only the happy path, whenever the implementation introduces validation, cancellation, retry, authentication, persistence, or disabled UI states.
-- Do not create a fixed coverage target solely to satisfy this reference. Report the changed branches and the evidence that covers them; add coverage thresholds only when the repository already enforces them.
-- Keep virtual time, dispatchers, application engines, databases, temporary files, and background jobs isolated and cleaned up so tests do not depend on execution order.
+- 选择证明变更契约的最窄测试层：业务规则用纯领域/状态测试，协程调度用 `runTest`，Ktor 接线用 `testApplication`，可见状态和交互用 Compose 测试，`actual` 实现用平台测试。
+- 保持测试夹具与仓库的依赖边界对齐。为拥有的端口使用 fake，仅在与外部依赖的交互本身是契约时使用 mock。
+- 当实现引入验证、取消、重试、认证、持久化或禁用 UI 状态时，断言失败和恢复行为，而非仅快乐路径。
+- 不要仅为满足此参考而创建固定覆盖率目标。报告变更的分支和覆盖它们的证据；仅当仓库已强制执行时才添加覆盖率阈值。
+- 保持虚拟时间、调度器、应用引擎、数据库、临时文件和后台作业隔离和清理，使测试不依赖执行顺序。
 
 ## Verification Focus
 
-- Run the configured Gradle test task for changed modules or the narrowest relevant target.
-- Run lint/static analysis tasks such as `ktlint` or `detekt` when configured.
-- For coroutine/Flow changes, verify cancellation and pending job cleanup.
-- For KMP, record platform targets run and explicitly name any unavailable target.
+- 为变更模块或最窄相关目标运行配置的 Gradle 测试任务。
+- 在配置时运行 lint/静态分析任务如 `ktlint` 或 `detekt`。
+- 对于协程/Flow 变更，验证取消和待处理 job 清理。
+- 对于 KMP，记录运行的平台目标并显式命名任何不可用目标。
 
 ## Evidence Focus
 
-- In the evidence summary, name the behavior verified and the Kotlin/Gradle commands run.
+- 在证据总结中，说明已验证的行为和运行的 Kotlin/Gradle 命令。

@@ -1,79 +1,79 @@
-# React Native Verification
+# React Native 验证
 
-Use this reference only when the task explicitly owns React Native test implementation. Component/screen/hook tests establish JavaScript-visible behavior; native builds, simulators/devices, and mobile automation establish platform integration that unit tests cannot.
+仅当任务显式拥有 React Native 测试实现时使用此参考。组件/屏幕/hook 测试建立 JavaScript 可见行为；原生构建、模拟器/设备和移动自动化建立单元测试无法建立的平台集成。
 
-## Select The Evidence Layer
+## 选择证据层
 
-Use pure tests for validators/reducers/formatters, hook tests for public lifecycle/state contracts, React Native Testing Library for component/screen behavior, navigation/provider integration tests for composed flows, and device/native checks for system APIs and platform chrome.
+对验证器/reducer/格式化器使用纯测试，对公共生命周期/状态契约使用 hook 测试，对组件/屏幕行为使用 React Native Testing Library，对组合流使用导航/provider 集成测试，对系统 API 和平台壳使用设备/原生检查。
 
-Do not claim safe-area, keyboard, permission prompts, deep links, status bars, native modules, gestures, performance, or production signing from a mocked DOM-like tree alone.
+不要仅从 mock 的 DOM 类树声称安全区域、键盘、权限提示、深链接、状态栏、原生模块、手势、性能或生产签名。
 
-Use the repository's runner, transforms, presets, renderer, mocks, and test utilities. Do not introduce another test stack because an external example uses Jest or a specific library.
+使用仓库的 runner、转换、preset、渲染器、mock 和测试工具。不要因为外部示例使用 Jest 或特定库就引入另一个测试栈。
 
-## Queries And Interaction
+## 查询与交互
 
-Prefer accessible role/name/label/text/state queries and realistic press/type/scroll interactions supported by the test library. Test IDs are a fallback for elements without a meaningful semantic locator.
+优先使用测试库支持的可访问角色/名称/标签/文本/状态查询和真实的按压/输入/滚动交互。Test ID 是没有有意义语义定位器的元素的回退。
 
-Assert visible state and exact emitted command/navigation target. For lists and actions, change sort/filter/selection/refresh before activating a row to catch mutable-target defects.
+断言可见状态和精确发出的命令/导航目标。对于列表和操作，在激活行之前变更排序/筛选/选择/刷新以捕获可变目标缺陷。
 
-Cover draft preservation, field/global errors, duplicate-submit blocking, disabled/forbidden behavior, success readback, and retry when task-owned.
+在任务所属时覆盖草稿保留、字段/全局错误、重复提交阻止、禁用/禁止行为、成功回读和重试。
 
-## Harness And Isolation
+## Harness 与隔离
 
-Create isolated router/navigation, query cache, store, theme, i18n, auth, safe-area, and feature-flag providers per test. Avoid shared singletons leaking identity or cached records.
+为每个测试创建隔离的路由/导航、查询缓存、store、主题、i18n、auth、安全区域和 feature-flag provider。避免泄漏标识或缓存记录的共享单例。
 
-Mock the accepted API/native/storage boundary, not every hook/component under test. Reject unexpected calls and assert method/path/payload/params when they are part of the contract.
+在已接受的 API/原生/存储边界 mock，而非每个被测 hook/组件。拒绝意外调用并在契约一部分时断言方法/路径/载荷/参数。
 
-Reset module mocks, timers, storage, stores, query clients, permission state, and `Platform.OS` changes after each case.
+在每个用例后重置模块 mock、定时器、存储、store、查询 client、权限状态和 `Platform.OS` 变更。
 
-## Navigation And Deep Links
+## 导航与深链接
 
-Test route param parsing, direct entry, push/replace/back intent, protected routing, modal dismissal, and return-context behavior using the repository harness.
+使用仓库 harness 测试路由参数解析、直接进入、push/replace/back 意图、受保护路由、模态关闭和返回上下文行为。
 
-Keep actual URL-scheme/association and cold/warm deep-link validation at the platform integration layer. A mocked router call cannot prove operating-system delivery.
+将实际 URL scheme/关联和冷/暖深链接验证保留在平台集成层。Mock 的路由调用不能证明操作系统交付。
 
-## Storage And Async Work
+## 存储与异步工作
 
-Exercise missing, valid, corrupt, expired, migrating, failed, and identity-switched storage states when owned. Prove late reads/requests do not overwrite newer state.
+在拥有时练习缺失、有效、损坏、过期、迁移中、失败和标识切换的存储状态。证明晚期读取/请求不覆盖较新状态。
 
-Await visible outcomes rather than arbitrary sleeps. Use fake timers only for timer-owned behavior and restore them. Trigger cleanup by unmounting, blurring, navigating, or changing dependencies as the public lifecycle requires.
+等待可见结果而非任意休眠。仅对定时器所属行为使用 fake timer 并恢复。按公共生命周期要求通过卸载、失焦、导航或变更依赖触发清理。
 
-## Native Modules And Permissions
+## 原生模块与权限
 
-Provide explicit native-module mocks that mirror the relevant success/failure contract. A permissive empty mock can conceal missing installation or unsupported method behavior.
+提供镜像相关成功/失败契约的显式原生模块 mock。宽松的空 mock 可能掩盖缺失安装或不受支持的方法行为。
 
-Test permission state transitions in JavaScript, then verify real prompt/config/capability behavior on the affected platform when the task changes native permissions.
+在 JavaScript 中测试权限状态转换，当任务变更原生权限时在受影响平台上验证真实提示/配置/能力行为。
 
-## Lists And Performance
+## 列表与性能
 
-Use representative collection data to prove key/action identity, refresh, pagination guards, errors, and recycled-row behavior. Render-count assertions are appropriate only for an explicit performance task and must preserve correctness.
+用代表性集合数据证明键/操作标识、刷新、分页守卫、错误和回收行行为。渲染计数断言仅适用于显式性能任务且必须保留正确性。
 
-Profile actual mobile runtime for list, animation, memory, image, startup, or interaction performance. Unit tests cannot establish frame rate or native memory behavior.
+为列表、动画、内存、图像、启动或交互性能分析实际移动运行时。单元测试不能建立帧率或原生内存行为。
 
-## Platform Coverage
+## 平台覆盖
 
-Run platform-specific builds/simulators/devices according to task ownership and available environment. If one platform is unavailable, record the precise limitation and remaining platform risk; do not fail unrelated code work or claim both-platform coverage.
+按任务所有权和可用环境运行平台特定的构建/模拟器/设备。如果一个平台不可用，记录精确限制和剩余平台风险；不要使不相关代码工作失败或声称双平台覆盖。
 
-An enforcement requirement may make missing platform evidence a delivery blocker, but generic mobile tasks do not automatically require every device matrix.
+强制要求可能使缺失平台证据成为交付阻止项，但通用移动任务不自动要求每个设备矩阵。
 
 ## Verification
 
-- Run focused type/lint/unit/screen tests and the affected Metro/native build boundary.
-- Cover success plus meaningful validation, authorization, conflict, offline/native failure, or unavailable state owned by the task.
-- Verify provider/store/storage isolation and cleanup between cases.
-- Execute real platform checks for native config, permissions, deep links, keyboard/system chrome, or native modules when owned.
-- Keep mobile automation artifacts distinct from component-test evidence.
+- 运行聚焦的类型/lint/单元/屏幕测试和受影响的 Metro/原生构建边界。
+- 覆盖成功加任务所属的有意义的验证、授权、冲突、离线/原生失败或不可用状态。
+- 在用例之间验证 provider/store/存储隔离和清理。
+- 在拥有时为原生配置、权限、深链接、键盘/系统壳或原生模块执行真实平台检查。
+- 将移动自动化产物与组件测试证据区分开。
 
-## Delivery Evidence
+## 交付证据
 
-Name each behavior, evidence layer, platform/runtime, and assertion. Report mocks and unavailable platforms honestly. Passing component tests do not prove native installation, OS integration, real-device capability, or performance.
+命名每个行为、证据层、平台/运行时和断言。诚实报告 mock 和不可用平台。通过的组件测试不证明原生安装、OS 集成、真实设备能力或性能。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Load this reference only when the accepted task owns React Native test creation, test modification, or test-specific verification.
-- Snapshot trees used as the primary workflow evidence.
-- Native modules mocked to empty objects regardless of real contract.
-- Arbitrary sleeps used for async/animation synchronization.
-- Shared router/store/storage state leaking across tests.
-- Both-platform or real-device coverage claimed from one simulator.
-- Missing device evidence routed as a generic source-code defect.
+- 仅当已接受任务拥有 React Native 测试创建、测试修改或测试专用验证时才加载此参考。
+- 快照树用作主要工作流证据。
+- 无论真实契约如何将原生模块 mock 为空对象。
+- 用于异步/动画同步的任意休眠。
+- 跨测试泄漏的共享路由/store/存储状态。
+- 从一个模拟器声称双平台或真实设备覆盖。
+- 缺失设备证据作为通用源代码缺陷路由。

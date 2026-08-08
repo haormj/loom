@@ -1,83 +1,83 @@
-# React Component And Hook Testing
+# React 组件与 Hook 测试
 
-Use this reference only when the task explicitly owns React test implementation. Keep component/hook verification here; an MCP-selected browser profile owns Playwright navigation, multi-viewport workflow evidence, network synchronization, and browser artifacts.
+仅当任务明确拥有 React 测试实现时使用此参考。将组件/hook 验证保留在此处；MCP 选择的浏览器 profile 拥有 Playwright 导航、多视口工作流证据、网络同步和浏览器产物。
 
-## Test Boundary
+## 测试边界
 
-Choose the smallest public boundary that proves the task behavior: pure function, reducer, hook contract, component, provider-composed feature, or route integration. Do not render the whole application for a local formatter, and do not mock every child when composition is the behavior under test.
+选择证明任务行为的最小公共边界：纯函数、reducer、hook 契约、组件、provider 组合的功能或路由集成。不要为本地格式化器渲染整个应用，当组合是被测行为时也不要 mock 每个子组件。
 
-Use the repository's existing runner, DOM environment, Testing Library, assertion extensions, request mocking, and fixture conventions. Do not introduce Jest/Vitest/MSW or a second provider harness merely because an external example uses it.
+使用仓库现有的 runner、DOM 环境、Testing Library、断言扩展、请求 mock 和 fixture 约定。不要因为外部示例使用 Jest/Vitest/MSW 或第二个 provider harness 就引入它们。
 
-Tests should fail for a visible or emitted contract regression, not a private refactor.
+测试应因可见或发出的契约回归而失败，而非私有重构。
 
-## User-Facing Queries
+## 面向用户的查询
 
-Prefer role plus accessible name, label, text, and async `findBy*` queries. These reflect how users and assistive technology discover controls. A missing accessible query often reveals a component semantics defect.
+优先使用角色加可访问名称、标签、文本和异步 `findBy*` 查询。这些反映用户和辅助技术如何发现控件。缺失可访问查询通常揭示组件语义缺陷。
 
-Use `queryBy*` for absence and `getBy*` for immediate presence. Use `findBy*` or `waitFor` for eventual outcomes; do not wrap synchronous assertions in arbitrary waits.
+对缺失使用 `queryBy*`，对立即存在使用 `getBy*`。对最终结果使用 `findBy*` 或 `waitFor`；不要将同步断言包裹在任意等待中。
 
-Test IDs are a last resort for elements without a meaningful semantic identity, not a substitute for labeling a button, field, dialog, row, or status.
+Test ID 是没有有意义语义标识的元素的最后手段，不是替代为按钮、字段、对话框、行或状态添加标签的方式。
 
-## Interaction
+## 交互
 
-Use the repository's `userEvent` setup for typing, tabbing, selecting, clicking, and form submission. Assert the visible result and exact emitted command target/payload.
+使用仓库的 `userEvent` 设置来输入、制表、选择、点击和提交表单。断言可见结果和精确发出的命令目标/载荷。
 
-For list/detail/action surfaces, include a case where sort, filter, selection, pagination, refresh, or modal state changes before the command. This catches handlers that read stale global selection rather than the displayed target.
+对于列表/详情/操作界面，包含一个在命令之前排序、筛选、选择、分页、刷新或模态状态变更的用例。这可以捕获读取过期全局选择而非显示目标的处理器。
 
-Cover duplicate-submit blocking, draft preservation after errors, server-normalized readback, and disabled/forbidden behavior when those states are task-owned.
+当这些状态为任务所属时，覆盖重复提交阻止、错误后草稿保留、服务端规范化回读和禁用/禁止行为。
 
 ## Provider Harness
 
-Build one test render helper that mirrors required router, query client, store, theme, i18n, auth, and feature-flag providers while allowing per-test overrides. Create isolated query/store/router instances for each test.
+构建一个测试渲染助手，镜像所需的路由、query client、store、主题、i18n、auth 和 feature-flag provider，同时允许逐测试覆盖。为每个测试创建隔离的 query/store/router 实例。
 
-Do not conceal required inputs behind permissive global defaults. A component that requires tenant/auth/router context should fail clearly when the provider contract is absent.
+不要用宽松的全局默认值隐藏所需输入。需要租户/auth/router context 的组件在 provider 契约缺失时应明确失败。
 
-Use representative route params and navigation history for route-aware components. Assert navigation outcomes rather than mocking the router hook until nothing real remains.
+对路由感知组件使用代表性的路由参数和导航历史。断言导航结果而非 mock 路由 hook 直到没有真实内容残留。
 
-## Network And Async Behavior
+## 网络与异步行为
 
-Mock at the accepted API client/network boundary with the repository's approach. Keep request method, path, query, headers, and body expectations aligned with the API contract; do not mock the hook under test.
+在已接受的 API client/网络边界使用仓库方法进行 mock。保持请求方法、路径、查询、头和体期望与 API 契约对齐；不要 mock 被测 hook。
 
-Model success plus meaningful validation, authorization, conflict, not-found, unavailable, or malformed response states owned by the task. Reset handlers and reject unexpected network calls.
+建模任务所属的成功加上有意义的验证、授权、冲突、未找到、不可用或格式错误响应状态。重置处理器并拒绝意外网络调用。
 
-Wait for visible outcomes instead of sleeping. Use fake timers only for timer-owned behavior and restore them after each test. For replaceable requests, prove an older completion cannot overwrite newer state.
+等待可见结果而非休眠。仅对定时器所属行为使用 fake timers，并在每次测试后恢复。对于可替换请求，证明较旧的完成不能覆盖较新状态。
 
-## Hook Contracts
+## Hook 契约
 
-Test a custom hook through `renderHook` or a small consumer component and assert its public state/actions. Include dependency changes, cleanup, cancellation, errors, and retry where those are the reason the hook exists.
+通过 `renderHook` 或一个小型消费者组件测试自定义 hook，并断言其公共状态/操作。包含依赖变更、清理、取消、错误和重试（如果这些是 hook 存在的原因）。
 
-Run relevant hook tests under Strict Mode when setup/cleanup replay can expose resource duplication. Avoid asserting exact render/effect counts unless they are the explicit performance contract.
+当 setup/cleanup 重放可能暴露资源重复时，在 Strict Mode 下运行相关 hook 测试。避免断言精确渲染/effect 计数，除非它们是明确的性能契约。
 
-## State And Cache Isolation
+## 状态与缓存隔离
 
-Reset stores, query caches, local/session storage, timers, mocks, and singletons between tests. Include identity/tenant dimensions in fixtures so leaked state is observable.
+在测试之间重置 store、query cache、本地/会话存储、定时器、mock 和单例。在 fixture 中包含标识/租户维度，使泄漏状态可观察。
 
-For optimistic updates, test immediate presentation, success reconciliation, rollback, conflicting/out-of-order completion, and server-normalized data.
+对于乐观更新，测试即时呈现、成功协调、回滚、冲突/乱序完成和服务端规范化数据。
 
-## Accessibility Assertions
+## 可访问性断言
 
-Assert names, roles, descriptions, error association, disabled semantics, focus movement/restoration, and keyboard interactions for the changed controls. Snapshot markup cannot establish accessibility behavior.
+为变更的控件断言名称、角色、描述、错误关联、禁用语义、焦点移动/恢复和键盘交互。快照标记不能建立可访问性行为。
 
-Keep DOM snapshots small and intentional for stable generated structure. Prefer behavior assertions for forms, routes, async state, and component composition.
+保持 DOM 快照精小且有意图，用于稳定的生成结构。对表单、路由、异步状态和组件组合优先使用行为断言。
 
 ## Verification
 
-- Run the narrow changed test target, then the repository typecheck/build when public types, exports, providers, or bundling changed.
-- Prove success and at least one task-owned blocking/failure path for mutations and API-backed surfaces.
-- Verify request shape, stable command target identity, returned readback, and no unexpected calls.
-- Exercise provider isolation, async cleanup, and stale-result safety where applicable.
-- Keep Playwright evidence separate unless the task also has explicit browser-verification ownership.
+- 运行窄范围的变更测试目标，当公共类型、导出、provider 或打包变更时运行仓库 typecheck/build。
+- 对变更和 API 支持的界面证明成功和至少一个任务所属的阻止/失败路径。
+- 验证请求形状、稳定命令目标标识、返回回读和无意外调用。
+- 在适用处练习 provider 隔离、异步清理和过期结果安全。
+- 除非任务也拥有显式浏览器验证，否则保持 Playwright 证据分开。
 
-## Delivery Evidence
+## 交付证据
 
-Name the public behavior, harness/network boundary, representative states, and assertion that would fail on regression. Passing tests without identifying what they prove are weak evidence; implementation-detail snapshots and mocked-away behavior prove even less.
+命名公共行为、harness/网络边界、代表性状态和回归时会失败的断言。通过的测试如果不标识它们证明了什么则是弱证据；实现细节快照和 mock 掉的行为证明的更少。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Load this reference only when the accepted task owns React test creation, test modification, or test-specific verification.
-- A new test stack introduced despite established repository tooling.
-- Test IDs preferred over accessible roles and labels.
-- Providers, hooks, and network client all mocked in the same test.
-- Arbitrary sleeps or unbounded `waitFor` used for synchronization.
-- Shared query/store/router state leaking between tests.
-- Browser workflow claims made from DOM component tests alone.
+- 仅当已接受任务拥有 React 测试创建、测试修改或测试专用验证时才加载此参考。
+- 尽管有已建立的仓库工具仍引入新的测试栈。
+- 优先使用 Test ID 而非可访问角色和标签。
+- 在同一测试中 mock provider、hook 和网络 client。
+- 用于同步的任意休眠或无界 `waitFor`。
+- 测试间泄漏的共享 query/store/router 状态。
+- 仅从 DOM 组件测试做出浏览器工作流声明。

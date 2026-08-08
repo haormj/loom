@@ -1,80 +1,80 @@
-# Failure Modes And Architecture Risks
+# 失败模式和架构风险
 
-Use this reference when writing behavior failure paths, runtime failure expectations, or architecture risk records.
+当编写行为失败路径、运行时失败期望或架构风险记录时使用本引用。
 
-Failure modes are part of architecture, not an afterthought once implementation is complete.
+失败模式是架构的一部分，不是实现完成后的事后补充。
 
-## Risk Categories
+## 风险类别
 
-| Category | Examples |
+| 类别 | 示例 |
 |---|---|
-| data_integrity | Duplicate records, invalid lifecycle transition, partial write, stale read, schema drift. |
-| integration | External service unavailable, invalid response, retry duplication, contract mismatch. |
-| runtime | Build/start failure, missing env, wrong probe path, background worker not running. |
-| security | Unauthorized operation, sensitive data leak, unsafe error message. |
-| operability | No observable signal for critical failure, unclear recovery path. |
-| maintainability | Unclear ownership, duplicated business rules, hidden framework behavior. |
+| data_integrity | 重复记录、无效生命周期转换、部分写入、陈旧读取、schema 漂移。 |
+| integration | 外部服务不可用、无效响应、重试重复、契约不匹配。 |
+| runtime | 构建/启动失败、缺失环境变量、错误探针路径、后台 worker 未运行。 |
+| security | 未授权操作、敏感数据泄露、不安全的错误消息。 |
+| operability | 关键失败无可观测信号、恢复路径不清晰。 |
+| maintainability | 所有权不清晰、重复业务规则、隐藏框架行为。 |
 
-## Required Risk Shape
+## 必需的风险形态
 
-Each risk must include:
+每个风险必须包含：
 
-- stable risk id
-- category
-- severity
-- likelihood
-- impact
-- mitigation
-- owner artifact refs
-- verification hints
+- 稳定的风险 id
+- 类别
+- 严重性
+- 可能性
+- 影响
+- 缓解措施
+- 拥有工件引用
+- 验证提示
 
-Severity describes impact. Likelihood describes probability. Do not conflate them.
+严重性描述影响。可能性描述概率。不要混淆它们。
 
-## Failure Mode Checklist
+## 失败模式清单
 
-For each stateful or externally visible flow, consider:
+对于每个有状态或外部可见的流程，考虑：
 
-- invalid input
-- duplicate operation
-- forbidden state transition
-- missing authorization or role
-- related record not found
-- dependency unavailable
-- write succeeds but follow-up step fails
-- read model stale or incomplete
-- runtime surface starts but API is unreachable
-- user-visible feedback hides the real blocking reason
+- 无效输入
+- 重复操作
+- 禁止的状态转换
+- 缺失授权或角色
+- 相关记录未找到
+- 依赖不可用
+- 写入成功但后续步骤失败
+- 读取模型陈旧或不完整
+- 运行时面启动但 API 不可达
+- 用户可见反馈隐藏了真实阻断原因
 
-For every applicable failure, identify:
+对于每个适用的失败，识别：
 
-- failure origin and affected capability
-- state before the failure and state that remains afterward
-- whether retry is safe, unsafe, bounded, or user-triggered
-- compensation, forward repair, rollback, or manual recovery behavior
-- user/operator-visible signal and correlation evidence
-- owner module, interface, runtime dependency, or durable artifact
+- 失败来源和受影响的能力
+- 失败前的状态和失败后保持的状态
+- 重试是安全的、不安全的、有界的还是用户触发的
+- 补偿、前向修复、回滚或手动恢复行为
+- 用户/运维人员可见信号和关联证据
+- 拥有模块、接口、运行时依赖或持久工件
 
-Only record risks that affect current implementation, verification, or mitigation ownership.
+仅记录影响当前实现、验证或缓解所有权的风险。
 
-## Mitigation Quality
+## 缓解质量
 
-Good mitigation:
+良好缓解：
 
-- names the owner module/interface/task area
-- states the design or code behavior
-- can be verified by tests, static checks, runtime probes, or review
+- 命名拥有模块/接口/任务区域
+- 说明设计或代码行为
+- 可通过测试、静态检查、运行时探针或评审验证
 
-Weak mitigation:
+弱缓解：
 
-- "handle errors"
-- "add validation"
-- "make it robust"
-- "monitor later"
+- "处理错误"
+- "添加校验"
+- "使其健壮"
+- "稍后监控"
 
-## Anti-Patterns
+## 反模式
 
-- Treating all errors as generic 500 responses.
-- Putting validation only in frontend code.
-- Ignoring partial writes or duplicate submissions.
-- Using a broad risk with no owner artifacts.
-- Creating risks for future phases that current tasks cannot mitigate.
+- 将所有错误视为通用 500 响应。
+- 仅在前端代码中做校验。
+- 忽略部分写入或重复提交。
+- 使用没有拥有工件的宽泛风险。
+- 为当前任务无法缓解的未来阶段创建风险。

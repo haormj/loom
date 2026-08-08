@@ -1,82 +1,82 @@
-# C++ Generic And Template Contracts
+# C++ 泛型与模板契约
 
 ## When To Use
 
-Use this reference only when the task owns a reusable template/generic contract, constraints, compile-time dispatch, CRTP/mixin, variadic API, or metaprogramming required by real consumers.
+仅当任务拥有可复用模板/泛型契约、约束、编译时分派、CRTP/mixin、可变参数 API 或真实消费者所需的元编程时才使用此参考。
 
 ## Implementation Focus
 
 ### Start From The Consumer Contract
 
-Identify supported type families, required operations/semantics, ownership, customization point, error behavior, performance/ABI needs, and at least two real consumers before designing the template.
+在设计模板之前标识支持的类型族、所需操作/语义、所有权、自定义点、错误行为、性能/ABI 需求和至少两个真实消费者。
 
-Prefer a normal function/class/runtime interface when only one concrete type exists or dynamic substitution is the actual requirement.
+当仅存在一个具体类型或动态替换是实际需求时优先使用普通函数/类/运行时接口。
 
-Keep public template APIs small and implementation details in `detail` namespaces or source with explicit instantiation when possible.
+保持公共模板 API 小，并尽可能将实现细节放在 `detail` 命名空间或带显式实例化的源码中。
 
 ### Constraints And Diagnostics
 
-Use concepts/requires for supported standards and named constraints that express caller-visible requirements. For older standards, keep SFINAE/detection idioms localized.
+对支持的标准使用 concept/requires 和表达调用者可见需求的命名约束。对较旧的标准将 SFINAE/检测惯用法局部化。
 
-Avoid unconstrained templates that fail deep inside implementation. Negative use should produce a diagnostic near the call with a meaningful missing requirement.
+避免在实现深处失败的未约束模板。否定使用应在调用附近产生带有有意义缺失需求的诊断。
 
-Do not create overlapping/ambiguous overload sets; test conversions, cv/ref qualifiers, derived types, proxies, and initializer-list interactions.
+不要创建重叠/模糊的重载集；测试转换、cv/ref 限定符、派生类型、代理和初始化列表交互。
 
 ### Deduction, Forwarding, And Lifetime
 
-Understand template deduction versus explicit types, decay, array/function handling, forwarding references, reference collapsing, and `decltype(auto)`.
+理解模板推导与显式类型、退化、数组/函数处理、转发引用、引用折叠和 `decltype(auto)`。
 
-Use `std::forward` only with the exact forwarding reference and only once per logical value. Do not return references/decltype(auto) to locals/temporaries or store forwarded references beyond their lifetime.
+仅与确切的转发引用一起使用 `std::forward` 且每个逻辑值仅一次。不要返回指向局部/临时对象的引用/decltype(auto) 或将转发的引用存储超过其生命周期。
 
-Constrain universal-reference constructors so they do not hijack copy/move or unrelated conversions.
+约束通用引用构造函数使其不劫持拷贝/移动或不相关转换。
 
 ### Variadics And Compile-Time Branching
 
-Define empty/single/multiple pack behavior, evaluation order, and ownership for fold expressions and pack expansion. Preserve short-circuit semantics where required.
+为折叠表达式和包展开定义空/单个/多个包行为、求值顺序和所有权。在需要时保留短路语义。
 
-Use `if constexpr` for related type-specific branches under one coherent operation. Ensure discarded branches are still valid where non-dependent syntax requires it.
+对一个连贯操作下的相关类型特定分支使用 `if constexpr`。确保被丢弃分支在非依赖语法需要时仍然有效。
 
-Avoid recursive metaprogramming when standard traits, folds, constexpr functions, or generated tables are clearer and cheaper to compile.
+当标准 trait、折叠、constexpr 函数或生成表更清晰且编译成本更低时避免递归元编程。
 
 ### CRTP And Customization
 
-Use CRTP for proven static polymorphism, mixins, or compile-time customization. Prevent accidental slicing/misderived types and keep the derived contract explicit.
+为已验证的静态多态、mixin 或编译时自定义使用 CRTP。防止意外切片/错误派生类型并保持派生契约显式。
 
-Prefer standard customization points, tag_invoke-like local conventions, policies, or free functions according to repository style. Do not expose inheritance just to share one helper.
+根据仓库风格优先使用标准自定义点、tag_invoke 类似本地约定、策略或自由函数。不要仅为共享一个辅助函数而暴露继承。
 
-Expression templates require measurable temporary elimination and strict operand lifetime/aliasing rules; they are not a default vector API pattern.
+表达式模板需要可测量的临时消除和严格的操作数生命周期/别名规则；它们不是默认的 vector API 模式。
 
 ### Instantiation, ODR, And Build Cost
 
-Templates normally require visible definitions. Keep definitions `inline`/header-safe, avoid non-inline globals/static members violating ODR, and control explicit instantiations across translation units.
+模板通常需要可见定义。保持定义 `inline`/头安全，避免违反 ODR 的非内联全局/静态成员，并跨翻译单元控制显式实例化。
 
-Assess code size, debug symbol growth, compiler memory/time, and ABI exposure for many instantiations. Use extern/explicit instantiation or type erasure when the consumer set is bounded and build cost matters.
+为多次实例化评估代码大小、调试符号增长、编译器内存/时间和 ABI 暴露。当消费者集有界且构建成本重要时使用 extern/显式实例化或类型擦除。
 
-Public templates expose implementation and can break consumers on change; preserve semantic/version compatibility even without a traditional binary ABI.
+公共模板暴露实现且在变更时可能破坏消费者；即使没有传统二进制 ABI 也保留语义/版本兼容性。
 
 ### Compile-Time Data And Errors
 
-Keep constexpr/type-level computations bounded and guard integer overflow, recursion depth, index bounds, and invalid packs. Runtime validation is still required for runtime input.
+保持 constexpr/类型级计算有界并守卫整数溢出、递归深度、索引边界和无效包。运行时输入仍需要运行时验证。
 
-Use static assertions for invariants callers can act on, not to repeat a concept or leak implementation internals.
+为调用者可采取行动的不变式使用静态断言，而非重复概念或泄露实现内部。
 
 ## Verification Focus
 
-- Instantiate at least two meaningful supported types plus cv/ref/value edge cases.
-- Add negative compile tests/static checks when repository infrastructure supports them.
-- Test forwarding/move counts, returned lifetimes, empty packs, overload resolution, and customization behavior.
-- Build all consuming targets and monitor compile time/binary size when abstraction breadth changes.
-- Exercise runtime correctness and error behavior; compile success is not semantic proof.
+- 实例化至少两个有意义支持的类型以及 cv/ref/值边界情况。
+- 在仓库基础设施支持时添加否定编译测试/静态检查。
+- 测试转发/移动计数、返回生命周期、空包、重载解析和自定义行为。
+- 当抽象广度变更时构建所有消费目标并监控编译时间/二进制大小。
+- 演练运行时正确性和错误行为；编译成功不是语义证明。
 
 ## Evidence Focus
 
-Name the consumer contract, constraint/customization design, lifetime/instantiation decision, supported and rejected types, and build/runtime proof. Template density or “zero cost” claims are not evidence.
+说明消费者契约、约束/自定义设计、生命周期/实例化决策、支持和被拒绝的类型以及构建/运行时证明。模板密度或"零成本"声明不是证据。
 
 ## Unsafe Defaults
 
-- Template layer added for one concrete consumer.
-- Unconstrained universal references hijacking overloads.
-- Forwarded/reference/view values stored past source lifetime.
-- Deep trait/SFINAE errors exposed to callers.
-- Expression templates introduced without benchmark/lifetime design.
-- Header definitions creating ODR or code-size problems.
+- 为一个具体消费者添加模板层。
+- 未约束通用引用劫持重载。
+- 转发/引用/视图值存储超过源码生命周期。
+- 深层 trait/SFINAE 错误暴露给调用者。
+- 没有基准/生命周期设计就引入表达式模板。
+- 头定义创建 ODR 或代码大小问题。

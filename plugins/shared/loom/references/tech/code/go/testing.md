@@ -1,91 +1,91 @@
-# Go Test And Verification Design
+# Go 测试与验证设计
 
 ## When To Use
 
-Use this reference only when the task explicitly owns Go tests, fixtures/fakes, integration/tagged tests, race checks, fuzzing, benchmarks, golden output, or test infrastructure.
+仅当任务显式拥有 Go 测试、夹具/fake、集成/标记测试、竞争检查、模糊测试、基准测试、黄金输出或测试基础设施时才使用此参考。
 
 ## Implementation Focus
 
 ### Public Behavior And Cases
 
-Test exported/consumer-visible functions, handlers, services, workers, repositories, commands, and adapters through results/effects. Avoid private call-order tests that freeze implementation.
+通过结果/效果测试导出/消费者可见的函数、处理器、服务、worker、repository、命令和适配器。避免冻结实现的私有调用顺序测试。
 
-Use table-driven tests for meaningful input partitions and subtests with scenario names. Do not force every test into a table when setup/assertions differ substantially.
+为有意义的输入分区和带场景名的子测试使用表驱动测试。当设置/断言差异很大时不要强制每个测试都放入表中。
 
-Cover success, invalid/empty/boundary, typed/wrapped error, cancellation/deadline, repeated/concurrent operation, and cleanup changed by the task.
+覆盖任务变更的成功、无效/空/边界、类型化/包装错误、取消/截止时间、重复/并发操作和清理。
 
-Use `errors.Is`/`errors.As`, structured response fields, and public output; compare exact error text only when it is user/public contract.
+使用 `errors.Is`/`errors.As`、结构化响应字段和公共输出；仅当确切错误文本是用户/公共契约时比较它。
 
 ### Helpers, Cleanup, And Isolation
 
-Mark helpers with `t.Helper`, fail at the caller, and register `t.Cleanup` after successful acquisition. Check cleanup errors when they affect correctness.
+用 `t.Helper` 标记辅助函数，在调用者处失败，并在成功获取后注册 `t.Cleanup`。当清理错误影响正确性时检查它们。
 
-Use `t.TempDir`, `t.Setenv`, unique DB/resource names, fake clocks/random/IDs, and dependency injection. Restore global log/output/timezone/current directory/signal/registry state.
+使用 `t.TempDir`、`t.Setenv`、唯一 DB/资源名、假时钟/随机/ID 和依赖注入。恢复全局日志/输出/时区/当前目录/信号/注册表状态。
 
-Use `t.Parallel` only after proving no shared env, package globals, singleton fakes, temp collisions, ports, DB records, or ordering. Parent/child parallel scheduling must be understood.
+仅在证明没有共享环境、包全局、单例 fake、临时冲突、端口、DB 记录或排序后使用 `t.Parallel`。必须理解父/子并行调度。
 
 ### Fakes, HTTP, And External Boundaries
 
-Prefer small stateful fakes for consumer interfaces and `httptest.Server`/`ResponseRecorder` for HTTP behavior where appropriate. Assert method/path/query/header/body/cancellation and close bodies.
+为消费者接口优先使用小型有状态 fake，在合适时为 HTTP 行为使用 `httptest.Server`/`ResponseRecorder`。断言方法/路径/查询/头/主体/取消并关闭主体。
 
-Do not mock the function/package under test or require a mocking framework for tiny interfaces. Generated mocks follow pinned repository tooling and generated-file policy.
+不要 mock 被测函数/包或为微型接口要求 mock 框架。生成的 mock 遵循固定的仓库工具和生成文件策略。
 
-Integration tests using DB/queues/cloud/filesystems run behind established tags/commands and clean state. Unit tests must not unexpectedly need network, Docker, credentials, or local services.
+使用 DB/队列/云/文件系统的集成测试在已建立的标签/命令之后运行并清理状态。单元测试不得意外需要网络、Docker、凭据或本地服务。
 
 ### Async And Concurrency
 
-Use channels/barriers/hooks/fake clocks to control ordering. Avoid sleep-only synchronization; deadlines protect against hangs but do not prove desired scheduling.
+使用 channel/屏障/hook/假时钟控制排序。避免仅 sleep 同步；截止时间防止挂起但不证明期望的调度。
 
-Assert goroutine shutdown, channel close/queue behavior, cancellation/error propagation, and no work after stop. Run race detector on affected packages and keep tests representative enough to execute the shared state.
+断言 goroutine 关闭、channel 关闭/队列行为、取消/错误传播和停止后没有工作。在受影响的包上运行竞争检测器并保持测试足够代表性以执行共享状态。
 
-Avoid `t.Fatal`/`FailNow` from non-test goroutines; send results/errors back to the test owner.
+避免从非测试 goroutine 使用 `t.Fatal`/`FailNow`；将结果/错误发送回测试所有者。
 
 ### Fuzz And Property Tests
 
-Use fuzzing for parsers, decoders, protocol handlers, validators, path/URL logic, and state transitions accepting broad untrusted input.
+对解析器、解码器、协议处理器、验证器、路径/URL 逻辑和接受广泛不可信输入的状态转换使用模糊测试。
 
-Fuzz targets are deterministic, bounded, reset global state, avoid network/unbounded allocation, and assert invariants/no panic. Promote minimized failures to fixed regression seeds/cases.
+模糊测试目标是确定性的、有界的、重置全局状态、避免网络/无界分配并断言不变式/无 panic。将最小化的失败提升为固定的回归种子/用例。
 
-Property tests fit round-trip, ordering, idempotency, serialization, and algebraic invariants; preserve domain constraints in generators.
+属性测试适合往返、排序、幂等性、序列化和代数不变式；在生成器中保留领域约束。
 
 ### Golden Files And Snapshots
 
-Use `testdata` golden files for stable generated/rendered/protocol output with explicit update flag/workflow and reviewed diffs. Normalize only nondeterministic fields intentionally.
+对稳定的生成/渲染/协议输出使用 `testdata` 黄金文件并具有显式更新标志/工作流和审查过的差异。仅有意规范化非确定字段。
 
-Avoid huge volatile snapshots or automatic updates in normal test runs. Assert semantics separately where formatting alone cannot prove behavior.
+避免在正常测试运行中使用巨大的易变快照或自动更新。在仅靠格式化无法证明行为时单独断言语义。
 
 ### Benchmarks And Examples
 
-Benchmarks use representative setup, `b.ResetTimer`, `b.ReportAllocs`, sinks/anti-optimization, sub-benchmarks, and correctness checks outside measured loops.
+基准测试使用代表性设置、`b.ResetTimer`、`b.ReportAllocs`、sink/反优化、子基准测试和测量循环外的正确性检查。
 
-Run enough samples/benchstat/profiling for claims; benchmarks do not replace correctness tests.
+为声明运行足够的样本/benchstat/profiling；基准测试不替代正确性测试。
 
-Examples compile and document public use; output examples require deterministic output. Avoid examples that depend on network/local config.
+示例编译并记录公共使用；输出示例需要确定性输出。避免依赖网络/本地配置的示例。
 
 ### Coverage And Tooling
 
-Coverage guides untested branches but no universal percentage proves quality. Check test discovery/package/tag selection and avoid reporting cached/stale results as current evidence when relevant.
+覆盖率指导未测试的分支但没有通用百分比证明质量。检查测试发现/包/标签选择并在相关时避免报告缓存/过期结果作为当前证据。
 
-Run vet/staticcheck/golangci-lint according to repository policy; tools supplement behavior tests.
+根据仓库策略运行 vet/staticcheck/golangci-lint；工具补充行为测试。
 
 ## Verification Focus
 
-- Run the narrow affected package tests, then affected module lanes according to blast radius.
-- Run targeted `-race`, tagged integration, fuzz regression, or benchmark commands only for owned risks.
-- Verify tests are discovered and no cleanup/goroutine/global state leaks under repetition/parallel execution.
-- Exercise release/OS/arch/tag behavior when build constraints change semantics.
-- Record unavailable external infrastructure precisely without claiming it passed.
+- 运行受影响的最窄包测试，然后根据影响范围运行受影响的模块通道。
+- 仅对拥有的风险运行有针对性的 `-race`、标记集成、模糊回归或基准命令。
+- 验证测试被发现且在重复/并行执行下没有清理/goroutine/全局状态泄漏。
+- 当构建约束改变语义时演练发布/OS/arch/标签行为。
+- 精确记录不可用的外部基础设施而不声称它通过。
 
 ## Evidence Focus
 
-Name behavior/invariant, test layer/tag/runtime, and assertion/tool result. Test count, coverage percentage, benchmark speed, or `go test` without package/tag context is weak evidence.
+说明行为/不变式、测试层/标签/运行时和断言/工具结果。没有包/标签上下文的测试计数、覆盖率百分比、基准速度或 `go test` 是弱证据。
 
 ## Unsafe Defaults
 
-- Load this reference only when the accepted task owns Go test creation, test modification, or test-specific verification.
-- Every test forced into a table or marked parallel.
-- Sleep-only concurrency synchronization.
-- Unit tests unexpectedly requiring external infrastructure.
-- Generated mocks replacing small meaningful fakes.
-- Golden files auto-updated or used for semantic behavior alone.
-- Coverage target treated as completion proof.
+- 仅当已接受的任务拥有 Go 测试创建、测试修改或测试特定验证时才加载此参考。
+- 每个测试强制放入表或标记为并行。
+- 仅 sleep 的并发同步。
+- 单元测试意外需要外部基础设施。
+- 生成的 mock 替换小型有意义的 fake。
+- 黄金文件自动更新或仅用于语义行为。
+- 覆盖率目标视为完成证明。

@@ -1,15 +1,14 @@
-/* UIX design tokens.
-   Merge into the project's existing token/theme file when one exists.
-   Do not create a parallel token system beside an existing design system. */
+/* UIX 设计令牌。
+   当项目已有令牌/主题文件时，将其合并到现有文件中。
+   不要在现有设计系统旁边创建并行的令牌系统。 */
 
 /* UIX gate: token.semantic_roles.coverage
-   Pass when adapted tokens cover semantic surface, text, border, primary,
-   status, focus, control, shell, table/list, and detail/action roles used by
-   the implemented UI. Fail when tokens are decorative, unused, or copied into
-   page-local styles instead of a project-level asset. */
+   当适配的令牌覆盖已实现 UI 使用的语义 surface、text、border、primary、
+   status、focus、control、shell、table/list 和 detail/action 角色时通过。
+   当令牌是装饰性的、未使用的或被复制到页面本地样式而非项目级资产时失败。 */
 
 :root {
-  /* Spacing: 4px grid */
+  /* 间距：4px 网格 */
   --space-0: 0;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -28,7 +27,7 @@
   --space-48: 12rem;
   --space-64: 16rem;
 
-  /* Typography */
+  /* 排版 */
   --font-family-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Geist", system-ui, sans-serif;
   --font-family-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC", Georgia, serif;
   --font-family-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "SF Mono", monospace;
@@ -51,7 +50,7 @@
   --line-height-relaxed: 1.65;
   --line-height-loose: 1.8;
 
-  /* Radius and elevation */
+  /* 圆角和阴影 */
   --radius-none: 0;
   --radius-xs: 2px;
   --radius-sm: 4px;
@@ -69,7 +68,7 @@
   --shadow-2xl: 0 28px 56px rgb(16 24 40 / 0.20);
   --shadow-inner: inset 0 2px 4px rgb(16 24 40 / 0.06);
 
-  /* Motion */
+  /* 动效 */
   --duration-instant: 0ms;
   --duration-fast: 100ms;
   --duration-quick: 150ms;
@@ -85,7 +84,7 @@
   --ease-in-cubic: cubic-bezier(0.32, 0, 0.67, 0);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Breakpoints are reference tokens; media queries must use literal values. */
+  /* 断点是参考令牌；媒体查询必须使用字面值。 */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
@@ -93,7 +92,7 @@
   --breakpoint-2xl: 1536px;
   --breakpoint-3xl: 1920px;
 
-  /* Containers and layers */
+  /* 容器和层级 */
   --container-sm: 640px;
   --container-md: 768px;
   --container-lg: 1024px;
@@ -113,11 +112,11 @@
   --z-notification: 80;
   --z-max: 9999;
 
-  /* Touch targets */
+  /* 触摸目标 */
   --touch-target-min: 44px;
   --touch-target-android: 48px;
 
-  /* Product UI layout aliases */
+  /* 产品 UI 布局别名 */
   --shell-sidebar-width: 240px;
   --shell-sidebar-compact-width: 64px;
   --shell-topbar-height: 56px;
@@ -165,7 +164,7 @@
   --color-info: oklch(0.58 0.15 230);
   --color-info-foreground: oklch(0.99 0.01 230);
 
-  /* Semantic aliases consumed by components. Prefer these over raw color roles. */
+  /* 组件消费的语义别名。优先使用这些而非原始颜色角色。 */
   --surface: var(--color-surface);
   --surface-muted: var(--color-surface-tinted);
   --surface-raised: var(--color-surface-elevated);

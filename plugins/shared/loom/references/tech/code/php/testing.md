@@ -1,39 +1,39 @@
-# PHP Testing Quality
+# PHP 测试质量
 
-This file applies PHP testing and static-analysis guidance to task-owned changes.
+本文件将 PHP 测试和静态分析指导应用于任务拥有的变更。
 
 ## When To Use
 
-- The task changes PHP behavior, validation, persistence, framework routes, service classes, CLI commands, async handlers, or tests.
-- Use this when PHPUnit, Pest, PHPStan, Psalm, framework feature tests, mocks, fixtures, or coverage expectations affect delivery quality.
-- If the task only edits non-PHP files, use this only when PHP verification is still the correct proof for the changed behavior.
+- 任务变更了 PHP 行为、验证、持久化、框架路由、服务类、CLI 命令、异步处理器或测试。
+- 当 PHPUnit、Pest、PHPStan、Psalm、框架功能测试、mock、夹具或覆盖率期望影响交付质量时使用此参考。
+- 如果任务仅编辑非 PHP 文件，仅当 PHP 验证仍是变更行为的正确证明时才使用此参考。
 
 ## Implementation Focus
 
-- Follow the test framework already present: PHPUnit or Pest, framework base test classes, database refresh traits, factories, fixture style, and naming conventions.
-- Prefer feature/integration tests for HTTP validation, authorization, serialization, persistence, and framework wiring. Use unit tests for pure services, value objects, policies, and validators.
-- Add data providers or Pest datasets for validation matrices and state-transition tables where they make branches clearer than repeated tests.
-- Use test doubles at owned boundaries: external services, mailers, queues, event buses, clocks, and repositories. Do not mock the class under test or overspecify internal method calls.
-- Keep database tests isolated using the repository's transaction, refresh, or container strategy. Do not make tests depend on execution order or shared mutable fixtures.
-- For PHPStan/Psalm, add precise generics, array shapes, and PHPDoc where language types cannot express the contract. Do not suppress analysis findings without a task-owned reason.
-- If changing error handling, include tests for exception/result shape and user-visible error contract, not only the successful branch.
-- When touching queues/events/async handlers, test both dispatch/payload and handler effect if the handler owns behavior.
+- 遵循已存在的测试框架：PHPUnit 或 Pest、框架基础测试类、数据库刷新 trait、工厂、夹具风格和命名约定。
+- 为 HTTP 验证、授权、序列化、持久化和框架接线优先使用功能/集成测试。为纯服务、值对象、策略和验证器使用单元测试。
+- 为验证矩阵和状态转换表添加数据提供者或 Pest 数据集，当它们使分支比重复测试更清晰时。
+- 在拥有的边界使用测试替身：外部服务、邮件器、队列、事件总线、时钟和 repository。不要 mock 被测类或过度指定内部方法调用。
+- 使用仓库的事务、刷新或容器策略保持数据库测试隔离。不要使测试依赖执行顺序或共享可变夹具。
+- 对于 PHPStan/Psalm，在语言类型无法表达契约的地方添加精确泛型、数组形态和 PHPDoc。没有任务拥有的理由不要抑制分析发现。
+- 如果变更错误处理，包含异常/结果形态和用户可见错误契约的测试，而非仅成功分支。
+- 当触及队列/事件/异步处理器时，如果处理器拥有行为则测试分派/载荷和处理器效果。
 
 ## Decision Rules
 
-- Select the narrowest proof that covers the owned contract: unit tests for pure domain logic, framework feature tests for routing/validation/authorization/serialization, integration tests for persistence and container wiring, and runtime smoke tests for async workers.
-- Keep PHPUnit/Pest, Laravel, Symfony, and database fixtures aligned with the repository's existing harness. Do not introduce a second test style because an external example uses it.
-- Use data providers or datasets for a finite validation/state matrix, but keep each case's expected business outcome visible. Do not hide meaningful assertions behind a generic snapshot.
-- Use PHPStan/Psalm annotations to describe real boundary shapes and generics. Resolve findings or record a narrow baseline exception; do not blanket-ignore an entire directory.
-- Report changed-branch evidence rather than imposing a universal coverage percentage. A high percentage does not prove authorization, serialization, persistence, or retry behavior when those branches are untested.
+- 选择覆盖拥有契约的最窄证明：纯领域逻辑用单元测试，路由/验证/授权/序列化用框架功能测试，持久化和容器接线用集成测试，异步 worker 用运行时冒烟测试。
+- 保持 PHPUnit/Pest、Laravel、Symfony 和数据库夹具与仓库现有的框架对齐。不要因为外部示例使用就引入第二种测试风格。
+- 为有限验证/状态矩阵使用数据提供者或数据集，但保持每个用例的预期业务结果可见。不要用通用快照隐藏有意义的断言。
+- 使用 PHPStan/Psalm 注解描述真实边界形态和泛型。解决发现或记录窄基线例外；不要 blanket-ignore 整个目录。
+- 报告变更分支证据而非施加通用覆盖率百分比。当分支未测试时高百分比不证明授权、序列化、持久化或重试行为。
 
 ## Verification Focus
 
-- Run the targeted PHP test command and the configured static-analysis command when available.
-- For framework endpoints, verify successful request, validation failure, authorization failure when relevant, and persisted/read-back state.
-- For service/domain code, verify edge cases, invalid states, and dependency failure behavior.
-- For test-only changes, make sure the new/changed test fails for the intended reason before the implementation would satisfy it when feasible.
+- 运行定向 PHP 测试命令和配置的静态分析命令（当可用时）。
+- 对于框架端点，验证成功请求、验证失败、相关时的授权失败以及持久化/回读状态。
+- 对于服务/领域代码，验证边界情况、无效状态和依赖失败行为。
+- 对于仅测试变更，在可行时确保新/变更的测试在实现满足它之前因预期原因失败。
 
 ## Evidence Focus
 
-- In the evidence summary, name the proof type: PHPUnit/Pest unit test, framework feature test, database assertion, static analysis, data-provider matrix, mock/fake boundary, queue/event proof, or known verification gap.
+- 在证据总结中，说明证明类型：PHPUnit/Pest 单元测试、框架功能测试、数据库断言、静态分析、数据提供者矩阵、mock/fake 边界、队列/事件证明或已知验证缺口。

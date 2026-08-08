@@ -3016,43 +3016,22 @@ mod tests {
         let references = [
             (
                 "content.md",
-                &["## Surface Copy Modes", "## Localization And Long Content"][..],
+                &["## Surface Copy Modes", "## 本地化和长内容"][..],
             ),
-            (
-                "data.md",
-                &[
-                    "## Volume And View Selection",
-                    "## Query And Readback States",
-                ][..],
-            ),
-            (
-                "interaction.md",
-                &[
-                    "## Interaction Composition",
-                    "## Transition And Reconciliation",
-                ][..],
-            ),
-            (
-                "mobile.md",
-                &[
-                    "## Viewport And Platform Behavior",
-                    "## Touch And Gesture Rules",
-                ][..],
-            ),
+            ("data.md", &["## 数据量和视图选择", "## 查询和回读状态"][..]),
+            ("interaction.md", &["## 交互组合", "## 过渡和协调"][..]),
+            ("mobile.md", &["## 视口和平台行为", "## 触摸和手势规则"][..]),
             (
                 "web-implementation.md",
                 &["## Browser Boundary Decisions", "## Evidence Checklist"][..],
             ),
             (
                 "frameworks.md",
-                &[
-                    "## Boundary With Technical Guidance",
-                    "## Existing Project Adaptation",
-                ][..],
+                &["## 与技术指导的边界", "## 现有项目适配"][..],
             ),
             (
                 "verification.md",
-                &["## Review Coverage", "## Environment-Blocked Inspection"][..],
+                &["## Review Coverage", "## 环境阻塞的检查"][..],
             ),
         ];
 
@@ -3082,116 +3061,100 @@ mod tests {
             (
                 "scenarios/admin-dashboard.md",
                 &[
-                    "## Required Patterns",
+                    "## 必需模式",
                     "## Quality Gate Index",
-                    "## Filter, Selection, And Mutation Continuity",
+                    "## 筛选、选择和变更连续性",
                 ][..],
                 "data-region=\"results\"",
             ),
             (
                 "scenarios/consumer-app.md",
-                &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Browse, Detail, And Commit",
-                ][..],
+                &["## 必需模式", "## 验证信号", "## 浏览、详情和提交"][..],
                 "data-region=\"selected-detail\"",
             ),
             (
                 "scenarios/corporate-site.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Proof And Conversion Continuity",
-                    "## Responsive Identity",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 证明和转化连续性",
+                    "## 响应式标识",
                 ][..],
                 "data-region=\"identity-hero\"",
             ),
             (
                 "scenarios/data-console.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Query Lifecycle",
-                    "## Result Accessibility",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 查询生命周期",
+                    "## 结果可访问性",
                 ][..],
                 "type QueryState<T>",
             ),
             (
                 "scenarios/developer-tool.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Safe Technical Output",
-                    "## Keyboard Workflow",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 安全技术输出",
+                    "## 键盘工作流",
                 ][..],
                 "data-region=\"diagnostic-output\"",
             ),
             (
                 "scenarios/docs-site.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Reading And Code Interaction",
-                    "## Responsive Reading",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 阅读和代码交互",
+                    "## 响应式阅读",
                 ][..],
                 "data-region=\"code-example\"",
             ),
             (
                 "scenarios/fintech-consumer-app.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Money And Risk Display",
-                    "## Transaction Feedback",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 金额和风险展示",
+                    "## 交易反馈",
                 ][..],
                 "data-region=\"transaction-review\"",
             ),
             (
                 "scenarios/fintech-workstation.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Dense Financial Workbench",
-                    "## Risk And Audit Continuity",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 密集金融工作台",
+                    "## 风险和审计连续性",
                 ][..],
                 "data-region=\"decision-panel\"",
             ),
             (
                 "scenarios/immersive-3d.md",
-                &[
-                    "## Required Patterns",
-                    "## Verification",
-                    "## Loading, Fallback, And Performance",
-                ][..],
+                &["## 必需模式", "## 验证", "## 加载、回退和性能"][..],
                 "interactive scene",
             ),
             (
                 "scenarios/marketing-site.md",
                 &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Scroll Rhythm And Proof",
-                    "## Media And Interaction",
+                    "## 必需模式",
+                    "## 验证信号",
+                    "## 滚动节奏和证明",
+                    "## 媒体和交互",
                 ][..],
                 "offer/object",
             ),
             (
                 "scenarios/mobile-native.md",
-                &[
-                    "## Required Patterns",
-                    "## Verification",
-                    "## Platform Resolution",
-                ][..],
-                "| Safe area |",
+                &["## 必需模式", "## 验证", "## 平台解析"][..],
+                "| 安全区域 |",
             ),
             (
                 "scenarios/mobile-responsive.md",
-                &[
-                    "## Required Patterns",
-                    "## Verification Signals",
-                    "## Keyboard, Orientation, And Recovery",
-                ][..],
+                &["## 必需模式", "## 验证信号", "## 键盘、方向和恢复"][..],
                 "100dvh",
             ),
         ];
@@ -3225,40 +3188,37 @@ mod tests {
         let expectations = [
             (
                 "stacks/native-mobile.md",
-                &[
-                    "## Platform Implementation Boundary",
-                    "## Screen State And Restoration",
-                ][..],
+                &["## 平台实现边界", "## 屏幕状态和恢复"][..],
                 "platform navigation",
             ),
             (
                 "stacks/plain-html.md",
-                &["## Entry, Asset, And Enhancement Boundary"][..],
+                &["## 入口、资产和增强边界"][..],
                 "document entry",
             ),
             (
                 "stacks/react.md",
-                &["## Route And Data Boundary", "## Token And State Ownership"][..],
+                &["## 路由和数据边界", "## 令牌和状态归属"][..],
                 "query/mutation adapter",
             ),
             (
                 "stacks/svelte.md",
-                &["## Page Load And Action Boundary"][..],
+                &["## 页面加载和操作边界"][..],
                 "page data state",
             ),
             (
                 "stacks/threejs.md",
-                &["## Scene, Asset, And Overlay Boundary"][..],
+                &["## 场景、资产和覆盖边界"][..],
                 "asset lifecycle",
             ),
             (
                 "stacks/uniapp.md",
-                &["## Cross-Target Page Boundary"][..],
+                &["## 跨目标页面边界"][..],
                 "pages.json route",
             ),
             (
                 "stacks/vue.md",
-                &["## Page, Composable, And Runtime Boundary"][..],
+                &["## 页面、Composable 和运行时边界"][..],
                 "composable/data adapter",
             ),
         ];

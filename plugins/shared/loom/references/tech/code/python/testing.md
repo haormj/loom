@@ -1,40 +1,40 @@
-# Python Testing Quality
+# Python 测试质量
 
 ## When To Use
 
-- The task adds or changes Python tests, pytest fixtures, mocks, async tests, integration tests, snapshot/golden data, coverage configuration, or behavior implemented in Python.
-- Use this when Python behavior needs proof through the repository's test stack.
-- Follow existing pytest, unittest, framework, or integration-test conventions unless the task explicitly owns test infrastructure.
+- 任务添加或变更 Python 测试、pytest 夹具、mock、异步测试、集成测试、快照/黄金数据、覆盖率配置或 Python 实现的行为。
+- 当 Python 行为需要通过仓库测试栈证明时使用此参考。
+- 遵循现有的 pytest、unittest、框架或集成测试约定，除非任务显式拥有测试基础设施。
 
 ## Implementation Focus
 
-- Use pytest fixtures for reusable setup with explicit cleanup. Prefer `tmp_path`, `monkeypatch`, and fixture finalizers over global state changes.
-- Use `parametrize` for validation matrices, state transitions, parser inputs, edge cases, and repeated business rules. Name cases when failures would otherwise be unclear.
-- Mock external boundaries such as HTTP clients, filesystem, time, random IDs, queues, mail, databases, and cloud services. Do not mock the domain logic being tested.
-- Use `AsyncMock` and async fixtures for async code. Await the behavior under test and assert awaited calls, cancellation, and cleanup when relevant.
-- Assert exceptions with type and meaningful message or error attributes when callers depend on them. Avoid broad "raises Exception" assertions.
-- Keep integration tests behind explicit markers or commands when they require databases, Docker, network, credentials, or slow services.
-- Use snapshot or golden tests only for stable serialized/rendered output, and keep update workflow explicit. Do not snapshot broad objects when targeted assertions are clearer.
-- Prefer fixture factories for domain objects that need variation. Keep factories typed enough to catch invalid test data.
-- Keep coverage focused on changed behavior and meaningful error paths. Do not add coverage excludes to hide untested new code.
-- Clean up environment variables, temp files, monkeypatches, event loops, background tasks, and database state after tests.
+- 使用 pytest 夹具进行带有显式清理的可复用设置。优先使用 `tmp_path`、`monkeypatch` 和夹具终结器而非全局状态变更。
+- 对验证矩阵、状态转换、解析器输入、边界情况和重复业务规则使用 `parametrize`。当失败不明显时为用例命名。
+- Mock 外部边界如 HTTP 客户端、文件系统、时间、随机 ID、队列、邮件、数据库和云服务。不要 mock 正在被测试的领域逻辑。
+- 对异步代码使用 `AsyncMock` 和异步夹具。等待被测行为并在相关时断言被等待的调用、取消和清理。
+- 当调用者依赖异常类型和有意义的消息或错误属性时断言它们。避免宽泛的 "raises Exception" 断言。
+- 当集成测试需要数据库、Docker、网络、凭据或慢服务时，将其放在显式标记或命令之后。
+- 仅对稳定的序列化/渲染输出使用快照或黄金测试，并保持更新工作流显式。当有针对性的断言更清晰时不要快照宽泛对象。
+- 对需要变化的领域对象优先使用夹具工厂。保持工厂足够类型化以捕获无效测试数据。
+- 保持覆盖率聚焦于变更的行为和有意义的错误路径。不要添加覆盖率排除来隐藏未测试的新代码。
+- 测试后清理环境变量、临时文件、monkeypatch、事件循环、后台任务和数据库状态。
 
 ## Decision Rules
 
-- Choose the narrowest proof for the changed contract: unit tests for pure transformations, integration tests for adapters/persistence, framework tests for routing, and async tests for event-loop behavior.
-- Keep fixtures explicit and typed enough to reject invalid data. Use `tmp_path`, `monkeypatch`, finalizers, and factories instead of shared global state or order-dependent setup.
-- Use parameterization for finite validation/state matrices and name cases where the expected outcome is not obvious. Assert exception type and meaningful message/attributes when callers depend on them.
-- Mock external boundaries, not the domain logic under test. For async code use `AsyncMock`/the configured plugin and verify cancellation, awaited calls, and resource cleanup when relevant.
-- Keep integration markers explicit for databases, Docker, network, credentials, and slow tests. Record the marker/command used rather than pretending a unit test proves provider behavior.
-- Report changed-branch and error-path evidence rather than imposing a universal coverage percentage. Coverage exclusions must have an owned reason.
+- 为变更的契约选择最窄证明：纯转换用单元测试，适配器/持久化用集成测试，路由用框架测试，事件循环行为用异步测试。
+- 保持夹具显式且足够类型化以拒绝无效数据。使用 `tmp_path`、`monkeypatch`、终结器和工厂而非共享全局状态或依赖顺序的设置。
+- 对有限的验证/状态矩阵使用参数化，并在预期结果不明显时为用例命名。当调用者依赖时断言异常类型和有意义的消息/属性。
+- Mock 外部边界，而非被测领域逻辑。对异步代码使用 `AsyncMock`/配置的插件，并在相关时验证取消、被等待的调用和资源清理。
+- 为数据库、Docker、网络、凭据和慢测试保持集成标记显式。记录使用的标记/命令，而不是假装单元测试证明了提供者行为。
+- 报告变更分支和错误路径证据，而非施加统一的覆盖率百分比。覆盖率排除必须有拥有的原因。
 
 ## Verification Focus
 
-- Run the configured pytest command or the narrowest package command that covers changed Python behavior.
-- Run configured type/lint/format commands when tests or source changes rely on typing or style enforcement.
-- For async code, verify the test runner uses the correct async plugin and leaves no pending tasks.
-- For integration tests, record the marker/command used or why it was not run.
+- 运行配置的 pytest 命令或覆盖变更 Python 行为的最窄包命令。
+- 当测试或源码变更依赖类型或风格强制时，运行配置的类型/lint/格式命令。
+- 对异步代码，验证测试运行器使用正确的异步插件且不留下待处理任务。
+- 对集成测试，记录使用的标记/命令或为什么未运行。
 
 ## Evidence Focus
 
-- In the evidence summary, name the behavior verified and the Python commands run.
+- 在证据总结中，说明已验证的行为和运行的 Python 命令。

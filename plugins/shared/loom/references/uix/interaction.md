@@ -1,43 +1,43 @@
-# UIX Focus: Interaction
+# UIX 焦点：交互
 
-Load this when the task creates or changes user actions, forms, navigation, tables, modals, drawers, command surfaces, or feedback behavior.
+当任务创建或修改用户操作、表单、导航、表格、模态框、抽屉、命令界面或反馈行为时加载此文件。
 
-## Action Design
+## 操作设计
 
-- Primary action is visible where the user makes the decision.
-- Secondary actions are available but visually quieter.
-- Destructive actions need confirmation, undo, or a clear recovery path based on severity.
-- Disabled actions should explain why when the user can do something to unlock them.
-- Repeated row actions should keep row identity stable and visible.
-- Long-running actions show progress at the action source. Keep the object identity visible while the request is pending.
-- Mutations should define what changes after success: row state, detail summary, event history, count, or navigation.
+- 主要操作在用户决策处可见。
+- 次要操作可用但视觉上更安静。
+- 破坏性操作根据严重程度需要确认、撤销或明确的恢复路径。
+- 当用户可以采取措施解锁时，禁用操作应解释原因。
+- 重复行操作应保持行标识稳定且可见。
+- 长时间运行的操作在操作源处显示进度。在请求待处理时保持对象标识可见。
+- 变更操作应定义成功后什么发生变化：行状态、详情摘要、事件历史、计数或导航。
 
 ## Brief Mapping
 
-When the task brief includes an action contract:
+当任务简报包含操作契约时：
 
-- Primary actions must be directly reachable in the owning surface or flow.
-- Contextual actions stay attached to the relevant row, record, field group, panel, or step.
-- Dangerous actions require confirmation, undo, or a clear recovery path based on severity.
-- The declared placement rule overrides generic component habits; keep the affected object visible at decision time.
-- The post-success update is part of the implementation, not just copy. Update the row, detail, count, state, route, or history that proves the mutation landed.
+- 主要操作必须在归属界面或流程中可直接到达。
+- 上下文操作与相关的行、记录、字段组、面板或步骤保持关联。
+- 危险操作根据严重程度需要确认、撤销或明确的恢复路径。
+- 声明的放置规则覆盖通用组件习惯；在决策时保持受影响对象可见。
+- 成功后更新是实现的一部分，而非仅是文案。更新行、详情、计数、状态、路由或历史记录以证明变更已落地。
 
-When the task brief includes a state contract:
+当任务简报包含状态契约时：
 
-- Implement each listed state at the affected region, not only as a global spinner, banner, or toast.
-- Keep validation, technical failure, domain blocking, and disabled/unavailable states visually and semantically distinct.
-- For integration-backed actions, pending/error/success feedback must preserve object identity and user-entered values when practical.
+- 在受影响区域实现每个列出的状态，而非仅作为全局旋转器、横幅或 toast。
+- 保持验证、技术失败、领域阻塞和禁用/不可用状态在视觉和语义上区分。
+- 对于集成支持的操作，待处理/错误/成功反馈必须在可行时保留对象标识和用户输入值。
 
-## Forms
+## 表单
 
-- Use visible labels, not placeholder-only labels.
-- Group related fields and explain business requirements near the field.
-- Validate before submit when rules are known locally.
-- Preserve user input after validation or server failure.
-- Show submitting state and prevent accidental double-submit.
-- Place business-blocking feedback near the affected field/object and in the form summary when useful.
+- 使用可见标签，而非仅占位符标签。
+- 分组相关字段并在字段附近说明业务要求。
+- 当规则在本地已知时在提交前验证。
+- 验证或服务器失败后保留用户输入。
+- 显示提交状态并防止意外重复提交。
+- 将业务阻塞反馈放在受影响字段/对象附近，并在有用时放在表单摘要中。
 
-Form anatomy for business applications:
+业务应用的表单解剖结构：
 
 ```html
 <form data-region="business-form">
@@ -49,34 +49,34 @@ Form anatomy for business applications:
 </form>
 ```
 
-Do not collapse validation, technical error, and business block into one generic toast. They require different user recovery paths.
+不要将验证、技术错误和业务阻塞折叠成一个通用 toast。它们需要不同的用户恢复路径。
 
-## Navigation
+## 导航
 
-- Keep current section/page visible.
-- Use breadcrumbs for deep management flows.
-- Use tabs only for peer sections of the same object, not unrelated pages.
-- Use drawers/sheets when they preserve list context; use full routes when the detail has deep workflow.
-- Mobile navigation must not depend on hover.
+- 保持当前部分/页面可见。
+- 在深层管理流程中使用面包屑。
+- 仅对同一对象的对等部分使用标签页，而非无关页面。
+- 当抽屉/面板能保留列表上下文时使用它们；当详情有深度工作流时使用完整路由。
+- 移动导航不得依赖悬停。
 
-## Feedback
+## 反馈
 
-- Success updates the affected object and gives a short confirmation.
-- Error explains recovery without exposing stack traces or internal tool names.
-- Loading is scoped to the region that is waiting.
-- Toasts are for transient confirmation, not the only place for critical rules.
+- 成功更新受影响对象并给出简短确认。
+- 错误说明恢复方式而不暴露堆栈跟踪或内部工具名称。
+- 加载作用域限于等待的区域。
+- toast 用于瞬态确认，而非关键规则的唯一位置。
 
-Use this placement guide:
+使用此放置指南：
 
-| Feedback type | Preferred placement |
+| 反馈类型 | 首选放置位置 |
 | --- | --- |
-| Field validation | Directly under the field and in summary for long forms. |
-| Business-blocking rule | Affected row/detail/action panel, with optional form summary. |
-| System failure | Region-level alert with retry path. |
-| Successful mutation | Updated object state plus short toast or inline confirmation. |
-| Empty result | Results region, filters still visible. |
+| 字段验证 | 直接在字段下方，长表单时也在摘要中。 |
+| 业务阻塞规则 | 受影响的行/详情/操作面板，可选加表单摘要。 |
+| 系统失败 | 区域级警告并带重试路径。 |
+| 成功变更 | 更新对象状态加上简短 toast 或内联确认。 |
+| 空结果 | 结果区域，筛选器仍可见。 |
 
-## State Region Pattern
+## 状态区域模式
 
 ```html
 <form data-state="ready|submitting|blocked|error">
@@ -86,54 +86,48 @@ Use this placement guide:
 </form>
 ```
 
-Keep technical errors, validation errors, and business-rule blocks visually distinct. Users should know whether to retry, correct input, or change a business condition.
+保持技术错误、验证错误和业务规则阻塞在视觉上区分。用户应知道是重试、修正输入还是更改业务条件。
 
-## Keyboard And Pointer
+## 键盘和指针
 
-- Focus order follows task order.
-- Icon-only controls have labels and tooltips when meaning is not universal.
-- Touch targets are large enough and separated.
-- Hover states must have focus/touch equivalents.
-- Escape/back behavior should close transient layers before abandoning the whole workflow.
+- 焦点顺序遵循任务顺序。
+- 仅图标控件在含义非通用时有标签和工具提示。
+- 触摸目标足够大且分开。
+- 悬停状态必须有焦点/触摸等价物。
+- Escape/返回行为应先关闭瞬态层再放弃整个工作流。
 
-## Interaction Composition
+## 交互组合
 
-Choose the smallest interaction surface that preserves context:
+选择保留上下文的最小交互面：
 
-| Situation | Preferred composition |
+| 情况 | 首选组合 |
 | --- | --- |
-| Quick field edit | Inline edit with field validation and cancel/recovery. |
-| Row or record inspection | Detail panel or route that preserves list context. |
-| Short confirmation | Dialog with explicit consequence and focused primary action. |
-| Multi-field or deep workflow | Dedicated route or step flow with back/cancel and summary. |
-| Temporary supporting choice | Popover, menu, or sheet with keyboard and touch exit. |
-| Long-running mutation | Source action stays visible with pending, retry, and readback state. |
+| 快速字段编辑 | 带字段验证和取消/恢复的内联编辑。 |
+| 行或记录检查 | 保留列表上下文的详情面板或路由。 |
+| 简短确认 | 带明确后果和聚焦主要操作的对话框。 |
+| 多字段或深度工作流 | 带返回/取消和摘要的专用路由或步骤流。 |
+| 临时支持选择 | 带键盘和触摸退出的弹出框、菜单或面板。 |
+| 长时间运行变更 | 源操作保持可见，带待处理、重试和回读状态。 |
 
-Do not use a modal as the default container for every interaction. Choose a layer
-from the amount of context, text, validation, and navigation the user needs.
+不要将模态框作为每个交互的默认容器。根据用户需要的上下文、文本、验证和导航量选择层级。
 
-## Transition And Reconciliation
+## 过渡和协调
 
-- Define the allowed transition before styling the control: eligible, pending,
-  succeeded, failed, blocked, and unavailable are distinct states.
-- Disable only the action that cannot safely repeat. Keep navigation, cancellation,
-  and unaffected work available when the product allows it.
-- Reconcile optimistic UI with the returned server state. On failure, restore the
-  prior value or show the server result and the recovery path.
-- Keep selected identity, filters, draft input, and active tab stable across a
-  retry or a route transition when those values define the user's context.
-- Test rapid repeated input, double activation, escape/back, refresh during pending,
-  and a failure after a visible optimistic update when the flow is asynchronous.
+- 在样式化控件之前定义允许的过渡：eligible、pending、succeeded、failed、blocked 和 unavailable 是不同的状态。
+- 仅禁用不能安全重复的操作。当产品允许时保持导航、取消和未受影响的工作可用。
+- 用返回的服务器状态协调乐观 UI。失败时恢复之前的值或显示服务器结果和恢复路径。
+- 在重试或路由过渡时保持选定的标识、筛选器、草稿输入和活动标签页稳定（当这些值定义用户上下文时）。
+- 当流程异步时测试快速重复输入、双重激活、escape/返回、待处理期间刷新以及可见乐观更新后的失败。
 
-## Workflow Continuity
+## 工作流连续性
 
-- Preserve selected rows, filters, active tabs, and entered values across refreshes and failed mutations when technically possible.
-- Detail drawers should close back to the same list state.
-- Multi-step flows need progress, back/cancel behavior, and a visible summary before irreversible actions.
-- If a task spans frontend and backend, the UI must display backend validation and domain errors in product language.
+- 在技术上可行时，在刷新和失败变更后保留选定的行、筛选器、活动标签页和输入值。
+- 详情抽屉应关闭回到相同的列表状态。
+- 多步流程需要进度、返回/取消行为和不可逆操作前的可见摘要。
+- 如果任务跨越前端和后端，UI 必须以产品语言展示后端验证和领域错误。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `admin.state.scoped_feedback` | Loading, success, validation, error, and business-blocking feedback appear beside the affected table, form, detail, row, or action. | Feedback is only a toast/global banner, domain blocks look like technical errors, or failed submit loses context/input. |
+| `admin.state.scoped_feedback` | 加载、成功、验证、错误和业务阻塞反馈出现在受影响的表格、表单、详情、行或操作旁边。 | 反馈仅为 toast/全局横幅，领域阻塞看起来像技术错误，或失败的提交丢失上下文/输入。 |

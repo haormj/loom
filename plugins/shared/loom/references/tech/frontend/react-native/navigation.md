@@ -1,77 +1,77 @@
-# React Native Navigation
+# React Native 导航
 
-Apply navigation guidance only when the task owns routes, stacks, tabs, drawers, modals/sheets, route parameters, deep links, protected flow, state restoration, or back behavior. Preserve the repository's Expo Router or React Navigation model.
+仅当任务拥有路由、栈、标签、抽屉、模态/sheet、路由参数、深链接、受保护流、状态恢复或返回行为时应用导航指导。保留仓库的 Expo Router 或 React Navigation 模型。
 
-## Navigation Ownership
+## 导航所有权
 
-Map product destinations and transitions before editing navigator code. Distinguish root/auth/onboarding/tab/detail/modal flows, define which navigator owns each route, and preserve the user's expected return location.
+在编辑导航器代码之前映射产品目标和转换。区分根/auth/onboarding/标签/详情/模态流，定义哪个导航器拥有每个路由，并保留用户期望的返回位置。
 
-Do not introduce Expo Router into a React Navigation app, or a parallel manual navigator into an Expo Router app, for one feature. Use the installed version's APIs and typed-route support.
+不要为一个功能将 Expo Router 引入 React Navigation 应用，或将平行手动导航器引入 Expo Router 应用。使用已安装版本的 API 和类型化路由支持。
 
-Keep reusable screens independent of file-based route mechanics where practical. Route wrappers parse params, provide route-owned dependencies, and render the feature surface.
+在可行处保持可复用屏幕独立于基于文件的路由机制。路由包装器解析参数、提供路由拥有的依赖并渲染功能界面。
 
-## Route Parameters
+## 路由参数
 
-Pass stable IDs and small serializable navigation state. Avoid full mutable records, functions, secrets, access tokens, or large payloads in params.
+传递稳定 ID 和小型可序列化导航状态。避免在参数中使用完整可变记录、函数、密钥、访问令牌或大型载荷。
 
-Treat external/deep-link params as untrusted. Normalize singular/array forms where the router permits both, validate format/range, and render not-found/invalid/forbidden states before data or native operations.
+将外部/深链接参数视为不可信。在路由器允许两者时规范化单数/数组形式，验证格式/范围，并在数据或原生操作之前渲染未找到/无效/禁止状态。
 
-Type route names and params through the repository's navigation types or generated Expo typed routes. Do not silence route typing with broad casts.
+通过仓库的导航类型或生成的 Expo 类型化路由类型化路由名称和参数。不要用宽泛强制转换消除路由类型。
 
-## Push, Replace, Reset, And Dismiss
+## Push、Replace、Reset 与 Dismiss
 
-Use push when history should preserve the current screen; replace for one-way transitions such as completed auth/onboarding; reset only when old history must become unreachable; dismiss modal stacks intentionally.
+当历史应保留当前屏幕时使用 push；为单向转换（如完成的 auth/onboarding）使用 replace；仅当旧历史必须不可达时使用 reset；有意识地关闭模态栈。
 
-Prevent duplicate destinations from repeated taps or async completion. Keep pending state on the initiating control and reconcile navigation only after the required command result.
+防止重复点击或异步完成导致的重复目标。在发起控件上保持 pending 状态并仅在所需命令结果后协调导航。
 
-Preserve list filter/scroll/context when users inspect a detail and return. Do not reconstruct return state from mutable global selection if route identity already exists.
+当用户检查详情并返回时保留列表筛选/滚动/上下文。如果路由标识已存在，不要从可变全局选择重建返回状态。
 
-## Layouts, Tabs, And Modals
+## 布局、标签与模态
 
-In Expo Router, route groups organize navigation without changing URL segments; they are not authorization by themselves. `_layout` owns shared providers, guards, and navigator options at the smallest coherent scope.
+在 Expo Router 中，route group 在不改变 URL segment 的情况下组织导航；它们本身不是授权。`_layout` 在最小内聚范围拥有共享 provider、守卫和导航器选项。
 
-Keep tab identity stable and avoid nesting navigators merely to hide headers. Modal/sheet presentation needs explicit close/back behavior, focus/announcement handling, unsaved-change policy, and safe-area/keyboard integration.
+保持标签标识稳定，避免仅为隐藏头而嵌套导航器。模态/sheet 呈现需要显式关闭/返回行为、焦点/宣告处理、未保存变更策略和安全区域/键盘集成。
 
-Use product labels and accessible names for headers, tabs, and actions. Icons alone must have understandable labels and selected state.
+为头、标签和操作使用产品标签和可访问名称。仅图标必须有可理解的标签和选定状态。
 
-## Protected Flows
+## 受保护流
 
-Gate at an owning layout/navigator while authentication state is known. Render a stable loading/restoration surface before redirecting so the app does not flash protected content or bounce between routes.
+当认证状态已知时在所属布局/导航器处门控。在重定向前渲染稳定的加载/恢复界面，使应用不闪烁受保护内容或在路由间弹跳。
 
-Authorization remains server-enforced. A hidden tab or redirect is presentation, not access control. Preserve the intended destination across sign-in only when it is safe and still authorized.
+授权仍由服务端执行。隐藏标签或重定向是展示，不是访问控制。仅在安全且仍授权时跨登录保留目标目的地。
 
-Handle logout/account/tenant switch by clearing incompatible navigation and persisted state so back navigation cannot reveal stale screens.
+通过清除不兼容导航和持久化状态来处理登出/账户/租户切换，使返回导航不能显示过期屏幕。
 
-## Deep Links And External Entry
+## 深链接与外部入口
 
-Keep schemes, universal/app links, linking config, route patterns, and platform association files aligned. Define cold start, warm app, authenticated, unauthenticated, invalid target, and unavailable record behavior.
+保持 scheme、universal/app link、链接配置、路由模式和平台关联文件对齐。定义冷启动、暖应用、已认证、未认证、无效目标和不可用记录行为。
 
-External links must not bypass validation or route guards. Avoid open redirects and restrict callback destinations to accepted origins/routes.
+外部链接不得绕过验证或路由守卫。避免开放重定向，将回调目标限制为已接受的 origin/路由。
 
-## Back And Unsaved Work
+## 返回与未保存工作
 
-Coordinate header back, gestures, Android hardware back, modal close, and system navigation. Intercept only when the task owns unsaved work or an overlay; return control to the navigator otherwise.
+协调头返回、手势、Android 硬件返回、模态关闭和系统导航。仅当任务拥有未保存工作或覆盖层时拦截；否则将控制返回导航器。
 
-Do not register competing back handlers at several layers. Clean up listeners and ensure the topmost visible surface owns interception.
+不要在多层注册竞争返回处理器。清理监听器并确保最顶层可见界面拥有拦截。
 
 ## Verification
 
-- Test direct entry, forward/back, tab switching, modal open/dismiss, repeated navigation, and return-context preservation.
-- Exercise valid, missing, malformed, array-shaped, unauthorized, and not-found params where applicable.
-- Verify auth restoration, protected redirect, post-login destination, logout reset, and account/tenant switch.
-- Test cold/warm deep-link entry and config changes on affected platforms.
-- Check Android hardware back and iOS gesture/header behavior when custom interception exists.
+- 测试直接进入、前进/返回、标签切换、模态打开/关闭、重复导航和返回上下文保留。
+- 在适用处练习有效、缺失、格式错误、数组形式、未授权和未找到参数。
+- 验证 auth 恢复、受保护重定向、登录后目标、登出重置和账户/租户切换。
+- 在受影响平台上测试冷/暖深链接入口和配置变更。
+- 当存在自定义拦截时检查 Android 硬件返回和 iOS 手势/头行为。
 
-## Delivery Evidence
+## 交付证据
 
-Name the navigator/layout owner, route/param contract, history operation, guard/deep-link path, and assertion proving return/back behavior. A route file existing or one successful `push` does not prove protected entry, restoration, malformed params, or platform back semantics.
+命名导航器/布局所有者、路由/参数契约、历史操作、守卫/深链接路径和证明返回/返回行为的断言。路由文件存在或一次成功的 `push` 不能证明受保护入口、恢复、格式错误参数或平台返回语义。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- A second navigation model introduced for one feature.
-- Mutable records or credentials passed through params.
-- Broad casts used to bypass typed route errors.
-- Leaf-screen redirect logic duplicated across protected routes.
-- `replace`/reset used where users must return to prior context.
-- Route groups treated as authorization.
-- Back listeners retained after the owning screen disappears.
+- 为一个功能引入第二个导航模型。
+- 通过参数传递可变记录或凭据。
+- 使用宽泛强制转换绕过类型化路由错误。
+- 叶子屏幕重定向逻辑跨受保护路由重复。
+- 在用户必须返回先前上下文处使用 `replace`/reset。
+- 将 route group 视为授权。
+- 所属屏幕消失后仍保留的返回监听器。

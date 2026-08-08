@@ -1,78 +1,78 @@
-# React Shared And Server State
+# React 共享状态与服务端状态
 
-Apply this reference when the task owns shared client state or an API/server-state binding. Local ephemeral rendering state remains in the core component boundary and does not require a store/cache reference.
+当任务拥有共享客户端状态或 API/服务端状态绑定时应用此参考。本地临时渲染状态保留在核心组件边界中，不需要 store/缓存参考。
 
-## Classify State By Ownership
+## 按所有权分类状态
 
-| State | Preferred owner |
+| 状态 | 首选所有者 |
 |---|---|
-| Local open/input/focus/draft | component/form hook |
-| Related local transitions | `useReducer` |
-| Low-frequency cross-tree dependency | focused Context |
-| Shared workflow/client lifecycle | selected Zustand/Redux/other store |
-| Remote cached source | selected TanStack Query/SWR/data layer |
-| Shareable filter/tab/page | router URL state |
+| 本地打开/输入/焦点/草稿 | component/form hook |
+| 相关本地转换 | `useReducer` |
+| 低频跨树依赖 | focused Context |
+| 共享工作流/客户端生命周期 | selected Zustand/Redux/other store |
+| 远程缓存源 | selected TanStack Query/SWR/data layer |
+| 可共享筛选/标签/分页 | router URL state |
 
-Do not copy remote data into local/context/store layers without a synchronization reason. Separate persisted records, editable drafts, selected target, pending/optimistic operation, and filters when lifecycles differ.
+不要在没有同步原因的情况下将远程数据复制到本地/context/store 层。当生命周期不同时，将持久化记录、可编辑草稿、选定目标、待处理/乐观操作和筛选器分开。
 
-## Local Reducers And Context
+## 本地 Reducer 与 Context
 
-Use reducers for related event-driven transitions where many `useState` values can drift. Events include target/payload context and reducers remain pure/immutable.
+对许多 `useState` 值可能漂移的相关事件驱动转换使用 reducer。事件包含目标/载荷上下文，reducer 保持纯函数/不可变。
 
-Use Context for stable or low-frequency cross-tree values such as theme/session adapters, not every fast-changing feature collection. Split contexts by update frequency/ownership and memoize provider values only when it reduces real churn.
+对稳定或低频跨树值使用 Context，如主题/会话适配器，而非每个快速变化的功能集合。按更新频率/所有权拆分 context，仅在减少实际抖动时记忆化 provider 值。
 
-Do not hide feature business operations inside a generic app context.
+不要在通用 app context 中隐藏功能业务操作。
 
-## External Stores
+## 外部 Store
 
-Use only the library selected by TechnicalBaseline/repository. Define store slice ownership, normalized identity, actions/commands, selectors, initialization/reset, and route/identity lifetime.
+仅使用 TechnicalBaseline/仓库选择的库。定义 store slice 所有权、规范化标识、操作/命令、选择器、初始化/重置和路由/标识生命周期。
 
-Zustand/Redux Toolkit examples are alternatives. Do not add a store for one modal or duplicate a server-state library.
+Zustand/Redux Toolkit 示例是备选方案。不要为一个模态添加 store 或重复服务端状态库。
 
-Selectors should be stable and narrow; avoid returning new objects/arrays without equality/memo behavior on hot paths. Store actions should include displayed target ID rather than read mutable selection later.
+选择器应稳定且窄；避免在热路径上无相等性/memo 行为返回新对象/数组。Store 操作应包含显示的目标 ID，而非稍后读取可变选择。
 
-## Server-State Libraries
+## 服务端状态库
 
-Define query keys from every resource/filter/page/tenant/identity dimension affecting the result. Bound stale/gc/refetch/retry/polling behavior and clear/invalidate on mutation/logout/tenant changes.
+从影响结果的每个资源/筛选/分页/租户/标识维度定义 query key。限定 stale/gc/refetch/retry/polling 行为，并在变更/登出/租户变更时清除/失效。
 
-Expected validation/conflict/forbidden/unavailable failures remain typed and user-visible. Do not retry non-idempotent/business/auth failures generically.
+预期的验证/冲突/禁止/不可用失败保持类型化且用户可见。不要通用重试非幂等/业务/认证失败。
 
-Mutations need exact invalidation/update/readback. Optimistic changes require stable temporary/target identity, rollback, conflict, duplicate, and stale-response handling.
+变更需要精确的失效/更新/回读。乐观变更需要稳定的临时/目标标识、回滚、冲突、重复和过期响应处理。
 
-## Drafts, Selection, And Persistence
+## 草稿、选择与持久化
 
-When opening a form/detail/modal, snapshot or key draft state to the displayed record. Reset/preserve deliberately when the target, route, identity, or server version changes.
+打开表单/详情/模态时，将草稿状态快照或键到显示的记录。当目标、路由、标识或服务端版本变更时，有意识地重置/保留。
 
-Do not derive submit payload from a different selected object than the visible draft. Prevent stale background responses from overwriting a newer target.
+不要从与可见草稿不同的选定对象派生提交载荷。防止过期的后台响应覆盖较新目标。
 
-Persist client state only when the product requires it. Version/validate persisted schemas and clear sensitive/authorization/transient state. Local/session storage is public to browser scripts and not authority.
+仅在产品需要时持久化客户端状态。版本化/验证持久化模式，清除敏感/授权/临时状态。本地/会话存储对浏览器脚本是公开的，不是权威。
 
-## Concurrency And Derived State
+## 并发与派生状态
 
-Keep derived labels, filtered lists, totals, eligibility, and selected entities in selectors/computation rather than duplicated writable state.
+将派生标签、筛选列表、总计、资格和选定实体保留在选择器/计算中，而非重复的可写状态。
 
-Define latest-wins, ordered, independent, or duplicate-blocking semantics for async commands. State must return to usable conditions after error/cancellation.
+为异步命令定义最新优先、有序、独立或重复阻止语义。状态必须在错误/取消后返回可用条件。
 
-Use transitions/deferred values for rendering urgency, not as a substitute for source-of-truth or request cancellation.
+将 transitions/deferred values 用于渲染紧迫性，不作为真相来源或请求取消的替代。
 
 ## Verification
 
-- Test select-target/edit/cancel/save/reopen and target changes during pending work.
-- Test reducer/store transitions, selector derivation, immutable updates, reset/logout/tenant behavior.
-- Verify query keys, stale/refetch/retry, exact invalidation, readback, and no cross-user leakage.
-- Prove duplicate/optimistic rollback/conflict/stale-response behavior where owned.
-- Verify persisted-state validation/migration/clearing.
-- Test components render states and dispatch commands for the displayed target.
+- 测试选择目标/编辑/取消/保存/重新打开以及待处理工作期间的目标变更。
+- 测试 reducer/store 转换、选择器派生、不可变更新、重置/登出/租户行为。
+- 验证 query key、stale/refetch/retry、精确失效、回读和无跨用户泄漏。
+- 在拥有处证明重复/乐观回滚/冲突/过期响应行为。
+- 验证持久化状态验证/迁移/清除。
+- 测试组件渲染状态并为显示目标分派命令。
 
-## Delivery Evidence
+## 交付证据
 
-Identify state owner/lifetime/key/action and transition/cache assertion proving it. Store/provider presence or a successful fetch cannot prove target consistency, invalidation, race handling, persistence safety, or cross-user isolation.
+标识状态所有者/生命周期/键/操作和证明它的转换/缓存断言。Store/provider 存在或成功 fetch 不能证明目标一致性、失效、竞争处理、持久化安全或跨用户隔离。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- State reference loaded for every React component.
-- Remote data duplicated across effect, context, store, and query cache.
-- Store library added for small local state.
-- Commands reading mutable selected state instead of payload target.
-- Query keys omitting identity/filter dimensions.
-- Optimistic or persisted state without rollback/schema/logout handling.
+- 为每个 React 组件加载状态参考。
+- 跨 effect、context、store 和 query cache 重复远程数据。
+- 为小型本地状态添加 store 库。
+- 命令读取可变选定状态而非载荷目标。
+- Query key 遗漏标识/筛选维度。
+- 乐观或持久化状态无回滚/模式/登出处理。

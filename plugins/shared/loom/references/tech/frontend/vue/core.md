@@ -1,77 +1,77 @@
-# Vue Reactivity And Composable Delivery
+# Vue 响应式与 Composable 交付
 
-Implement task-owned Vue surfaces within the repository's Vue version, Options/Composition API convention, language policy, router, state/data libraries, SFC tooling, component system, and UI quality contract. Do not convert established patterns incidentally.
+在仓库的 Vue 版本、Options/Composition API 约定、语言策略、路由、状态/数据库、SFC 工具、组件系统和 UI 质量契约内实现任务所属的 Vue 界面。不要附带转换已建立的模式。
 
-## Repository Convention
+## 仓库约定
 
-Use `<script setup>` and Composition API when they are established or the task explicitly owns migration. Preserve a coherent Options API feature when conversion would expand scope or alter behavior.
+当 `<script setup>` 和 Composition API 已建立或任务显式拥有迁移时使用它们。当转换会扩大范围或改变行为时，保留一个连贯的 Options API 功能。
 
-Confirm Vue/compiler versions and enabled macros before using `defineModel`, reactive props destructure, generic SFC syntax, or other version-specific behavior. External “modern Vue” examples are not compatibility proof.
+在使用 `defineModel`、reactive props destructure、generic SFC 语法或其他版本特定行为之前，确认 Vue/compiler 版本和已启用的宏。外部"现代 Vue"示例不是兼容性证明。
 
-Keep route/page components as workflow orchestration and extract focused feature components/composables when state, effects, or reuse make the surface hard to inspect.
+将路由/页面组件保持为工作流编排，当状态、effect 或复用使界面难以检查时提取聚焦的功能组件/composable。
 
-## Ref, Reactive, And Identity
+## Ref、Reactive 与标识
 
-Use `ref` for primitives, nullable/replaceable objects, template refs, and values whose replacement is meaningful. Use `reactive` for cohesive object state that retains one proxy identity.
+对原始值、可空/可替换对象、template ref 和替换有意义的值使用 `ref`。对保留一个代理标识的内聚对象状态使用 `reactive`。
 
-Do not destructure a reactive object into plain values. Use `toRefs`, `toRef`, store helpers, or access through the proxy. Avoid replacing a `reactive` object in a way that disconnects consumers.
+不要将 reactive 对象解构为普通值。使用 `toRefs`、`toRef`、store helper 或通过代理访问。避免以断开消费者连接的方式替换 `reactive` 对象。
 
-Use `shallowRef`/`markRaw` for large immutable payloads or third-party instances only when deep tracking is unnecessary and updates explicitly replace/trigger identity.
+仅当不需要深度跟踪且更新显式替换/触发标识时，对大型不可变载荷或第三方实例使用 `shallowRef`/`markRaw`。
 
-Keep editable drafts, persisted/API records, selected snapshots, filters, pending operations, and optimistic values separate when their lifetimes differ.
+当生命周期不同时，将可编辑草稿、持久化/API 记录、选定快照、筛选器、待处理操作和乐观值分开。
 
-## Derived State And Watchers
+## 派生状态与 Watcher
 
-Use `computed` for pure derived values and writable computed only for a real controlled transformation. Do not use watchers to keep redundant state synchronized.
+对纯派生值使用 `computed`，仅对真正的受控转换使用可写 computed。不要用 watcher 保持冗余状态同步。
 
-Use `watch` when source/old value/timing control matters; use `watchEffect` for a concise effect whose dependencies are intentionally discovered during synchronous execution. Async dependencies accessed after `await` are not auto-tracked as expected.
+当源/旧值/时序控制重要时使用 `watch`；对依赖在同步执行期间被有意发现的简洁 effect 使用 `watchEffect`。在 `await` 之后访问的异步依赖不会按预期自动跟踪。
 
-Choose `flush` timing deliberately for DOM-dependent work and avoid deep watching large objects. Watch a getter or normalized subset instead.
+对 DOM 相关工作有意识地选择 `flush` 时序，避免深度监听大型对象。改为监听 getter 或规范化子集。
 
-Cancel or invalidate stale async work with watcher cleanup (`onCleanup`/supported cleanup API), `AbortController`, or operation identity so a prior route/filter/record cannot overwrite current state.
+用 watcher 清理（`onCleanup`/支持的清理 API）、`AbortController` 或操作标识取消或使过期异步工作失效，使先前的路由/筛选/记录不能覆盖当前状态。
 
-## Lifecycle And Effect Scope
+## 生命周期与 Effect Scope
 
-Register lifecycle hooks synchronously during setup. Dispose listeners, timers, observers, subscriptions, workers, browser/native integrations, and manually created watchers.
+在 setup 期间同步注册生命周期 hook。释放监听器、定时器、观察者、订阅、worker、浏览器/原生集成和手动创建的 watcher。
 
-Use `effectScope` only when a composable/plugin creates a group of effects with an independent lifecycle, and expose/perform scope disposal. Component-owned reactive effects normally stop automatically on unmount.
+仅当 composable/plugin 创建一组具有独立生命周期的 effect 时使用 `effectScope`，并暴露/执行 scope 释放。组件拥有的响应式 effect 通常在卸载时自动停止。
 
-Template refs are nullable before mount and after unmount/conditional removal. Prefer declarative rendering; use DOM/imperative refs only for focus, measurement, or third-party integration.
+Template ref 在挂载前和卸载/条件移除后为可空。优先使用声明式渲染；仅对焦点、测量或第三方集成使用 DOM/命令式 ref。
 
-## Composable Contracts
+## Composable 契约
 
-Extract a composable for reusable stateful behavior or a complex external lifecycle, not just to move code. Accept refs/getters/values according to the repository convention and normalize with supported utilities such as `toValue` where appropriate.
+为可复用的有状态行为或复杂的外部生命周期提取 composable，而非仅仅为了移动代码。按仓库约定接受 ref/getter/值，在适当时用 `toValue` 等支持的工具规范化。
 
-Return a small public contract with readonly state when callers should not mutate it and named commands for transitions. Avoid hidden router, global store, tenant, auth, or broad API behavior in a generic composable.
+返回精小的公共契约，当调用者不应修改时返回只读状态，为转换返回命名命令。避免在通用 composable 中隐藏 router、全局 store、租户、auth 或宽泛 API 行为。
 
-For async work, expose meaningful idle/loading/refreshing/ready/empty/error/mutating state, retry/cancel semantics, and stable command targets.
+对于异步工作，暴露有意义的 idle/loading/refreshing/ready/empty/error/mutating 状态、重试/取消语义和稳定的命令目标。
 
-## Workflow And UI
+## 工作流与 UI
 
-Represent task-owned loading, empty, validation, conflict/stale, forbidden, unavailable, submitting, success, disabled, and rollback states near the affected region.
+在受影响区域附近表示任务所属的加载、空、验证、冲突/过期、禁止、不可用、提交中、成功、禁用和回滚状态。
 
-Preserve valid input after rejection, block duplicate submit, and reconcile returned identity/version/status. Product UI must not expose runtime commands, framework explanations, delivery notes, or verification instructions.
+拒绝后保留有效输入，阻止重复提交，并协调返回的标识/版本/状态。产品 UI 不得暴露运行时命令、框架说明、交付备注或验证指令。
 
-Use semantic elements, labels, focus handling, announcements, and repository UIX tokens/components. Vue directives and transitions must preserve keyboard and reduced-motion behavior.
+使用语义元素、标签、焦点处理、宣告和仓库 UIX 令牌/组件。Vue 指令和过渡必须保留键盘和减少动画行为。
 
 ## Verification
 
-- Run focused SFC type/build/lint and component/composable tests supplied by the repository.
-- Prove reactive updates after source replacement, destructuring boundaries, route/record changes, and async completion ordering.
-- Test watcher cleanup/cancellation, lifecycle disposal, and remount behavior for external resources.
-- Exercise owned workflow states, draft preservation, duplicate blocking, stable targets, and final readback.
-- Verify semantics, focus, keyboard interaction, long/localized content, and responsive behavior.
+- 运行仓库提供的聚焦 SFC 类型/构建/lint 和组件/composable 测试。
+- 证明源替换、解构边界、路由/记录变更和异步完成排序后的响应式更新。
+- 测试 watcher 清理/取消、生命周期释放和外部资源的重新挂载行为。
+- 练习所属的工作流状态、草稿保留、重复阻止、稳定目标和最终回读。
+- 验证语义、焦点、键盘交互、长/本地化内容和响应式行为。
 
-## Delivery Evidence
+## 交付证据
 
-Name the reactivity owner, ref/reactive/computed/watch decision, composable lifecycle, and assertion proving visible behavior. A successful render or passing typecheck does not prove stale-work safety, cleanup, draft integrity, or accessibility.
+命名响应式所有者、ref/reactive/computed/watch 决策、composable 生命周期和证明可见行为的断言。成功渲染或通过类型检查不能证明过期工作安全、清理、草稿完整性或可访问性。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Composition API or TypeScript migration attached to unrelated feature work.
-- Reactive objects destructured into non-reactive values.
-- Watchers used to mirror computed state.
-- Deep watch on large data without a bounded source.
-- Async watcher results accepted after the owner changes.
-- Generic composables hiding router/auth/API/global dependencies.
-- DOM refs accessed before mount or used for declarative behavior.
+- 将 Composition API 或 TypeScript 迁移附着到不相关的功能工作。
+- Reactive 对象解构为非响应式值。
+- 用 watcher 镜像 computed 状态。
+- 在无有界源的情况下深度监听大型数据。
+- 在所有者变更后接受异步 watcher 结果。
+- 通用 composable 隐藏 router/auth/API/全局依赖。
+- 在挂载前访问 DOM ref 或用于声明式行为。

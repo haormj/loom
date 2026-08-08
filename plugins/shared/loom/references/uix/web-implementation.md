@@ -1,20 +1,20 @@
-# UIX Focus: Web Implementation
+# UIX 焦点：Web 实现
 
-Use this when a user-visible browser surface is created or changed. This file covers DOM, CSS, browser behavior, and Web framework edge cases that make a UI feel production-ready instead of merely styled.
+当创建或修改用户可见的浏览器界面时使用此文件。此文件涵盖 DOM、CSS、浏览器行为和 Web 框架边缘情况，使 UI 感觉达到生产级而非仅有样式。
 
-Do not use this file for native mobile screens, mini-program targets, or primary 3D scenes unless the task also includes a normal browser UI around them.
+除非任务也包含围绕它们的正常浏览器 UI，否则不要将此文件用于原生移动屏幕、小程序目标或主要 3D 场景。
 
-## Semantic Accessibility
+## 语义可访问性
 
-- Use native elements first: `button` for actions, `a` or framework links for navigation, `label` for form labels, `table` for real tabular comparison.
-- Do not use clickable `div` or `span` elements for primary controls.
-- Icon-only controls need an accessible name and, when meaning is not universal, a tooltip or nearby text.
-- Decorative icons should be hidden from assistive technology.
-- Dynamic validation, save, delete, and load feedback should be announced in the affected region, not only as a disconnected toast.
-- Headings must form a usable outline. A page with multiple regions still needs one clear top heading and meaningful region labels.
-- Images need useful alternative text when they communicate content. Decorative media should not compete with the task.
+- 优先使用原生元素：`button` 用于操作、`a` 或框架链接用于导航、`label` 用于表单标签、`table` 用于真实的表格比较。
+- 不要对主要控件使用可点击的 `div` 或 `span` 元素。
+- 仅图标控件需要可访问名称，且当含义非通用时需要工具提示或附近文本。
+- 装饰性图标应对辅助技术隐藏。
+- 动态验证、保存、删除和加载反馈应在受影响区域播报，而非仅作为断开的 toast。
+- 标题必须形成可用的大纲。具有多个区域的页面仍需要一个清晰的顶级标题和有意义的区域标签。
+- 传达内容的图像需要有用的替代文本。装饰性媒体不应与任务竞争。
 
-Accessible control pattern:
+可访问控件模式：
 
 ```tsx
 <button
@@ -26,16 +26,16 @@ Accessible control pattern:
 </button>
 ```
 
-## Focus And Keyboard
+## 焦点和键盘
 
-- Every interactive control needs a visible focus state.
-- Removing outlines is acceptable only when a visible replacement exists.
-- Prefer focus-visible styling so pointer clicks do not create noisy rings.
-- Compound controls such as search boxes, comboboxes, cards with actions, and editable table rows need focus-within treatment.
-- Hover-only controls require keyboard and touch equivalents.
-- Modals, drawers, sheets, and menus must preserve focus flow and provide an obvious exit path.
+- 每个交互控件都需要可见的焦点状态。
+- 仅当存在可见替代时才可移除轮廓。
+- 优先使用 focus-visible 样式，这样指针点击不会产生嘈杂的焦点环。
+- 复合控件如搜索框、组合框、带操作的卡片和可编辑表格行需要 focus-within 处理。
+- 仅悬停控件需要键盘和触摸等价物。
+- 模态框、抽屉、面板和菜单必须保留焦点流并提供明显的退出路径。
 
-Focus pattern:
+焦点模式：
 
 ```css
 .control {
@@ -47,19 +47,19 @@ Focus pattern:
 }
 ```
 
-## Forms And Actions
+## 表单和操作
 
-- Inputs need stable `name` values and visible labels. Placeholder-only labels are not enough.
-- Use input types and input modes that match the value: email, tel, url, number, decimal, search, and similar.
-- Use autocomplete thoughtfully so browsers can help without filling the wrong field.
-- Do not block paste in normal fields. Paste is part of accessibility and recovery.
-- Submit controls should enter a submitting state only after submission starts; do not disable the primary path before the user can act.
-- Field errors belong next to the field. Form-level summaries should link or guide back to the affected field.
-- Failed submission must preserve user input and selection context.
-- Destructive actions need confirmation, undo, or a clear recovery path based on severity.
-- Warn about unsaved changes when navigation would discard meaningful user work.
+- 输入需要稳定的 `name` 值和可见标签。仅占位符标签不够。
+- 使用匹配值的输入类型和输入模式：email、tel、url、number、decimal、search 等。
+- 深思熟虑地使用 autocomplete，让浏览器能帮忙而不会填错字段。
+- 不要在正常字段中阻止粘贴。粘贴是可访问性和恢复的一部分。
+- 提交控件应仅在提交开始后进入提交状态；不要在用户可以操作之前禁用主要路径。
+- 字段错误应放在字段旁边。表单级摘要应链接或引导回受影响字段。
+- 失败的提交必须保留用户输入和选择上下文。
+- 破坏性操作根据严重程度需要确认、撤销或明确的恢复路径。
+- 当导航会丢弃有意义的用户工作时警告未保存的更改。
 
-Form resilience pattern:
+表单韧性模式：
 
 ```tsx
 <label htmlFor="supplier-email">Supplier Email</label>
@@ -75,16 +75,16 @@ Form resilience pattern:
 </p>
 ```
 
-## Layout Resilience
+## 布局韧性
 
-- Long names, identifiers, table values, and user-provided text need wrapping, truncation, or reveal behavior.
-- Flex children that contain text often need `min-width: 0` so truncation can work.
-- Empty strings, empty arrays, missing optional values, and partial records must not collapse the layout.
-- Data tables need horizontal overflow or a mobile card/detail fallback when comparison is not the main goal.
-- Fixed-format controls, counters, toolbar buttons, and table rows should not resize when state text changes.
-- Avoid unwanted page-level horizontal scrolling; fix the element that overflows instead of hiding all overflow by reflex.
+- 长名称、标识符、表格值和用户提供的文本需要换行、截断或展开行为。
+- 包含文本的 Flex 子项通常需要 `min-width: 0` 才能使截断生效。
+- 空字符串、空数组、缺失的可选值和部分记录不得使布局塌陷。
+- 当比较不是主要目标时，数据表格需要水平溢出或移动卡片/详情回退。
+- 固定格式控件、计数器、工具栏按钮和表格行在状态文本变化时不应改变尺寸。
+- 避免不需要的页面级水平滚动；修复溢出的元素而非反射性地隐藏所有溢出。
 
-Long-content pattern:
+长内容模式：
 
 ```css
 .record-row {
@@ -99,16 +99,16 @@ Long-content pattern:
 }
 ```
 
-## Motion And Interaction
+## 动效和交互
 
-- Honor reduced-motion preferences for transitions and animations.
-- Animate transform and opacity for frequent transitions. Avoid layout-property animation in normal product flows.
-- Do not use catch-all transitions; list the properties that should move.
-- Motion must be interruptible. The UI should respond if the user clicks, closes, scrolls, or changes selection mid-animation.
-- Drag, resize, and gesture flows should avoid accidental text selection and should keep inactive regions inert when needed.
-- Touch targets must be large enough, and mobile flows must not depend on hover.
+- 对过渡和动画尊重减弱动效偏好。
+- 对频繁过渡动画 transform 和 opacity。避免在正常产品流中动画布局属性。
+- 不要使用全捕获过渡；列出应该移动的属性。
+- 动效必须是可中断的。如果用户在动画中途点击、关闭、滚动或更改选择，UI 应响应。
+- 拖拽、调整大小和手势流应避免意外文本选择，并在需要时保持非活动区域惰性。
+- 触摸目标必须足够大，移动流不得依赖悬停。
 
-Motion pattern:
+动效模式：
 
 ```css
 .drawer {
@@ -123,16 +123,16 @@ Motion pattern:
 }
 ```
 
-## Media And Browser Performance
+## 媒体和浏览器性能
 
-- Content images need stable dimensions or aspect ratios to avoid layout shift.
-- Below-the-fold media should avoid eager loading. First-viewport critical media should be prioritized through the project stack's normal mechanism.
-- Large lists need pagination, virtualization, chunked rendering, or content-visibility treatment once the visible count can grow beyond a small operational list.
-- Avoid reading layout measurements during render. Measure after paint only when CSS layout cannot solve the problem.
-- Expensive controlled inputs need debouncing, local buffering, or framework-specific optimization.
-- Fonts and remote assets should be loaded through the project's existing performance pattern.
+- 内容图像需要稳定的尺寸或宽高比以避免布局偏移。
+- 折叠下方的媒体应避免预加载。首屏关键媒体应通过项目技术栈的正常机制优先处理。
+- 当可见计数可能超出小型操作列表时，大型列表需要分页、虚拟化、分块渲染或 content-visibility 处理。
+- 避免在渲染期间读取布局测量值。仅在 CSS 布局无法解决问题时在绘制后测量。
+- 昂贵的受控输入需要防抖、本地缓冲或框架特定的优化。
+- 字体和远程资产应通过项目现有的性能模式加载。
 
-List strategy pattern:
+列表策略模式：
 
 ```text
 small bounded list -> normal render
@@ -141,31 +141,24 @@ append-only feed -> incremental loading with stable item identity
 wide comparison table -> horizontal overflow with labeled scroll region
 ```
 
-## Navigation, Locale, And Hydration
+## 导航、区域设置和水合
 
-- Filters, tabs, pagination, selected records, and expanded panels should be restorable through URL state or equivalent navigation state when users reasonably share, reload, or return to the view.
-- Navigation links must keep browser affordances such as open in new tab and copy link.
-- Use locale-aware date, time, number, and currency formatting for user-facing values.
-- Keep code tokens, brand names, ids, and product identifiers from being accidentally translated when the UI supports translation.
-- In server-rendered stacks, avoid hydration mismatch from random values, current time, viewport-only values, or uncontrolled-to-controlled input transitions.
-- Use client-only rendering escapes sparingly and only for values that genuinely cannot match across server and browser.
+- 当用户合理地分享、重载或返回视图时，筛选器、标签页、分页、选定记录和展开面板应通过 URL 状态或等价导航状态可恢复。
+- 导航链接必须保留浏览器功能如在新标签页打开和复制链接。
+- 对面向用户的值使用区域感知的日期、时间、数字和货币格式化。
+- 当 UI 支持翻译时，防止代码令牌、品牌名称、ID 和产品标识符被意外翻译。
+- 在服务端渲染技术栈中，避免随机值、当前时间、仅视口值或非受控到受控输入过渡导致的水合不匹配。
+- 谨慎使用客户端专用渲染转义，仅用于在服务端和浏览器之间确实无法匹配的值。
 
 ## Browser Boundary Decisions
 
-- Keep browser-only APIs, viewport measurements, random values, current-time values,
-  and storage access behind the project's established client boundary.
-- Prefer CSS layout and media queries over render-time measurement. When measurement
-  is necessary, handle the initial unknown state without shifting or hiding the
-  primary workflow.
-- Give every scrollable region an intentional owner. Nested scrolling must preserve
-  keyboard, touch, focus, and escape behavior rather than trapping the user.
-- For a list that can grow, select normal rendering, paging, virtualization, or
-  incremental loading from expected volume and interaction needs. Do not optimize a
-  small list with a complex renderer before measuring the actual bottleneck.
-- Keep API, storage, and browser failure messages in product language and near the
-  affected surface; source code and network details belong in diagnostics.
+- 将仅浏览器 API、视口测量、随机值、当前时间值和存储访问放在项目已建立的客户端边界之后。
+- 优先使用 CSS 布局和媒体查询而非渲染时测量。当需要测量时，在没有偏移或隐藏主要工作流的情况下处理初始未知状态。
+- 为每个可滚动区域指定有意的所有者。嵌套滚动必须保留键盘、触摸、焦点和退出行为，而非困住用户。
+- 对于可增长的列表，根据预期量和交互需求选择正常渲染、分页、虚拟化或增量加载。在测量实际瓶颈之前不要用复杂渲染器优化小型列表。
+- 将 API、存储和浏览器失败消息保持为产品语言并靠近受影响界面；源代码和网络细节属于诊断。
 
-Formatting pattern:
+格式化模式：
 
 ```ts
 const amount = new Intl.NumberFormat(locale, {
@@ -176,21 +169,20 @@ const amount = new Intl.NumberFormat(locale, {
 
 ## Evidence Checklist
 
-Implementation evidence should show:
+实现证据应展示：
 
-- Semantic controls, labels, focus behavior, and dynamic feedback source checks.
-- Form metadata, error placement, submission state, and recovery behavior when forms are in scope.
-- Long-content, empty-value, media, list-size, and layout-overflow handling.
-- Reduced-motion handling for animated UI.
-- Locale formatting and navigation-state handling when those values or flows are user-visible.
-- Hydration-sensitive values checked in server-rendered Web stacks.
-- Browser boundary, scroll ownership, list strategy, and client-only values checked
-  when those concerns are part of the changed surface.
+- 语义控件、标签、焦点行为和动态反馈源检查。
+- 表单元数据、错误放置、提交状态和恢复行为（当表单在范围内时）。
+- 长内容、空值、媒体、列表大小和布局溢出处理。
+- 动画 UI 的减弱动效处理。
+- 当这些值或流对用户可见时的区域格式化和导航状态处理。
+- 服务端渲染 Web 技术栈中检查的水合敏感值。
+- 当这些关注点是变更界面一部分时检查的浏览器边界、滚动归属、列表策略和仅客户端值。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `web.semantic_accessibility` | Native control semantics, accessible names, visible focus, and scoped feedback announcements are present in changed browser UI. | Clickable non-controls, unlabeled icon buttons or fields, hidden focus, missing dynamic feedback region, or inaccessible media. |
-| `web.form_and_state_resilience` | Forms/actions keep meaningful metadata, inline errors, recoverable input, safe submission state, and destructive-action recovery. | Placeholder-only labels, blocked paste, lost input after failure, generic errors away from fields, double-submit risk, or immediate destructive actions. |
-| `web.runtime_layout_safety` | Long content, empty values, media sizing, large lists, reduced motion, locale formatting, hydration-sensitive values, and restorable state are handled where in scope. | Text breaks layout, empty data renders broken UI, media shifts layout, large lists render naively, motion ignores user preference, values are hardcoded, or reload loses expected state. |
+| `web.semantic_accessibility` | 变更的浏览器 UI 中存在原生控件语义、可访问名称、可见焦点和作用域反馈播报。 | 可点击的非控件、未标记的图标按钮或字段、隐藏焦点、缺失动态反馈区域或不可访问的媒体。 |
+| `web.form_and_state_resilience` | 表单/操作保持有意义的元数据、内联错误、可恢复输入、安全提交状态和破坏性操作恢复。 | 仅占位符标签、阻止粘贴、失败后丢失输入、远离字段的通用错误、重复提交风险或立即执行破坏性操作。 |
+| `web.runtime_layout_safety` | 长内容、空值、媒体尺寸、大型列表、减弱动效、区域格式化、水合敏感值和可恢复状态在范围内得到处理。 | 文本破坏布局、空数据渲染损坏 UI、媒体偏移布局、大型列表天真渲染、动效忽略用户偏好、值硬编码或重载丢失预期状态。 |

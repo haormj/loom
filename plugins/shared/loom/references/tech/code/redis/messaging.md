@@ -1,45 +1,45 @@
-# Redis Queues And Streams
+# Redis 队列与流
 
 ## When To Use
 
-Use this reference when the task owns an accepted Redis `queue` or `stream` capability, including producers, workers, acknowledgments, retries, or dead-letter handling.
+当任务拥有已接受的 Redis `queue` 或 `stream` 能力（包括生产者、worker、确认、重试或死信处理）时使用此参考。
 
 ## Implementation Focus
 
-- Choose List for a simple bounded work queue and Stream for consumer groups, acknowledgments, replay, or pending-entry inspection.
-- Give every message a stable idempotency identity and a versioned payload envelope.
-- Define when a message is considered claimed, processed, acknowledged, retried, or permanently failed.
-- Bound payload size, queue depth, consumer concurrency, retry count, and retention.
-- For Streams, use consumer groups and acknowledge only after the business effect is committed.
-- For Lists, define the visibility and recovery behavior around worker crashes; a blocking pop alone is not durable acknowledgment.
-- Use a Sorted Set or an explicit scheduled store for delayed retries, with a bounded backoff and dead-letter destination.
-- Keep retries separate from ordinary redelivery and classify permanent validation failures.
-- Use an idempotency String or Hash when message redelivery could repeat an external or durable effect.
+- 对简单的有界工作队列选择 List，对消费者组、确认、重放或待处理条目检查选择 Stream。
+- 为每条消息赋予稳定的幂等标识和版本化的载荷信封。
+- 定义消息何时被视为已声明、已处理、已确认、已重试或永久失败。
+- 限制载荷大小、队列深度、消费者并发、重试次数和保留。
+- 对于 Stream，使用消费者组并仅在业务效果提交后确认。
+- 对于 List，围绕 worker 崩溃定义可见性和恢复行为；仅阻塞 pop 不是持久确认。
+- 对延迟重试使用 Sorted Set 或显式调度存储，并具有有界退避和死信目标。
+- 将重试与普通重新投递分开并分类永久验证失败。
+- 当消息重新投递可能重复外部或持久效果时使用幂等 String 或 Hash。
 
 ## Failure Boundary
 
-Redis message delivery does not make a database write and an external side effect atomic. Define the outbox, transaction, acknowledgment, or reconciliation boundary that the application actually owns.
+Redis 消息投递不使数据库写入和外部副作用原子化。定义应用实际拥有的发件箱、事务、确认或对账边界。
 
-If the queue is optional, the user-facing operation must have an accepted fallback. If the queue is required, readiness and failure must be visible before the application reports success.
+如果队列是可选的，面向用户的操作必须有已接受的回退。如果队列是必需的，就绪和失败必须在应用报告成功之前可见。
 
 ## Verification Focus
 
-- A worker acknowledges only after the intended effect succeeds.
-- A crash before acknowledgment produces a bounded retry or pending state.
-- Duplicate delivery does not repeat an idempotent business effect.
-- Retry backoff, maximum attempts, dead-letter handling, and permanent failures are explicit.
-- Payload validation, version handling, cancellation, and shutdown drain behavior are covered.
+- worker 仅在预期效果成功后确认。
+- 确认前崩溃产生有界重试或待处理状态。
+- 重复投递不重复幂等业务效果。
+- 重试退避、最大尝试、死信处理和永久失败是显式的。
+- 载荷验证、版本处理、取消和关闭排空行为被覆盖。
 
 ## Evidence Focus
 
-Name the selected List or Stream boundary, message identity, acknowledgment point, retry policy, idempotency store, and evidence for crash or duplicate delivery.
+说明选中的 List 或 Stream 边界、消息标识、确认点、重试策略、幂等存储和崩溃或重复投递证据。
 
-Include the worker shutdown and redelivery evidence when those lifecycle rules are owned by the task. A producer-only test does not prove delivery or retry safety.
+当这些生命周期规则由任务拥有时包含 worker 关闭和重新投递证据。仅生产者测试不证明投递或重试安全。
 
 ## Unsafe Defaults
 
-- Treating `LPUSH`/`RPOP` as a reliable acknowledged queue without recovery design.
-- Acknowledging before the database or external effect commits.
-- Infinite retries for malformed or permanently forbidden messages.
-- Unbounded Streams, Lists, payloads, or worker concurrency.
-- Assuming Pub/Sub provides durable delivery or replay.
+- 将 `LPUSH`/`RPOP` 视为没有恢复设计的可靠已确认队列。
+- 在数据库或外部效果提交之前确认。
+- 对格式错误或永久禁止的消息进行无限重试。
+- 无界 Stream、List、载荷或 worker 并发。
+- 假设 Pub/Sub 提供持久投递或重放。

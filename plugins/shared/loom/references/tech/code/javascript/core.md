@@ -1,31 +1,31 @@
-# JavaScript Core Quality
+# JavaScript 核心质量
 
 ## When To Use
 
-- The task changes JavaScript source in apps, libraries, Node services, browser modules, build scripts, or shared runtime utilities.
-- Use this for baseline modern JavaScript correctness: syntax target, data handling, public contracts, side-effect boundaries, and runtime safety.
-- If the task is TypeScript-first, use TypeScript references instead; do not duplicate JavaScript guidance unless plain `.js`, `.mjs`, or `.cjs` files are part of the task.
+- 任务变更了应用、库、Node 服务、浏览器模块、构建脚本或共享运行时工具中的 JavaScript 源码。
+- 用于基线现代 JavaScript 正确性：语法目标、数据处理、公共契约、副作用边界和运行时安全。
+- 如果任务是 TypeScript 优先的，改用 TypeScript 参考；不要重复 JavaScript 指导，除非普通 `.js`、`.mjs` 或 `.cjs` 文件是任务的一部分。
 
 ## Implementation Focus
 
-- Match the repository's runtime target before using newer language features. Do not use syntax or built-ins that the configured Node version, browser target, bundler, or test environment cannot run.
-- Follow the package module convention. Keep ESM code in ESM files and CommonJS code in CommonJS files; isolate interop instead of mixing `import` and `require` in the same module.
-- Use `const` by default and `let` only for intentional reassignment. Do not introduce `var`.
-- Use optional chaining only for genuinely optional paths, and use nullish coalescing when `0`, `false`, or empty string are valid values. Do not replace meaningful falsy data with defaults via `||`.
-- Keep external inputs validated at runtime: HTTP payloads, form values, storage data, environment variables, CLI args, and messages from workers or iframes.
-- Add JSDoc for public functions, exported modules, and complex data shapes when the repository does not have TypeScript types for the contract.
-- Keep pure transformation logic separate from side effects such as fetch, filesystem, DOM mutation, timers, logging, and process control.
-- Do not mutate function parameters unless the local project convention uses controlled mutation for performance or framework APIs. Prefer returning new objects for business state changes.
-- Use `Object.hasOwn` or safe ownership checks for untrusted objects. Avoid calling methods directly from data objects that may not inherit from `Object.prototype`.
-- Avoid proposal-stage features unless the existing toolchain already transpiles them and the task owns compatibility risk.
+- 在使用较新的语言特性之前匹配仓库的运行时目标。不要使用配置的 Node 版本、浏览器目标、bundler 或测试环境无法运行的语法或内置功能。
+- 遵循包模块约定。将 ESM 代码保留在 ESM 文件中，CommonJS 代码保留在 CommonJS 文件中；隔离互操作而非在同一模块中混合 `import` 和 `require`。
+- 默认使用 `const`，仅在有意的重新赋值时使用 `let`。不要引入 `var`。
+- 仅对真正可选的路径使用可选链，当 `0`、`false` 或空字符串是有效值时使用空值合并。不要通过 `||` 用默认值替换有意义的假值数据。
+- 在运行时保持外部输入验证：HTTP 载荷、表单值、存储数据、环境变量、CLI 参数和来自 worker 或 iframe 的消息。
+- 当仓库没有 TypeScript 类型用于契约时，为公共函数、导出模块和复杂数据形态添加 JSDoc。
+- 将纯转换逻辑与副作用（如 fetch、文件系统、DOM 变更、定时器、日志和进程控制）分开。
+- 不要变更函数参数，除非本地项目约定出于性能或框架 API 使用受控变更。优先为业务状态变更返回新对象。
+- 对不可信对象使用 `Object.hasOwn` 或安全的所有权检查。避免直接从可能不继承自 `Object.prototype` 的数据对象调用方法。
+- 避免提案阶段特性，除非现有工具链已转译它们且任务拥有兼容性风险。
 
 ## Verification Focus
 
-- Run the repository's lint/build/test command that covers the changed JavaScript runtime.
-- Smoke-test changed entry modules with the actual runtime when possible, especially build scripts, CLIs, Node services, and browser bootstrap files.
-- Add tests for data validation, defaulting behavior, and side-effect boundaries that changed.
-- Confirm no new unhandled promise rejections, unsupported syntax for the target runtime, or module-system mixing was introduced.
+- 运行覆盖变更 JavaScript 运行时的仓库 lint/build/test 命令。
+- 尽可能使用实际运行时对变更的入口模块进行冒烟测试，特别是构建脚本、CLI、Node 服务和浏览器引导文件。
+- 为变更的数据验证、默认行为和副作用边界添加测试。
+- 确认没有引入新的未处理 promise 拒绝、目标运行时不支持的语法或模块系统混用。
 
 ## Evidence Focus
 
-- In the evidence summary, name the JavaScript decision made: runtime target, module convention, defaulting behavior, validation boundary, JSDoc contract, or side-effect separation.
+- 在证据总结中，说明做出的 JavaScript 决策：运行时目标、模块约定、默认行为、验证边界、JSDoc 契约或副作用分离。

@@ -1,25 +1,25 @@
-# Spring Boot Security Implementation
+# Spring Boot 安全实现
 
-Implement the authentication and authorization policy already owned by the current interfaces and architecture. Do not introduce JWT, OAuth2, sessions, roles, refresh tokens, or account management when protected operations are not part of the task.
+实现当前接口和架构已拥有的认证和授权策略。当受保护操作不是任务的一部分时，不要引入 JWT、OAuth2、session、role、refresh token 或账户管理。
 
-The accepted JWT algorithm, issuer, audience, token type, and key-source contract lives in `tech/api/jwt.md` when a bearer JWT profile is active. This file owns Spring Security wiring and framework-specific verification only. A `server_session` profile is a separate cookie-backed session path and must not be implemented as JWT.
+当 bearer JWT profile 激活时，已接受的 JWT 算法、issuer、audience、token 类型和密钥来源契约在 `tech/api/jwt.md` 中。本文件仅负责 Spring Security 配置和框架特定验证。`server_session` profile 是独立的 cookie 支持的 session 路径，不得实现为 JWT。
 
-## Security Mechanism Boundary
+## 安全机制边界
 
-Choose the mechanism from the accepted baseline and existing repository:
+从已接受的基线和已有仓库中选择机制：
 
-| Client/Trust Model | Typical Spring Security Shape |
+| 客户端/信任模型 | 典型 Spring Security 形态 |
 |---|---|
-| Same-origin browser session | Session authentication, secure cookies, CSRF protection |
-| Stateless bearer-token API | OAuth2 Resource Server with issuer/JWK validation |
-| Service-to-service API | Resource Server, mTLS-aware infrastructure, or existing gateway identity |
-| Internal unauthenticated runtime | Explicit public routes only when accepted; no placeholder auth system |
+| 同源浏览器 session | Session 认证、安全 cookie、CSRF 保护 |
+| 无状态 bearer-token API | OAuth2 Resource Server 配以 issuer/JWK 验证 |
+| 服务间 API | Resource Server、mTLS 感知基础设施或已有 gateway identity |
+| 内部未认证运行时 | 仅在已接受时显式公共路由；无占位认证系统 |
 
-Prefer Spring Security's OAuth2 Resource Server support over a custom JWT parsing filter when issuer/JWK or signed bearer tokens are the requirement. A custom filter is justified only by an existing token contract that Resource Server cannot represent.
+当需求是 issuer/JWK 或签名 bearer token 时，优先使用 Spring Security 的 OAuth2 Resource Server 支持而非自定义 JWT 解析 filter。仅当已有 token 契约 Resource Server 无法表示时才使用自定义 filter。
 
 ## Filter Chain
 
-Use Spring Security 6 `SecurityFilterChain` and explicit route ownership.
+使用 Spring Security 6 `SecurityFilterChain` 和显式路由归属。
 
 ```java
 @Bean
@@ -35,25 +35,25 @@ SecurityFilterChain apiSecurity(HttpSecurity http) throws Exception {
 }
 ```
 
-Keep matcher order from specific to general. Avoid broad `permitAll`, accidental catch-all protection that blocks health/static assets, and parallel filter chains with overlapping matchers. Preserve the established role-versus-authority convention.
+保持 matcher 顺序从特定到一般。避免宽泛 `permitAll`、意外阻止健康/静态资源的 catch-all 保护，以及具有重叠 matcher 的并行 filter chain。保留已建立的 role 与 authority 约定。
 
-Do not disable CSRF by habit. Stateless bearer-token APIs that do not authenticate with cookies can disable it deliberately. Browser sessions and cookie-based authentication require CSRF protection. Document the actual client mechanism in configuration or tests.
+不要习惯性禁用 CSRF。不使用 cookie 认证的无状态 bearer-token API 可以慎重禁用它。浏览器 session 和基于 cookie 的认证需要 CSRF 保护。在配置或测试中记录实际的客户端机制。
 
-For a `server_session` profile, load the authenticated principal from the server-side session store, map its stable user id and roles to Spring authorities, and protect unsafe browser requests with CSRF validation. Do not create an OAuth2 resource-server filter, bearer token parser, issuer/audience configuration, or JWT algorithm configuration for this profile. Redis is the session store when the accepted runtime dependency declares the `session` capability; session lifecycle and cookie settings remain framework/configuration concerns owned by the backend task.
+对于 `server_session` profile，从服务端 session 存储加载已认证 principal，将其稳定用户 id 和 role 映射为 Spring authority，并用 CSRF 验证保护不安全的浏览器请求。不要为此 profile 创建 OAuth2 resource-server filter、bearer token 解析器、issuer/audience 配置或 JWT 算法配置。当已接受的运行时依赖声明 `session` 能力时，Redis 是 session 存储；session 生命周期和 cookie 设置仍是后端任务拥有的框架/配置关注。
 
-## Authentication Material
+## 认证材料
 
-- Store passwords with the repository's selected adaptive encoder; never plaintext or reversible encryption.
-- Externalize issuer, audience, JWK location, client credentials, signing material, token lifetime, and allowed clock skew.
-- Map the selected `tech/api/jwt.md` contract into Spring's resource-server validation; do not widen algorithms or claims in framework configuration.
-- Never log bearer tokens, refresh tokens, passwords, authorization headers, or decoded sensitive claims.
-- Keep production credentials out of default application configuration; placeholders and environment bindings are allowed.
+- 使用仓库所选的自适应编码器存储密码；切勿明文或可逆加密。
+- 外部化 issuer、audience、JWK 位置、客户端凭证、签名材料、token 生命周期和允许的时钟偏差。
+- 将所选的 `tech/api/jwt.md` 契约映射到 Spring 的 resource-server 验证；不要在框架配置中放宽算法或 claim。
+- 切勿记录 bearer token、refresh token、密码、授权 header 或解码的敏感 claim。
+- 将生产凭证排除在默认应用配置之外；允许占位符和环境绑定。
 
-Custom refresh-token flows require independent token type, persistence or revocation semantics, rotation/reuse detection, expiry, logout behavior, and theft response. Clearing `SecurityContextHolder` does not revoke a stateless token.
+自定义 refresh-token 流程需要独立的 token 类型、持久化或撤销语义、轮转/重用检测、过期、登出行为和盗窃响应。清除 `SecurityContextHolder` 不会撤销无状态 token。
 
-## Authorization Boundary
+## 授权边界
 
-Route authorization protects endpoint classes. Method authorization protects business operations reachable from multiple entry points.
+路由授权保护端点类。方法授权保护可从多个入口点到达的业务操作。
 
 ```java
 @PreAuthorize("hasAuthority('orders:approve') and @orderAccess.canApprove(#orderId, authentication)")
@@ -62,46 +62,46 @@ public OrderResponse approve(UUID orderId) {
 }
 ```
 
-Keep resource ownership and lifecycle eligibility in an authorization/domain service rather than embedding repository queries in SpEL. UI visibility is not authorization. Controller checks alone are insufficient when jobs, messages, or other services can call the same operation.
+将资源归属和生命周期资格保留在授权/domain service 中，而非在 SpEL 中嵌入 repository 查询。UI 可见性不是授权。当 job、消息或其他 service 可以调用同一操作时，仅 controller 检查是不够的。
 
-Differentiate:
+区分：
 
-- missing or invalid authentication: `401`
-- authenticated caller lacking permission: `403`
-- protected resource existence: hide or expose according to accepted policy
-- business ineligibility after authorization: domain conflict or validation response
+- 缺失或无效认证：`401`
+- 缺乏权限的已认证调用者：`403`
+- 受保护资源存在性：根据已接受策略隐藏或暴露
+- 授权后的业务不合格：domain 冲突或验证响应
 
-Use `AuthenticationEntryPoint` and `AccessDeniedHandler` to produce the accepted safe error envelope. Do not expose parser exceptions, account existence, internal role mappings, or stack traces.
+使用 `AuthenticationEntryPoint` 和 `AccessDeniedHandler` 产生已接受的安全错误 envelope。不要暴露解析器异常、账户存在性、内部 role 映射或堆栈跟踪。
 
-## Current User Resolution
+## 当前用户解析
 
-Prefer an immutable application-facing principal containing only stable identity and authorities. Do not pass `HttpServletRequest` or Spring Security internals through domain code. Load current mutable user state only when the operation requires it.
+优先使用仅包含稳定 identity 和 authority 的不可变应用面向 principal。不要通过 domain 代码传递 `HttpServletRequest` 或 Spring Security 内部。仅在操作需要时加载当前可变用户状态。
 
-For reactive applications, use reactive security context APIs; ThreadLocal assumptions do not cross reactive boundaries safely.
+对于响应式应用，使用响应式安全上下文 API；ThreadLocal 假设不能安全跨响应式边界。
 
-## CORS And Security
+## CORS 与安全
 
-Share one explicit CORS policy with the web boundary. Credentialed browser requests require explicit origins. Preflight must reach the CORS/security filters without accidentally permitting the protected operation itself.
+与 Web 边界共享一个显式 CORS 策略。带凭证的浏览器请求需要显式 origin。Preflight 必须到达 CORS/安全 filter 而不意外允许受保护操作本身。
 
 ## Verification Focus
 
-Useful security evidence includes:
+有用的安全证据包括：
 
-- filter-chain context startup
-- one allowed request and one denied request for every changed protected policy
-- missing, malformed, expired, wrong-issuer/audience, and insufficient-authority token behavior when owned
-- method-level resource ownership denial
-- password hashing and invalid-credential behavior without secret disclosure
-- CSRF behavior matching session or bearer-token client style
-- CORS preflight for the real browser origin boundary
-- stable `401` and `403` response shape
+- filter-chain 上下文启动
+- 每个变更的受保护策略的一个允许请求和一个拒绝请求
+- 当拥有时的缺失、格式错误、过期、错误 issuer/audience 和权限不足的 token 行为
+- 方法级资源归属拒绝
+- 不暴露密钥的密码哈希和无效凭证行为
+- 匹配 session 或 bearer-token 客户端风格的 CSRF 行为
+- 真实浏览器 origin 边界的 CORS preflight
+- 稳定的 `401` 和 `403` 响应形态
 
-## Unsafe Defaults
+## 不安全默认
 
-- Copying a handwritten JWT filter and token service from a tutorial.
-- Treating stateless logout as `SecurityContextHolder.clearContext()` only.
-- Reusing an access-token parser for refresh tokens without token-type enforcement.
-- Disabling CSRF and enabling credentialed CORS without identifying the client model.
-- Hardcoding a localhost origin or signing secret.
-- Logging every invalid token with a stack trace.
-- Adding role tables and authentication endpoints when the accepted phase is unauthenticated.
+- 从教程复制手写 JWT filter 和 token service。
+- 将无状态登出视为仅 `SecurityContextHolder.clearContext()`。
+- 在没有 token 类型强制的情况下将 access-token 解析器复用于 refresh token。
+- 在不识别客户端模型的情况下禁用 CSRF 并启用带凭证的 CORS。
+- 硬编码 localhost origin 或签名密钥。
+- 用堆栈跟踪记录每个无效 token。
+- 在已接受阶段未认证时添加 role 表和认证端点。

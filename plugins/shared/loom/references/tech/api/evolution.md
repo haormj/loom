@@ -1,69 +1,69 @@
-# API Evolution And Compatibility
+# API 演进和兼容性
 
-## Default Position
+## 默认立场
 
-Loom does not require API versioning by default. Do not add `/v1`, deprecation headers, migration guides, or version routers unless the current contract actually needs API lifecycle management.
+Loom 默认不要求 API 版本化。除非当前契约实际需要 API 生命周期管理，否则不要添加 `/v1`、弃用头、迁移指南或版本路由器。
 
-## When Evolution Rules Apply
+## 何时应用演进规则
 
-Apply compatibility rules when one or more are true:
+当一个或多个条件为真时应用兼容性规则：
 
-- the user explicitly asks for versioning or public API stability
-- existing repository APIs already use versions
-- current work changes an existing interface consumed by another app
-- OpenAPI/SDK/codegen clients depend on stable schema
-- the task modifies response fields, status codes, authentication, or request requirements of an accepted interface
+- 用户明确要求版本化或公开 API 稳定性
+- 已有仓库 API 已使用版本
+- 当前工作改变了被另一个应用消费的已有接口
+- OpenAPI/SDK/codegen 客户端依赖稳定 schema
+- 任务修改了已接受接口的响应字段、状态码、认证或请求要求
 
-## Compatibility Rules
+## 兼容性规则
 
-Usually compatible:
+通常兼容：
 
-- adding optional request fields
-- adding response fields that clients can ignore
-- adding new endpoints
-- tightening server-side validation only when invalid data was already rejected by business rules
+- 添加可选请求字段
+- 添加客户端可忽略的响应字段
+- 添加新端点
+- 收紧服务端校验，仅当无效数据已被业务规则拒绝时
 
-Usually breaking:
+通常破坏：
 
-- removing or renaming fields
-- changing field types
-- adding required request fields
-- changing success/error status codes for the same scenario
-- changing auth behavior
-- changing response envelope shape
+- 移除或重命名字段
+- 更改字段类型
+- 添加必需请求字段
+- 更改同一场景的成功/错误状态码
+- 更改认证行为
+- 更改响应封装形态
 
-## Loom Handling
+## Loom 处理
 
-When a breaking change risk exists:
+当存在破坏性变更风险时：
 
-- Architecture should record a risk or decision.
-- Task planning should assign it to the task touching that interface.
-- Implementation should either preserve compatibility or record the intentional change.
-- Review should flag unacknowledged compatibility breaks and identify the responsible repair owner.
+- 架构应记录风险或决策。
+- 任务规划应将其分配给触及该接口的任务。
+- 实现应保持兼容性或记录有意的变更。
+- 评审应标记未确认的兼容性破坏并识别负责的修复方。
 
-## Deprecation And Sunset
+## 弃用和 Sunset
 
-When the current phase intentionally deprecates an accepted API, define the policy rather than only changing code:
+当当前阶段有意弃用一个已接受的 API 时，定义策略而非仅更改代码：
 
-- successor endpoint or response shape
-- deprecation signal, such as `Deprecation` response header or documentation note
-- sunset timing when known
-- migration note or compatibility adapter when a separate client exists
+- 后继端点或响应形态
+- 弃用信号，如 `Deprecation` 响应头或文档说明
+- 已知时的 sunset 时序
+- 存在独立客户端时的迁移说明或兼容适配器
 
-Use `Sunset` and `Link: rel="successor-version"` headers only when the product actually has clients that can consume them. Internal apps can record a simpler migration note.
+仅当产品实际有可消费它们的客户端时才使用 `Sunset` 和 `Link: rel="successor-version"` 头。内部应用可以记录更简单的迁移说明。
 
-## Version Discovery
+## 版本发现
 
-Do not create root version discovery endpoints by default. Add discovery only when:
+默认不要创建根版本发现端点。仅在以下情况添加发现：
 
-- the existing API already exposes version metadata
-- public or separately deployed clients need to negotiate versions
-- OpenAPI/SDK distribution depends on separate versions
+- 已有 API 已暴露版本元数据
+- 公开或独立部署的客户端需要协商版本
+- OpenAPI/SDK 分发依赖独立版本
 
-## Contract File Handling
+## 契约文件处理
 
-If `contract` is also selected, keep versioning reflected in the contract file:
+如果同时选择了 `contract`，在契约文件中反映版本化：
 
-- separate specs per major version when existing repository convention uses that
-- otherwise a single spec with clear server/path conventions
-- no hidden breaking changes without an architecture risk or decision
+- 当已有仓库约定使用时，按主版本分开规范
+- 否则使用单个规范，配以清晰的 server/path 约定
+- 没有架构风险或决策就不应有隐藏的破坏性变更

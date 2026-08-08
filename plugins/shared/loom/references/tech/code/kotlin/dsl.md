@@ -1,33 +1,33 @@
-# Kotlin DSL And Generic Design Quality
+# Kotlin DSL 与泛型设计质量
 
 ## When To Use
 
-- The task introduces or changes a type-safe builder, lambda with receiver, delegated property, inline/reified helper, operator overload, or generic abstraction in Kotlin.
-- Use this when a fluent API or generic boundary is part of the owned implementation. Do not load it for ordinary Kotlin classes that do not define a reusable abstraction.
+- 任务在 Kotlin 中引入或变更类型安全构建器、带接收者的 lambda、委托属性、inline/reified 辅助、操作符重载或泛型抽象。
+- 当流畅 API 或泛型边界是拥有实现的一部分时使用此参考。不要为不定义可复用抽象的普通 Kotlin 类加载它。
 
 ## Implementation Focus
 
-- Design the DSL around a small owned model and make invalid intermediate states difficult to express. Validate the final model at the boundary before it reaches persistence, routing, build configuration, or another side effect.
-- Use a lambda with receiver when the block configures one coherent owner. Keep nested receivers shallow, name ambiguous receivers explicitly, and avoid implicit calls that make it unclear which object is being mutated.
-- Prefer `@DslMarker` when nested builders expose overlapping members. This prevents a child block from accidentally configuring a parent object.
-- Use scope functions for one purpose at a time. `apply`/`also` should not hide validation or I/O; use named functions when a chain contains business decisions or more than one side effect.
-- Keep extension functions and operator overloads unsurprising and domain-owned. Do not redefine common operators to perform I/O, mutate hidden global state, or make control flow difficult to read.
-- Use `inline` and `reified` only when they remove a real type-token or allocation boundary. Avoid exposing implementation-specific generic constraints through public APIs without a compatibility reason.
-- Use delegated properties when the delegate owns observable semantics such as lazy initialization, configuration lookup, or state persistence. Do not use delegation to hide a simple field or lifecycle that should be explicit.
-- Prefer sealed hierarchies and constrained type parameters when they encode a finite protocol. Keep variance and nullable bounds explicit at the public boundary.
+- 围绕小型拥有模型设计 DSL 并使无效中间状态难以表达。在最终模型到达持久化、路由、构建配置或其他副作用之前在边界验证它。
+- 当块配置一个连贯所有者时使用带接收者的 lambda。保持嵌套接收者浅，显式命名模糊接收者，避免使不清楚哪个对象被变更的隐式调用。
+- 当嵌套构建器暴露重叠成员时优先使用 `@DslMarker`。这防止子块意外配置父对象。
+- 一次只为一目的使用作用域函数。`apply`/`also` 不应隐藏验证或 I/O；当链包含业务决策或多个副作用时使用命名函数。
+- 保持扩展函数和操作符重载不令人意外且领域拥有。不要重新定义常见操作符来执行 I/O、变更隐藏全局状态或使控制流难以阅读。
+- 仅当 `inline` 和 `reified` 移除真实的类型令牌或分配边界时才使用。没有兼容性原因不要通过公共 API 暴露实现特定的泛型约束。
+- 当委托拥有可观察语义（如延迟初始化、配置查找或状态持久化）时使用委托属性。不要用委托隐藏应该显式的简单字段或生命周期。
+- 当 sealed 层次结构和受约束类型参数编码有限协议时优先使用。在公共边界保持变异和可空边界显式。
 
 ## Verification Focus
 
-- Test builder defaults, required fields, nested-scope restrictions, invalid combinations, generic type selection, and delegation lifecycle behavior through the public DSL.
-- Compile or run the narrowest module target that consumes the abstraction. For a published or shared API, verify source compatibility and representative call sites.
-- Check that evaluation order, receiver ownership, exceptions, and side effects remain visible in tests. Do not use a sample that only proves the fluent syntax compiles.
+- 通过公共 DSL 测试构建器默认值、必填字段、嵌套作用域限制、无效组合、泛型类型选择和委托生命周期行为。
+- 编译或运行消费该抽象的最窄模块目标。对于已发布或共享 API，验证源码兼容性和代表性调用点。
+- 检查求值顺序、接收者所有权、异常和副作用在测试中保持可见。不要使用仅证明流畅语法编译的示例。
 
 ## Evidence Focus
 
-- In the evidence summary, name the abstraction decision: builder state model, receiver scope, DSL marker, extension/operator boundary, delegation lifecycle, inline/reified use, or generic variance.
-- Record the invalid-state or compatibility case that was verified, not only the command that compiled the happy path.
+- 在证据总结中，说明抽象决策：构建器状态模型、接收者作用域、DSL 标记、扩展/操作符边界、委托生命周期、inline/reified 使用或泛型变异。
+- 记录验证的无效状态或兼容性用例，而非仅编译快乐路径的命令。
 
 ## Failure Modes
 
-- Do not add a DSL because a builder would be shorter to type. A regular constructor or named function is preferable when it is clearer.
-- Do not copy an external DSL sample without adapting receiver ownership, validation, naming, and lifecycle to the repository's existing API.
+- 不要因为构建器更短而添加 DSL。当更清晰时普通构造函数或命名函数更可取。
+- 不要在没有将接收者所有权、验证、命名和生命周期适配到仓库现有 API 的情况下复制外部 DSL 示例。

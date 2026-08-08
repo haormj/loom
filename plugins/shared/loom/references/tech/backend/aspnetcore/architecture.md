@@ -1,25 +1,25 @@
-# ASP.NET Core Application Architecture
+# ASP.NET Core 应用架构
 
-Implement the architecture style and module boundaries accepted in the architecture contract. Clean Architecture, vertical slices, CQRS, and MediatR are options, not framework defaults; preserve the repository's established shape unless the task owns a structural decision.
+实现架构契约中已接受的架构风格和模块边界。Clean Architecture、vertical slice、CQRS 和 MediatR 是选项，而非框架默认；除非任务拥有结构性决策，否则保留仓库已有的架构形态。
 
-## Dependency Direction
+## 依赖方向
 
-For a layered architecture, dependencies point toward application/domain policy:
+对于分层架构，依赖指向 application/domain 策略：
 
-| Boundary | Owns | Must not own |
+| 边界 | 拥有 | 不得拥有 |
 |---|---|---|
-| Domain | entities, value objects, invariants, domain failures | ASP.NET, EF Core, transport DTOs, external clients |
-| Application | use cases, ports, orchestration, transaction intent | HTTP binding, provider configuration |
-| Infrastructure | EF/client/message/file adapters | product policy hidden in adapters |
-| Web/API | transport binding, identity context, result mapping | persistence queries and business workflows |
+| Domain | 实体、值对象、不变量、领域失败 | ASP.NET、EF Core、传输 DTO、外部客户端 |
+| Application | 用例、端口、编排、事务意图 | HTTP 绑定、provider 配置 |
+| Infrastructure | EF/client/message/file 适配器 | 隐藏在适配器中的产品策略 |
+| Web/API | 传输绑定、identity 上下文、结果映射 | 持久化查询和业务工作流 |
 
-Project references and namespaces should enforce the accepted direction. A folder named `Domain` inside the web project does not create an architectural boundary by itself.
+项目引用和命名空间应强制执行已接受的依赖方向。Web 项目中名为 `Domain` 的文件夹本身并不构成架构边界。
 
-For a modular monolith or vertical-slice design, keep capability ownership equally explicit: one slice/module owns its commands, queries, rules, storage adapter, and public contract. Shared projects should contain stable cross-cutting primitives, not miscellaneous code imported by every feature.
+对于模块化单体或 vertical-slice 设计，同样要明确能力归属：一个 slice/module 拥有其命令、查询、规则、存储适配器和公共契约。共享项目应包含稳定的横切基础设施，而非被每个功能导入的杂项代码。
 
-## Use-Case Boundary
+## 用例边界
 
-Represent each mutating or query operation with an application service/handler whose input, output, cancellation, authorization context, failures, and transaction responsibility are visible.
+用应用 service/handler 表示每个变更或查询操作，使其输入、输出、取消、授权上下文、失败和事务责任清晰可见。
 
 ```csharp
 public sealed record ApproveOrder(Guid OrderId, Guid ActorId);
@@ -40,55 +40,55 @@ public sealed class ApproveOrderHandler(
 }
 ```
 
-The example shows an explicit application boundary, not a requirement to create repository/unit-of-work wrappers around EF Core when the accepted design uses `DbContext` directly.
+该示例展示了一个明确的应用边界，并非要求在已接受设计直接使用 `DbContext` 时仍然创建 repository/unit-of-work 包装器。
 
-## CQRS And MediatR
+## CQRS 与 MediatR
 
-Use command/query separation when read and write responsibilities, authorization, validation, transactions, or scaling genuinely differ. Do not duplicate identical DTOs/handlers for ceremonial CQRS.
+当读和写的职责、授权、验证、事务或扩展性确实不同时，使用命令/查询分离。不要为了形式化的 CQRS 重复创建相同的 DTO/handler。
 
-MediatR is useful only when the repository selects it and pipeline behaviors remove real cross-cutting duplication. Register handlers from the correct assemblies and keep behavior order deliberate. Validation, authorization, transaction, idempotency, and logging behaviors must not each execute the handler or hide side effects.
+仅当仓库选择了 MediatR 且 pipeline behavior 消除了真实的横切重复时才使用它。从正确的程序集注册 handler，并保持 behavior 顺序的慎重性。验证、授权、事务、幂等和日志 behavior 不得各自执行 handler 或隐藏副作用。
 
-Do not put EF queries in every endpoint simply because query handlers are thin. Keep query ownership aligned with the selected application/data boundary and project directly to read models.
+不要仅因为 query handler 很薄就在每个端点放 EF 查询。保持查询归属与所选的 application/data 边界一致，并直接投影到读模型。
 
-## Dependency Injection And Composition
+## 依赖注入与组合
 
-Register application services and adapter implementations in explicit composition extensions close to their owning projects. Use scoped lifetimes for request/unit-of-work services, singleton only for thread-safe stateless/shared resources, and transient for cheap independent components.
+在靠近所属项目的显式组合扩展中注册应用服务和适配器实现。请求/工作单元服务使用 scoped 生命周期，仅对线程安全无状态/共享资源使用 singleton，对廉价的独立组件使用 transient。
 
-Avoid service locator access through `IServiceProvider` in business code. Factories are appropriate when runtime selection is part of the accepted design; inject narrow factory interfaces instead of the container.
+避免在业务代码中通过 `IServiceProvider` 进行 service locator 访问。当运行时选择是已接受设计的一部分时，工厂是合适的；注入窄接口的工厂而非容器。
 
-Validate required options during startup and keep infrastructure details out of domain/application constructors. Prevent circular project references rather than masking them with shared utility assemblies.
+在启动时验证必需的选项，并将基础设施细节排除在 domain/application 构造函数之外。防止循环项目引用，而非用共享工具程序集来掩盖。
 
-## Validation And Failure Boundaries
+## 验证与失败边界
 
-Transport validation handles malformed HTTP input. Application validation handles use-case preconditions and authorization. Domain objects enforce invariants that must hold across entry points. Database constraints remain the final concurrent integrity boundary.
+传输验证处理格式错误的 HTTP 输入。应用验证处理用例前置条件和授权。领域对象强制执行必须跨入口点保持的不变量。数据库约束是最终的并发完整性边界。
 
-Use typed domain/application failures and translate them once at the API boundary. Do not make domain exceptions inherit ASP.NET HTTP exception types or leak EF/provider exceptions through handler responses.
+使用类型化的 domain/application 失败，并在 API 边界处转换一次。不要让领域异常继承 ASP.NET HTTP 异常类型，也不要让 EF/provider 异常泄漏到 handler 响应中。
 
-## Transactions And Side Effects
+## 事务与副作用
 
-One use case owns the transaction for its persisted invariants. Repositories should not silently commit independently. Keep HTTP/email/queue/file calls outside database transactions unless the accepted design explicitly coordinates them.
+一个用例拥有其持久化不变量的事务。Repository 不应独立地静默提交。除非已接受设计明确协调，否则将 HTTP/email/queue/file 调用保持在数据库事务之外。
 
-For durable events, use the accepted outbox or messaging boundary and make handlers idempotent where duplicate delivery is possible. In-process MediatR notifications are not a durable event bus.
+对于持久事件，使用已接受的 outbox 或消息边界，并在可能重复投递时使 handler 幂等。进程内 MediatR notification 不是持久事件总线。
 
-## Verification
+## 验证
 
-- Build the affected project graph to catch illegal/missing references and DI registration errors.
-- Test domain invariants without ASP.NET or EF infrastructure.
-- Test handlers/services for authorization, state transition, transaction, cancellation, and failure mapping.
-- Compile a production-representative service provider when registrations or pipeline behaviors change.
-- Add architecture dependency tests only when the repository uses them and the decision is important enough to enforce mechanically.
-- Exercise HTTP mapping separately when endpoints are also task-owned.
+- 构建受影响的项目图，以捕获非法/缺失的引用和 DI 注册错误。
+- 在不依赖 ASP.NET 或 EF 基础设施的情况下测试领域不变量。
+- 测试 handler/service 的授权、状态转换、事务、取消和失败映射。
+- 当注册或 pipeline behavior 变更时，编译具有生产代表性的 service provider。
+- 仅当仓库使用架构依赖测试且该决策足够重要需要机制化强制时，才添加架构依赖测试。
+- 当端点也属于任务拥有时，单独验证 HTTP 映射。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the accepted decision, owner module/project, changed dependency direction, and the test/build evidence proving it. A namespace layout, generated project tree, or passing endpoint alone does not prove architecture boundaries or transaction ownership.
+标识已接受的决策、所属模块/项目、变更的依赖方向，以及证明它的测试/构建证据。命名空间布局、生成的项目树或通过的端点本身不能证明架构边界或事务归属。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Clean Architecture or MediatR introduced without an accepted architecture decision.
-- Domain types depending on ASP.NET, EF Core, or transport DTOs.
-- Shared projects becoming a dumping ground for feature logic.
-- One handler class per trivial getter with no meaningful separation.
-- `IServiceProvider` used as a service locator.
-- Repositories committing independently inside one use case.
-- In-process notifications claimed as durable integration events.
+- 在没有已接受架构决策的情况下引入 Clean Architecture 或 MediatR。
+- Domain 类型依赖 ASP.NET、EF Core 或传输 DTO。
+- 共享项目成为功能逻辑的垃圾场。
+- 每个简单的 getter 一个 handler 类，没有有意义的分离。
+- `IServiceProvider` 被用作 service locator。
+- 在一个用例中 repository 独立提交。
+- 将进程内 notification 声称为持久集成事件。

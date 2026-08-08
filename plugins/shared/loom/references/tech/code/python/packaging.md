@@ -1,41 +1,41 @@
-# Python Packaging Quality
+# Python 打包质量
 
 ## When To Use
 
-- The task changes `pyproject.toml`, package layout, dependency declarations, lock files, CLI entry points, build metadata, type package markers, import paths, or distribution settings.
-- Use this when packaging decisions affect installation, runtime importability, dependency resolution, or release artifacts.
-- If the task only changes Python source inside an established package, preserve packaging files unless the source change requires them.
+- 任务变更了 `pyproject.toml`、包布局、依赖声明、锁文件、CLI 入口点、构建元数据、类型包标记、导入路径或分发设置。
+- 当打包决策影响安装、运行时可导入性、依赖解析或发布产物时使用此参考。
+- 如果任务仅变更已建立包内的 Python 源码，保持打包文件不变，除非源码变更需要它们。
 
 ## Implementation Focus
 
-- Follow the repository's package manager and build backend. Do not switch between Poetry, Hatch, setuptools, uv, pip-tools, or plain requirements as an incidental change.
-- Keep application and library dependency rules distinct. Applications can use lock files and pinned runtime dependencies; libraries should usually use compatible version ranges and avoid over-pinning transitive behavior.
-- Use dependency groups or extras according to the existing project style. Do not put test, lint, docs, or dev-only tools in runtime dependencies.
-- Preserve `src/` layout or flat layout based on the repository. Do not move packages just to match a template.
-- Add `py.typed` only for packages that intentionally expose typed public APIs. Ensure it is included in package data when distribution is relevant.
-- Keep CLI entry points in packaging metadata when commands must be installed by users. Direct script paths are acceptable only when the repository already uses them for local tooling.
-- Keep package version source of truth clear. Do not duplicate version constants across source, metadata, and release scripts without an existing synchronization pattern.
-- Update lock files only when dependency changes require it. Do not churn lock files for source-only changes.
-- Include non-Python package data deliberately through the existing backend's package-data mechanism. Do not rely on files being present because they exist in the repo.
-- Keep import paths stable for consumers; moving modules needs compatibility exports or explicit migration when the package is public.
+- 遵循仓库的包管理器和构建后端。不要在 Poetry、Hatch、setuptools、uv、pip-tools 或纯 requirements 之间作为附带变更切换。
+- 保持应用和库依赖规则区分。应用可以使用锁文件和固定的运行时依赖；库通常应使用兼容版本范围并避免过度固定传递行为。
+- 根据现有项目风格使用依赖组或 extras。不要将测试、lint、文档或仅开发工具放在运行时依赖中。
+- 基于仓库保留 `src/` 布局或扁平布局。不要仅为匹配模板而移动包。
+- 仅对有意暴露类型化公共 API 的包添加 `py.typed`。确保在分发相关时将其包含在包数据中。
+- 当命令必须由用户安装时，将 CLI 入口点保留在打包元数据中。仅当仓库已将其用于本地工具时，直接脚本路径才可接受。
+- 保持包版本真相来源清晰。不要在没有现有同步模式的情况下在源码、元数据和发布脚本之间复制版本常量。
+- 仅在依赖变更需要时更新锁文件。不要为仅源码变更而搅动锁文件。
+- 通过现有后端的包数据机制有意包含非 Python 包数据。不要依赖文件存在因为它们在仓库中存在。
+- 为消费者保持导入路径稳定；移动模块需要兼容性导出或显式迁移（当包是公共的时）。
 
 ## Decision Rules
 
-- Treat `pyproject.toml` as the selected build/configuration source of truth. Do not switch Poetry, Hatch, setuptools, uv, pip-tools, or plain requirements because an external template uses another backend.
-- Keep runtime, optional, test, lint, docs, and build dependencies in their existing scopes. A package needed only for tests must not become a production dependency.
-- Preserve the existing `src/` or flat layout and namespace. When adding a package, verify importability from an installed build, not only from the repository working directory.
-- Add `py.typed` and package-data declarations only when the project intentionally exposes typed APIs or non-Python resources. Confirm the build backend includes them.
-- Keep one version source and update lock files only when dependency metadata changes require it. Source-only changes should not churn lock files.
-- Treat CLI entry points and public import paths as compatibility contracts. Test the installed/local command and retain explicit migration behavior for renamed modules.
+- 将 `pyproject.toml` 视为选定的构建/配置真相来源。不要因为外部模板使用另一个后端而在 Poetry、Hatch、setuptools、uv、pip-tools 或纯 requirements 之间切换。
+- 将运行时、可选、测试、lint、文档和构建依赖保持在各自现有范围内。仅用于测试的包不得成为生产依赖。
+- 保留现有的 `src/` 或扁平布局和命名空间。添加包时，从已安装的构建验证可导入性，而非仅从仓库工作目录。
+- 仅当项目有意暴露类型化 API 或非 Python 资源时才添加 `py.typed` 和包数据声明。确认构建后端包含它们。
+- 保持一个版本来源，仅在依赖元数据变更需要时更新锁文件。仅源码变更不应搅动锁文件。
+- 将 CLI 入口点和公共导入路径视为兼容性契约。测试已安装/本地命令，并为重命名的模块保留显式迁移行为。
 
 ## Verification Focus
 
-- Run an import smoke test for changed package/module paths.
-- Run the repository's build command when packaging metadata, package data, entry points, or dependencies changed.
-- Validate CLI entry points by invoking the installed or local command when added or changed.
-- Confirm runtime dependencies, optional/dev dependencies, lock files, and package data changed only for task-relevant reasons.
-- Verify a clean-environment install when packaging metadata or entry points change; a local import can be satisfied by undeclared repository files.
+- 为变更的包/模块路径运行导入冒烟测试。
+- 当打包元数据、包数据、入口点或依赖变更时，运行仓库的构建命令。
+- 当添加或变更 CLI 入口点时，通过调用已安装或本地命令来验证。
+- 确认运行时依赖、可选/开发依赖、锁文件和包数据仅因任务相关原因而变更。
+- 当打包元数据或入口点变更时，验证干净环境安装；本地导入可能由未声明的仓库文件满足。
 
 ## Evidence Focus
 
-- In the evidence summary, name the packaging decision: build backend, dependency scope, package layout, typed marker, CLI entry point, version source, lock update, package data, or import compatibility.
+- 在证据总结中，说明打包决策：构建后端、依赖范围、包布局、类型标记、CLI 入口点、版本来源、锁更新、包数据或导入兼容性。

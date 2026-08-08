@@ -1,83 +1,83 @@
-# C++ Ownership And Interface Delivery
+# C++ 所有权与接口交付
 
 ## When To Use
 
-Use this reference for task-owned C++ source/header changes. Preserve the repository's declared language standard, compiler/platform matrix, error policy, ABI/public API, build system, and local Core Guidelines conventions.
+此参考用于任务拥有的 C++ 源码/头文件变更。保留仓库声明的语言标准、编译器/平台矩阵、错误策略、ABI/公共 API、构建系统和本地 Core Guidelines 约定。
 
-Do not adopt C++20/23 syntax because the technical baseline names C++ generally; version-specific guidance is selected separately.
+不要因为技术基线笼统地命名 C++ 就采用 C++20/23 语法；版本特定指导单独选择。
 
 ## Implementation Focus
 
 ### Ownership And RAII
 
-Make resource ownership explicit for memory, handles, files, sockets, locks, transactions, threads, GPU/device objects, mapped regions, and temporary state.
+使内存、句柄、文件、socket、锁、事务、线程、GPU/设备对象、映射区域和临时状态的资源所有权显式。
 
-Prefer value semantics and the rule of zero. Use `std::unique_ptr` for exclusive heap ownership, `std::shared_ptr` only for demonstrated shared lifetime, `std::weak_ptr` to break observing cycles, and pointers/references/views for non-owning access with documented lifetime.
+优先使用值语义和零原则。对独占堆所有权使用 `std::unique_ptr`，仅对已证明的共享生命周期使用 `std::shared_ptr`，用 `std::weak_ptr` 打断观察循环，对非拥有访问使用指针/引用/视图并记录生命周期。
 
-Avoid application-level raw `new`/`delete`. Isolate allocator, placement construction, C interop, or intrusive ownership and prove alignment, destruction, exception, and transfer rules.
+避免应用级原始 `new`/`delete`。隔离分配器、placement 构造、C 互操作或侵入式所有权并证明对齐、销毁、异常和转移规则。
 
-Resource wrappers should be non-copyable or deeply copyable by contract and safely movable. A moved-from object remains valid for destruction/assignment; mark moves `noexcept` when container behavior depends on it.
+资源包装器应按契约不可拷贝或深拷贝且可安全移动。被移动的对象保持可用于销毁/赋值；当容器行为依赖时将移动标记为 `noexcept`。
 
 ### Value And View Lifetimes
 
-Use `std::span`, `std::string_view`, iterators, and references only when the source outlives every use. Do not return views into temporaries, invalidated containers, local buffers, or strings reconstructed during conversion.
+仅当源码比每次使用活得更久时才使用 `std::span`、`std::string_view`、迭代器和引用。不要返回指向临时对象、已失效容器、本地缓冲区或转换期间重建的字符串的视图。
 
-Know invalidation rules for vector growth, erase, unordered rehash, string mutation, and ranges/views. Store stable IDs/indices only when their update semantics are explicit.
+了解 vector 增长、erase、unordered rehash、字符串变更和 range/view 的失效规则。仅当更新语义显式时才存储稳定的 ID/索引。
 
-Prefer returning values and rely on copy elision. Do not add `std::move` to a local return when it can inhibit NRVO.
+优先返回值并依赖拷贝消除。当可能抑制 NRVO 时不要对局部返回添加 `std::move`。
 
 ### Interfaces And Const Correctness
 
-Use narrow types and explicit constructors for conversions that could surprise callers. Keep nullable/optional/error distinctions visible rather than encoding several meanings in a pointer or sentinel.
+对可能使调用者意外的转换使用窄类型和显式构造函数。保持可空/可选/错误区分可见，而非在指针或哨兵中编码多种含义。
 
-Apply `const` to observable read-only operations and data access without using `const_cast` to bypass ownership. Pass by value when the function consumes/copies a small value, by reference/view for non-owning access, and by owning value/pointer for transfer.
+将 `const` 应用于可观察的只读操作和数据访问，而不使用 `const_cast` 绕过所有权。当函数消费/拷贝小值时按值传递，非拥有访问时按引用/视图传递，转移时按拥有值/指针传递。
 
-Preserve virtual destructor and override/final requirements. Avoid calling virtual functions from constructors/destructors and avoid object slicing through by-value base parameters/containers.
+保留虚析构函数和 override/final 要求。避免从构造函数/析构函数调用虚函数，避免通过按值基类参数/容器发生对象切片。
 
 ### Error And Exception Safety
 
-Follow one recoverable-error style per boundary: exceptions, expected/status/result, or error codes. Assertions/undefined behavior are not user-input or runtime failure handling.
+每个边界遵循一种可恢复错误风格：异常、expected/status/result 或错误码。断言/未定义行为不是用户输入或运行时失败处理。
 
-State exception guarantees for mutating/resource operations. Build new state first or use rollback guards/transactions so failure does not leak or leave partially committed invariants.
+为变更/资源操作声明异常保证。先构建新状态或使用回滚守卫/事务，使失败不泄露或留下部分提交的不变式。
 
-Destructors and cleanup paths must not throw. Translate C/library/system exceptions/errors at module/API boundaries without exposing secrets or unstable implementation details.
+析构函数和清理路径不得抛出。在模块/API 边界转换 C/库/系统异常/错误，不暴露密钥或不稳定的实现细节。
 
 ### Headers, ODR, And ABI
 
-Headers include what public declarations require, avoid `using namespace`, macros, anonymous namespaces, and non-inline definitions that violate the One Definition Rule.
+头文件包含公共声明所需内容，避免 `using namespace`、宏、匿名命名空间和违反唯一定义规则的非内联定义。
 
-Keep implementation dependencies in source/Pimpl where build time or ABI stability warrants it; do not add Pimpl mechanically to internal code.
+在构建时间或 ABI 稳定性需要时将实现依赖保留在源码/Pimpl 中；不要对内部代码机械地添加 Pimpl。
 
-For externally consumed libraries, assess layout/vtable/export visibility/calling convention/symbol/version compatibility before changing public classes, enums, templates, exceptions, or allocator ownership.
+对于外部消费的库，在变更公共类、枚举、模板、异常或分配器所有权之前评估布局/vtable/导出可见性/调用约定/符号/版本兼容性。
 
-Use fixed-width integers only when width is the wire/file/hardware contract. Validate narrowing, signed/unsigned conversion, overflow, shifts, and size calculations.
+仅当宽度是线上/文件/硬件契约时才使用定宽整数。验证窄化、有符号/无符号转换、溢出、位移和大小计算。
 
 ### Undefined Behavior And Interop
 
-Treat lifetime, bounds, alignment, aliasing, data races, iterator invalidation, use-after-move, signed overflow, invalid shifts, and uninitialized reads as correctness defects.
+将生命周期、边界、对齐、别名、数据竞争、迭代器失效、use-after-move、有符号溢出、无效位移和未初始化读取视为正确性缺陷。
 
-At C/OS boundaries, check every status/length/ownership contract, keep callbacks' user data alive, avoid exceptions crossing C ABI, and release resources through matching allocator/API families.
+在 C/OS 边界，检查每个状态/长度/所有权契约，保持回调的用户数据存活，避免异常跨越 C ABI，并通过匹配的分配器/API 族释放资源。
 
-Prefer C++ casts and keep `reinterpret_cast`/`const_cast` inside reviewed low-level boundaries with invariant tests.
+优先使用 C++ 转换并将 `reinterpret_cast`/`const_cast` 保留在已审查的低级边界内并具有不变式测试。
 
 ## Verification Focus
 
-- Build changed targets with the exact declared standard and affected compiler/platform configuration.
-- Treat new changed-file warnings as defects under repository policy.
-- Test success, invalid/boundary input, ownership transfer, moved-from behavior, cleanup, and error/exception guarantees.
-- Run ASan/UBSan or equivalent when lifetime, bounds, casts, alignment, interop, or low-level resources change and supported.
-- Check public headers independently and ABI/API compatibility when consumers exist.
+- 用确切的声明标准和受影响的编译器/平台配置构建变更目标。
+- 在仓库策略下将新的变更文件警告视为缺陷。
+- 测试成功、无效/边界输入、所有权转移、被移动行为、清理和错误/异常保证。
+- 在生命周期、边界、转换、对齐、互操作或低级资源变更且支持时运行 ASan/UBSan 或等效工具。
+- 当消费者存在时独立检查公共头和 ABI/API 兼容性。
 
 ## Evidence Focus
 
-Name the owner and lifetime, interface/error contract, exception guarantee, ABI/header decision, and focused behavior/sanitizer proof. Compilation alone does not establish resource release, view lifetime, rollback, or ABI safety.
+说明所有者和生命周期、接口/错误契约、异常保证、ABI/头文件决策和聚焦行为/sanitizer 证明。仅编译不建立资源释放、视图生命周期、回滚或 ABI 安全。
 
 ## Unsafe Defaults
 
-- `shared_ptr` used because ownership is unclear.
-- Views/references returned without source lifetime proof.
-- Mixed exception/status/null/sentinel policy for one failure class.
-- Raw casts or signed/unsigned conversions used to silence diagnostics.
-- Public header/layout changed without consumer/ABI analysis.
-- Assertions used for external/runtime errors.
-- Sanitizer absence presented as proof of no undefined behavior.
+- 因所有权不清晰而使用 `shared_ptr`。
+- 没有源码生命周期证明就返回视图/引用。
+- 对一个失败类混合异常/状态/null/哨兵策略。
+- 使用原始转换或有符号/无符号转换来静默诊断。
+- 没有消费者/ABI 分析就变更公共头/布局。
+- 对外部/运行时错误使用断言。
+- 将 sanitizer 缺席作为无未定义行为的证明。

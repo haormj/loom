@@ -1,64 +1,64 @@
-# PostgreSQL Schema Mapping
+# PostgreSQL Schema 映射
 
-Use this file with `tech/code/sql/schema.md` when the accepted persistence provider is PostgreSQL and the task owns schema, migration, entity mapping, or database-backed invariants.
+当已接受的持久化提供者是 PostgreSQL 且任务拥有 schema、迁移、实体映射或数据库支持的不变式时，将此文件与 `tech/code/sql/schema.md` 一起使用。
 
 ## When To Use
 
-- Read the repository's PostgreSQL version, driver, ORM, migration tool, extension policy, and existing migration style before choosing syntax.
-- Apply provider rules only to fields, constraints, indexes, and migrations owned by the task.
-- Keep server administration and unrelated platform work outside this implementation reference.
+- 在选择语法之前，阅读仓库的 PostgreSQL 版本、驱动程序、ORM、迁移工具、扩展策略和现有迁移风格。
+- 仅将提供者规则应用于任务拥有的字段、约束、索引和迁移。
+- 将服务器管理和不相关的平台工作排除在此实现参考之外。
 
 ## Implementation Focus
 
-- Choose identity columns, application-generated UUIDs, or another key strategy from domain needs, migration policy, ORM support, and existing schema. Do not introduce `SERIAL` only because it is familiar.
-- Use `TIMESTAMPTZ` when the business value represents an instant across time zones. Keep application serialization and comparison rules aligned.
-- Use `NUMERIC` for exact quantities and match precision/scale to domain and API contracts.
-- Use `TEXT` when no length invariant exists; use bounded text types when the business rule or index strategy requires a limit.
-- Use JSONB, arrays, INET, or CIDR only when the domain and query contract need their semantics. Stable, frequently queried fields should remain typed columns when that keeps ownership clear.
-- Do not use `gen_random_uuid()` or another extension function unless the extension is an accepted migration dependency and is verified in the target environment.
+- 从领域需求、迁移策略、ORM 支持和现有 schema 中选择标识列、应用生成的 UUID 或其他键策略。不要仅因为熟悉就引入 `SERIAL`。
+- 当业务值表示跨时区的时刻时使用 `TIMESTAMPTZ`。保持应用序列化和比较规则对齐。
+- 对精确量使用 `NUMERIC` 并将精度/标度与领域和 API 契约匹配。
+- 当不存在长度不变式时使用 `TEXT`；当业务规则或索引策略需要限制时使用有界文本类型。
+- 仅当领域和查询契约需要其语义时才使用 JSONB、数组、INET 或 CIDR。稳定的、频繁查询的字段在保持所有权清晰时应保留为类型化列。
+- 除非扩展是已接受的迁移依赖且在目标环境中已验证，否则不要使用 `gen_random_uuid()` 或其他扩展函数。
 
 ## Constraints And Indexes
 
-- Define primary keys, foreign keys, unique constraints, check constraints, and nullability at the database layer for durable invariants.
-- Use partial indexes, GIN, GiST, BRIN, or covering indexes only for a named query/access path and supported provider version.
-- Treat partitioning as an architecture decision backed by data volume, retention, write pattern, and query evidence. It is not a default schema step.
-- Keep cascade behavior aligned with domain ownership and migration safety.
+- 为持久不变式在数据库层定义主键、外键、唯一约束、检查约束和可空性。
+- 仅对命名查询/访问路径和受支持的提供者版本使用部分索引、GIN、GiST、BRIN 或覆盖索引。
+- 将分区视为由数据量、保留、写入模式和查询证据支持的架构决策。它不是默认 schema 步骤。
+- 保持级联行为与领域所有权和迁移安全性对齐。
 
 ## Migration And ORM Alignment
 
-- Keep migration DDL, ORM mappings, extension installation, enum representation, nullability, defaults, and API DTOs aligned.
-- Review a clean migration path and an upgrade path when existing data is in scope.
-- Do not hide provider features in auto-generated schema changes without reviewing the generated migration.
+- 保持迁移 DDL、ORM 映射、扩展安装、枚举表示、可空性、默认值和 API DTO 对齐。
+- 当现有数据在范围内时，审查干净迁移路径和升级路径。
+- 不要在未审查生成迁移的情况下将提供者特性隐藏在自动生成的 schema 变更中。
 
 ## Compatibility Checklist
 
-- Confirm whether required extensions are an accepted migration dependency and are available in every environment owned by the task.
-- Compare application nullability with PostgreSQL column nullability and default expressions.
-- Keep timestamp storage, application serialization, and timezone comparisons aligned.
-- Check enum, domain, JSONB, array, network, and numeric mappings in the driver and ORM before changing an existing column.
-- Check foreign-key types, collations, and referenced key definitions on both sides of every relationship.
-- Confirm that partial, GIN, GiST, BRIN, or covering indexes are supported by the target PostgreSQL version and match the query predicate.
-- Treat partitioning as a separate architecture decision with migration and query ownership, not as a schema decoration.
+- 确认所需扩展是否是已接受的迁移依赖且在任务拥有的每个环境中可用。
+- 将应用可空性与 PostgreSQL 列可空性和默认表达式比较。
+- 保持时间戳存储、应用序列化和时区比较对齐。
+- 在更改现有列之前，检查驱动程序和 ORM 中的枚举、域、JSONB、数组、网络和数字映射。
+- 检查每个关系两侧的外键类型、排序规则和引用键定义。
+- 确认目标 PostgreSQL 版本支持部分、GIN、GiST、BRIN 或覆盖索引且匹配查询谓词。
+- 将分区视为具有迁移和查询所有权的单独架构决策，而非 schema 装饰。
 
 ## Persistence Shape Review
 
-- Name the entity or table owner, durable invariant, migration owner, and query path affected by the change.
-- State whether the change is additive, compatible with existing rows, or requires a data backfill.
-- Keep API read/write models separate from generated values, internal flags, and storage-only fields.
-- Verify that a failed migration or partial write does not leave a state that the application cannot read.
+- 说明受变更影响的实体或表所有者、持久不变式、迁移所有者和查询路径。
+- 说明变更是添加性的、与现有行兼容的，还是需要数据回填。
+- 将 API 读写模型与生成值、内部标志和仅存储字段分开。
+- 验证失败的迁移或部分写入不会留下应用无法读取的状态。
 
 ## Verification Focus
 
-- Run migrations or application startup against the configured PostgreSQL target or compatible provider.
-- Prove UUID/identity generation, timestamp semantics, JSONB/array mapping, constraints, index behavior, and relations touched by the task.
-- Record the PostgreSQL version, extension dependency, and provider behavior verified.
+- 针对配置的 PostgreSQL 目标或兼容提供者运行迁移或应用启动。
+- 证明任务涉及的 UUID/标识生成、时间戳语义、JSONB/数组映射、约束、索引行为和关系。
+- 记录 PostgreSQL 版本、扩展依赖和验证的提供者行为。
 
 ## Evidence Focus
 
-- In the evidence summary, name the schema decision made: type mapping, identity, extension dependency, constraint, index, migration compatibility, or ORM alignment.
+- 在证据总结中，说明所做的 schema 决策：类型映射、标识、扩展依赖、约束、索引、迁移兼容性或 ORM 对齐。
 
 ## Risks To Avoid
 
-- Assuming every PostgreSQL installation has the required extension enabled.
-- Introducing partitioning, RLS, or custom types because the provider supports them without a current requirement.
-- Testing PostgreSQL-specific types or indexes only with SQLite, H2, or an in-memory mock.
+- 假设每个 PostgreSQL 安装都启用了所需扩展。
+- 因为提供者支持就引入分区、RLS 或自定义类型而没有当前需求。
+- 仅用 SQLite、H2 或内存 mock 测试 PostgreSQL 特定类型或索引。

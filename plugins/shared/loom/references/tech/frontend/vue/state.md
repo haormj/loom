@@ -1,81 +1,81 @@
-# Vue State And Pinia
+# Vue 状态与 Pinia
 
-Apply state guidance only when the task owns shared client state, API-backed state, client persistence, selected/draft workflow state, optimistic transitions, or store lifetime. Static/presentational Vue work should not create a store.
+仅当任务拥有共享客户端状态、API 支持的状态、客户端持久化、选定/草稿工作流状态、乐观转换或 store 生命周期时应用状态指导。静态/展示型 Vue 工作不应创建 store。
 
-## Choose The Owner
+## 选择所有者
 
-Keep state local to a component/composable when one surface owns it. Use a Pinia store for cross-component/route workflows, authenticated identity, shared commands, or state with an application-level lifetime.
+当一个界面拥有状态时将其保持为组件/composable 本地。对于跨组件/路由工作流、认证标识、共享命令或具有应用级生命周期的状态使用 Pinia store。
 
-Keep remote cached data in the repository's query/data layer when present. Do not duplicate the same resource in an effect ref, query cache, and Pinia store without a defined source of truth.
+当仓库存在 query/数据层时将远程缓存数据保留在其中。不要在没有定义真相来源的情况下将同一资源在 effect ref、query cache 和 Pinia store 中重复。
 
-Separate server records, editable drafts, selected snapshots, filters/page, pending commands, validation errors, optimistic overlays, and persisted preferences according to lifetime.
+按生命周期分开服务端记录、可编辑草稿、选定快照、筛选/分页、待处理命令、验证错误、乐观覆盖层和持久化偏好。
 
-## Store Design
+## Store 设计
 
-Preserve the repository's setup/options store convention. Organize stores by product capability and ownership rather than one store per component or one application-wide mega-store.
+保留仓库的 setup/options store 约定。按产品能力和所有权组织 store，而非每个组件一个 store 或一个应用级巨型 store。
 
-State is serializable/inspectable where practical; getters derive values; actions own transitions and side effects shared by consumers. Presentational toggles usually remain local.
+状态在可行处可序列化/可检查；getter 派生值；action 拥有消费者共享的转换和副作用。展示型开关通常保持本地。
 
-Use `storeToRefs` when destructuring reactive state/getters; actions can be destructured directly. Avoid copying store refs into separate refs that drift.
+解构响应式状态/getter 时使用 `storeToRefs`；action 可直接解构。避免将 store ref 复制到会漂移的独立 ref。
 
-Return readonly state from composables/providers when callers should use commands rather than direct mutation.
+当调用者应使用命令而非直接修改时，从 composable/provider 返回只读状态。
 
-## API And Async State
+## API 与异步状态
 
-Model idle/loading/refreshing/ready/empty/error/mutating states without erasing usable data during refresh. Preserve distinct validation, forbidden, not-found, conflict, unavailable, and unexpected failures where user action differs.
+建模 idle/loading/refreshing/ready/empty/error/mutating 状态而不在刷新期间擦除可用数据。在用户操作不同处保留不同的验证、禁止、未找到、冲突、不可用和意外失败。
 
-Key requests/cache by every resource, filter, page, tenant, identity, and locale dimension affecting results. Cancel or sequence superseded requests and prevent old responses from replacing a newer route/filter/account.
+按影响结果的每个资源、筛选、分页、租户、标识和区域设置维度键化请求/缓存。取消或排序被取代的请求，防止旧响应替换较新的路由/筛选/账户。
 
-Actions receive stable target identity in their payload. Never derive a mutation target from mutable global selection after confirmation or async delay.
+Action 在载荷中接收稳定的目标标识。永远不要在确认或异步延迟后从可变全局选择派生变更目标。
 
-After mutation, reconcile returned ID/version/status/normalized values and invalidate/refetch only affected resources. A success toast without visible readback is incomplete.
+变更后，协调返回的 ID/版本/状态/规范化值并仅失效/重新获取受影响资源。没有可见回读的成功 toast 是不完整的。
 
-## Optimistic Transitions
+## 乐观转换
 
-Use optimistic state only when reversible and understandable. Track operation identity and prior state so overlapping writes can reconcile independently.
+仅当可逆且可理解时使用乐观状态。跟踪操作标识和先前状态，使重叠写入可以独立协调。
 
-Define success, validation rejection, authorization failure, conflict, network uncertainty, out-of-order completion, and server-normalized response behavior.
+定义成功、验证拒绝、授权失败、冲突、网络不确定性、乱序完成和服务端规范化响应行为。
 
-Do not let an optimistic client transition authorize an action or permanently hide a failed command.
+不要让乐观客户端转换授权操作或永久隐藏失败命令。
 
-## Store Lifetime And SSR
+## Store 生命周期与 SSR
 
-Create isolated Pinia instances per application/request/test. In SSR/Nuxt, never use a process-global mutable store that leaks data across requests/users.
+为每个应用/请求/测试创建隔离的 Pinia 实例。在 SSR/Nuxt 中，永远不要使用跨请求/用户泄漏数据的进程全局可变 store。
 
-Hydrate only serializable intended state and avoid server/client divergence from browser-only values. Identity/account changes must reset or re-scope incompatible stores and caches.
+仅 hydrate 可序列化的预期状态，避免因仅浏览器值导致的服务端/客户端分歧。标识/账户变更必须重置或重新限定不兼容的 store 和缓存。
 
-Dispose store-created watchers/subscriptions when their owner ends. Component `storeToRefs` cleanup does not automatically stop watchers created in a long-lived store.
+当所有者结束时释放 store 创建的 watcher/订阅。组件 `storeToRefs` 清理不会自动停止在长寿命 store 中创建的 watcher。
 
-## Persistence
+## 持久化
 
-Persist only explicit durable slices. Version and validate stored data, namespace by identity/environment, represent hydration, and define migration/expiry/logout/account-switch cleanup.
+仅持久化显式的持久切片。版本化和验证存储数据，按标识/环境命名空间，表示 hydration，并定义迁移/过期/登出/账户切换清理。
 
-Do not persist loading flags, transient errors, open dialogs, in-flight operations, or sensitive data to ordinary browser/device storage. A persistence plugin still needs schema and identity policy.
+不要将加载标志、临时错误、打开的对话框、进行中的操作或敏感数据持久化到普通浏览器/设备存储。持久化插件仍需要 schema 和标识策略。
 
-## Cross-Store Dependencies
+## 跨 Store 依赖
 
-Keep dependency direction clear and avoid cyclic initialization/action chains. Pass data into actions or extract a lower-level service when two stores would otherwise call each other recursively.
+保持依赖方向清晰，避免循环初始化/action 链。当两个 store 否则会递归调用彼此时，将数据传入 action 或提取低级服务。
 
-For plugins/subscriptions, define ordering, error behavior, and disposal. Do not hide business commands in generic persistence/logging plugins.
+对于 plugin/订阅，定义排序、错误行为和释放。不要在通用持久化/记录 plugin 中隐藏业务命令。
 
 ## Verification
 
-- Test getters/actions/transitions through isolated active Pinia instances.
-- Prove request/cache dimensions, supersession, targeted invalidation, and no cross-user/request leakage.
-- Exercise selection changes, duplicate submit, optimistic overlap/rollback, conflict, and returned readback.
-- Test persisted missing/corrupt/old/expired data plus logout/account/environment cleanup when owned.
-- Verify store watcher/subscription disposal and SSR hydration consistency.
+- 通过隔离的活动 Pinia 实例测试 getter/action/转换。
+- 证明请求/缓存维度、取代、定向失效和无跨用户/请求泄漏。
+- 练习选择变更、重复提交、乐观重叠/回滚、冲突和返回回读。
+- 在拥有时测试持久化缺失/损坏/旧/过期数据加登出/账户/环境清理。
+- 验证 store watcher/订阅释放和 SSR hydration 一致性。
 
-## Delivery Evidence
+## 交付证据
 
-Name the state owner/lifetime/key/action, transition table, and assertion proving visible consistency. Store existence or a successful fetch does not prove isolation, target correctness, invalidation, rollback, persistence, or SSR safety.
+命名状态所有者/生命周期/键/action、转换表和证明可见一致性的断言。Store 存在或成功 fetch 不能证明隔离、目标正确性、失效、回滚、持久化或 SSR 安全。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Pinia introduced for local one-component state.
-- Remote data duplicated across refs, Pinia, and query cache.
-- Store actions reading mutable selected state instead of payload targets.
-- Request keys omitting identity/filter dimensions.
-- Optimistic updates without operation identity and rollback.
-- Persisted or SSR state shared across users/tests.
-- Long-lived store watchers never disposed.
+- 为本地单组件状态引入 Pinia。
+- 跨 ref、Pinia 和 query cache 重复远程数据。
+- Store action 读取可变选定状态而非载荷目标。
+- 请求键遗漏标识/筛选维度。
+- 无操作标识和回滚的乐观更新。
+- 跨用户/测试共享的持久化或 SSR 状态。
+- 永不释放的长寿命 store watcher。

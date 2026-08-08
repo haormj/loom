@@ -1,51 +1,51 @@
-# Playwright Delivery Core
+# Playwright 交付核心
 
-Use the MCP-derived browser verification profile as the scope authority. This reference explains how to turn its checks into maintainable browser automation without broadening the task or replacing the project's test stack.
+使用 MCP 派生的浏览器验证 profile 作为范围权威。此参考解释如何将其检查转化为可维护的浏览器自动化，而不扩大任务或替换项目的测试栈。
 
-## Loom Browser Quality Closure
+## Loom 浏览器质量闭环
 
-Browser checks run in the MCP-generated browser quality closure after implementation and runtime delivery. Ordinary UI tasks implement and statically/component-test their owned surface; they do not install browsers or claim rendered evidence.
+浏览器检查在实现和运行时交付之后的 MCP 生成的浏览器质量闭环中运行。普通 UI 任务实现并静态/组件测试其所属界面；它们不安装浏览器或声称渲染证据。
 
-- `sourceTaskId` and `sourceVerificationId` preserve the business task that each closure check proves.
-- `required` evidence must pass, use accepted external evidence, or receive an explicit quality waiver before automatic delivery closure.
-- `supplemental` evidence improves confidence but an environment gap does not turn completed product code into a failed task.
-- Run only checks in the closure profile. Do not recreate checks from UI prose, scan other task results for extra scope, or add a broad regression suite.
+- `sourceTaskId` 和 `sourceVerificationId` 保留每个闭环检查所证明的业务任务。
+- `required` 证据必须通过、使用已接受的外部证据，或在自动交付闭环之前获得显式质量豁免。
+- `supplemental` 证据提高信心，但环境差距不会将已完成的产品代码变为失败任务。
+- 仅运行闭环 profile 中的检查。不要从 UI 描述重新创建检查、扫描其他任务结果寻找额外范围，或添加宽泛的回归套件。
 
-## Verification Design
+## 验证设计
 
-Start from the behavior the check must prove:
+从检查必须证明的行为开始：
 
-1. Identify the assigned `verificationId`, viewport, backend mode, task-owned workflow, and UI surface.
-2. Choose the shortest user-observable path that reaches the required outcome.
-3. Arrange only the state that path needs.
-4. Perform actions through visible controls or declared browser navigation.
-5. Assert the business outcome, local UI state, and relevant persistence or API effect.
+1. 标识分配的 `verificationId`、视口、后端模式、任务所属工作流和 UI 界面。
+2. 选择到达所需结果的最短用户可观察路径。
+3. 仅安排该路径所需的状态。
+4. 通过可见控件或声明的浏览器导航执行操作。
+5. 断言业务结果、本地 UI 状态和相关的持久化或 API 效果。
 
-A browser check is not a tour of the application. Do not add unrelated navigation, full regression coverage, or every breakpoint just because Playwright can reach them.
+浏览器检查不是应用导览。不要添加不相关的导航、完整回归覆盖或每个断点，仅因为 Playwright 能到达它们。
 
-## Test Layer Boundary
+## 测试层边界
 
-Use Playwright for behavior that requires a browser boundary:
+将 Playwright 用于需要浏览器边界的行为：
 
-- route entry, navigation, history, refresh, deep links, and browser storage;
-- user workflows crossing components, providers, and API calls;
-- rendered responsive layout and viewport-specific interaction;
-- keyboard/focus behavior and browser-level semantics;
-- integration feedback such as submitting, success, validation, and business blocking.
+- 路由进入、导航、历史、刷新、深链接和浏览器存储；
+- 跨组件、provider 和 API 调用的用户工作流；
+- 渲染的响应式布局和视口特定交互；
+- 键盘/焦点行为和浏览器级语义；
+- 集成反馈，如提交、成功、验证和业务阻止。
 
-Keep pure functions, reducers, composables, hooks, isolated component states, and server-only rules in their existing unit or integration test layer. Do not move cheap deterministic checks into a browser suite.
+将纯函数、reducer、composable、hook、隔离的组件状态和仅服务端规则保留在其现有的单元或集成测试层。不要将廉价的确定性检查移入浏览器套件。
 
-## Project Adaptation
+## 项目适配
 
-- Reuse the repository's package manager, Playwright config, test roots, scripts, fixtures, and naming conventions when present.
-- Follow the request-selected project runner and shared-runtime contract; this reference does not override runner selection or dependency ownership.
-- When no Playwright project exists and the task owns suite setup, create the smallest config and test root that support the assigned checks.
-- Do not install a second E2E runner beside an accepted existing browser test stack unless the technical baseline selected Playwright for the new project.
-- Do not prepare the browser runtime from inside the closure task. The delivery runtime is prepared before the execution request and attached to the task scope.
+- 在存在时复用仓库的包管理器、Playwright 配置、测试根、脚本、fixture 和命名约定。
+- 遵循请求选择的项目 runner 和共享运行时契约；此参考不覆盖 runner 选择或依赖所有权。
+- 当不存在 Playwright 项目且任务拥有套件设置时，创建支持分配检查的最小配置和测试根。
+- 不要在已接受的现有浏览器测试栈旁安装第二个 E2E runner，除非技术基线为新项目选择了 Playwright。
+- 不要从闭环任务内部准备浏览器运行时。交付运行时在执行请求之前准备并附加到任务范围。
 
-## Check Anatomy
+## 检查结构
 
-Use test names that state behavior and outcome:
+使用陈述行为和结果的测试名称：
 
 ```typescript
 test('saved profile name survives a browser reload', async ({ page }) => {
@@ -60,26 +60,26 @@ test('saved profile name survives a browser reload', async ({ page }) => {
 });
 ```
 
-The example asserts the visible state transition. It does not assert internal component names, CSS classes, or implementation state.
+示例断言可见状态转换。它不断言内部组件名称、CSS 类或实现状态。
 
-## Backend Mode
+## 后端模式
 
-- `real`: run the assigned workflow against the real project backend and persistence boundary. Seed controlled data through an existing fixture/API path. Do not replace the central success path with `page.route()` mocks.
-- `not_applicable`: keep the check rendered and deterministic without inventing a backend. Static or client-only surfaces may use local fixture data only when that matches production behavior.
+- `real`：针对真实项目后端和持久化边界运行分配的工作流。通过现有 fixture/API 路径种子受控数据。不要用 `page.route()` mock 替换中央成功路径。
+- `not_applicable`：保持检查渲染且确定，不发明后端。静态或仅客户端界面仅在匹配生产行为时使用本地 fixture 数据。
 
-Network interception may control a specific failure or timing condition. It must not silently convert a real-backend check into a mocked component demonstration.
+网络拦截可控制特定失败或时序条件。它不得静默地将真实后端检查转换为 mock 的组件演示。
 
-## State And Isolation
+## 状态与隔离
 
-- Each test creates or identifies its own records; never depend on another test's execution order.
-- Use stable unique values for mutable records and clean them through supported project fixtures when cleanup matters.
-- Keep authentication state scoped by role and environment. Do not commit credentials or generated auth state.
-- Parallelize only after state ownership is isolated. `fullyParallel: true` is not a quality signal when tests mutate shared records.
-- Avoid hidden prerequisites. A failing setup must identify the missing service, credential, seed, or route.
+- 每个测试创建或标识自己的记录；永远不要依赖另一个测试的执行顺序。
+- 为可变记录使用稳定唯一值，并在清理重要时通过支持的项目 fixture 清理它们。
+- 按角色和环境限定认证状态。不要提交凭据或生成的 auth 状态。
+- 仅在状态所有权隔离后并行化。当测试修改共享记录时 `fullyParallel: true` 不是质量信号。
+- 避免隐藏先决条件。失败的设置必须标识缺失的 service、凭据、种子或路由。
 
-## Assertions
+## 断言
 
-Prefer web-first assertions that retry against observable state:
+优先使用针对可观察状态重试的 web-first 断言：
 
 ```typescript
 await expect(page.getByRole('button', { name: 'Save' })).toBeEnabled();
@@ -87,13 +87,13 @@ await expect(page.getByRole('status')).toHaveText('Saved');
 await expect(page).toHaveURL(/\/account\/profile$/);
 ```
 
-Do not use `waitForTimeout()` as synchronization. Do not use `networkidle` as a generic readiness condition in applications with polling, analytics, sockets, or background refresh. Wait for the response, URL, element state, or business outcome that actually gates the next action.
+不要使用 `waitForTimeout()` 作为同步。不要在有轮询、分析、socket 或后台刷新的应用中将 `networkidle` 用作通用就绪条件。等待实际门控下一步操作的响应、URL、元素状态或业务结果。
 
-## Artifact Discipline
+## 产物纪律
 
-- Keep traces, screenshots, videos, and reports in the project's configured output directory.
-- Retain diagnostic artifacts on failure or retry according to configuration; keep their contents out of the concise verification summary.
-- A retry success remains a retry success. Preserve the attempt count and investigate repeated instability instead of reporting a clean first-pass result.
-- If environment preparation fails, record the concrete missing dependency or service. Do not relabel an environment failure as a product defect.
+- 将 trace、截图、视频和报告保留在项目配置的输出目录中。
+- 按配置在失败或重试时保留诊断产物；将其内容排除在简洁验证摘要之外。
+- 重试成功仍然是重试成功。保留尝试计数并调查重复不稳定性，而非报告干净的首次通过结果。
+- 如果环境准备失败，记录具体的缺失依赖或 service。不要将环境失败重新标记为产品缺陷。
 
-A check is complete only when the assigned viewport and backend mode ran, the expected business outcome was observed, the invocation returned control, artifacts are referenced rather than embedded, and no temporary server or browser process is left unmanaged.
+检查仅在分配的视口和后端模式运行、观察到预期业务结果、调用返回控制、产物被引用而非嵌入、且无临时服务端或浏览器进程未被管理时才算完成。

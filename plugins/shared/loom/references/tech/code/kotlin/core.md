@@ -1,39 +1,39 @@
-# Kotlin Core Quality
+# Kotlin 核心质量
 
 ## When To Use
 
-- The task changes Kotlin application, library, domain, service, Android, server, or shared module code.
-- Use this for baseline Kotlin correctness: null safety, data/state modeling, idioms, extension boundaries, public API shape, and interop-safe design.
-- If the task only changes generated files, build metadata, or non-Kotlin code, do not expand scope because this reference is available.
+- 任务变更了 Kotlin 应用、库、领域、服务、Android、服务器或共享模块代码。
+- 用于基线 Kotlin 正确性：null 安全、数据/状态建模、惯用法、扩展边界、公共 API 形态和互操作安全设计。
+- 如果任务仅变更生成的文件、构建元数据或非 Kotlin 代码，不要因为此参考可用就扩大范围。
 
 ## Implementation Focus
 
-- Use Kotlin null safety as a design tool. Avoid `!!` except for documented contract violations that should fail fast; prefer `requireNotNull`, safe calls, or explicit validation.
-- Model finite workflow, UI, or operation states with sealed classes/interfaces and exhaustive `when`. Avoid scattered nullable fields or booleans that permit impossible combinations.
-- Use data classes for immutable data carriers, but keep mutable state and behavior in services, view models, or domain objects when lifecycle matters.
-- Keep extension functions close to the type/domain they clarify. Do not add broad global extensions on common types like `String`, `List`, or `Any` unless the repository already owns that convention.
-- Use scope functions intentionally: `apply` for configuration, `let` for nullable transform, `also` for side effects, `run/with` for scoped computation. Avoid chains that hide business logic.
-- Use inline/value classes for strongly typed identifiers or constrained primitives only when they prevent real mix-ups and validation is centralized.
-- Keep Java interop explicit where relevant: nullability annotations, platform types, checked exceptions, SAM adapters, and serialization/JPA/framework requirements.
-- Use `require`, `check`, and domain results consistently according to caller expectations. Do not throw generic exceptions for normal validation failures if the app uses typed errors.
-- For libraries, follow explicit API mode if configured: public declarations need deliberate visibility, return types, and KDoc where they form an external contract.
-- Avoid magic companion objects, singletons, or top-level mutable state for dependencies that should be injected or lifecycle-owned.
+- 将 Kotlin null 安全用作设计工具。除应快速失败的已记录契约违反外避免 `!!`；优先使用 `requireNotNull`、安全调用或显式验证。
+- 用 sealed class/interface 和穷尽 `when` 建模有限的工作流、UI 或操作状态。避免允许不可能组合的分散可空字段或布尔值。
+- 对不可变数据载体使用 data class，但当生命周期重要时将可变状态和行为保留在服务、view model 或领域对象中。
+- 将扩展函数保持在它们所澄清的类型/领域附近。不要在 `String`、`List` 或 `Any` 等常见类型上添加宽泛全局扩展，除非仓库已拥有该约定。
+- 有意使用作用域函数：`apply` 用于配置，`let` 用于可空转换，`also` 用于副作用，`run`/`with` 用于作用域计算。避免隐藏业务逻辑的链式调用。
+- 仅当 inline/value class 防止真实混淆且验证集中化时才用于强类型标识符或受约束原始类型。
+- 在相关处保持 Java 互操作显式：可空性注解、平台类型、检查异常、SAM 适配器和序列化/JPA/框架要求。
+- 根据调用者期望一致使用 `require`、`check` 和领域结果。如果应用使用类型化错误，不要为正常验证失败抛出通用异常。
+- 对于库，如果配置了则遵循显式 API 模式：公共声明需要刻意的可见性、返回类型和 KDoc（当它们形成外部契约时）。
+- 避免为应注入或生命周期拥有的依赖使用魔术 companion object、单例或顶层可变状态。
 
 ## Boundary Decisions
 
-- Treat Kotlin's platform types from Java as untrusted at the boundary. Normalize nullability and exceptional behavior once in an adapter instead of spreading defensive checks through domain code.
-- Keep `data`, `sealed`, and `value` types focused on contracts. Do not use a data class as a mutable service, or a value class as a substitute for validation that the caller can bypass.
-- Prefer a narrow extension on an owned domain type over a utility namespace. If an extension changes security, persistence, serialization, transaction, or lifecycle behavior, keep it behind the owning service or adapter.
-- Enable explicit API mode for published libraries or shared modules when the repository uses it. Make public visibility, return types, and KDoc deliberate; do not apply library visibility rules to an internal application without repository evidence.
-- When Kotlin interoperates with Java, preserve existing annotations, bean conventions, checked-exception expectations, and framework proxy requirements before applying a Kotlin-only idiom.
+- 将来自 Java 的 Kotlin 平台类型在边界视为不可信。在适配器中一次性规范化可空性和异常行为，而非在领域代码中散布防御性检查。
+- 保持 `data`、`sealed` 和 `value` 类型聚焦于契约。不要将 data class 用作可变服务，或将 value class 用作调用者可绕过的验证替代。
+- 优先在拥有的领域类型上使用窄扩展而非工具命名空间。如果扩展变更安全、持久化、序列化、事务或生命周期行为，将其保留在拥有的服务或适配器之后。
+- 在仓库使用时为已发布的库或共享模块启用显式 API 模式。使公共可见性、返回类型和 KDoc 刻意；在没有仓库证据的情况下不要将库可见性规则应用于内部应用。
+- 当 Kotlin 与 Java 互操作时，在应用 Kotlin 专有惯用法之前保留现有注解、bean 约定、检查异常期望和框架代理要求。
 
 ## Verification Focus
 
-- Run the configured Gradle build/test command for changed modules.
-- Run `ktlint`, `detekt`, or repository lint tasks when configured.
-- Add tests for null branches, sealed state transitions, validation failures, Java interop boundaries, and extension behavior touched by the task.
-- Confirm no new undocumented `!!`, impossible state combinations, or lifecycle-free mutable singletons were introduced.
+- 为变更模块运行配置的 Gradle 构建/测试命令。
+- 在配置时运行 `ktlint`、`detekt` 或仓库 lint 任务。
+- 为任务涉及的 null 分支、sealed 状态转换、验证失败、Java 互操作边界和扩展行为添加测试。
+- 确认没有引入新的未记录 `!!`、不可能状态组合或无生命周期的可变单例。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Kotlin decision made: null safety, sealed state, data/domain split, extension boundary, scope function use, value class, Java interop, explicit API, or lifecycle ownership.
+- 在证据总结中，说明做出的 Kotlin 决策：null 安全、sealed 状态、数据/领域分离、扩展边界、作用域函数使用、value class、Java 互操作、显式 API 或生命周期所有权。

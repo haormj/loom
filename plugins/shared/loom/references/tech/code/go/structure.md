@@ -1,91 +1,91 @@
-# Go Module And Package Structure
+# Go 模块与包结构
 
 ## When To Use
 
-Use this reference only when the task owns module/workspace files, package/dependency boundaries, command entry points, `internal`, build tags, generated/embed assets, configuration composition, or structure migration.
+仅当任务拥有模块/workspace 文件、包/依赖边界、命令入口点、`internal`、构建标签、生成/嵌入资产、配置组合或结构迁移时才使用此参考。
 
 ## Implementation Focus
 
 ### Preserve Existing Shape
 
-Inspect module/workspace roots, packages, commands, internal/public consumers, generated code, build tags, tools, tests, and release pipeline before moving files.
+在移动文件之前检查模块/workspace 根、包、命令、内部/公共消费者、生成代码、构建标签、工具、测试和发布 pipeline。
 
-Do not impose a textbook `cmd/internal/pkg` layout on a coherent repository. Structure follows actual binaries, reusable modules, and ownership boundaries.
+不要将教科书式的 `cmd/internal/pkg` 布局强加于连贯的仓库。结构跟随实际的二进制文件、可复用模块和所有权边界。
 
-Move in buildable slices and update imports, generated commands, tests, embeds, build scripts, docs/config, and consumers together. Remove temporary old/new ownership after cutover.
+以可构建的切片移动并一起更新导入、生成命令、测试、嵌入、构建脚本、文档/配置和消费者。切换后移除临时的旧/新所有权。
 
 ### Modules And Workspaces
 
-Keep module path stable for published consumers unless a breaking migration is owned. `go.mod` `go`/toolchain directives, replaces/excludes/retracts, and dependency versions affect CI/consumers/reproducibility.
+为已发布消费者保持模块路径稳定，除非拥有破坏性迁移。`go.mod` `go`/toolchain 指令、replace/exclude/retract 和依赖版本影响 CI/消费者/可复现性。
 
-Use `go.work` for local multi-module development according to repository policy; do not commit machine-local `replace` paths or make production builds depend on an accidental workspace.
+根据仓库策略使用 `go.work` 进行本地多模块开发；不要提交机器本地 `replace` 路径或使生产构建依赖意外的工作区。
 
-Run `go mod tidy` only after real import/build-tag changes and review `go.mod`/`go.sum` deltas. Do not churn indirect dependencies unrelated to the task.
+仅在实际导入/构建标签变更后运行 `go mod tidy` 并审查 `go.mod`/`go.sum` 差异。不要搅动与任务无关的间接依赖。
 
-Check licenses/vulnerabilities/maintenance and avoid importing `internal` packages across forbidden module trees.
+检查许可证/漏洞/维护并避免跨禁止模块树导入 `internal` 包。
 
 ### Packages And Dependency Direction
 
-Name packages by cohesive capability/domain, short lowercase and not generic `utils/common/helpers/models/services` dumping grounds.
+按内聚能力/领域命名包，简短小写而非通用的 `utils/common/helpers/models/services` 倾倒场。
 
-Keep import direction acyclic and ownership clear. Break cycles by moving an abstraction/value to the consumer/lower boundary, not by global registries or duplicated types.
+保持导入方向无环且所有权清晰。通过将抽象/值移到消费者/较低边界来打破循环，而非通过全局注册表或重复类型。
 
-Avoid one package per type and huge packages combining transport/domain/data/runtime. Package public API should reflect what other packages need.
+避免每种类型一个包和组合传输/领域/数据/运行时的巨大包。包公共 API 应反映其他包需要什么。
 
-Use `internal` to enforce application-private boundaries and public module packages only for supported consumers. `pkg` has no special compiler meaning and is not mandatory.
+使用 `internal` 强制应用私有边界，公共模块包仅用于受支持的消费者。`pkg` 没有特殊编译器含义且不是强制的。
 
 ### Commands And Composition
 
-Use `cmd/<binary>` for multiple/clear executable entry points when local convention supports it. Keep `main` focused on config, dependency construction, lifecycle, signals, and running application commands.
+当本地约定支持时为多个/清晰的可执行入口点使用 `cmd/<binary>`。保持 `main` 聚焦于配置、依赖构造、生命周期、信号和运行应用命令。
 
-Business/domain logic stays in importable/testable packages. Avoid importing one command's internals from another.
+业务/领域逻辑保留在可导入/可测试的包中。避免从一个命令导入另一个命令的内部。
 
-Each server/worker/CLI has explicit startup validation, graceful shutdown, exit codes, and version/build metadata according to delivery contract.
+每个服务器/worker/CLI 根据交付契约具有显式启动验证、优雅关闭、退出码和版本/构建元数据。
 
 ### Build Tags And Platform Files
 
-Use `//go:build` expressions plus filename suffixes for real platform/integration/tool/generated alternatives. Keep a buildable implementation for every supported tag/OS/arch combination.
+为真实的平台/集成/工具/生成替代方案使用 `//go:build` 表达式加文件名后缀。为每个支持的标签/OS/arch 组合保持可构建的实现。
 
-Tagged files can hide compile/test failures; document/run commands in CI and avoid mutually overlapping duplicate definitions.
+标记文件可能隐藏编译/测试失败；在 CI 中记录/运行命令并避免相互重叠的重复定义。
 
-Do not use tags as runtime feature flags or to conceal unfinished code.
+不要将标签用作运行时功能标志或隐藏未完成的代码。
 
 ### Generated Code And Tools
 
-Keep `go:generate`/tool commands deterministic/pinned, exact source inputs, output ownership, and checked-in policy. Do not hand-edit generated files.
+保持 `go:generate`/工具命令确定性/固定、确切源输入、输出所有权和签入策略。不要手动编辑生成文件。
 
-Tool dependencies belong in the repository's tools pattern and must not leak into production binaries.
+工具依赖属于仓库的工具模式且不得泄露到生产二进制文件中。
 
-Use `go:embed` with compile-time-valid paths, bounded assets, clear package ownership, and production licensing/security. Embedded config/secrets cannot vary at runtime and remain in binaries.
+使用 `go:embed` 并具有编译时有效路径、有界资产、清晰包所有权和生产许可/安全。嵌入的配置/密钥不能在运行时变化且保留在二进制文件中。
 
 ### Configuration And Boundaries
 
-Keep environment/file/flags loading in composition packages; domain packages receive validated typed config/dependencies.
+在组合包中保持环境/文件/标志加载；领域包接收已验证的类型化配置/依赖。
 
-Avoid package `init` side effects, global mutable registries, hidden environment reads, network calls, or goroutines that make import/start/test order unpredictable.
+避免包 `init` 副作用、全局可变注册表、隐藏的环境读取、网络调用或使导入/启动/测试顺序不可预测的 goroutine。
 
 ### Public Modules And Compatibility
 
-For public packages, preserve import paths, exported identifiers, interface method sets, behavior, errors, and semantic version/module major rules. Use `internal` implementation packages to limit surface.
+对于公共包，保留导入路径、导出标识符、接口方法集、行为、错误和语义版本/模块 major 规则。使用 `internal` 实现包来限制表面。
 
 ## Verification Focus
 
-- Run `go list`, focused tests, and builds for all affected modules/commands/tag/platform combinations.
-- Verify no import cycles, forbidden internal imports, stale generated output, or accidental workspace/local replace dependency.
-- Review `go.mod`/`go.sum` changes and minimum Go/toolchain/consumer impact.
-- Build/run entry points for config/start/shutdown/exit behavior when composition moves.
-- Test embeds/generated/public consumers and clean checkout reproducibility.
+- 为所有受影响的模块/命令/标签/平台组合运行 `go list`、聚焦测试和构建。
+- 验证没有导入循环、禁止的 internal 导入、过期的生成输出或意外的工作区/本地 replace 依赖。
+- 审查 `go.mod`/`go.sum` 变更和最低 Go/toolchain/消费者影响。
+- 当组合移动时构建/运行入口点以验证配置/启动/关闭/退出行为。
+- 测试嵌入/生成/公共消费者和干净检出可复现性。
 
 ## Evidence Focus
 
-Name module/package/command boundary, import visibility, tag/generated/config decision, and affected module/command build proof. A tidy folder tree or default-tag test does not establish all consumers/platforms.
+说明模块/包/命令边界、导入可见性、标签/生成/配置决策和受影响的模块/命令构建证明。整洁的文件夹树或默认标签测试不建立所有消费者/平台。
 
 ## Unsafe Defaults
 
-- Template directory structure imposed without repository need.
-- `utils/common/pkg` used as dependency dumping ground.
-- Machine-local replace/workspace committed or required for CI.
-- Build-tag path left uncompiled/unverified.
-- Generated files edited manually or tools unpinned.
-- init/global state hides config, network, goroutine, or registration ownership.
-- Public import path/method set changed without compatibility plan.
+- 在没有仓库需求的情况下强加模板目录结构。
+- `utils/common/pkg` 用作依赖倾倒场。
+- 机器本地 replace/workspace 被提交或 CI 需要。
+- 构建标签路径未编译/未验证。
+- 生成文件被手动编辑或工具未固定。
+- init/全局状态隐藏配置、网络、goroutine 或注册所有权。
+- 公共导入路径/方法集在没有兼容性计划的情况下变更。

@@ -1,68 +1,68 @@
-# PostgreSQL Query Semantics
+# PostgreSQL 查询语义
 
-Use this file with `tech/code/sql/queries.md` when a PostgreSQL task owns query behavior, repository queries, CRUD reads/writes, pagination, JSONB access, or query-plan changes.
+当 PostgreSQL 任务拥有查询行为、repository 查询、CRUD 读写、分页、JSONB 访问或查询计划变更时，将此文件与 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Confirm the PostgreSQL version, driver/ORM query mode, extensions, and existing indexes before using provider-specific syntax.
-- Keep result shape, authorization filters, and deterministic ordering from the common SQL contract.
-- Do not add a PostgreSQL-only feature when a portable implementation satisfies the accepted behavior without a measured need.
+- 在使用提供者特定语法之前，确认 PostgreSQL 版本、驱动程序/ORM 查询模式、扩展和现有索引。
+- 保持公共 SQL 契约的结果形态、授权过滤和确定性排序。
+- 当可移植实现在没有测量需求的情况下满足已接受行为时，不要添加 PostgreSQL 专有特性。
 
 ## Implementation Focus
 
-- Use explicit casts when JSONB, enum, numeric, timestamp, or network values cross a typed application boundary.
-- Use JSONB containment and existence operators only when the indexed access path and field semantics are part of the task.
-- Treat timestamp timezone semantics as part of the query contract. Do not compare local display values as if they were stored instants.
-- Use CTEs for clarity or reuse, and verify materialization behavior against the target PostgreSQL version when plan cost matters.
-- Preserve upsert conflict targets, update columns, no-op behavior, and idempotency explicitly.
+- 当 JSONB、枚举、数字、时间戳或网络值跨越类型化应用边界时使用显式转换。
+- 仅当索引访问路径和字段语义是任务的一部分时才使用 JSONB 包含和存在操作符。
+- 将时间戳时区语义视为查询契约的一部分。不要将本地显示值当作存储时刻来比较。
+- 为清晰或复用使用 CTE，并在计划成本重要时针对目标 PostgreSQL 版本验证物化行为。
+- 显式保留 upsert 冲突目标、更新列、无操作行为和幂等性。
 
 ## Index And Pagination Alignment
 
-- Choose B-tree, GIN, GiST, BRIN, partial, or covering indexes from actual predicates, ordering, data distribution, and provider support.
-- A partial index must match the query predicate and active-record semantics; otherwise it is not a usable proof of performance.
-- Use deterministic ordering with a unique tie-breaker for offset or keyset pagination.
-- Use `EXPLAIN` or controlled `EXPLAIN ANALYZE` for performance work. Do not execute mutating statements merely to produce a plan.
+- 从实际谓词、排序、数据分布和提供者支持中选择 B-tree、GIN、GiST、BRIN、部分或覆盖索引。
+- 部分索引必须匹配查询谓词和活动记录语义；否则它不是可用的性能证明。
+- 对偏移或键集分页使用带有唯一决胜键的确定性排序。
+- 为性能工作使用 `EXPLAIN` 或受控的 `EXPLAIN ANALYZE`。不要仅为生成计划而执行变更语句。
 
 ## Plan Review
 
-- Check scan type, estimated versus actual rows, join cardinality, sort work, buffer behavior, and index usage for the changed query.
-- Compare the plan with the expected predicate and ordering path. Correct results do not prove acceptable access cost.
-- Do not add a partial or specialized index until the query predicate, data distribution, and provider evidence justify it.
-- Treat casts, timezone conversions, JSONB expressions, functions on indexed columns, and collation as possible causes of a poor plan.
-- Record representative data assumptions when the plan depends on cardinality or value distribution.
+- 为变更的查询检查扫描类型、估计与实际行、连接基数、排序工作、缓冲区行为和索引使用。
+- 将计划与预期谓词和排序路径比较。正确结果不证明可接受的访问成本。
+- 在查询谓词、数据分布和提供者证据证明之前，不要添加部分或专用索引。
+- 将转换、时区转换、JSONB 表达式、索引列上的函数和排序规则视为计划不佳的可能原因。
+- 当计划依赖基数或值分布时，记录代表性数据假设。
 
 ## Read And Write Boundary
 
-- A repository query must return the fields required by the service or API contract without exposing storage-only fields.
-- A mutation query must make affected-row and no-op behavior clear to the caller.
-- Keep authorization, tenant, and soft-delete predicates in the same query boundary that owns the read or write.
-- For retries, preserve the conflict target and make duplicate execution observable and safe.
+- repository 查询必须返回服务或 API 契约所需的字段，不暴露仅存储字段。
+- 变更查询必须向调用方明确受影响行和无操作行为。
+- 将授权、租户和软删除谓词保留在拥有读取或写入的同一查询边界中。
+- 为重试保留冲突目标并使重复执行可观察且安全。
 
 ## Review Questions
 
-- What exact user or service behavior requires this query?
-- Which PostgreSQL feature is being used, and what version or extension evidence supports it?
-- Which index, JSONB operator, cast, or ordering rule does the query depend on?
-- Which empty, duplicate, null, timestamp, and boundary cases prove the result shape?
+- 什么确切的用户或服务行为需要此查询？
+- 正在使用哪个 PostgreSQL 特性，什么版本或扩展证据支持它？
+- 查询依赖哪个索引、JSONB 操作符、转换或排序规则？
+- 哪些空、重复、null、时间戳和边界情况证明了结果形态？
 
 ## Transactions And Mutations
 
-- Keep multi-row mutations inside the application transaction boundary defined by Architecture.
-- If advisory or row locks are required by the current business rule, define ownership, timeout, release, and failure behavior explicitly.
-- Handle serialization, deadlock, and transient lock failures with bounded retry and idempotency in the owning application layer.
+- 将多行变更保留在 Architecture 定义的应用事务边界内。
+- 如果当前业务规则需要咨询锁或行锁，显式定义所有权、超时、释放和失败行为。
+- 在拥有的应用层中以有界重试和幂等性处理序列化、死锁和瞬态锁失败。
 
 ## Verification Focus
 
-- Test empty results, nulls, duplicate-prone joins, timestamp boundaries, JSONB predicates, stable pagination, and business filters relevant to the query.
-- For a plan or index change, record PostgreSQL version, extension/index choice, query shape, and plan observation.
-- For writes, prove affected-row behavior and read-back against PostgreSQL when provider behavior is part of the change.
+- 测试空结果、null 值、易重复连接、时间戳边界、JSONB 谓词、稳定分页和与查询相关的业务过滤。
+- 对于计划或索引变更，记录 PostgreSQL 版本、扩展/索引选择、查询形态和计划观察。
+- 对于写入，当提供者行为是变更的一部分时，针对 PostgreSQL 证明受影响行行为和回读。
 
 ## Evidence Focus
 
-- In the evidence summary, name the query decision made: result shape, predicate/index alignment, JSONB operator, pagination, provider cast, affected-row behavior, or read-back proof.
+- 在证据总结中，说明所做的查询决策：结果形态、谓词/索引对齐、JSONB 操作符、分页、提供者转换、受影响行行为或回读证明。
 
 ## Risks To Avoid
 
-- Treating JSONB, GIN, partial indexes, or CTE materialization as free defaults.
-- Using `EXPLAIN ANALYZE` on an uncontrolled mutation.
-- Claiming PostgreSQL compatibility from a different provider's query test.
+- 将 JSONB、GIN、部分索引或 CTE 物化视为免费默认值。
+- 在不受控的变更上使用 `EXPLAIN ANALYZE`。
+- 从不同提供者的查询测试声称 PostgreSQL 兼容性。

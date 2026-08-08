@@ -1,61 +1,61 @@
-# Oracle Schema Mapping
+# Oracle Schema 映射
 
-Use this file with `tech/code/sql/schema.md` when the accepted persistence provider is Oracle and the task owns schema, migration, entity mapping, or database-backed invariants.
+当已接受的持久化提供者是 Oracle 且任务拥有 schema、迁移、实体映射或数据库支持的不变式时，将此文件与 `tech/code/sql/schema.md` 一起使用。
 
 ## When To Use
 
-- Read the Oracle version, compatibility mode, driver, ORM, migration tool, and existing migration style before choosing syntax.
-- Apply provider rules only to fields, constraints, indexes, and migrations owned by the task.
-- Keep database platform administration and unrelated environment work outside this implementation reference.
+- 在选择语法之前，阅读 Oracle 版本、兼容模式、驱动程序、ORM、迁移工具和现有迁移风格。
+- 仅将提供者规则应用于任务拥有的字段、约束、索引和迁移。
+- 将数据库平台管理和不相关的环境工作排除在此实现参考之外。
 
 ## Implementation Focus
 
-- Choose identity columns, sequences, application-generated UUIDs, or another key strategy from domain needs, migration policy, ORM support, and existing schema.
-- Use `NUMBER` with explicit precision and scale for exact quantities. Do not rely on implicit numeric conversion at the application boundary.
-- Use `VARCHAR2`/`NVARCHAR2` for text according to character semantics and length requirements. Remember that Oracle treats an empty string as `NULL` in character columns.
-- Use `TIMESTAMP` or `TIMESTAMP WITH TIME ZONE` from the business instant/local-time contract. Keep driver conversion and API serialization aligned.
-- Use native JSON, JSON functions, generated columns, function-based indexes, or custom types only when the Oracle version and migration contract support them.
+- 从领域需求、迁移策略、ORM 支持和现有 schema 中选择标识列、序列、应用生成的 UUID 或其他键策略。
+- 对精确量使用具有显式精度和标度的 `NUMBER`。不要在应用边界依赖隐式数字转换。
+- 根据字符语义和长度要求使用 `VARCHAR2`/`NVARCHAR2` 存储文本。记住 Oracle 在字符列中将空字符串视为 `NULL`。
+- 根据业务时刻/本地时间契约使用 `TIMESTAMP` 或 `TIMESTAMP WITH TIME ZONE`。保持驱动程序转换和 API 序列化对齐。
+- 仅当 Oracle 版本和迁移契约支持时才使用原生 JSON、JSON 函数、生成列、基于函数的索引或自定义类型。
 
 ## Constraints And Indexes
 
-- Define primary keys, foreign keys, unique constraints, check constraints, and nullability at the database layer for durable invariants.
-- Use B-tree, bitmap, function-based, or domain indexes only for a named access path and workload. Bitmap indexes require an explicit workload decision and are not a default OLTP choice.
-- Keep cascade behavior aligned with domain ownership and migration safety.
+- 为持久不变式在数据库层定义主键、外键、唯一约束、检查约束和可空性。
+- 仅对命名访问路径和工作负载使用 B-tree、位图、基于函数的或域索引。位图索引需要显式工作负载决策，不是默认 OLTP 选择。
+- 保持级联行为与领域所有权和迁移安全性对齐。
 
 ## Migration And ORM Alignment
 
-- Keep migration DDL, ORM mappings, sequence/identity configuration, enum/state conversion, nullability, defaults, and API DTOs aligned.
-- Review generated migration SQL and object naming/quoting before using Oracle-specific features.
-- Verify clean installation and upgrade behavior when existing rows, sequences, indexes, constraints, or backfills are in scope.
+- 保持迁移 DDL、ORM 映射、序列/标识配置、枚举/状态转换、可空性、默认值和 API DTO 对齐。
+- 在使用 Oracle 特定特性之前审查生成的迁移 SQL 和对象命名/引用。
+- 当现有行、序列、索引、约束或回填在范围内时，验证干净安装和升级行为。
 
 ## Compatibility Checklist
 
-- Confirm Oracle version and compatibility mode for identity, JSON, pagination, analytic, and temporal syntax.
-- Check `NUMBER` precision/scale, timestamp zone semantics, and empty-string/null behavior in the driver and ORM.
-- Check sequence allocation and generated-key retrieval through the actual data-access path.
-- Check foreign-key types, length semantics, collation, and nullability on both sides of every relationship.
-- Treat partitioning, flashback/history, row-level security, and custom types as explicit architecture/data decisions.
+- 确认标识、JSON、分页、分析和时间语法的 Oracle 版本和兼容模式。
+- 检查驱动程序和 ORM 中的 `NUMBER` 精度/标度、时间戳区域语义和空字符串/null 行为。
+- 通过实际数据访问路径检查序列分配和生成键检索。
+- 检查每个关系两侧的外键类型、长度语义、排序规则和可空性。
+- 将分区、闪回/历史、行级安全和自定义类型视为显式架构/数据决策。
 
 ## Persistence Shape Review
 
-- Name the table owner, durable invariant, migration owner, and query path affected by the change.
-- State whether the change is additive, compatible with existing rows, or requires a backfill.
-- Keep API read/write models separate from generated values, internal flags, and storage-only fields.
-- Verify that a failed migration or partial write does not leave a state the application cannot read.
+- 说明受变更影响的表所有者、持久不变式、迁移所有者和查询路径。
+- 说明变更是添加性的、与现有行兼容的，还是需要回填。
+- 将 API 读写模型与生成值、内部标志和仅存储字段分开。
+- 验证失败的迁移或部分写入不会留下应用无法读取的状态。
 
 ## Verification Focus
 
-- Run the changed migration or application startup against Oracle or the repository's provider-compatible path.
-- Prove generated identity, numeric precision, timestamp/zone semantics, empty-string behavior, constraints, indexes, and mappings touched by the task.
-- Record Oracle version, compatibility mode, and provider behavior verified.
+- 针对 Oracle 或仓库的提供者兼容路径运行变更的迁移或应用启动。
+- 证明任务涉及的生成标识、数字精度、时间戳/区域语义、空字符串行为、约束、索引和映射。
+- 记录 Oracle 版本、兼容模式和验证的提供者行为。
 
 ## Evidence Focus
 
-- Name the schema decision proved: type mapping, identity, sequence, constraint, index, migration compatibility, or ORM alignment.
+- 说明已证明的 schema 决策：类型映射、标识、序列、约束、索引、迁移兼容性或 ORM 对齐。
 
 ## Risks To Avoid
 
-- Treating empty strings as distinct from `NULL` in application validation or uniqueness logic.
-- Relying on implicit numeric/date conversion or session NLS settings.
-- Adding bitmap indexes, partitioning, or custom types without a named workload and migration boundary.
-- Testing Oracle-specific behavior only with SQLite, H2, or an in-memory mock.
+- 在应用验证或唯一性逻辑中将空字符串视为与 `NULL` 不同。
+- 依赖隐式数字/日期转换或会话 NLS 设置。
+- 在没有命名工作负载和迁移边界的情况下添加位图索引、分区或自定义类型。
+- 仅用 SQLite、H2 或内存 mock 测试 Oracle 特定行为。

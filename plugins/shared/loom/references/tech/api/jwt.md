@@ -1,32 +1,32 @@
-# JWT API Contract
+# JWT API 契约
 
-## Scope
+## 范围
 
-JWT is a retained but dormant capability. Use this reference only when an explicitly accepted TechnicalBaseline security profile selects `mechanism=bearer_jwt` for the current security scenario. A protected requirement, backend framework, keyword, or greenfield project does not activate JWT. This file defines the API-facing obligations of an active profile; it does not select an algorithm, create login endpoints, or replace the framework security reference.
+JWT 是保留但休眠的能力。仅当明确接受的 TechnicalBaseline 安全配置为当前安全场景选择 `mechanism=bearer_jwt` 时才使用本引用。受保护的需求、后端框架、关键词或全新项目不会激活 JWT。本文件定义活跃配置的面向 API 的义务；它不选择算法、创建登录端点或替代框架安全引用。
 
-When no active profile exists, keep the current phase free of JWT implementation and record the security decision as pending or deferred through the owning contract. Do not invent a JWT profile to make an unauthenticated implementation pass.
+当没有活跃配置时，保持当前阶段不含 JWT 实现，并通过拥有契约将安全决策记录为待定或推迟。不要编造 JWT 配置以使未认证实现通过。
 
-## Contract Boundary
+## 契约边界
 
-- Read the selected `securityProfileRef` from the accepted interface `authPolicy`.
-- Accept only the algorithm selected by that profile. Never derive or widen the algorithm from an incoming token header.
-- Keep issuer, audience, key source, token type, clock skew, and claim names aligned with the profile and external identity contract.
-- Confirm that the scenario has an identified token authority, client trust model, and authorization mapping before wiring a verifier. The current JWT capability does not by itself define login, refresh, revocation, tenant, or ownership semantics.
-- Validate signature, issuer, audience, expiry, not-before, subject, and token type when those claims are part of the profile.
-- Keep access-token and refresh-token contracts separate. Do not add refresh tokens, login, logout, revocation, or user storage unless the accepted API contract owns them.
+- 从已接受接口的 `authPolicy` 中读取所选的 `securityProfileRef`。
+- 仅接受该配置选择的算法。绝不从传入 token 的 header 派生或放宽算法。
+- 保持签发者、受众、密钥来源、token 类型、时钟偏差和 claim 名称与配置及外部身份契约对齐。
+- 在连接验证器之前，确认场景已有已识别的 token 权威、客户端信任模型和授权映射。当前 JWT 能力本身不定义登录、刷新、撤销、租户或所有权语义。
+- 当这些 claim 是配置的一部分时，验证签名、签发者、受众、过期时间、生效时间、主体和 token 类型。
+- 保持 access-token 和 refresh-token 契约分开。除非已接受 API 契约拥有它们，否则不要添加 refresh token、登录、登出、撤销或用户存储。
 
-## HTTP Behavior
+## HTTP 行为
 
-Protected interfaces must define stable `401` and `403` behavior, including the accepted safe error envelope. Missing or invalid bearer credentials are not business validation errors. Do not reveal account existence, parser details, signing keys, raw claims, or token validation internals.
+受保护接口必须定义稳定的 `401` 和 `403` 行为，包括接受的安全错误封装。缺失或无效的 bearer 凭证不是业务校验错误。不要泄露账户是否存在、解析器细节、签名密钥、原始 claim 或 token 验证内部信息。
 
-## Key And Configuration Boundary
+## 密钥和配置边界
 
-The profile owns the key source, not the secret value. Bind issuer, audience, JWK location or secret reference, selected algorithm, token lifetime, and clock skew through validated configuration. Never commit signing material or log authorization headers, access tokens, refresh tokens, or decoded sensitive claims.
+配置拥有密钥来源，而非密钥值。通过已验证的配置绑定签发者、受众、JWK 位置或密钥引用、所选算法、token 生命周期和时钟偏差。绝不提交签名材料或记录授权头、access token、refresh token 或解码的敏感 claim。
 
-## Verification Evidence
+## 验证证据
 
-For a task that owns JWT behavior, provide focused evidence for allowed access, missing credentials, malformed or invalid signatures, expired tokens, wrong issuer or audience, wrong token type, and insufficient permission as applicable to the selected contract. A token extractor, OpenAPI security scheme, or library import alone is not evidence of validation.
+对于拥有 JWT 行为的任务，根据所选契约提供以下方面的聚焦证据：允许访问、缺失凭证、格式错误或无效签名、过期 token、错误签发者或受众、错误 token 类型以及权限不足（如适用）。仅 token 提取器、OpenAPI security scheme 或库导入不能作为验证的证据。
 
-## Non-Goals
+## 非目标
 
-Do not add JWT to an unauthenticated interface, choose multiple algorithms “for flexibility,” write a handwritten parser when the selected framework has a maintained resource-server path, or copy this guidance into language/framework references.
+不要将 JWT 添加到未认证接口，不要"为了灵活性"选择多种算法，不要在所选框架有维护的资源服务器路径时手写解析器，不要将本指导复制到语言/框架引用中。

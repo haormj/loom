@@ -1,35 +1,35 @@
-# UIX Focus: Mobile
+# UIX 焦点：移动端
 
-Load this when a web surface must be responsive, when a mobile/native scenario is selected, or when the task changes touch behavior.
+当 web 界面必须响应式、选定移动/原生场景或任务更改触摸行为时加载此文件。
 
-## Baseline
+## 基线
 
-- Mobile is not a squeezed desktop.
-- One primary task per screen is the default.
-- Touch targets are comfortable and separated.
-- Sticky top/bottom bars respect safe areas and do not hide content.
-- Hover-only behavior is invalid.
+- 移动端不是压缩的桌面。
+- 默认每屏一个主要任务。
+- 触摸目标舒适且分开。
+- 粘性顶/底栏尊重安全区域且不隐藏内容。
+- 仅悬停行为无效。
 
-## Layout
+## 布局
 
-- Use single-column task flow for forms and details.
-- Convert dense tables into list/detail cards or drill-down routes unless comparison truly requires horizontal table scroll.
-- Keep primary action visible near the end of the task or in a safe sticky region.
-- Collapse sidebars to drawers, rails, or bottom navigation.
-- Use mobile viewport units and safe-area padding when full-height screens are used.
+- 对表单和详情使用单列任务流。
+- 将密集表格转换为列表/详情卡片或下钻路由，除非比较确实需要水平表格滚动。
+- 在任务末尾附近或安全粘性区域保持主要操作可见。
+- 将侧边栏折叠为抽屉、导轨或底部导航。
+- 当使用全高屏幕时使用移动视口单位和安全区域填充。
 
-## Breakpoint Behavior
+## 断点行为
 
-| Width | Expected behavior |
+| 宽度 | 预期行为 |
 | --- | --- |
-| `< 640px` | Single-column task flow, bottom or inline actions, no hover dependency. |
-| `640-767px` | Wider cards or two-up secondary content only when it does not crowd controls. |
-| `768-1023px` | Tablet split view may appear; drawers replace fixed sidebars. |
-| `>= 1024px` | Desktop scenario baseline may apply. |
+| `< 640px` | 单列任务流、底部或内联操作、无悬停依赖。 |
+| `640-767px` | 仅在不拥挤控件时使用更宽的卡片或双列次要内容。 |
+| `768-1023px` | 可能出现平板分屏视图；抽屉替换固定侧边栏。 |
+| `>= 1024px` | 可应用桌面场景基线。 |
 
-Do not rely on CSS variables inside media query conditions; write literal breakpoint values and keep the token names as documentation or framework config.
+不要在媒体查询条件内依赖 CSS 变量；编写字面断点值并将令牌名称作为文档或框架配置。
 
-## Mobile Skeleton
+## 移动骨架
 
 ```css
 .mobile-task {
@@ -52,60 +52,50 @@ Do not rely on CSS variables inside media query conditions; write literal breakp
 }
 ```
 
-Use this structure for mobile forms, record details, checkout/review flows, and app-like responsive pages.
+将此结构用于移动表单、记录详情、结账/审查流程和类应用响应式页面。
 
-## Data And Navigation Fallbacks
+## 数据和导航回退
 
-- Table to cards: keep title, status, key facts, and primary row action visible.
-- Sidebar to drawer: preserve active section and provide close/back control.
-- Detail panel to route/sheet: preserve selected record and return path.
-- Topbar to compact header: keep page title and one primary command visible.
-- Pagination to load-more or compact pager when page numbers do not fit.
+- 表格到卡片：保持标题、状态、关键事实和主要行操作可见。
+- 侧边栏到抽屉：保留活动部分并提供关闭/返回控件。
+- 详情面板到路由/面板：保留选定记录和返回路径。
+- 顶栏到紧凑页眉：保持页面标题和一个主要命令可见。
+- 分页到加载更多或紧凑分页器（当页码不适合时）。
 
-## Inputs
+## 输入
 
-- Use correct input types for number, email, phone, date, search, and password.
-- Keep labels visible.
-- Place validation next to the field.
-- Preserve values when the keyboard opens/closes or validation fails.
+- 为数字、电子邮件、电话、日期、搜索和密码使用正确的输入类型。
+- 保持标签可见。
+- 将验证放在字段旁边。
+- 键盘打开/关闭或验证失败时保留值。
 
-## Viewport And Platform Behavior
+## 视口和平台行为
 
-- Use `100dvh` for full-height web surfaces and keep a fallback for environments
-  that do not support dynamic viewport units.
-- Put safe-area padding on the inside of fixed headers, bottom actions, and bottom
-  navigation. The content scroll region must remain reachable above the action bar.
-- When the keyboard opens, scroll the focused field into view and keep its label,
-  error, and submit action discoverable. Do not rely on a fixed viewport height.
-- Use a bottom sheet for a short mobile choice or confirmation when it preserves
-  the current context; use a full-screen route for a deep form or detail workflow.
-- Native and cross-platform surfaces must follow the platform navigation, back,
-  dynamic type, permission, and safe-area conventions of the selected target.
+- 对全高 web 界面使用 `100dvh`，并在不支持动态视口单位的环境中保留回退。
+- 将安全区域填充放在固定页眉、底部操作和底部导航的内侧。内容滚动区域必须在操作栏上方保持可达。
+- 键盘打开时，将焦点字段滚动到视图中并保持其标签、错误和提交操作可发现。不要依赖固定视口高度。
+- 当底部面板保留当前上下文时，将其用于简短的移动选择或确认；将全屏路由用于深度表单或详情工作流。
+- 原生和跨平台界面必须遵循选定目标的平台导航、返回、动态排版、权限和安全区域约定。
 
-## Touch And Gesture Rules
+## 触摸和手势规则
 
-- Keep primary targets at least 44px on web and use the selected platform minimum
-  for native surfaces. Separate adjacent destructive and safe actions.
-- Provide a visible pressed/focus state without requiring hover.
-- Do not use horizontal page scrolling for normal task flow. Restrict horizontal
-  scrolling to labeled data/code regions where comparison requires it.
-- Keep swipe, drag, and long-press actions optional when the same operation needs a
-  keyboard, pointer, or accessible command path.
-- Check orientation changes, text scaling, long labels, and a failed submit while
-  the keyboard or a sheet is open when those states are in scope.
+- 在 web 上保持主要目标至少 44px，原生界面使用选定平台最小值。分开相邻的破坏性和安全操作。
+- 提供可见的按下/焦点状态而不要求悬停。
+- 不要对正常任务流使用水平页面滚动。将水平滚动限制在比较需要的带标签数据/代码区域。
+- 当相同操作需要键盘、指针或可访问命令路径时，将滑动、拖拽和长按操作保持为可选。
+- 当这些状态在范围内时，检查方向变化、文本缩放、长标签以及键盘或面板打开时的失败提交。
 
-## Verification
+## 验证
 
-- Check narrow viewport, keyboard behavior, scroll, touch targets, and sticky bars.
-- Check long labels and business messages in the target language.
-- Check that error and success feedback remain visible after submit.
-- Check that drawers/sheets close without losing form or selection context.
-- Check 200% zoom or system text scaling when the environment allows it.
-- Record the target posture, viewport width, safe-area behavior, keyboard case, and
-  responsive fallback in evidence when mobile behavior is owned.
+- 检查窄视口、键盘行为、滚动、触摸目标和粘性栏。
+- 用目标语言检查长标签和业务消息。
+- 检查提交后错误和成功反馈是否保持可见。
+- 检查抽屉/面板关闭时不丢失表单或选择上下文。
+- 环境允许时检查 200% 缩放或系统文本缩放。
+- 当拥有移动行为时，在证据中记录目标姿态、视口宽度、安全区域行为、键盘情况和响应式回退。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `admin.mobile.record_fallback` | Narrow screens keep record workflows usable through cards, drawer/sheet/detail route, or explicitly source-checked responsive fallback. | Desktop table is merely squeezed, primary actions depend on hover, detail context is unreachable, or mobile evidence is absent without environment blocker. |
+| `admin.mobile.record_fallback` | 窄屏幕通过卡片、抽屉/面板/详情路由或明确源码检查的响应式回退保持记录工作流可用。 | 桌面表格仅被压缩、主要操作依赖悬停、详情上下文不可达，或无环境阻塞原因而缺少移动证据。 |

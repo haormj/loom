@@ -4857,11 +4857,11 @@ mod tests {
             let content = fs::read_to_string(&path)
                 .unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
             for section in [
-                "## Provider Decision",
-                "## Correlation And Boundaries",
-                "## Async And File Output",
+                "## Provider 决策",
+                "## 关联与边界",
+                "## 异步与文件输出",
                 "## Verification Focus",
-                "## Unsafe Defaults",
+                "## 不安全默认",
             ] {
                 assert!(
                     content.contains(section),
@@ -6019,14 +6019,14 @@ mod tests {
             root.join("plugins/shared/loom/references/tech/code/java/persistence.md"),
         )
         .expect("read Java persistence reference");
-        assert!(persistence.contains("Spring Data repositories"));
-        assert!(persistence.contains("selected provider"));
+        assert!(persistence.contains("Spring Data repository"));
+        assert!(persistence.contains("选中的提供者"));
 
         let reactive = fs::read_to_string(
             root.join("plugins/shared/loom/references/tech/code/java/reactive.md"),
         )
         .expect("read Java reactive reference");
-        assert!(reactive.contains("dedicated external-service integration reference"));
+        assert!(reactive.contains("专用的外部服务集成参考"));
         assert!(reactive.contains("StepVerifier"));
     }
 }

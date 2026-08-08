@@ -1,37 +1,37 @@
-# JavaScript Module Quality
+# JavaScript 模块质量
 
 ## When To Use
 
-- The task changes imports, exports, package entry points, `package.json` `type` or `exports`, dynamic imports, bundling boundaries, CommonJS/ESM interop, or module layout.
-- Use this when module shape affects runtime loading, tree shaking, package consumers, test setup, or browser/Node compatibility.
-- If the task only changes logic inside an existing module and import/export shape is unchanged, this reference should not expand scope.
+- 任务变更了导入、导出、包入口点、`package.json` `type` 或 `exports`、动态导入、打包边界、CommonJS/ESM 互操作或模块布局。
+- 当模块形态影响运行时加载、tree shaking、包消费者、测试设置或浏览器/Node 兼容性时使用此参考。
+- 如果任务仅变更现有模块内的逻辑且导入/导出形态不变，此参考不应扩大范围。
 
 ## Implementation Focus
 
-- Determine the package convention from `package.json`, file extensions, bundler config, and existing imports. Do not convert a package between CommonJS and ESM as an incidental fix.
-- In ESM code, use explicit file extensions where the runtime requires them. In bundler-managed apps, follow the bundler and repository import style rather than mixing conventions.
-- Keep CommonJS interop in a small adapter boundary, such as a `.cjs` wrapper or `createRequire` helper. Do not scatter `require` calls through ESM modules.
-- Prefer named exports for libraries and shared utility modules so consumers and bundlers can select stable APIs. Keep default exports when the framework or repository convention expects them.
-- Use `package.json` `exports` to expose intentional public entry points. Do not expose internal folders or unstable build artifacts unless the package already treats them as public API.
-- Use dynamic import for lazy features, optional heavy dependencies, or environment-specific code. Validate dynamic import keys; do not interpolate arbitrary user input into module paths.
-- Avoid circular dependencies by moving shared contracts/constants to a neutral module or injecting dependencies through a factory. Do not patch cycles with late mutation unless the project already uses that pattern.
-- Keep side-effect imports limited to bootstrap, polyfills, global styles, or explicit registration modules. A normal utility module should not mutate global state at import time.
-- When changing module boundaries, preserve test and build runner compatibility; Jest/Vitest/Node/bundlers often resolve ESM and CommonJS differently.
+- 从 `package.json`、文件扩展名、bundler 配置和现有导入确定包约定。不要将 CommonJS 和 ESM 之间的转换作为附带修复。
+- 在 ESM 代码中，在运行时需要的地方使用显式文件扩展名。在 bundler 管理的应用中，遵循 bundler 和仓库导入风格而非混合约定。
+- 将 CommonJS 互操作保留在小型适配器边界中，如 `.cjs` 包装器或 `createRequire` 辅助函数。不要在 ESM 模块中散布 `require` 调用。
+- 为库和共享工具模块优先使用命名导出，以便消费者和 bundler 可以选择稳定的 API。当框架或仓库约定期望时保留默认导出。
+- 使用 `package.json` `exports` 暴露有意的公共入口点。不要暴露内部文件夹或不稳定的构建产物，除非包已将它们视为公共 API。
+- 对延迟功能、可选的重度依赖或环境特定代码使用动态导入。验证动态导入键；不要将任意用户输入插值到模块路径中。
+- 通过将共享契约/常量移到中性模块或通过工厂注入依赖来避免循环依赖。除非项目已使用该模式，否则不要用延迟变更修补循环。
+- 将副作用导入限制在引导、polyfill、全局样式或显式注册模块。普通工具模块不应在导入时变更全局状态。
+- 变更模块边界时，保持测试和构建运行器兼容性；Jest/Vitest/Node/bundler 通常以不同方式解析 ESM 和 CommonJS。
 
 ### Resolution And Publication
 
-Treat `package.json` `type`, `exports`, `imports`, file extensions, and bundler aliases as one resolution contract. For a package with multiple consumers, define which conditions (`import`, `require`, `node`, `browser`, or the repository's supported condition) resolve to which artifact, and keep declaration/source maps aligned where they are owned.
+将 `package.json` `type`、`exports`、`imports`、文件扩展名和 bundler 别名视为一个解析契约。对于有多个消费者的包，定义哪些条件（`import`、`require`、`node`、`browser` 或仓库支持的条件）解析到哪个产物，并在拥有的地方保持声明/source map 对齐。
 
-Do not expose a source directory merely to make a test import pass. Add a public export only when the symbol is a supported API, and verify deep-import failures for paths that must remain private. Import maps and aliases are browser/build configuration; they do not change Node's package resolution unless the runtime explicitly supports them.
+不要仅为使测试导入通过而暴露源码目录。仅当符号是受支持的 API 时才添加公共导出，并验证必须保持私有的路径的深度导入失败。Import map 和别名是浏览器/构建配置；除非运行时显式支持它们，否则它们不改变 Node 的包解析。
 
 ## Verification Focus
 
-- Run build or bundle commands that exercise the changed import graph.
-- Add or run an import smoke test for public package entry points, CLI entry modules, or dynamically imported modules.
-- Verify both Node and browser targets when the module is consumed in both environments.
-- Confirm no unintended circular dependency, missing extension, broken `exports` path, or default/named export mismatch was introduced.
-- Verify each declared package entry under its supported runtime condition and run an import smoke test from the package boundary, not only from an internal relative path.
+- 运行演练变更导入图的构建或打包命令。
+- 为公共包入口点、CLI 入口模块或动态导入的模块添加或运行导入冒烟测试。
+- 当模块在两种环境中都被消费时验证 Node 和浏览器目标。
+- 确认没有引入意外的循环依赖、缺失扩展、损坏的 `exports` 路径或默认/命名导出不匹配。
+- 在其支持的运行时条件下验证每个声明的包入口，并从包边界运行导入冒烟测试，而非仅从内部相对路径。
 
 ## Evidence Focus
 
-- In the evidence summary, name the module decision: ESM/CJS convention, public exports, dynamic import, interop adapter, side-effect boundary, or circular dependency removal.
+- 在证据总结中，说明模块决策：ESM/CJS 约定、公共导出、动态导入、互操作适配器、副作用边界或循环依赖消除。

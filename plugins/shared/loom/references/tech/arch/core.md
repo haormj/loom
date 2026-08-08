@@ -1,68 +1,68 @@
-# Loom Architecture Core
+# Loom 架构核心
 
-Use this file when Loom architecture work needs to turn confirmed scope, technical baseline, and repository context into implementation-facing decisions.
+当 Loom 架构工作需要将确认的范围、技术基线和仓库上下文转化为面向实现的决策时，使用本文件。
 
-Loom architecture work is not a standalone design essay. It is an implementation-facing design contract whose ownership, behavior, data, runtime, and failure boundaries must remain observable in the delivered system.
+Loom 架构工作不是独立的设计论述。它是一个面向实现的设计契约，其所有权、行为、数据、运行时和失败边界必须在交付系统中保持可观测。
 
-## Architecture Judgment
+## 架构判断
 
-1. Start from confirmed current-phase behavior, constraints, and existing repository boundaries.
-2. Select the smallest structure that preserves ownership, invariants, failure recovery, and runtime closure.
-3. Make every boundary observable in code ownership, an interface, a state transition, a data rule, or a runtime surface.
-4. Treat future extensibility as a consequence of a current decision, not as permission to implement speculative layers.
+1. 从确认的当前阶段行为、约束和已有仓库边界出发。
+2. 选择能保持所有权、不变量、失败恢复和运行时闭环的最小结构。
+3. 使每个边界在代码所有权、接口、状态转换、数据规则或运行时面中可观测。
+4. 将未来可扩展性视为当前决策的后果，而非实现推测性层的许可。
 
-## Required Architecture Assets
+## 必需的架构资产
 
-Production-grade Loom architecture output must produce implementation-facing assets:
+生产级 Loom 架构输出必须产生面向实现的资产：
 
-| Asset | Purpose | Engineering Effect |
+| 资产 | 用途 | 工程效果 |
 |---|---|---|
-| Architecture style | Explains the selected structural approach for the current phase. | Establishes the composition and dependency rules implementation must preserve. |
-| Module boundary | Defines responsibilities and ownership for code changes. | Keeps behavior, state, and dependencies inside explicit owners. |
-| Data architecture | Defines ownership, invariants, transaction boundaries, and migration impact for the already selected stack. | Governs persistence mappings, writes, reads, and schema evolution. |
-| Behavior model | Defines workflows, state transitions, blocking paths, and success outcomes. | Makes success, rejection, failure, and state effects implementable. |
-| Runtime boundary | Defines build/start/probe/environment expectations. | Makes runtime entry points and dependency behavior explicit. |
-| ADR decision | Captures context, decision, alternatives, consequences, and verification hints. | Preserves the selected trade-off and its observable consequences. |
-| NFR target | Captures concrete quality targets and verification strategy. | Turns quality claims into measurable implementation obligations. |
-| Risk/failure mode | Captures impact, mitigation, owner artifacts, and verification hints. | Connects failure exposure to an owned mitigation and evidence signal. |
+| 架构风格 | 解释当前阶段选择的结构方法。 | 确立实现必须保持的组合和依赖规则。 |
+| 模块边界 | 定义代码变更的职责和所有权。 | 将行为、状态和依赖保持在明确的拥有者内。 |
+| 数据架构 | 为已选技术栈定义所有权、不变量、事务边界和迁移影响。 | 治理持久化映射、写入、读取和 schema 演进。 |
+| 行为模型 | 定义工作流、状态转换、阻断路径和成功结果。 | 使成功、拒绝、失败和状态效果可实现。 |
+| 运行时边界 | 定义构建/启动/探针/环境期望。 | 使运行时入口点和依赖行为明确。 |
+| ADR 决策 | 记录上下文、决策、备选方案、后果和验证提示。 | 保留所选权衡及其可观测后果。 |
+| NFR 目标 | 记录具体质量目标和验证策略。 | 将质量声明转化为可衡量的实现义务。 |
+| 风险/失败模式 | 记录影响、缓解措施、拥有工件和验证提示。 | 将失败暴露连接到拥有缓解措施和证据信号。 |
 
-## Decision Discipline
+## 决策纪律
 
-- A decision must change implementation ownership, behavior, data consistency, runtime shape, security, operability, or verification.
-- Name the forces that distinguish the selected structure from realistic alternatives.
-- Define where the rule is enforced and what observable evidence proves it.
-- Keep related decisions coherent: a service split without data ownership, failure behavior, and runtime independence is not a complete decision.
-- Do not create an ADR merely to restate a framework or database already selected by the technical baseline.
+- 决策必须改变实现所有权、行为、数据一致性、运行时形态、安全、可运维性或验证。
+- 命名区分所选结构与现实备选方案的力量。
+- 定义规则在哪里执行以及什么可观测证据证明它。
+- 保持相关决策连贯：没有数据所有权、失败行为和运行时独立性的服务拆分不是完整的决策。
+- 不要仅为重述技术基线已选择的框架或数据库而创建 ADR。
 
-## Decision Inputs
+## 决策输入
 
-Use these inputs. Ignore unselected or unavailable context.
+使用这些输入。忽略未选择或不可用的上下文。
 
-| Input | Use |
+| 输入 | 用途 |
 |---|---|
-| Current phase scope | Defines what the architecture must support now. |
-| Deferred/excluded scope | Defines what must not be implemented now. |
-| Requirement details | Defines invariants, workflows, actors, and data behaviors. |
-| Technical baseline | Defines selected runtime/framework/storage facts. Consume it; do not redo technology selection here. |
-| Repository context | Defines existing code boundaries and style when available. |
-| Frontend quality contract | Defines frontend quality only for frontend surfaces; do not mix UI references into architecture references. |
+| 当前阶段范围 | 定义架构现在必须支持什么。 |
+| 推迟/排除范围 | 定义现在不得实现什么。 |
+| 需求详情 | 定义不变量、工作流、参与者和数据行为。 |
+| 技术基线 | 定义已选运行时/框架/存储事实。消费它；不要在此重做技术选择。 |
+| 仓库上下文 | 在可用时定义已有代码边界和风格。 |
+| 前端质量契约 | 仅对前端面定义前端质量；不要将 UI 引用混入架构引用。 |
 
-## Must Not
+## 禁止事项
 
-- Do not select a database, language, or framework in Architecture when Technical Baseline already owns that decision.
-- Do not produce generic "scalable, maintainable, secure" claims without an observable target and evaluation boundary.
-- Do not write future phase capabilities as current-phase modules.
-- Do not create abstraction layers unless they support current behavior, verification, or isolation.
-- Do not leave decisions, NFRs, or risks empty just because the phase looks small.
+- 当技术基线已拥有数据库、语言或框架选择时，不要在架构中重新选择。
+- 不要产生没有可观测目标和评估边界的通用"可扩展、可维护、安全"声明。
+- 不要将未来阶段能力写为当前阶段模块。
+- 除非抽象层支持当前行为、验证或隔离，否则不要创建。
+- 不要仅因为阶段看起来小就让决策、NFR 或风险留空。
 
-## Minimum Quality Bar
+## 最低质量标准
 
-A usable Architecture section lets an implementation reader answer:
+一个可用的架构章节让实现读者能回答：
 
-- Which module or boundary owns the implementation?
-- Which data invariants must the implementation preserve?
-- Which interface or workflow proves the behavior?
-- Which architecture decision or risk governs that owner?
-- Which verification evidence proves the architecture constraint is respected?
+- 哪个模块或边界拥有实现？
+- 实现必须保持哪些数据不变量？
+- 哪个接口或工作流证明行为？
+- 哪个架构决策或风险治理该拥有者？
+- 哪些验证证据证明架构约束被遵守？
 
-If those answers are missing, the architecture is incomplete; do not displace the ambiguity into implementation.
+如果这些答案缺失，架构不完整；不要将模糊性推入实现。

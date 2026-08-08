@@ -1,93 +1,93 @@
-# API Pagination And Collection Reads
+# API 分页和集合读取
 
-## When Pagination Is Required
+## 何时需要分页
 
-Pagination is required when a collection endpoint can grow beyond a small bounded current-phase dataset or when the UI supports repeated list scanning/searching.
+当集合端点可能超出当前阶段小型有界数据集，或 UI 支持重复列表扫描/搜索时，需要分页。
 
-It is not required for fixed lookup lists, enum-like values, or small bounded lists explicitly constrained by the requirement.
+对于固定查找列表、类枚举值或由需求明确约束的小型有界列表，不需要分页。
 
-## Strategy Selection
+## 策略选择
 
-| Strategy | Use When | Avoid When |
+| 策略 | 适用场景 | 不适用场景 |
 |---|---|---|
-| Page/size | Internal tools, admin tables, simple random access. | Very large or fast-changing feeds. |
-| Offset/limit | Existing APIs already use offset. | High offset performance matters. |
-| Cursor | Large or changing datasets, infinite scroll, timeline feeds. | Users need direct page numbers. |
-| Keyset | Stable indexed sort fields exist. | Sorting is arbitrary or multi-field without index support. |
+| Page/size | 内部工具、管理表格、简单随机访问。 | 非常大或快速变化的 Feed。 |
+| Offset/limit | 已有 API 已使用 offset。 | 高 offset 性能重要时。 |
+| Cursor | 大型或变化的数据集、无限滚动、时间线 Feed。 | 用户需要直接页码时。 |
+| Keyset | 存在稳定的索引排序字段。 | 排序任意或无索引支持的多字段排序。 |
 
-## Response Shape Choices
+## 响应形态选择
 
-Declare response metadata according to the selected strategy:
+根据所选策略声明响应元数据：
 
-| Shape | Use When |
+| 形态 | 适用场景 |
 |---|---|
-| `items`, `page`, `size`, `totalElements`, `totalPages` | Page/size admin tables where total count is affordable and useful. |
-| `items`, `offset`, `limit`, `hasMore` | Offset/limit APIs where total count is optional or expensive. |
-| `items`, `nextCursor`, `hasMore` | Cursor/keyset APIs or changing datasets. |
-| Link headers or `_links` | Existing repository/API convention already uses navigational links. |
+| `items`、`page`、`size`、`totalElements`、`totalPages` | Page/size 管理表格，总数可负担且有用。 |
+| `items`、`offset`、`limit`、`hasMore` | Offset/limit API，总数可选或昂贵。 |
+| `items`、`nextCursor`、`hasMore` | Cursor/keyset API 或变化的数据集。 |
+| Link 头或 `_links` | 已有仓库/API 约定已使用导航链接。 |
 
-Total count is optional. Do not force expensive `COUNT(*)` behavior for large or rapidly changing datasets. If the UI needs total pages, state the cost and verification expectation.
+总数是可选的。不要为大型或快速变化的数据集强制昂贵的 `COUNT(*)` 行为。如果 UI 需要总页数，说明成本和验证期望。
 
-## Contract Fields
+## 契约字段
 
-A paginated collection contract should include:
+分页集合契约应包含：
 
 - `paginationPolicy.strategy`
 - `paginationPolicy.requestFields`
 - `paginationPolicy.responseFields`
 - `paginationPolicy.defaultLimit`
 - `paginationPolicy.maxLimit`
-- `filterFields` and `sortFields` when applicable
-- whether total count is returned, omitted, or client-requested
+- 适用时的 `filterFields` 和 `sortFields`
+- 总数是返回、省略还是由客户端请求
 
-For example, a page/size admin table should name the `page` and `size` request fields, the collection and metadata response fields, a default page size, and a maximum page size.
+例如，page/size 管理表格应指明 `page` 和 `size` 请求字段、集合和元数据响应字段、默认页大小和最大页大小。
 
-## Filter And Sort Semantics
+## 过滤和排序语义
 
-Filtering must be applied before pagination. Sorting must be stable enough that repeated page reads do not skip or duplicate records.
+过滤必须在分页之前应用。排序必须足够稳定，使重复页读取不会跳过或重复记录。
 
-For cursor or keyset pagination, the cursor should encode the stable sort fields or the interface should declare the fields that form the cursor. For ordinary admin tables, page/size with a stable default sort is usually sufficient.
+对于 cursor 或 keyset 分页，cursor 应编码稳定排序字段，或接口应声明构成 cursor 的字段。对于普通管理表格，page/size 配以稳定的默认排序通常足够。
 
-Allow only declared filter and sort fields. Reject or consistently ignore unknown fields according to the existing API contract; never pass client-provided field names or operators directly into SQL.
+仅允许已声明的过滤和排序字段。按已有 API 契约拒绝或一致忽略未知字段；绝不将客户端提供的字段名或操作符直接传入 SQL。
 
-## Cursor And Keyset Contract
+## Cursor 和 Keyset 契约
 
-- Treat cursors as opaque client tokens. Do not require clients to construct or modify their internal representation.
-- Include every effective sort value, sort direction, and a unique tie-breaker in the cursor or keyset boundary so equal primary sort values cannot skip or duplicate records.
-- Do not place secrets or unnecessary personal data in an encoded cursor. Sign or otherwise validate cursors when tampering could expose data or bypass a filter boundary.
-- Define cursor version or expiry behavior only when the server may change the encoding or the result window has a real lifetime.
-- For bidirectional navigation, define separate next/previous semantics and reverse both comparison and ordering correctly before restoring response order.
-- Keep filters and sort policy stable across cursor requests. A cursor created for one filter/sort combination must not silently continue a different query.
+- 将 cursor 视为不透明的客户端 token。不要要求客户端构造或修改其内部表示。
+- 在 cursor 或 keyset 边界中包含每个有效排序值、排序方向和唯一决胜键，使相同主排序值不会跳过或重复记录。
+- 不要在编码的 cursor 中放置密钥或不必要的个人数据。当篡改可能暴露数据或绕过过滤边界时，对 cursor 签名或以其他方式验证。
+- 仅当服务端可能更改编码或结果窗口有真实生命周期时才定义 cursor 版本或过期行为。
+- 对于双向导航，定义独立的 next/previous 语义，并在恢复响应顺序前正确反转比较和排序。
+- 在 cursor 请求间保持过滤和排序策略稳定。为一个过滤/排序组合创建的 cursor 不得静默继续不同的查询。
 
-## Limits And Count Cost
+## 限制和计数成本
 
-- Declare minimum, default, and maximum page size when the selected strategy accepts a client-controlled size.
-- Define the response for negative values, zero where unsupported, values above the maximum, malformed cursors, and out-of-range pages.
-- Return total count only when a client workflow needs it and the query cost is acceptable. `hasMore` or a next cursor is sufficient for many feeds and large datasets.
-- Align keyset fields and common filter/sort combinations with the persistence query and index design owned by implementation tasks.
+- 当所选策略接受客户端控制的页大小时，声明最小、默认和最大页大小。
+- 定义负值、不支持的零值、超过最大值、格式错误的 cursor 和超出范围页码的响应。
+- 仅当客户端工作流需要且查询成本可接受时才返回总数。对于许多 Feed 和大型数据集，`hasMore` 或 next cursor 已足够。
+- 将 keyset 字段和常见过滤/排序组合与实现任务拥有的持久化查询和索引设计对齐。
 
-## Edge Cases
+## 边界情况
 
-Collection contracts should state the behavior for:
+集合契约应说明以下行为：
 
-- empty result sets
-- last page
-- out-of-range page or offset
-- invalid cursor
-- cursor/filter or cursor/sort mismatch
-- page size above maximum
+- 空结果集
+- 最后一页
+- 超出范围的页或 offset
+- 无效 cursor
+- cursor/过滤或 cursor/排序不匹配
+- 页大小超过最大值
 
-Use existing project conventions for whether out-of-range pages return an empty page or a client error. Do not leave this behavior for the frontend to guess.
+超出范围的页是返回空页还是客户端错误，使用已有项目约定。不要将此行为留给前端猜测。
 
-## Verification Hooks
+## 验证钩子
 
-For collection tasks, prefer tests or runtime checks that prove:
+对于集合任务，优先使用以下测试或运行时检查来证明：
 
-- default pagination returns a bounded page
-- filters/sorts used by the UI are wired to backend query behavior
-- response shape contains the fields the frontend uses
-- repeated reads with equal sort values do not skip or duplicate records
-- malformed or tampered cursors follow the declared error behavior
-- empty or out-of-range behavior matches the declared policy
+- 默认分页返回有界页
+- UI 使用的过滤/排序已连接到后端查询行为
+- 响应形态包含前端使用的字段
+- 相等排序值的重复读取不会跳过或重复记录
+- 格式错误或篡改的 cursor 遵循声明的错误行为
+- 空或超出范围行为与声明的策略匹配
 
-Do not add broad pagination infrastructure to write-only or detail-only tasks.
+不要为仅写或仅详情任务添加宽泛的分页基础设施。

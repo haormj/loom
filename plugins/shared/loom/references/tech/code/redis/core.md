@@ -1,46 +1,46 @@
-# Redis Integration Core
+# Redis 集成核心
 
 ## When To Use
 
-Use this reference when the task owns an application boundary that uses an accepted Redis capability. It provides cross-capability integration rules; use the capability-specific reference for the selected capability's behavior.
+当任务拥有使用已接受 Redis 能力的应用边界时使用此参考。它提供跨能力集成规则；使用能力特定参考处理选中能力的行为。
 
-Do not add Redis because a package, environment variable, or generic architecture text mentions it. The accepted TechnicalBaseline provider and task-owned capability are the applicability authority.
+不要因为包、环境变量或通用架构文本提到 Redis 就添加它。已接受的 TechnicalBaseline 提供者和任务拥有的能力是适用性权威。
 
 ## Implementation Focus
 
-- Keep the business source of truth explicit. Redis is not automatically authoritative for domain records.
-- Give every key a stable namespace owned by the feature and include every identity or version dimension that changes the value.
-- Include tenant, actor, locale, permission, filter, or schema version dimensions when they change the value.
-- Bound value size, list length, stream retention, concurrency, and retry work.
-- Set timeouts and connection-pool limits at the selected framework integration boundary.
-- Treat Redis unavailability according to the accepted capability contract; optional optimization paths may fall back, while required work may fail explicitly.
-- Keep serialization versioned and avoid putting mutable ORM entities or credentials into shared Redis values.
-- Use one application-owned adapter rather than scattering provider commands through handlers.
+- 保持业务真相来源显式。Redis 不会自动成为领域记录的权威。
+- 为每个键赋予由功能拥有的稳定命名空间，并包含改变值的每个标识或版本维度。
+- 当租户、参与者、locale、权限、过滤或 schema 版本维度改变值时包含它们。
+- 限制值大小、列表长度、流保留、并发和重试工作。
+- 在选中的框架集成边界设置超时和连接池限制。
+- 根据已接受的能力契约处理 Redis 不可用；可选优化路径可以回退，而必需工作可以显式失败。
+- 保持序列化版本化并避免将可变 ORM 实体或凭据放入共享 Redis 值。
+- 使用一个应用拥有的适配器而非在处理器中散布提供者命令。
 
 ## Capability Boundaries
 
-Redis capabilities have different correctness rules. Do not combine them behind one generic helper that hides TTL, authorization, retry, acknowledgment, or lease behavior.
+Redis 能力有不同的正确性规则。不要将它们组合在一个隐藏 TTL、授权、重试、确认或租约行为的通用辅助之后。
 
-If two capabilities need different durability or isolation policies, use separate logical namespaces or separate accepted dependency ids. Do not silently change the shared Redis deployment to satisfy an unconfirmed requirement.
+如果两个能力需要不同的持久性或隔离策略，使用单独的逻辑命名空间或单独的已接受依赖 ID。不要静默更改共享 Redis 部署以满足未确认的需求。
 
 ## Verification Focus
 
-- Verify the selected capability's key namespace and identity dimensions.
-- Verify connection timeout, reconnect, and unavailable-provider behavior.
-- Verify values cannot cross tenants, users, versions, or feature boundaries.
-- Verify expiration, cleanup, and bounded resource behavior.
-- Verify serialization remains compatible with the current code and deployment image.
+- 验证选中能力的键命名空间和标识维度。
+- 验证连接超时、重连和不可用提供者行为。
+- 验证值不能跨越租户、用户、版本或功能边界。
+- 验证过期、清理和有界资源行为。
+- 验证序列化与当前代码和部署镜像保持兼容。
 
 ## Evidence Focus
 
-Record the adapter, capability, key examples, configuration source, unavailable-provider behavior, and the focused test or runtime evidence that proves the decision.
+记录适配器、能力、键示例、配置来源、不可用提供者行为以及证明决策的聚焦测试或运行时证据。
 
-Evidence should point to changed files and concrete test cases. A successful Redis ping does not prove application-level key isolation or recovery behavior.
+证据应指向变更的文件和具体测试用例。成功的 Redis ping 不证明应用级键隔离或恢复行为。
 
 ## Unsafe Defaults
 
-- Treating Redis package detection as a reason to add a service.
-- Using `localhost` for a container-to-container Redis URL.
-- Sharing keys between unrelated capability data without an explicit contract.
-- Storing secrets, access tokens, or unrestricted domain objects in broad keys.
-- Leaving TTL, size, timeout, or retry behavior to provider defaults.
+- 将 Redis 包检测视为添加服务的理由。
+- 为容器到容器的 Redis URL 使用 `localhost`。
+- 在没有显式契约的情况下在不相关能力数据之间共享键。
+- 在宽泛键中存储密钥、访问令牌或不受限的领域对象。
+- 将 TTL、大小、超时或重试行为留给提供者默认值。

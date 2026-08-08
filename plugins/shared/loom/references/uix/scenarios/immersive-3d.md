@@ -1,15 +1,15 @@
-# UIX Scenario: Immersive 3D
+# UIX 场景：沉浸式 3D
 
-Use for Three.js/WebGL/canvas scenes, product configurators, spatial tools, games, simulations, and immersive interactive visuals.
+用于 Three.js/WebGL/canvas 场景、产品配置器、空间工具、游戏、模拟和沉浸式交互视觉。
 
-## Baseline
+## 基线
 
-- The primary scene is full-bleed or dominant, not trapped inside a decorative card.
-- The scene must render nonblank, be correctly framed, and respond to expected interaction.
-- Density is `immersive`.
-- Controls support the scene task without covering critical visual content.
+- 主要场景是全出血或主导的，而非困在装饰性卡片中。
+- 场景必须渲染非空白、正确构图并响应预期交互。
+- 密度为 `immersive`。
+- 控件支持场景任务而不覆盖关键视觉内容。
 
-## Scene Layout
+## 场景布局
 
 ```html
 <main data-region="scene-page">
@@ -50,49 +50,48 @@ Use for Three.js/WebGL/canvas scenes, product configurators, spatial tools, game
 }
 ```
 
-## Required Patterns
+## 必需模式
 
-- Stable canvas sizing and resize handling.
-- Loading and fallback state for assets/shaders/WebGL support.
-- Scene controls: camera, zoom, rotate, reset, selection, mode toggle, or inspector as required.
-- Overlay UI with readable contrast and safe placement.
-- Reduced-motion or performance fallback when practical.
+- 稳定的画布尺寸和调整大小处理。
+- 资产/着色器/WebGL 支持的加载和回退状态。
+- 场景控件：相机、缩放、旋转、重置、选择、模式切换或检查器（视需要）。
+- 带可读对比度和安全放置的覆盖 UI。
+- 可行时的减弱动效或性能回退。
 
-## Control Composition
+## 控件组合
 
-- Keep primary controls docked or overlaid in predictable zones; avoid covering the object/scene center.
-- Inspector panels should be collapsible or responsive when they compete with the scene.
-- Use labels/tooltips for unfamiliar scene controls.
-- If the scene represents a product/configuration/game state, visible UI must expose the current mode, selected object, and available action.
+- 将主要控件停靠或覆盖在可预测区域；避免覆盖对象/场景中心。
+- 检查器面板在与场景竞争时应可折叠或响应式。
+- 为不熟悉的场景控件使用标签/工具提示。
+- 如果场景代表产品/配置/游戏状态，可见 UI 必须暴露当前模式、选定对象和可用操作。
 
-## Verification
+## 验证
 
-- Verify canvas pixels are nonblank.
-- Check desktop and mobile framing.
-- Confirm referenced assets load.
-- Confirm animation/interaction continues after initial render.
-- Check controls do not occlude the subject.
-- Check resize handling and device pixel ratio behavior when practical.
+- 验证画布像素非空白。
+- 检查桌面和移动构图。
+- 确认引用的资产加载。
+- 确认动画/交互在初始渲染后继续。
+- 检查控件不遮挡主体。
+- 可行时检查调整大小处理和设备像素比行为。
 
-## Avoid
+## 避免
 
-- Static placeholder canvas.
-- Dark blurred background with no inspectable object.
-- Controls that occlude the subject or cannot be used by touch.
+- 静态占位画布。
+- 无可检查对象的深色模糊背景。
+- 遮挡主体或无法通过触摸使用的控件。
 
-## Loading, Fallback, And Performance
+## 加载、回退和性能
 
-An immersive surface is incomplete until it behaves predictably before assets
-load, when WebGL is unavailable, and after the viewport changes.
+沉浸式界面在资产加载前、WebGL 不可用时和视口变化后行为可预测之前是不完整的。
 
 ```text
 initial loading -> asset progress or skeleton -> interactive scene
-                                      \\-> fallback explanation + usable action
+                                      \-> fallback explanation + usable action
 ```
 
-- Reserve the canvas dimensions before initialization so loading does not shift the surrounding UI.
-- Show which asset or stage is loading when progress is meaningful; a permanent spinner without recovery is not a loading state.
-- Provide an actionable fallback for WebGL, shader, asset, or capability failure. The fallback can be a static image, inspectable object view, or equivalent product task surface.
-- Keep camera framing, controls, and overlay state stable across resize and route changes.
-- Cap pixel ratio, dispose unused assets, and pause or reduce animation when the surface is hidden or reduced motion is requested.
-- Test the scene at desktop and mobile aspect ratios; a nonblank canvas alone does not prove correct framing or usable controls.
+- 在初始化前预留画布尺寸，以便加载不偏移周围 UI。
+- 当进度有意义时显示正在加载哪个资产或阶段；无恢复的永久旋转器不是加载状态。
+- 为 WebGL、着色器、资产或能力失败提供可操作的回退。回退可以是静态图像、可检查的对象视图或等价的产品任务界面。
+- 在调整大小和路由变化中保持相机构图、控件和覆盖状态稳定。
+- 限制像素比，处置未使用资产，并在界面隐藏或请求减弱动效时暂停或减少动画。
+- 在桌面和移动宽高比下测试场景；非空白画布本身不证明构图正确或控件可用。

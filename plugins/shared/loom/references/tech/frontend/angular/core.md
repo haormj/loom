@@ -1,29 +1,29 @@
-# Angular Application Implementation
+# Angular 应用实现
 
-Implement the accepted frontend experience within the repository's Angular version, application bootstrap, design system, API contract, and feature boundaries. Angular 17+ patterns are available only when the selected project version supports them.
+在仓库的 Angular 版本、应用引导、设计系统、API 契约和功能边界内实现已接受的前端体验。Angular 17+ 模式仅在所选项目版本支持时可用。
 
-## Application Composition
+## 应用组合
 
-Preserve standalone versus NgModule architecture. New standalone features should use `ApplicationConfig`, `bootstrapApplication`, route/provider functions, and explicit component imports; an established NgModule application should not be partially rewritten unless migration is task-owned.
+保留 standalone 与 NgModule 架构。新 standalone 功能应使用 `ApplicationConfig`、`bootstrapApplication`、路由/provider 函数和显式组件导入；已建立的 NgModule 应用不应被部分重写，除非迁移为任务所属。
 
-Register application-wide providers once in the composition root. Keep feature services/state/routes close to their owning capability and avoid `providedIn: 'root'` for stateful providers that should have route/feature lifetime.
+在组合根中一次性注册应用级 provider。将功能 service/state/route 保持在其所属能力附近，避免对应有路由/功能生命周期的有状态 provider 使用 `providedIn: 'root'`。
 
-Use injection tokens for configurable ports and browser/runtime abstractions. `inject()` and constructor injection are both valid; follow repository style and use `runInInjectionContext` only when a function genuinely needs an injection context.
+为可配置端口和浏览器/运行时抽象使用注入令牌。`inject()` 和构造函数注入均有效；遵循仓库风格，仅当函数真正需要注入上下文时使用 `runInInjectionContext`。
 
-## State Boundary
+## 状态边界
 
-Choose state by lifetime and sharing needs:
+按生命周期和共享需求选择状态：
 
-| State | Suitable owner |
+| 状态 | 适用所有者 |
 |---|---|
-| Local visual/edit state | component signals/form model |
-| Derived local state | `computed()` |
-| Reusable feature operation | service/facade |
-| Shared cross-surface lifecycle | selected store such as NgRx |
-| URL-shareable filters/selection | router params/query params |
-| Server source of truth | API service/cache policy, not duplicated client truth |
+| 本地视觉/编辑状态 | component signals/form model |
+| 派生本地状态 | `computed()` |
+| 可复用功能操作 | service/facade |
+| 共享跨界面生命周期 | selected store such as NgRx |
+| URL 可共享筛选/选择 | router params/query params |
+| 服务端真相来源 | API service/cache policy, not duplicated client truth |
 
-Signals are synchronous state primitives. Use `signal`, `computed`, and controlled `effect` for local/derived state; avoid effects that copy one signal into another, issue uncontrolled writes, or hide dependency cycles.
+Signal 是同步状态原语。对本地/派生状态使用 `signal`、`computed` 和受控 `effect`；避免将一个 signal 复制到另一个、发出不受控写入或隐藏依赖循环的 effect。
 
 ```typescript
 readonly records = signal<readonly RecordSummary[]>([]);
@@ -33,56 +33,56 @@ readonly selected = computed(() =>
 );
 ```
 
-Keep persisted records immutable enough for OnPush/signal equality to be meaningful. Maintain a separate editable draft and reconcile it after accepted save/readback.
+保持持久化记录足够不可变以使 OnPush/signal 相等性有意义。维护单独的可编辑草稿并在已接受保存/回读后协调。
 
-## API And Error Boundary
+## API 与错误边界
 
-Centralize HTTP transport in typed services/adapters. Preserve accepted method, path, payload, status, error, auth, pagination, and same-origin/base URL rules. Do not duplicate endpoint strings across components.
+在类型化 service/adapter 中集中 HTTP 传输。保留已接受的方法、路径、载荷、状态、错误、auth、分页和同源/base URL 规则。不要跨组件重复端点字符串。
 
-Use interceptors for cross-cutting transport concerns such as credentials, correlation, or error normalization only when they apply broadly. Business-specific error mapping belongs in the feature service/facade.
+仅当广泛适用时为横切传输关注（如凭据、关联或错误规范化）使用拦截器。业务特定的错误映射属于功能 service/facade。
 
-Distinguish validation, conflict/stale state, permission denial, not found, unavailable dependency, and transport failure in UI state. Do not convert every failure to an empty list or generic toast.
+在 UI 状态中区分验证、冲突/过期状态、权限拒绝、未找到、不可用依赖和传输失败。不要将每次失败转换为空列表或通用 toast。
 
-## Rendering And Change Detection
+## 渲染与变更检测
 
-Use `ChangeDetectionStrategy.OnPush` for task-owned business components where compatible. Update signals/immutable inputs through explicit events and avoid manual `detectChanges`/`markForCheck` as a routine state mechanism.
+在兼容时为任务所属的业务组件使用 `ChangeDetectionStrategy.OnPush`。通过显式事件更新 signal/不可变输入，避免将手动 `detectChanges`/`markForCheck` 作为常规状态机制。
 
-Use `@if`, `@for`, `@switch`, and deferred views only on compatible Angular versions. Track dynamic collections by stable domain identity, never mutable array index. `@defer` needs loading, placeholder, error, and triggering behavior that does not hide primary work.
+仅在兼容 Angular 版本上使用 `@if`、`@for`、`@switch` 和 deferred view。按稳定领域标识跟踪动态集合，绝不用可变数组索引。`@defer` 需要不隐藏主要工作的加载、占位符、错误和触发行为。
 
-Keep expensive transformation out of templates. Use computed view models, pure pipes, selectors, or bounded service projections. Do not call APIs or mutate state from template getters.
+将昂贵转换排除在模板之外。使用 computed 视图模型、纯 pipe、选择器或有界 service 投影。不要从模板 getter 调用 API 或修改状态。
 
-## Forms And Workflow State
+## 表单与工作流状态
 
-Use reactive forms for business workflows with validation, nested structures, dynamic rows, and explicit submit lifecycle. Typed forms should model nullability and disabled controls correctly; `form.value` may omit disabled fields while `getRawValue()` includes them.
+对具有验证、嵌套结构、动态行和显式提交生命周期的业务工作流使用响应式表单。类型化表单应正确建模可空性和禁用控件；`form.value` 可能省略禁用字段而 `getRawValue()` 包含它们。
 
-Client validation improves feedback but does not replace server rules. Map backend field/global errors without discarding the user's draft, and clear stale errors when relevant fields change or a resubmit succeeds.
+客户端验证改善反馈但不替代服务端规则。映射后端字段/全局错误而不丢弃用户草稿，在相关字段变更或重新提交成功时清除过期错误。
 
-Represent loading, empty, ready, submitting, success, disabled, and business-blocking states at the owning region/control. Prevent duplicate writes while preserving retry/recovery.
+在所属区域/控件处表示加载、空、就绪、提交中、成功、禁用和业务阻止状态。在保留重试/恢复的同时防止重复写入。
 
-## Security And Content
+## 安全与内容
 
-Treat all browser code/config as public. Never embed secrets or rely on route guards/UI visibility as server authorization. Sanitize or avoid untrusted HTML; use Angular's binding model and do not bypass security with `DomSanitizer` without a reviewed source contract.
+将所有浏览器代码/配置视为公开的。永远不要嵌入密钥或依赖路由守卫/UI 可见性作为服务端授权。净化或避免不受信 HTML；使用 Angular 的绑定模型，不要在没有审查过的源契约的情况下用 `DomSanitizer` 绕过安全。
 
-Keep product surfaces free of runtime commands, framework explanations, delivery progress, verification instructions, and implementation notes. Use the accepted UIX tokens/components and business language.
+保持产品界面不含运行时命令、框架说明、交付进度、验证指令和实现备注。使用已接受的 UIX 令牌/组件和业务语言。
 
 ## Verification
 
-- Build/typecheck the affected Angular project and compile templates/imports/providers.
-- Exercise task-owned loading, empty, ready, validation, conflict, permission, unavailable, submitting, and success states.
-- Verify immutable updates, stable tracking, draft preservation, and readback reconciliation.
-- Test typed HTTP mapping and exact error/status behavior when API binding changes.
-- Confirm no sensitive configuration or unsafe HTML path was introduced.
+- 构建/类型检查受影响的 Angular 项目并编译 template/导入/provider。
+- 练习任务所属的加载、空、就绪、验证、冲突、权限、不可用、提交中和成功状态。
+- 验证不可变更新、稳定跟踪、草稿保留和回读协调。
+- 当 API 绑定变更时测试类型化 HTTP 映射和精确错误/状态行为。
+- 确认未引入敏感配置或不安全 HTML 路径。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the Angular composition, state, HTTP, form, or rendering decision and the public behavior/assertion proving it. Compilation or a screenshot alone does not prove API mapping, failure recovery, state ownership, or form semantics.
+标识 Angular 组合、状态、HTTP、表单或渲染决策以及证明它的公共行为/断言。仅编译或截图不能证明 API 映射、失败恢复、状态所有权或表单语义。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Standalone/NgModule migration mixed into unrelated feature work.
-- Root-scoped mutable feature state by convenience.
-- Effects used to mirror derived signal state.
-- API calls and business error handling inside components.
-- Array index used to track mutable business rows.
-- Manual change detection used to compensate for unclear ownership.
-- Browser environment files treated as secret storage.
+- 将 standalone/NgModule 迁移混入不相关的功能工作。
+- 为便利使用根范围可变功能状态。
+- 用 effect 镜像派生 signal 状态。
+- 在组件内部进行 API 调用和业务错误处理。
+- 使用数组索引跟踪可变业务行。
+- 使用手动变更检测补偿不清晰的所有权。
+- 将浏览器环境文件视为密钥存储。

@@ -1,14 +1,14 @@
-# React Component Implementation
+# React 组件实现
 
-Implement task-owned React surfaces within the repository's React/framework version, language and type-checking policy, router, design system, data/state libraries, and UIX contract. Do not introduce version/framework patterns because external examples label them modern.
+在仓库的 React/框架版本、语言和类型检查策略、路由、设计系统、数据/状态库以及 UIX 契约范围内，实现任务所属的 React 界面。不要因为外部示例将其标记为"现代"而引入版本/框架模式。
 
-## Component Ownership
+## 组件所有权
 
-Route/page/surface components may orchestrate accepted data, state, navigation, and feature actions. Presentational components receive typed values and emit intent without hidden API/store/router work.
+路由/页面/界面组件可以编排已接受的数据、状态、导航和功能操作。展示型组件接收类型化的值并发出意图，不包含隐藏的 API/store/路由工作。
 
-Split components at independent state/behavior/reuse boundaries, not every DOM fragment. Avoid monolithic pages that mix list/detail/form/modal/transport and generic components with many boolean modes.
+在独立的状态/行为/复用边界拆分组件，而非每个 DOM 片段。避免将列表/详情/表单/模态/传输与具有多个布尔模式的通用组件混合在同一个庞大页面中。
 
-Model props from runtime/product use. Editable drafts, formatted inputs, pending mutations, and partial filters often need view/form models distinct from backend DTOs.
+根据运行时/产品用途建模 props。可编辑草稿、格式化输入、待处理变更和部分筛选器通常需要与后端 DTO 不同的视图/表单模型。
 
 ```tsx
 type OrderRowProps = {
@@ -26,63 +26,63 @@ export function OrderRow({ order, disabled = false, onInspect }: OrderRowProps) 
 }
 ```
 
-Emit stable target identity. Do not derive a submitted record from mutable global selection that can drift after filter/sort/refresh/modal changes.
+发出稳定的目标标识。不要从可在筛选/排序/刷新/模态变更后漂移的可变全局选择中派生已提交记录。
 
-## Rendering And Identity
+## 渲染与标识
 
-Keep render pure: no mutations, subscriptions, network calls, timers, or external writes. Derive values directly or through appropriate memo/selectors rather than mirroring props into state.
+保持渲染纯净：不进行变更操作、订阅、网络调用、定时器或外部写入。直接派生值或通过适当的 memo/选择器派生，而非将 props 镜像到 state 中。
 
-Use stable domain keys for insertable/reorderable/filterable/pageable records. Array index is acceptable only for a truly static list with no identity/state.
+对可插入/可重排/可筛选/可分页的记录使用稳定的领域键。数组索引仅适用于真正静态且无标识/状态的列表。
 
-Do not create component definitions inside another component's render; this remounts state. Inline event closures are not inherently a performance defect; optimize only measured hot boundaries.
+不要在另一个组件的渲染内部创建组件定义；这会导致状态重新挂载。内联事件闭包本身不是性能缺陷；仅优化已测量的热点边界。
 
-## Workflow State And Forms
+## 工作流状态与表单
 
-Represent task-owned loading, empty, ready, validation, conflict/stale, forbidden, unavailable, submitting, success, disabled, and optimistic rollback states near the owning region/control.
+在所属区域/控件附近表示任务所属的加载、空、就绪、验证、冲突/过期、禁止、不可用、提交中、成功、禁用和乐观回滚状态。
 
-Keep editable draft separate from persisted records. Preserve valid input after backend errors, associate field/global errors, block duplicate submit, and reconcile returned identity/version/status.
+将可编辑草稿与持久化记录分开。在后端错误后保留有效输入，关联字段/全局错误，阻止重复提交，并协调返回的标识/版本/状态。
 
-Use controlled/uncontrolled/form-library patterns consistently. Avoid switching controlled state after mount and avoid storing every derived field twice.
+一致地使用受控/非受控/表单库模式。避免在挂载后切换受控状态，避免将每个派生字段存储两次。
 
-## Errors And Async Boundaries
+## 错误与异步边界
 
-Error boundaries catch rendering/lifecycle failures below them; they do not catch event-handler/async errors automatically and should not replace expected business state.
+错误边界捕获其下方的渲染/生命周期失败；它们不会自动捕获事件处理器/异步错误，也不应替代预期的业务状态。
 
-Place boundaries at route/feature/independent expensive region granularity with usable recovery. Log unexpected failures once without exposing stack/provider data.
+在路由/功能/独立高成本区域的粒度上放置边界，并提供可用的恢复。记录意外失败一次，不暴露堆栈/提供商数据。
 
-Suspense is appropriate only when the selected framework/data source integrates with it. Loading a promise in an effect is not automatically Suspense behavior.
+Suspense 仅在所选框架/数据源与其集成时适用。在 effect 中加载 promise 不会自动产生 Suspense 行为。
 
-## Accessibility And UIX
+## 可访问性与 UIX
 
-Use semantic elements before ARIA, label fields, name icon-only actions, preserve keyboard/focus behavior, announce meaningful errors/status, and support reduced motion/text/long/localized content.
+优先使用语义元素而非 ARIA，为字段添加标签，为仅图标操作命名，保留键盘/焦点行为，宣告有意义的错误/状态，并支持减少动画/文本/长内容/本地化内容。
 
-Use the repository component library and UIX semantic tokens for density, typography, color, spacing, controls, dialogs, tables, and responsive behavior. Do not create custom buttons/dialogs/selects casually.
+使用仓库组件库和 UIX 语义令牌来处理密度、排版、颜色、间距、控件、对话框、表格和响应式行为。不要随意创建自定义按钮/对话框/选择器。
 
-Product UI must not display runtime commands, stack explanations, delivery progress, verification instructions, or debug messages.
+产品 UI 不得显示运行时命令、堆栈说明、交付进度、验证指令或调试消息。
 
-## Security And Browser Boundary
+## 安全与浏览器边界
 
-Treat client code/config/storage as public. Never embed secrets, trust hidden controls/routes as authorization, or render unsanitized HTML. Use `dangerouslySetInnerHTML` only with a reviewed trusted/sanitized source and tests.
+将客户端代码/配置/存储视为公开的。不要嵌入密钥、不要信任隐藏控件/路由作为授权、不要渲染未净化的 HTML。仅在审查过的可信/已净化来源和测试支持下使用 `dangerouslySetInnerHTML`。
 
-Preserve accepted API credentials/base paths/CSRF/CORS behavior through the existing client adapter. Do not hardcode local endpoints.
+通过现有的客户端适配器保留已接受的 API 凭据/基础路径/CSRF/CORS 行为。不要硬编码本地端点。
 
 ## Verification
 
-- Test visible behavior and emitted intent through roles/labels/text/user events.
-- Cover owned workflow states, draft preservation, duplicate blocking, and readback reconciliation.
-- Verify target identity after sort/filter/page/refresh/modal open-close.
-- Exercise focus, keyboard, semantics, errors, long content, and responsive constraints.
-- Run focused type/build/tests when component contracts/imports change.
+- 通过角色/标签/文本/用户事件测试可见行为和发出的意图。
+- 覆盖所属的工作流状态、草稿保留、重复阻止和回读协调。
+- 在排序/筛选/分页/刷新/模态打开-关闭后验证目标标识。
+- 练习焦点、键盘、语义、错误、长内容和响应式约束。
+- 当组件契约/导入变更时运行聚焦的类型/构建/测试。
 
-## Delivery Evidence
+## 交付证据
 
-Identify component/state/form/accessibility boundary and the visible assertion proving it. A shallow render, private state assertion, or one screenshot cannot prove action identity, async recovery, accessibility, or responsive workflow behavior.
+标识组件/状态/表单/可访问性边界以及证明它的可见断言。浅层渲染、私有状态断言或单张截图无法证明操作标识、异步恢复、可访问性或响应式工作流行为。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Backend DTOs reused as mutable form/view state indiscriminately.
-- API/store/router work hidden in presentational components.
-- Render-time side effects or component definitions.
-- Dynamic lists keyed by index.
-- Every expected failure delegated to an error boundary/toast.
-- Custom controls bypassing semantic UIX/design-system primitives.
+- 不加区分地将后端 DTO 用作可变表单/视图状态。
+- 在展示型组件中隐藏 API/store/路由工作。
+- 渲染时副作用或组件定义。
+- 以索引为键的动态列表。
+- 将每个预期失败委托给错误边界/提示。
+- 绕过语义 UIX/设计系统原语的自定义控件。

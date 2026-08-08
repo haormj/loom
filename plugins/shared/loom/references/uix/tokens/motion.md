@@ -1,51 +1,49 @@
-# UIX Token: Motion
+# UIX 令牌：动效
 
-Load this file when adding animation, transitions, skeletons, drawers, modals, route transitions, charts, 3D scenes, or feedback states.
+在添加动画、过渡、骨架、抽屉、模态、路由过渡、图表、3D 场景或反馈状态时加载此文件。
 
-## Purpose
+## 目的
 
-Motion must explain state or preserve orientation. It should not decorate a static interface.
+动效必须说明状态或保持方向感。它不应装饰静态界面。
 
-Use motion for:
+动效用于：
 
-- Opening and closing drawers, sheets, menus, popovers, and modals.
-- Showing loading progress or skeleton transitions.
-- Confirming success, undo, or destructive actions.
-- Revealing details after user intent.
-- Preserving spatial continuity in mobile navigation or 3D controls.
+- 打开和关闭抽屉、面板、菜单、弹出框和模态。
+- 显示加载进度或骨架过渡。
+- 确认成功、撤销或破坏性操作。
+- 在用户意图后揭示详情。
+- 在移动导航或 3D 控件中保持空间连续性。
 
-Avoid motion for:
+避免动效用于：
 
-- Spinning logos, bouncing icons, flashing borders, parallax by default, or decorative loops.
-- Frequent table row changes that distract from scanning.
-- Slow transitions that block repeated work.
+- 旋转 logo、跳动图标、闪烁边框、默认视差或装饰性循环。
+- 分散扫描注意力的频繁表格行变化。
+- 阻碍重复工作的慢速过渡。
 
-## Timing
+## 时序
 
-- Micro feedback: 100-160ms.
-- Hover/focus/pressed: 120-180ms.
-- Drawer/menu/popover: 160-240ms.
-- Modal/sheet: 180-280ms.
-- Route or large panel transition: 220-360ms.
-- Loading skeleton shimmer: subtle and optional; prefer stable skeleton blocks.
+- 微反馈：100-160ms。
+- 悬停/焦点/按下：120-180ms。
+- 抽屉/菜单/弹出框：160-240ms。
+- 模态/面板：180-280ms。
+- 路由或大面板过渡：220-360ms。
+- 加载骨架闪烁：微妙且可选；优先使用稳定骨架块。
 
-Use the shortest duration that preserves orientation. Repeated workbench actions
-should feel immediate; large spatial changes may use a longer transition only when
-the source and destination remain clear.
+使用保持方向感的最短持续时间。重复的工作台操作应感觉即时；大空间变化可使用更长过渡（仅当源和目标保持清晰时）。
 
-## Interaction Mapping
+## 交互映射
 
-| Interaction | Motion requirement |
+| 交互 | 动效要求 |
 | --- | --- |
-| Hover/focus/pressed | Small color, opacity, or transform response without layout movement. |
-| Drawer/sheet | Enter from its owning edge and return to the same context on close. |
-| Modal/dialog | Establish the blocked background and return focus to the trigger. |
-| List update | Preserve row identity and avoid animating every row during a mutation. |
-| Success/undo | Confirm the affected object or action; do not use a decorative burst. |
-| Loading | Preserve final dimensions and show progress at the waiting region. |
-| Route/detail change | Maintain spatial relationship when the user can return to the previous context. |
+| 悬停/焦点/按下 | 小幅颜色、不透明度或 transform 响应，无布局移动。 |
+| 抽屉/面板 | 从其拥有边缘进入并在关闭时返回相同上下文。 |
+| 模态/对话框 | 建立阻塞背景并将焦点返回触发器。 |
+| 列表更新 | 保留行标识，避免在变更期间为每行动画。 |
+| 成功/撤销 | 确认受影响对象或操作；不使用装饰性爆发。 |
+| 加载 | 保留最终尺寸并在等待区域显示进度。 |
+| 路由/详情变化 | 当用户可以返回先前上下文时保持空间关系。 |
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
 ```css
 :root {
@@ -68,27 +66,23 @@ the source and destination remain clear.
 }
 ```
 
-## Implementation
+## 实现
 
-- Animate `transform` and `opacity` first.
-- Avoid animating layout properties such as `width`, `height`, `top`, `left`, or `margin` in frequent interactions.
-- Use easing that decelerates naturally; avoid elastic/bounce unless the product tone explicitly supports it.
-- Respect `prefers-reduced-motion`; provide instant or near-instant alternatives.
-- Keep animation definitions close to design tokens or existing animation utilities.
-- Loading skeletons should preserve layout dimensions; animation is secondary to stable structure.
-- Long-running operations should expose progress or pending state at the region that is waiting, not through a global decorative spinner.
-- Do not start motion automatically when it competes with a destructive decision,
-  text entry, data comparison, or assistive technology announcement.
-- Stop, reverse, or settle motion when the user changes selection, closes a layer,
-  navigates away, or receives a server result. A stale animation must not imply a
-  state that is no longer true.
+- 优先动画 `transform` 和 `opacity`。
+- 避免在频繁交互中动画布局属性如 `width`、`height`、`top`、`left` 或 `margin`。
+- 使用自然减速的缓动；避免弹性/跳动，除非产品基调明确支持。
+- 尊重 `prefers-reduced-motion`；提供即时或近即时替代。
+- 保持动画定义靠近设计令牌或现有动画工具。
+- 加载骨架应保留布局尺寸；动画次于稳定结构。
+- 长时间运行的操作应在等待区域暴露进度或待处理状态，而非通过全局装饰性旋转器。
+- 当动效与破坏性决策、文本输入、数据比较或辅助技术播报竞争时，不要自动启动。
+- 当用户更改选择、关闭层、导航离开或收到服务器结果时，停止、反转或稳定动效。过时的动画不得暗示不再为真的状态。
 
-## Self-Check
+## 自检
 
-- Motion makes the user's next state easier to understand.
-- Reduced-motion users can complete the same workflow.
-- Long-running operations show progress without blocking the page.
-- No animation causes layout jump, scroll jump, or visual overlap.
-- Motion evidence notes reduced-motion support when new transitions or animations were added.
-- Evidence names the trigger, affected region, duration token, and reduced-motion
-  behavior for non-trivial motion.
+- 动效使用户的下一个状态更容易理解。
+- 减弱动效用户可以完成相同工作流。
+- 长时间运行的操作显示进度而不阻塞页面。
+- 无动画导致布局跳动、滚动跳动或视觉重叠。
+- 添加新过渡或动画时动效证据记录减弱动效支持。
+- 对于非平凡动效，证据指名触发器、受影响区域、持续时间令牌和减弱动效行为。

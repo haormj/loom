@@ -1,25 +1,25 @@
-# Spring Boot Testing
+# Spring Boot 测试
 
-Use the smallest Spring test boundary that can prove the task-owned behavior. This reference does not make every Spring task a testing task; it applies only when accepted task ownership explicitly includes test implementation.
+使用能证明任务拥有行为的最小 Spring 测试边界。此参考不使每个 Spring 任务成为测试任务；仅当已接受的任务归属显式包含测试实现时才适用。
 
-## Test Boundary Matrix
+## 测试边界矩阵
 
-| Behavior Under Test | Preferred Boundary | What It Proves |
+| 被测行为 | 首选边界 | 证明什么 |
 |---|---|---|
-| Pure domain/service rule | JUnit 5 with Mockito/fakes only when collaborators exist | Branches, state rules, collaborator contract without Spring startup |
-| MVC controller/advice | `@WebMvcTest` + `MockMvc` | Routing, binding, validation, serialization, status, error translation |
-| WebFlux controller | `@WebFluxTest` + `WebTestClient` | Reactive routing, body, status, error path |
-| JPA repository/mapping | `@DataJpaTest` | Repository query, mapping, constraints, fetch behavior |
-| Security filter/method | Web slice or focused security test | Allowed, unauthenticated, forbidden, CSRF/CORS behavior |
-| Configuration properties | Binder test, context runner, or focused context | Defaults, validation, invalid/missing configuration |
-| Cross-bean workflow | `@SpringBootTest` with targeted collaborators | Wiring, transaction, migration, security, runtime integration |
-| Provider-specific persistence | Testcontainers or repository-standard real provider | Dialect, migrations, constraints, native queries, locking |
+| 纯 domain/service 规则 | 仅当存在协作者时使用带 Mockito/fake 的 JUnit 5 | 分支、状态规则、协作者契约，无需 Spring 启动 |
+| MVC controller/advice | `@WebMvcTest` + `MockMvc` | 路由、绑定、验证、序列化、状态、错误转换 |
+| WebFlux controller | `@WebFluxTest` + `WebTestClient` | 响应式路由、body、状态、错误路径 |
+| JPA repository/映射 | `@DataJpaTest` | Repository 查询、映射、约束、fetch 行为 |
+| 安全 filter/方法 | Web slice 或聚焦安全测试 | 允许、未认证、禁止、CSRF/CORS 行为 |
+| 配置属性 | Binder 测试、context runner 或聚焦 context | 默认值、验证、无效/缺失配置 |
+| 跨 bean 工作流 | 带目标协作者的 `@SpringBootTest` | 配置、事务、迁移、安全、运行时集成 |
+| Provider 特定持久化 | Testcontainers 或仓库标准真实 provider | Dialect、迁移、约束、原生查询、锁 |
 
-Do not use `@SpringBootTest` for pure calculation or mapping code. Do not mock the class under test, Spring internals, JPA entities, or value objects.
+不要为纯计算或映射代码使用 `@SpringBootTest`。不要 mock 被测类、Spring 内部、JPA 实体或值对象。
 
-## MVC And WebFlux Slices
+## MVC 与 WebFlux Slice
 
-MVC tests should verify the accepted transport behavior, not just that a service method was called.
+MVC 测试应验证已接受的传输行为，而不仅是 service 方法被调用。
 
 ```java
 @WebMvcTest(OrderController.class)
@@ -39,92 +39,92 @@ class OrderControllerTest {
 }
 ```
 
-Use the mocking annotation supported by the repository's Spring Boot/Spring Framework version. Newer stacks can use `@MockitoBean`; existing projects may still use `@MockBean`. Do not rewrite the test stack solely to adopt an annotation from an example.
+使用仓库 Spring Boot/Spring Framework 版本支持的 mocking 注解。较新技术栈可使用 `@MockitoBean`；已有项目可能仍使用 `@MockBean`。不要仅为采用示例中的注解而重写测试技术栈。
 
-Import or include controller advice, converters, JSON modules, and security configuration needed by the slice. Avoid disabling all filters when the task owns protected behavior.
+导入或包含 slice 所需的 controller advice、转换器、JSON 模块和安全配置。当任务拥有受保护行为时避免禁用所有 filter。
 
-## Data Tests
+## 数据测试
 
-`@DataJpaTest` often defaults to an embedded database. Keep that only for provider-neutral mapping/query behavior. Disable replacement and use the selected provider when testing:
+`@DataJpaTest` 通常默认使用嵌入式数据库。仅对 provider 中立的映射/查询行为保留它。测试以下内容时禁用替换并使用所选 provider：
 
-- migration SQL
-- native queries
-- provider-specific column or enum types
-- generated IDs and defaults
-- locking, isolation, or transaction semantics
-- case sensitivity, collation, JSON, array, full-text, or timestamp behavior
+- 迁移 SQL
+- 原生查询
+- provider 特定列或 enum 类型
+- 生成 ID 和默认值
+- 锁、隔离或事务语义
+- 大小写敏感、collation、JSON、数组、全文或时间戳行为
 
-Use Flyway/Liquibase in the integration path when migrations are part of runtime. `ddl-auto=create-drop` does not prove migrations.
+当迁移是运行时的一部分时在集成路径中使用 Flyway/Liquibase。`ddl-auto=create-drop` 不证明迁移。
 
-Test both repository result and persisted state. For write workflows, verify commit/readback where commit behavior matters; a test-level rollback can hide post-commit events, constraint timing, or transaction synchronization.
+同时测试 repository 结果和持久化状态。对于写入工作流，当提交行为有影响时验证提交/回读；测试级回滚可能隐藏 post-commit 事件、约束时序或事务同步。
 
-When the accepted data-access selection is MyBatis-Plus, use the repository's Mapper and `SqlSessionFactory` configuration in the smallest suitable test boundary. Verify mapper scanning, XML namespace resolution, wrapper SQL, pagination, logical deletion, optimistic locking, TypeHandlers, interceptor scope, and provider-specific behavior. Do not replace a selected provider with H2 when testing SQL, plugins, migrations, locking, JSON, collation, or generated defaults.
+当已接受的数据访问选择是 MyBatis-Plus 时，在最小合适测试边界中使用仓库的 Mapper 和 `SqlSessionFactory` 配置。验证 mapper 扫描、XML namespace 解析、wrapper SQL、分页、逻辑删除、乐观锁、TypeHandler、interceptor scope 和 provider 特定行为。测试 SQL、插件、迁移、锁、JSON、collation 或生成默认值时不要用 H2 替换所选 provider。
 
 ## Testcontainers
 
-Reuse the repository's container lifecycle and selected provider. Spring Boot service connections are suitable when supported; `@DynamicPropertySource` remains valid for explicit property binding.
+复用仓库的容器生命周期和所选 provider。支持时 Spring Boot service connection 适用；`@DynamicPropertySource` 对显式属性绑定仍有效。
 
-Pin a compatible provider image in project configuration rather than this reference. Do not silently replace MySQL, PostgreSQL, SQL Server, Oracle, or a file database with H2.
+在项目配置而非此参考中固定兼容的 provider 镜像。不要静默用 H2 替换 MySQL、PostgreSQL、SQL Server、Oracle 或文件数据库。
 
-Container startup failure is environment evidence when the runtime is unavailable. A SQL assertion failure against a running container remains a code/test failure.
+容器启动失败是运行时不可用的环境证据。针对运行中容器的 SQL 断言失败仍是代码/测试失败。
 
-## Security Tests
+## 安全测试
 
-Use realistic roles, authorities, CSRF tokens, and claims. Cover the changed policy through:
+使用真实的 role、authority、CSRF token 和 claim。通过以下覆盖变更的策略：
 
-- allowed caller
-- missing authentication
-- insufficient authority
-- resource-ownership denial when applicable
-- stable `401`/`403` response shape
+- 允许的调用者
+- 缺失认证
+- 权限不足
+- 适用时的资源归属拒绝
+- 稳定的 `401`/`403` 响应形态
 
-Do not test protected endpoints only with every filter disabled. Avoid production default users or credentials for test convenience.
+不要在禁用所有 filter 的情况下仅测试受保护端点。避免为测试方便使用生产默认用户或凭证。
 
-## Configuration And Runtime Tests
+## 配置与运行时测试
 
-Use `ApplicationContextRunner`, binder tests, or a focused `@SpringBootTest` to prove:
+使用 `ApplicationContextRunner`、binder 测试或聚焦的 `@SpringBootTest` 证明：
 
-- `@ConfigurationProperties` defaults
-- validation of missing/invalid values
-- conditional bean selection
-- profile-specific behavior
-- absence of accidental startup dependency on external infrastructure
+- `@ConfigurationProperties` 默认值
+- 缺失/无效值的验证
+- 条件 bean 选择
+- profile 特定行为
+- 不意外依赖外部基础设施的启动
 
-Fix time through an injected `Clock`. Use synchronization primitives, Awaitility, latches, virtual time, or completion signals for async behavior; do not use arbitrary sleeps as the assertion mechanism.
+通过注入的 `Clock` 固定时间。对异步行为使用同步原语、Awaitility、latch、虚拟时间或完成信号；不要使用任意 sleep 作为断言机制。
 
-## Integration Boundaries
+## 集成边界
 
-Test outbound HTTP clients with MockWebServer, WireMock, or the repository's equivalent. Prove serialization, authentication/header propagation, provider errors, timeout, and retry classification without calling a real shared service.
+用 MockWebServer、WireMock 或仓库等价物测试出站 HTTP 客户端。在不调用真实共享服务的情况下证明序列化、认证/header 传播、provider 错误、超时和重试分类。
 
-For cache behavior, prove key separation, hit/miss, invalidation, and fallback. For resilience, prove attempts and terminal result without waiting for production-duration timers.
+对于缓存行为，证明键分离、命中/未命中、失效和回退。对于弹性，证明尝试和终态结果而不等待生产持续时间的定时器。
 
-## Isolation And Maintainability
+## 隔离与可维护性
 
-- Keep fixtures close to the business scenario and avoid shared mutable global state.
-- Reset external resources deterministically; do not rely on test execution order.
-- Use descriptive test names based on behavior and outcome.
-- Preserve Spring context caching by avoiding unnecessary per-test configuration changes.
-- Add a regression test for a fixed defect when the old behavior is reproducible.
-- Do not disable tests or weaken assertions to make the suite pass.
+- 保持 fixture 接近业务场景，避免共享可变全局状态。
+- 确定性地重置外部资源；不依赖测试执行顺序。
+- 使用基于行为和结果描述的测试名。
+- 通过避免不必要的按测试配置变更来保留 Spring 上下文缓存。
+- 当旧行为可重现时为已修复缺陷添加回归测试。
+- 不要禁用测试或弱化断言以使套件通过。
 
-No universal coverage percentage is imposed here. Coverage is useful for finding untested paths, not as a substitute for contract, failure, persistence, and security assertions.
+此处不施加通用覆盖率百分比。覆盖率有助于发现未测试路径，但不能替代契约、失败、持久化和安全断言。
 
 ## Verification Focus
 
-Useful test evidence identifies:
+有用的测试证据标识：
 
-- the selected test boundary and why it matches the changed behavior
-- exact success and blocking/failure paths covered
-- provider and migration path used for persistence behavior
-- Spring context or slice configuration involved
-- targeted build/test command and result
-- environment blockers separated from code failures
+- 所选测试边界以及为何匹配变更行为
+- 覆盖的精确成功和阻塞/失败路径
+- 用于持久化行为的 provider 和迁移路径
+- 涉及的 Spring context 或 slice 配置
+- 目标构建/测试命令和结果
+- 环境阻塞与代码失败分离
 
-## Unsafe Defaults
+## 不安全默认
 
-- Starting the full application context for every unit.
-- Using H2 as proof for provider-specific SQL.
-- Disabling security filters in the only controller test.
-- Relying on test rollback to prove post-commit behavior.
-- Fixed sleeps for async tests.
-- A hardcoded coverage target with no risk rationale.
+- 为每个单元启动完整应用上下文。
+- 使用 H2 作为 provider 特定 SQL 的证明。
+- 在唯一的 controller 测试中禁用安全 filter。
+- 依赖测试回滚证明 post-commit 行为。
+- 异步测试的固定 sleep。
+- 没有风险理由的硬编码覆盖率目标。

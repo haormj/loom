@@ -1,91 +1,91 @@
-# Test And Evidence Review
+# 测试和证据评审
 
-Use this reference to judge whether submitted evidence proves the changed behavior at a depth proportional to risk. Evidence quality depends on the claim-to-check mapping, not command count or suite size.
+使用本引用判断提交的证据是否在与风险相称的深度上证明了变更行为。证据质量取决于声明到检查的映射，而非命令数量或套件大小。
 
-## Evidence Inventory
+## 证据清单
 
-Classify available evidence as source inspection, compiler/type/static analysis, unit/component tests, integration/contract tests, migration/database checks, runtime/API/browser/device probes, deployment checks, or manual observation.
+将可用证据分类为源码检查、编译器/类型/静态分析、单元/组件测试、集成/契约测试、迁移/数据库检查、运行时/API/浏览器/设备探针、部署检查或手动观察。
 
-Record what environment/backend/provider/browser/device/config the check actually used. Do not generalize beyond that boundary.
+记录检查实际使用的环境/后端/provider/浏览器/设备/配置。不要超出该边界泛化。
 
-Distinguish executed evidence from planned commands, copied output, fixture-only behavior, and author narrative.
+区分已执行证据与计划命令、复制输出、仅 fixture 行为和作者叙述。
 
-## Strong Evidence
+## 强证据
 
-- The check exercises the changed branch through its public/owned boundary and asserts an observable result.
-- Success plus a meaningful blocking/failure/concurrency path is covered when those outcomes drive different behavior.
-- Durable writes are read back from the selected persistence integration where persistence correctness changed.
-- Interface checks assert method/path/input/status/output/error/auth behavior, not only server startup or an empty list.
-- UI checks prove relevant loading/empty/ready/error/disabled/submitting/readback states and stable action targets.
-- Migrations are applied/validated against representative existing schema/data and selected provider behavior.
-- Security evidence checks deny/cross-user/tenant/ownership behavior, not only an authenticated happy path.
-- Performance evidence states workload, build/runtime mode, baseline, measurement, and correctness guard.
+- 检查通过公共/拥有边界执行变更分支并断言可观测结果。
+- 当成功加有意义的阻断/失败/并发路径驱动不同行为时覆盖它们。
+- 当持久化正确性变更时，从所选持久化集成回读持久写入。
+- 接口检查断言方法/路径/输入/状态/输出/错误/认证行为，而非仅服务端启动或空列表。
+- UI 检查证明相关的 loading/empty/ready/error/disabled/submitting/readback 状态和稳定的 action 目标。
+- 迁移针对代表性已有 schema/数据和所选 provider 行为应用/验证。
+- 安全证据检查拒绝/跨用户/租户/所有权行为，而非仅认证的正常路径。
+- 性能证据说明工作负载、构建/运行时模式、基线、度量方式和正确性保护。
 
-## Weak Evidence
+## 弱证据
 
-- Build, formatter, linter, or typecheck is the only evidence for changed runtime behavior.
-- Tests assert private calls/state/snapshots while public behavior could remain wrong.
-- A mocked collaborator bypasses the authorization, transaction, serialization, or integration behavior being claimed.
-- Runtime probe checks health or first empty response for a multi-step workflow.
-- Test name/summary claims a branch but assertions do not distinguish it.
-- Browser screenshot proves appearance but not action, state, responsive, accessibility, or API binding.
-- Command/outcome/environment is missing or the result predates the latest repair.
+- 构建、formatter、linter 或 typecheck 是变更运行时行为的唯一证据。
+- 测试断言私有调用/状态/快照而公共行为可能仍错误。
+- mock 的协作者绕过所声称的授权、事务、序列化或集成行为。
+- 运行时探针检查多步工作流的健康或首个空响应。
+- 测试名/摘要声称一个分支但断言不区分它。
+- 浏览器截图证明外观但不证明 action、状态、响应式、可访问性或 API 绑定。
+- 命令/结果/环境缺失或结果早于最新修复。
 
-## Claim Mapping
+## 声明映射
 
-For each important changed obligation, map implementation location, evidence check, assertion/result, and remaining limitation.
+对于每个重要的变更义务，映射实现位置、证据检查、断言/结果和剩余限制。
 
-Verify that an evidence identifier points to an actual executed result and that the result belongs to the current task/change version. Stale pre-repair evidence must not approve post-repair code automatically.
+验证证据标识符指向实际执行结果且该结果属于当前任务/变更版本。修复前的陈旧证据不得自动批准修复后代码。
 
-One focused check can prove several tightly coupled obligations; one broad suite name cannot prove everything without visible assertions/results.
+一个聚焦检查可证明多个紧耦合义务；一个宽泛套件名不能在没有可见断言/结果的情况下证明一切。
 
-## Test Quality
+## 测试质量
 
-Review determinism, isolation, representative fixtures, assertion specificity, cleanup, and failure sensitivity.
+审查确定性、隔离性、代表性 fixture、断言特异性、清理和失败敏感性。
 
-Look for tests that cannot fail because mocks return the implementation's desired value, expected values are derived by the same code, exceptions are ignored, assertions are absent, or retries hide flaky outcomes.
+寻找不可能失败的测试：mock 返回实现期望的值、期望值由相同代码派生、异常被忽略、断言缺失或重试隐藏不稳定结果。
 
-Check state/time/random/order/global environment cleanup and parallel safety. Arbitrary sleeps signal synchronization uncertainty.
+检查状态/时间/随机/顺序/全局环境清理和并行安全。任意 sleep 表明同步不确定性。
 
-For regression fixes, evidence should reproduce the old failure or assert the exact invariant that was broken.
+对于回归修复，证据应复现旧失败或断言被破坏的确切不变量。
 
-## Layer Selection
+## 层选择
 
-Use unit tests for local logic, integration tests for boundary contracts, provider/runtime checks for infrastructure semantics, and browser/device tests for rendering/interaction/platform behavior.
+对本地逻辑使用单元测试，对边界契约使用集成测试，对基础设施语义使用 provider/运行时检查，对渲染/交互/平台行为使用浏览器/设备测试。
 
-Do not require the highest layer for every change. Select the cheapest layer that can actually prove the risk, then add higher-layer evidence for cross-module closure or environment-specific semantics.
+不要对每个变更都要求最高层。选择能实际证明风险的最低成本层，然后为跨模块闭环或环境特定语义添加更高层证据。
 
-Compiler/type/lint/build evidence remains valuable for public type, import, code generation, and production-bundle constraints but cannot replace behavior checks.
+编译器/类型/lint/构建证据对公共类型、导入、代码生成和生产 bundle 约束仍有价值，但不能替代行为检查。
 
-## Environment Limitations
+## 环境限制
 
-Separate product failure from unavailable toolchain/browser/device/service/credentials. Preserve any source/static/lower-layer evidence still possible and state the exact unproved risk.
+将产品失败与不可用的工具链/浏览器/设备/服务/凭证分开。保留仍可能的任何源码/静态/低层证据并说明确切未证明的风险。
 
-An environment gap blocks approval only when the required risk cannot be established at another credible layer and current policy requires that evidence.
+环境差距仅在所需风险无法在另一可信层建立且当前策略要求该证据时才阻塞批准。
 
-Do not rerun the same unavailable command through generic code repair without an environment change.
+不要在没有环境变更的情况下通过通用代码修复重新运行同一不可用命令。
 
-## Scope And Cost
+## 范围和成本
 
-Focused tests are appropriate for isolated changes; shared contracts, migrations, authorization, runtime routing, framework configuration, and cross-surface workflows justify broader affected-lane checks.
+聚焦测试适合隔离变更；共享契约、迁移、授权、运行时路由、框架配置和跨面工作流证明更广泛的受影响通道检查是合理的。
 
-Do not demand a full suite when a targeted regression plus affected package checks close the risk. Do not accept a tiny target when shared behavior has a wide blast radius.
+当针对性回归加受影响包检查能关闭风险时，不要要求全套件。当共享行为有宽泛影响范围时，不要接受微小目标。
 
-## Evidence Finding Shape
+## 证据发现形态
 
-State the unproved behavior, why current evidence cannot prove it, the risk, and the smallest additional check or correction. Avoid “needs more tests” without a concrete assertion and layer.
+说明未证明的行为、当前证据为何无法证明它、风险以及最小额外检查或修正。避免"需要更多测试"而没有具体断言和层。
 
-If source inspection confirms an actual defect, report the product defect rather than only an evidence gap.
+如果源码检查确认实际缺陷，报告产品缺陷而非仅证据差距。
 
-## Approval Bar
+## 批准标准
 
-Important changed behavior has current, credible, risk-proportionate evidence; negative/deny/recovery paths are covered where meaningful; provider/runtime limits are explicit; and no known gap contradicts completion.
+重要的变更行为有当前、可信、风险相称的证据；否定/拒绝/恢复路径在有意义处被覆盖；provider/运行时限制明确；且没有已知差距与完成矛盾。
 
-## Unsafe Review Defaults
+## 不安全的评审默认
 
-- Counting tests/commands instead of mapping claims.
-- Treating green build/typecheck as runtime proof.
-- Accepting stale evidence after repair.
-- Demanding full end-to-end coverage for every local change.
-- Routing environment unavailability as a source defect.
-- Reporting “more tests” without naming behavior and assertion.
+- 计数测试/命令而非映射声明。
+- 将绿色构建/typecheck 视为运行时证明。
+- 修复后接受陈旧证据。
+- 为每个本地变更要求完整端到端覆盖。
+- 将环境不可用路由为源码缺陷。
+- 报告"更多测试"而不指名行为和断言。
