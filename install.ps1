@@ -2,7 +2,7 @@
 param(
   [Parameter(Mandatory = $true)]
   [Alias("agent")]
-  [ValidateSet("codex", "claude-code", "opencode", "all")]
+  [ValidateSet("opencode", "all")]
   [string]$Agent,
 
   [Alias("version")]

@@ -27,8 +27,6 @@ const FORBIDDEN_PACKAGE_ENTRIES: &[&str] = &[
     "tests/",
     "node_modules/",
     "dist/",
-    "scripts/refresh-local-codex-plugin.js",
-    "scripts/refresh-local-claude-plugin.js",
     "scripts/refresh-local-opencode-plugin.js",
     "scripts/uninstall-local-adapter.js",
     "package-lock.json",
@@ -40,8 +38,6 @@ const REQUIRED_PACKAGE_ENTRIES: &[&str] = &[
     "bin/loom-setup",
     "python/runtime",
     "python/algorithms",
-    "plugins/codex",
-    "plugins/claude-code",
     "plugins/opencode",
 ];
 
@@ -685,11 +681,11 @@ fn audit_transcripts(transcripts: &[TranscriptInput]) -> AgentTranscriptAudit {
         .iter()
         .map(|transcript| transcript.agent.as_str())
         .collect::<BTreeSet<_>>();
-    for required in ["codex", "claude-code", "opencode"] {
+    for required in ["opencode"] {
         if !present_agents.contains(required) {
             all_issues.push(issue(
                 "AGENT_TRANSCRIPT_MISSING",
-                "Final transcript audit requires Codex, Claude Code, and OpenCode smoke transcripts.",
+                "Final transcript audit requires an OpenCode smoke transcript.",
                 [("agent", json!(required))],
             ));
         }

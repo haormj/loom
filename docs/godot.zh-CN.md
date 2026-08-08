@@ -50,27 +50,14 @@ export GODOT_PATH="$HOME/Applications/Godot_v4.x-stable_linux.x86_64"
 根据使用的 agent 安装 Loom：
 
 ```bash
-curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent codex
+curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent opencode
 ```
 
-需要时将 `codex` 替换为 `claude-code`、`opencode` 或 `all`。安装后重新
-打开 agent 会话。
+安装后重新打开 agent 会话。
 
 ## 3. 注册 Godot MCP
 
 `godot-mcp` 是独立于 Loom 的 MCP server，需要注册为 `godot`。
-
-Codex：
-
-```bash
-codex mcp add godot --env GODOT_PATH="$GODOT_PATH" -- npx @coding-solo/godot-mcp
-```
-
-Claude Code：
-
-```bash
-claude mcp add godot -e GODOT_PATH="$GODOT_PATH" -- npx @coding-solo/godot-mcp
-```
 
 OpenCode 配置：
 

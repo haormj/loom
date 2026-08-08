@@ -16,13 +16,13 @@ fn runtime_context_reads_only_current_host_env_name() {
     let original_host = std::env::var("LOOM_HOST").ok();
     let original_legacy_host = std::env::var("LOOM_MCP_HOST").ok();
     std::env::remove_var("LOOM_HOST");
-    std::env::set_var("LOOM_MCP_HOST", "claude-code");
+    std::env::set_var("LOOM_MCP_HOST", "opencode");
 
     let context = LoomMcpRuntimeContext::from_env();
 
     restore_env("LOOM_HOST", original_host);
     restore_env("LOOM_MCP_HOST", original_legacy_host);
-    assert_eq!(context.host, HostKind::Codex);
+    assert_eq!(context.host, HostKind::Opencode);
 }
 
 fn restore_env(key: &str, value: Option<String>) {

@@ -250,9 +250,9 @@ fn required_value<'a>(
 }
 
 fn usage() -> &'static str {
-    "loom-setup install --agent codex|claude-code|opencode|all\n\
-     loom-setup doctor [--agent codex|claude-code|opencode|all]\n\
-     loom-setup uninstall --agent codex|claude-code|opencode|all\n\
+    "loom-setup install --agent opencode|all\n\
+     loom-setup doctor [--agent opencode|all]\n\
+     loom-setup uninstall --agent opencode|all\n\
      loom-setup uninstall --all\n\
      loom-setup purge\n\
      loom-setup browser-runtime prepare [--playwright-version <registry-version-or-range>] [--browser chromium|firefox|webkit]\n\

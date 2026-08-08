@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/headbar.png" alt="Loom" width="100%">
   <p><strong>面向 agentic software delivery 的 loop engineering。</strong></p>
-  <p>一套开源交付 harness，帮助 Claude Code、Codex、OpenCode 等 coding agents 完成更大的软件任务，并保留过程状态。</p>
+  <p>一套开源交付 harness，帮助 OpenCode 等 coding agents 完成更大的软件任务，并保留过程状态。</p>
   <p>
     <a href="./README.md">English</a>
     ·
@@ -86,7 +86,7 @@ Task-scoped execution | 把交付拆成有边界的任务，并携带 source ref
 Review and repair loop | 通过 review signals、TaskResult evidence、repair contracts、多目标 repair 队列和再次验证，把实现与验证分离。
 Runtime and deploy readiness | 面向本地 Docker Compose 预览准备 topology-aware services、build contexts、环境规则、端口、health checks、日志和 repair boundaries。
 Knowledge-guided clarification | 让团队把本地域文档注册成具名知识库，构建本地可检索索引，并在需求澄清时只按当前步骤读取匹配片段。
-Multi-agent MCP protocol | 让 Codex、Claude Code、OpenCode 和后续支持 MCP 的 agents 运行同一套交付状态机。
+Multi-agent MCP protocol | 让 OpenCode 和后续支持 MCP 的 agents 运行同一套交付状态机。
 
 这条链路背后的技术指导集中在 `plugins/shared/loom/references/tech/`：架构（`arch`）、API 设计（`api`）、语言与 SQL 实现（`code`）、后端和前端框架（`backend`、`frontend`）、评审（`review`）以及 Playwright 验证（`test/playwright`）。这些内容不会作为一整套大 skill 一次性加载，而是由 Loom 根据已接受的技术事实和任务归属生成任务级选择，再把选中的 references 传给对应的架构、规划、执行、评审或浏览器闭环 request。
 
@@ -96,7 +96,7 @@ Multi-agent MCP protocol | 让 Codex、Claude Code、OpenCode 和后续支持 MC
 
 ```text
 Your coding agent / app
-(Codex, Claude Code, OpenCode, future agents...)
+(OpenCode, future agents...)
         |
         | delivery goal . repo context . logs . tests . preview evidence
         v
@@ -120,24 +120,12 @@ Agent turn / LLM context
 
 ## 前置条件
 
-- 本机已安装一种受支持的 coding agent：Codex、Claude Code 或 OpenCode
+- 本机已安装一种受支持的 coding agent：OpenCode
 - 使用 `loom deploy` 时需要 Docker
 
 ## 快速开始
 
 按你使用的 coding agent 安装 Loom。安装脚本会自动识别 OS 和 CPU，下载对应平台包，校验 release 包的 `.sha256` 资产，安装 Rust MCP server，携带受控 Python 算法运行时，写入 agent 的 MCP registration，刷新本地插件，并执行 `loom-setup doctor`。
-
-Codex：
-
-```bash
-curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent codex
-```
-
-Claude Code：
-
-```bash
-curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent claude-code
-```
 
 OpenCode：
 
@@ -155,8 +143,6 @@ Windows PowerShell：
 
 ```powershell
 Invoke-WebRequest https://github.com/valkor-ai/loom/releases/latest/download/install.ps1 -OutFile install.ps1
-.\install.ps1 -Agent codex
-.\install.ps1 -Agent claude-code
 .\install.ps1 -Agent opencode
 .\install.ps1 -Agent all
 ```
@@ -166,7 +152,7 @@ Invoke-WebRequest https://github.com/valkor-ai/loom/releases/latest/download/ins
 如果是在仓库本地做验证，请使用同一个安装脚本的本地构建模式：
 
 ```bash
-./install.sh --agent codex --local-build
+./install.sh --agent opencode --local-build
 ```
 
 它会构建 Rust MCP server 和 setup 二进制，生成同样的 release package layout，然后通过 `loom-setup` 完成安装并执行 doctor。后续本地修 bug 后都应该走这条路径，这样安装器、包结构、MCP registration 和插件刷新会一起被验证。
@@ -176,17 +162,16 @@ Invoke-WebRequest https://github.com/valkor-ai/loom/releases/latest/download/ins
 如果只想验证安装是否正常、但还不想开始需求交付，请在 coding agent 里使用 Loom 命令：
 
 ```text
-@loom status     # Codex
-/loom status     # Claude Code 和 OpenCode
+/loom status
 ```
 
 `status` 是只读命令。对于还没有使用过 Loom 的项目，返回 `STATE_NOT_INITIALIZED` 也属于正常的 smoke check 结果：这说明插件命令可用，并且没有启动任何交付流程。
 
-正常使用时不需要手动初始化 `.loom/`。从 agent 发起交付，例如 `@loom build ...` 或 `/loom build ...`，会在需要时自动为当前项目初始化本地交付状态。
+正常使用时不需要手动初始化 `.loom/`。从 agent 发起交付，例如 `/loom build ...`，会在需要时自动为当前项目初始化本地交付状态。
 
 ## 如何使用
 
-Loom 的正常使用入口是 code agent 里的本地插件。Codex 使用 `@loom`，Claude Code 和 OpenCode 使用 `/loom`。Rust MCP server 由 agent 的 MCP registration 自动启动，用户不需要手动启动。
+Loom 的正常使用入口是 code agent 里的本地插件。OpenCode 使用 `/loom`。Rust MCP server 由 agent 的 MCP registration 自动启动，用户不需要手动启动。
 
 ### 使用知识库
 
@@ -194,13 +179,13 @@ Loom 的正常使用入口是 code agent 里的本地插件。Codex 使用 `@loo
 
 Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身。需求澄清时，Loom 会搜索已启用且已成功构建的知识库索引，只读取当前澄清步骤匹配到的片段，并把有用信息转成对用户可见的问题或确认点。
 
-知识库命令应在当前项目的 coding agent 会话里执行。下面示例使用 Codex 的 `@loom`；在 Claude Code 和 OpenCode 中，把同样的子命令换成 `/loom`。
+知识库命令应在当前项目的 coding agent 会话里执行，使用 `/loom` 子命令。
 
 新增知识库：
 
 ```text
-@loom knowledge add --name product-rules ~/Documents/product-rules
-@loom knowledge build product-rules
+/loom knowledge add --name product-rules ~/Documents/product-rules
+/loom knowledge build product-rules
 ```
 
 `--name` 必填且必须全局唯一。一个知识库可以包含单个文件、多个文件、单个目录、多个目录，或文件与目录混合。当前支持的格式是 `.md`、`.txt`、`.json`、`.yaml`、`.yml`、`.pdf`、`.docx`。
@@ -208,10 +193,10 @@ Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身
 更新已有知识库的路径集合：
 
 ```text
-@loom knowledge update product-rules --add-path ~/Documents/new-rules.md
-@loom knowledge update product-rules --remove-path ~/Documents/old-rules.md
-@loom knowledge update product-rules --replace-paths ~/Documents/current-rules
-@loom knowledge build product-rules
+/loom knowledge update product-rules --add-path ~/Documents/new-rules.md
+/loom knowledge update product-rules --remove-path ~/Documents/old-rules.md
+/loom knowledge update product-rules --replace-paths ~/Documents/current-rules
+/loom knowledge build product-rules
 ```
 
 如果只是已注册路径里的文件内容发生变化，直接重新执行 `build`。只有知识库包含的路径集合发生变化时，才需要先执行 `update`。
@@ -219,7 +204,7 @@ Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身
 恢复未完成的知识库语义构建：
 
 ```text
-@loom knowledge resume product-rules
+/loom knowledge resume product-rules
 ```
 
 如果知识库构建还没发布就中断了，例如重新打开 coding agent 会话，或者多 pack 语义构建没有跑完，可以使用 `resume`。它不会重新构建知识库，而是找到下一包未完成的语义构建任务，让 agent 接着执行直到索引发布。
@@ -227,23 +212,23 @@ Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身
 查看和管理已有知识库：
 
 ```text
-@loom knowledge list
-@loom knowledge status product-rules
-@loom knowledge pending product-rules
-@loom knowledge discard product-rules
+/loom knowledge list
+/loom knowledge status product-rules
+/loom knowledge pending product-rules
+/loom knowledge discard product-rules
 ```
 
 临时停用或重新启用某个知识库：
 
 ```text
-@loom knowledge disable product-rules
-@loom knowledge enable product-rules
+/loom knowledge disable product-rules
+/loom knowledge enable product-rules
 ```
 
 删除知识库注册和 Loom 本地索引：
 
 ```text
-@loom knowledge remove product-rules
+/loom knowledge remove product-rules
 ```
 
 `remove` 不会删除你的原始文档，只会删除 Loom 对这个知识库的注册信息、待构建队列和已构建索引。
@@ -252,17 +237,6 @@ Loom 会把知识库当作需求澄清辅助，而不是把它当成需求本身
 
 在 coding agent 中使用对应的 Loom 命令入口启动：
 
-Codex：
-
-```text
-@loom build a visitor registration system
-@loom continue
-@loom review
-@loom deploy
-```
-
-Claude Code 和 OpenCode：
-
 ```text
 /loom build a visitor registration system
 /loom continue
@@ -270,13 +244,12 @@ Claude Code 和 OpenCode：
 /loom deploy
 ```
 
-不同 agent 的入口不同，但都会进入同一套 Loom MCP 交付协议。插件会把请求路由到 Loom tools，并按 MCP server 返回的结构化 next action 继续执行。
+不同 agent 的入口可能不同，但都会进入同一套 Loom MCP 交付协议。插件会把请求路由到 Loom tools，并按 MCP server 返回的结构化 next action 继续执行。
 
 当你希望 Loom 安全恢复或推进当前交付时，优先使用 `continue`。例如重新打开 agent 会话、任务中断、某个 tool action 成功后 agent 没继续往下走，或者你不确定下一步是什么时，都应该先用 `continue`。
 
 ```text
-@loom continue     # Codex
-/loom continue     # Claude Code 和 OpenCode
+/loom continue
 ```
 
 Agent 插件会自动设置 Loom 所需的路由环境。正常使用时请走 agent 命令入口；Loom 的产品运行时是 `loom-setup` 安装的 MCP server。
@@ -303,12 +276,10 @@ Loom 作为本地 MCP 交付状态机运行。Agent 不需要凭记忆决定完�
 
 需求 | 命令或文件
 --- | ---
-检查 Loom 插件可用性 | Codex 使用 `@loom status`，Claude Code 和 OpenCode 使用 `/loom status`
-安装或升级 Codex 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent codex`
-安装或升级 Claude Code 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent claude-code`
+检查 Loom 插件可用性 | `/loom status`
 安装或升级 OpenCode 插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent opencode`
 安装或升级全部受支持插件 | `curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh \| bash -s -- --agent all`
-运行本地部署预览 | Codex 使用 `@loom deploy`，Claude Code 和 OpenCode 使用 `/loom deploy`
+运行本地部署预览 | `/loom deploy`
 
 ## FAQ
 
@@ -322,7 +293,7 @@ Loom 作为本地 MCP 交付状态机运行。Agent 不需要凭记忆决定完�
 <details>
 <summary>如果交付过程中断了怎么办？</summary>
 
-Loom 会把项目本地交付状态保存到 `.loom/`，包括上下文、任务计划、结果记录、review notes、修复请求和部署证据。重新打开 agent 会话后，在 Codex 中运行 `@loom continue`，或在 Claude Code 和 OpenCode 中运行 `/loom continue`，Loom 会基于已保存的交付状态路由下一步。
+Loom 会把项目本地交付状态保存到 `.loom/`，包括上下文、任务计划、结果记录、review notes、修复请求和部署证据。重新打开 agent 会话后，运行 `/loom continue`，Loom 会基于已保存的交付状态路由下一步。
 
 </details>
 
@@ -338,8 +309,6 @@ Loom 会把项目本地交付状态保存到 `.loom/`，包括上下文、任务
 如果你需要从本机移除某个 agent 的 Loom 插件，请使用 `loom-setup`：
 
 ```bash
-~/.loom/bin/loom-setup uninstall --agent codex
-~/.loom/bin/loom-setup uninstall --agent claude-code
 ~/.loom/bin/loom-setup uninstall --agent opencode
 ```
 

@@ -5,7 +5,7 @@
 - `src/rust/`: workspace crates. `mcp-server` exposes tools; domain crates such as `planning`, `execution`, `deploy`, and `knowledge` own workflow behavior; `contracts`, `core`, and `state` provide shared protocols.
 - `src/python/algorithms/`: bundled BM25, TF-IDF, tokenization, and worker code.
 - `tests/rust/` and `tests/python/algorithms/`: integration and algorithm tests, organized by product domain.
-- `plugins/{codex,claude-code,opencode}/`: agent adapters. Shared Loom and deploy guidance lives under `plugins/shared/`; avoid duplicating shared rules in adapter files.
+- `plugins/opencode/`: agent adapter. Shared Loom and deploy guidance lives under `plugins/shared/`; avoid duplicating shared rules in adapter files.
 - `docs/`, `assets/`, and `scripts/`: user documentation, README media, and local install helpers.
 
 ## Build, Test, and Development Commands
@@ -25,7 +25,7 @@ Use targeted Rust tests while iterating, for example:
 cargo test --manifest-path src/rust/Cargo.toml -p deploy --test deploy_workflow
 ```
 
-Refresh a local integration after runtime or plugin changes with `./install.sh --agent codex --local-build`; Claude Code and OpenCode helpers are in `scripts/`.
+Refresh a local integration after runtime or plugin changes with `./install.sh --agent opencode --local-build`.
 
 ## Coding Style & Naming Conventions
 

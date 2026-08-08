@@ -13,7 +13,6 @@ use std::sync::{
 };
 use std::thread;
 use std::time::{Duration, SystemTime};
-use toml_edit::{DocumentMut, Item};
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -329,39 +328,31 @@ const LEGACY_MARKERS: &[&str] = &[
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AgentKind {
-    Codex,
-    ClaudeCode,
     Opencode,
 }
 
 impl AgentKind {
     pub fn parse(raw: &str) -> Result<Self, SetupError> {
         match raw.trim().to_ascii_lowercase().as_str() {
-            "codex" => Ok(Self::Codex),
-            "claude" | "claude-code" | "claude_code" => Ok(Self::ClaudeCode),
             "opencode" | "open-code" | "open_code" => Ok(Self::Opencode),
             other => Err(SetupError::InvalidArgument(format!(
-                "unsupported agent '{other}', expected codex, claude-code, opencode, or all"
+                "unsupported agent '{other}', expected opencode or all"
             ))),
         }
     }
 
-    pub fn all() -> [Self; 3] {
-        [Self::Codex, Self::ClaudeCode, Self::Opencode]
+    pub fn all() -> [Self; 1] {
+        [Self::Opencode]
     }
 
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Codex => "codex",
-            Self::ClaudeCode => "claude-code",
             Self::Opencode => "opencode",
         }
     }
 
     fn host_env(self) -> &'static str {
         match self {
-            Self::Codex => "codex",
-            Self::ClaudeCode => "claude-code",
             Self::Opencode => "opencode",
         }
     }
@@ -456,8 +447,6 @@ pub struct PythonManifest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PluginManifest {
-    pub codex: String,
-    pub claude_code: String,
     pub opencode: String,
 }
 
@@ -476,8 +465,6 @@ impl ReleaseManifest {
                 algorithms: "python/algorithms".to_string(),
             },
             plugins: PluginManifest {
-                codex: "plugins/codex".to_string(),
-                claude_code: "plugins/claude-code".to_string(),
                 opencode: "plugins/opencode".to_string(),
             },
         }
@@ -485,8 +472,6 @@ impl ReleaseManifest {
 
     fn plugin_path(&self, agent: AgentKind) -> &str {
         match agent {
-            AgentKind::Codex => &self.plugins.codex,
-            AgentKind::ClaudeCode => &self.plugins.claude_code,
             AgentKind::Opencode => &self.plugins.opencode,
         }
     }
@@ -505,8 +490,6 @@ pub struct SetupEnvironment {
     pub loom_home: PathBuf,
     pub user_home: PathBuf,
     pub package_root: PathBuf,
-    pub codex_home: PathBuf,
-    pub claude_home: PathBuf,
     pub opencode_home: PathBuf,
 }
 
@@ -621,24 +604,18 @@ impl SetupEnvironment {
                         .into(),
                 )
             })?;
-        let codex_home = env_path("CODEX_HOME").unwrap_or_else(|| user_home.join(".codex"));
-        let claude_home = env_path("CLAUDE_HOME").unwrap_or_else(|| user_home.join(".claude"));
         let opencode_home =
             env_path("OPENCODE_CONFIG_HOME").unwrap_or_else(|| user_home.join(".config/opencode"));
         Ok(Self {
             loom_home,
             user_home,
             package_root,
-            codex_home,
-            claude_home,
             opencode_home,
         })
     }
 
     pub fn for_test(user_home: PathBuf, loom_home: PathBuf, package_root: PathBuf) -> Self {
         Self {
-            codex_home: user_home.join(".codex"),
-            claude_home: user_home.join(".claude"),
             opencode_home: user_home.join(".config/opencode"),
             user_home,
             loom_home,
@@ -672,26 +649,14 @@ impl SetupEnvironment {
 
     pub fn agent_plugin_root(&self, agent: AgentKind) -> PathBuf {
         match agent {
-            AgentKind::Codex => self.user_home.join("plugins/loom"),
-            AgentKind::ClaudeCode => self.claude_home.join("skills/loom"),
             AgentKind::Opencode => self.opencode_home.join("plugins/loom.js"),
         }
     }
 
     pub fn agent_mcp_registration_path(&self, agent: AgentKind) -> PathBuf {
         match agent {
-            AgentKind::Codex => self.codex_home.join("mcp/loom.json"),
-            AgentKind::ClaudeCode => self.claude_home.join("mcp/loom.json"),
             AgentKind::Opencode => self.opencode_home.join("mcp/loom.json"),
         }
-    }
-
-    pub fn codex_config_path(&self) -> PathBuf {
-        self.codex_home.join("config.toml")
-    }
-
-    pub fn claude_config_path(&self) -> PathBuf {
-        self.user_home.join(".claude.json")
     }
 
     pub fn opencode_config_path(&self) -> PathBuf {
@@ -830,10 +795,6 @@ pub enum SetupError {
         path: PathBuf,
         source: serde_json::Error,
     },
-    Toml {
-        path: PathBuf,
-        source: toml_edit::TomlError,
-    },
     ChecksumMismatch {
         path: PathBuf,
         expected: String,
@@ -856,7 +817,6 @@ impl fmt::Display for SetupError {
             Self::InvalidArgument(message) => write!(formatter, "{message}"),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Json { path, source } => write!(formatter, "{}: {source}", path.display()),
-            Self::Toml { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::ChecksumMismatch {
                 path,
                 expected,
@@ -2092,14 +2052,6 @@ pub fn write_package_layout(
     )?;
 
     copy_required(
-        &repo.join(&manifest.plugins.codex),
-        &package_dir.join(&manifest.plugins.codex),
-    )?;
-    copy_required(
-        &repo.join(&manifest.plugins.claude_code),
-        &package_dir.join(&manifest.plugins.claude_code),
-    )?;
-    copy_required(
         &repo.join(&manifest.plugins.opencode),
         &package_dir.join(&manifest.plugins.opencode),
     )?;
@@ -2188,8 +2140,6 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
         manifest.binaries.setup.as_str(),
         manifest.python.runtime.as_str(),
         manifest.python.algorithms.as_str(),
-        manifest.plugins.codex.as_str(),
-        manifest.plugins.claude_code.as_str(),
         manifest.plugins.opencode.as_str(),
         SHARED_LOOM_REFERENCES,
         SHARED_LOOM_SKILLS,
@@ -2220,31 +2170,9 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
 
 fn validate_plugin_manifests(
     package_root: &Path,
-    manifest: &ReleaseManifest,
+    _manifest: &ReleaseManifest,
 ) -> Result<(), SetupError> {
-    for (plugin_root, manifest_file) in [
-        (&manifest.plugins.codex, ".codex-plugin/plugin.json"),
-        (&manifest.plugins.claude_code, ".claude-plugin/plugin.json"),
-    ] {
-        let path = package_root.join(plugin_root).join(manifest_file);
-        let value = read_json_value(&path)?;
-        let name = value.get("name").and_then(Value::as_str);
-        let version = value.get("version").and_then(Value::as_str);
-        if name != Some("loom") {
-            return Err(SetupError::InvalidArgument(format!(
-                "agent plugin manifest {} must identify the loom plugin",
-                path.display()
-            )));
-        }
-        if version != Some(manifest.version.as_str()) {
-            return Err(SetupError::InvalidArgument(format!(
-                "agent plugin manifest {} has version {:?}, expected {}",
-                path.display(),
-                version,
-                manifest.version
-            )));
-        }
-    }
+    let _ = package_root;
     Ok(())
 }
 
@@ -2255,8 +2183,6 @@ fn audit_package_contents(package_root: &Path) -> Result<(), SetupError> {
         "node_modules/",
         "dist/",
         ".git/",
-        "scripts/refresh-local-codex-plugin.js",
-        "scripts/refresh-local-claude-plugin.js",
         "scripts/refresh-local-opencode-plugin.js",
         "scripts/uninstall-local-adapter.js",
         "scripts/lib/loom-user-install.js",
@@ -2389,112 +2315,8 @@ fn install_agent_plugin(
 ) -> Result<(), SetupError> {
     let runtime_template = env.runtime_current().join(manifest.plugin_path(agent));
     match agent {
-        AgentKind::Codex => install_codex_plugin(env, &runtime_template, &manifest.version),
-        AgentKind::ClaudeCode => install_claude_plugin(env, &runtime_template, &manifest.version),
         AgentKind::Opencode => install_opencode_plugin(env, &runtime_template, &manifest.version),
     }
-}
-
-fn install_codex_plugin(
-    env: &SetupEnvironment,
-    template: &Path,
-    version: &str,
-) -> Result<(), SetupError> {
-    let target = env.agent_plugin_root(AgentKind::Codex);
-    cleanup_codex_plugin_cache(env)?;
-    prepare_generated_target(&target)?;
-    copy_dir(template, &target)?;
-    install_skill_references(env, &target)?;
-    write_install_stamp(&target, AgentKind::Codex, version)?;
-    write_codex_plugin_cache(env, &target)?;
-    update_codex_marketplace(env)?;
-    Ok(())
-}
-
-fn cleanup_codex_plugin_cache(env: &SetupEnvironment) -> Result<(), SetupError> {
-    for target in [
-        env.codex_home.join("plugins/cache/local/loom"),
-        env.codex_home.join("plugins/cache/local-plugins/loom"),
-    ] {
-        if target.exists() {
-            remove_path(&target)?;
-        }
-    }
-    Ok(())
-}
-
-fn write_codex_plugin_cache(env: &SetupEnvironment, plugin_root: &Path) -> Result<(), SetupError> {
-    let manifest_path = plugin_root.join(".codex-plugin/plugin.json");
-    let manifest = read_json_value(&manifest_path)?;
-    let version = manifest
-        .get("version")
-        .and_then(Value::as_str)
-        .ok_or_else(|| SetupError::MissingPackageEntry(manifest_path.clone()))?;
-    let cache_root = env
-        .codex_home
-        .join("plugins/cache/local-plugins/loom")
-        .join(version);
-    copy_dir(plugin_root, &cache_root)
-}
-
-fn update_codex_marketplace(env: &SetupEnvironment) -> Result<(), SetupError> {
-    let marketplace_path = env.user_home.join(".agents/plugins/marketplace.json");
-    let mut value = if marketplace_path.exists() {
-        read_json_value(&marketplace_path)?
-    } else {
-        json!({
-            "name": "local-plugins",
-            "interface": { "displayName": "Local Plugins" },
-            "plugins": []
-        })
-    };
-    value["name"] = json!("local-plugins");
-    if !value["plugins"].is_array() {
-        value["plugins"] = json!([]);
-    }
-    let plugins = value["plugins"].as_array_mut().expect("plugins is array");
-    plugins.retain(|entry| entry.get("name").and_then(Value::as_str) != Some("loomline"));
-    let entry = json!({
-        "name": "loom",
-        "source": { "source": "local", "path": "./plugins/loom" },
-        "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
-        "category": "Productivity"
-    });
-    if let Some(existing) = plugins
-        .iter_mut()
-        .find(|entry| entry.get("name").and_then(Value::as_str) == Some("loom"))
-    {
-        *existing = entry;
-    } else {
-        plugins.push(entry);
-    }
-    write_json(&marketplace_path, &value)
-}
-
-fn install_claude_plugin(
-    env: &SetupEnvironment,
-    template: &Path,
-    version: &str,
-) -> Result<(), SetupError> {
-    let target = env.agent_plugin_root(AgentKind::ClaudeCode);
-    prepare_generated_target(&target)?;
-    copy_dir(template, &target)?;
-    install_skill_references(env, &target)?;
-    write_install_stamp(&target, AgentKind::ClaudeCode, version)?;
-    let commands_root = env.claude_home.join("commands");
-    fs::create_dir_all(&commands_root).map_err(|source| SetupError::Io {
-        path: commands_root.clone(),
-        source,
-    })?;
-    for name in ["loom.md", "loom-deploy.md"] {
-        let source = target.join("commands").join(name);
-        if source.exists() {
-            let command_target = commands_root.join(name);
-            copy_path(&source, &command_target)?;
-            write_file_marker(&command_target, "Loom MCP-only Claude command")?;
-        }
-    }
-    Ok(())
 }
 
 fn install_opencode_plugin(
@@ -2558,20 +2380,6 @@ fn install_opencode_plugin(
     Ok(())
 }
 
-fn install_skill_references(env: &SetupEnvironment, plugin_root: &Path) -> Result<(), SetupError> {
-    copy_shared_references(
-        env,
-        SHARED_LOOM_REFERENCES,
-        &plugin_root.join("skills/loom/references"),
-    )?;
-    copy_shared_references(
-        env,
-        SHARED_DEPLOY_REFERENCES,
-        &plugin_root.join("skills/loom-deploy/references"),
-    )?;
-    copy_shared_references(env, SHARED_LOOM_SKILLS, &plugin_root.join("skills"))
-}
-
 fn install_standalone_references(
     env: &SetupEnvironment,
     shared_relative: &str,
@@ -2612,8 +2420,6 @@ fn write_mcp_registration(
     });
     write_json(&env.common_registration_path(agent), &registration)?;
     match agent {
-        AgentKind::Codex => write_codex_mcp_config(env, &command, agent)?,
-        AgentKind::ClaudeCode => write_claude_mcp_config(env, &command, agent)?,
         AgentKind::Opencode => write_opencode_mcp_config(env, &command, agent)?,
     }
     Ok(())
@@ -2621,57 +2427,8 @@ fn write_mcp_registration(
 
 fn effective_mcp_registration_path(env: &SetupEnvironment, agent: AgentKind) -> PathBuf {
     match agent {
-        AgentKind::Codex => env.codex_config_path(),
-        AgentKind::ClaudeCode => env.claude_config_path(),
         AgentKind::Opencode => env.opencode_config_path(),
     }
-}
-
-fn write_codex_mcp_config(
-    env: &SetupEnvironment,
-    command: &Path,
-    agent: AgentKind,
-) -> Result<(), SetupError> {
-    let path = env.codex_config_path();
-    let mut document = read_toml_document(&path)?;
-    let snippet = format!(
-        "[mcp_servers.loom]\ncommand = {command}\nargs = []\nstartup_timeout_sec = 30\n\n[mcp_servers.loom.env]\nLOOM_RUNTIME_HOME = {runtime}\nLOOM_HOME = {home}\nLOOM_HOST = {host}\n",
-        command = toml_string(&path_string(command)),
-        runtime = toml_string(&path_string(env.runtime_current())),
-        home = toml_string(&path_string(&env.loom_home)),
-        host = toml_string(agent.host_env()),
-    );
-    let snippet_document = parse_toml_document(&path, &snippet)?;
-    document["mcp_servers"]["loom"] = snippet_document["mcp_servers"]["loom"].clone();
-    write_toml_document(&path, &document)?;
-    remove_generated_codex_mcp_json(env)?;
-    Ok(())
-}
-
-fn write_claude_mcp_config(
-    env: &SetupEnvironment,
-    command: &Path,
-    agent: AgentKind,
-) -> Result<(), SetupError> {
-    let path = env.claude_config_path();
-    let mut value = read_json_if_exists(&path)?.unwrap_or_else(|| json!({}));
-    ensure_object_root(&mut value);
-    if !value.get("mcpServers").is_some_and(Value::is_object) {
-        value["mcpServers"] = json!({});
-    }
-    value["mcpServers"]["loom"] = json!({
-        "type": "stdio",
-        "command": path_string(command),
-        "args": [],
-        "env": {
-            "LOOM_RUNTIME_HOME": path_string(env.runtime_current()),
-            "LOOM_HOME": path_string(&env.loom_home),
-            "LOOM_HOST": agent.host_env()
-        }
-    });
-    write_json(&path, &value)?;
-    remove_generated_agent_mcp_json(env, agent)?;
-    Ok(())
 }
 
 fn write_opencode_mcp_config(
@@ -2702,37 +2459,6 @@ fn write_opencode_mcp_config(
     write_json(&path, &value)?;
     remove_generated_agent_mcp_json(env, agent)?;
     Ok(())
-}
-
-fn read_toml_document(path: &Path) -> Result<DocumentMut, SetupError> {
-    if !path.exists() {
-        return Ok(DocumentMut::new());
-    }
-    let text = fs::read_to_string(path).map_err(|source| SetupError::Io {
-        path: path.to_path_buf(),
-        source,
-    })?;
-    parse_toml_document(path, &text)
-}
-
-fn parse_toml_document(path: &Path, text: &str) -> Result<DocumentMut, SetupError> {
-    text.parse::<DocumentMut>()
-        .map_err(|source| SetupError::Toml {
-            path: path.to_path_buf(),
-            source,
-        })
-}
-
-fn write_toml_document(path: &Path, document: &DocumentMut) -> Result<(), SetupError> {
-    let mut text = document.to_string();
-    if !text.ends_with('\n') {
-        text.push('\n');
-    }
-    write_text(path, &text)
-}
-
-fn toml_string(value: &str) -> String {
-    serde_json::to_string(value).expect("serializing a string cannot fail")
 }
 
 fn cleanup_agent_session(env: &SetupEnvironment, agent: AgentKind) -> Result<(), SetupError> {
@@ -2782,21 +2508,6 @@ fn cleanup_legacy(
 
 fn legacy_paths_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<PathBuf> {
     match agent {
-        AgentKind::Codex => vec![
-            env.user_home.join("plugins/loom"),
-            env.user_home.join("plugins/loomline"),
-            env.codex_home.join("plugins/cache/local/loomline"),
-            env.codex_home.join("plugins/cache/local-plugins/loomline"),
-        ],
-        AgentKind::ClaudeCode => vec![
-            env.claude_home.join("skills/loom"),
-            env.claude_home.join("skills/loomline"),
-            env.claude_home.join("commands/loom.md"),
-            env.claude_home.join("commands/loom-deploy.md"),
-            env.claude_home.join("commands/loomline.md"),
-            env.claude_home.join("commands/loomline-deploy.md"),
-            env.claude_home.join("plugins/data/loomline-skills-dir"),
-        ],
         AgentKind::Opencode => vec![
             env.opencode_home.join("commands/loom.md"),
             env.opencode_home.join("commands/loom-deploy.md"),
@@ -2943,22 +2654,6 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
         remove_path(&plugin_root)?;
         removed.push(path_string(plugin_root));
     }
-    if matches!(agent, AgentKind::Codex) {
-        if remove_codex_marketplace_entry(env)? {
-            removed.push(path_string(
-                env.user_home.join(".agents/plugins/marketplace.json"),
-            ));
-        }
-        if remove_codex_mcp_config(env)? {
-            removed.push(path_string(env.codex_config_path()));
-        }
-        if remove_generated_codex_mcp_json(env)? {
-            removed.push(path_string(env.agent_mcp_registration_path(agent)));
-        }
-    }
-    if matches!(agent, AgentKind::ClaudeCode) && remove_claude_mcp_config(env)? {
-        removed.push(path_string(env.claude_config_path()));
-    }
     if matches!(agent, AgentKind::Opencode) && remove_opencode_mcp_config(env)? {
         removed.push(path_string(env.opencode_config_path()));
     }
@@ -2971,11 +2666,9 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
     let mut cleanup_paths = vec![
         env.common_registration_path(agent),
         env.agent_session_root(agent),
+        env.agent_mcp_registration_path(agent),
     ];
-    if !matches!(agent, AgentKind::Codex) {
-        cleanup_paths.push(env.agent_mcp_registration_path(agent));
-    }
-    for path in cleanup_paths {
+    for path in cleanup_paths.drain(..) {
         if path.exists() {
             remove_path(&path)?;
             removed.push(path_string(path));
@@ -2986,11 +2679,6 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
 
 fn uninstall_files_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<PathBuf> {
     match agent {
-        AgentKind::Codex => vec![],
-        AgentKind::ClaudeCode => vec![
-            env.claude_home.join("commands/loom.md"),
-            env.claude_home.join("commands/loom-deploy.md"),
-        ],
         AgentKind::Opencode => vec![
             env.opencode_home.join("commands/loom.md"),
             env.opencode_home.join("commands/loom-deploy.md"),
@@ -3000,58 +2688,6 @@ fn uninstall_files_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<Pa
             env.opencode_home.join(".loom-opencode-mcp-install.json"),
         ],
     }
-}
-
-fn remove_codex_marketplace_entry(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.user_home.join(".agents/plugins/marketplace.json");
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut value = read_json_value(&path)?;
-    let Some(plugins) = value.get_mut("plugins").and_then(Value::as_array_mut) else {
-        return Ok(false);
-    };
-    let before = plugins.len();
-    plugins.retain(|entry| entry.get("name").and_then(Value::as_str) != Some("loom"));
-    if plugins.len() == before {
-        return Ok(false);
-    }
-    write_json(&path, &value)?;
-    Ok(true)
-}
-
-fn remove_codex_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.codex_config_path();
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut document = read_toml_document(&path)?;
-    let removed = document
-        .get_mut("mcp_servers")
-        .and_then(Item::as_table_like_mut)
-        .and_then(|servers| servers.remove("loom"))
-        .is_some();
-    if removed {
-        write_toml_document(&path, &document)?;
-    }
-    Ok(removed)
-}
-
-fn remove_claude_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.claude_config_path();
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut value = read_json_value(&path)?;
-    let removed = value
-        .get_mut("mcpServers")
-        .and_then(Value::as_object_mut)
-        .and_then(|servers| servers.remove("loom"))
-        .is_some();
-    if removed {
-        write_json(&path, &value)?;
-    }
-    Ok(removed)
 }
 
 fn remove_opencode_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
@@ -3069,10 +2705,6 @@ fn remove_opencode_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError
         write_json(&path, &value)?;
     }
     Ok(removed)
-}
-
-fn remove_generated_codex_mcp_json(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    remove_generated_agent_mcp_json(env, AgentKind::Codex)
 }
 
 fn remove_generated_agent_mcp_json(
@@ -3230,24 +2862,12 @@ fn check_agent_mcp_registration(
     server_binary: &Path,
 ) -> DoctorCheck {
     match agent {
-        AgentKind::Codex => check_codex_mcp_config(env, server_binary),
-        AgentKind::ClaudeCode => check_claude_mcp_config(env, server_binary),
         AgentKind::Opencode => check_opencode_mcp_config(env, server_binary),
     }
 }
 
 fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> DoctorCheck {
     let (name, path) = match agent {
-        AgentKind::Codex => (
-            "codex.pluginVersion",
-            env.agent_plugin_root(agent)
-                .join(".codex-plugin/plugin.json"),
-        ),
-        AgentKind::ClaudeCode => (
-            "claude-code.pluginVersion",
-            env.agent_plugin_root(agent)
-                .join(".claude-plugin/plugin.json"),
-        ),
         AgentKind::Opencode => (
             "opencode.pluginVersion",
             env.opencode_home.join(".loom-opencode-mcp-install.json"),
@@ -3298,71 +2918,6 @@ fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> Docto
                 actual,
                 path.display()
             ),
-        }
-    }
-}
-
-fn check_codex_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> DoctorCheck {
-    let path = env.codex_config_path();
-    let name = "codex.mcpRegistration".to_string();
-    let document = match read_toml_document(&path) {
-        Ok(document) => document,
-        Err(error) => {
-            return DoctorCheck {
-                name,
-                status: "failed".to_string(),
-                detail: error.to_string(),
-            }
-        }
-    };
-    let command = document["mcp_servers"]["loom"]["command"].as_str();
-    let host = document["mcp_servers"]["loom"]["env"]["LOOM_HOST"].as_str();
-    if command == Some(path_string(server_binary).as_str()) && host == Some("codex") {
-        DoctorCheck {
-            name,
-            status: "passed".to_string(),
-            detail: format!(
-                "Codex config contains [mcp_servers.loom]: {}",
-                path.display()
-            ),
-        }
-    } else {
-        DoctorCheck {
-            name,
-            status: "failed".to_string(),
-            detail: format!("missing or stale [mcp_servers.loom] in {}", path.display()),
-        }
-    }
-}
-
-fn check_claude_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> DoctorCheck {
-    let path = env.claude_config_path();
-    let name = "claude-code.mcpRegistration".to_string();
-    let value = match read_json_value(&path) {
-        Ok(value) => value,
-        Err(error) => {
-            return DoctorCheck {
-                name,
-                status: "failed".to_string(),
-                detail: error.to_string(),
-            }
-        }
-    };
-    let loom = &value["mcpServers"]["loom"];
-    let command = loom["command"].as_str();
-    let host = loom["env"]["LOOM_HOST"].as_str();
-    let server_matches = command == Some(path_string(server_binary).as_str());
-    if loom["type"].as_str() == Some("stdio") && server_matches && host == Some("claude-code") {
-        DoctorCheck {
-            name,
-            status: "passed".to_string(),
-            detail: format!("Claude config contains mcpServers.loom: {}", path.display()),
-        }
-    } else {
-        DoctorCheck {
-            name,
-            status: "failed".to_string(),
-            detail: format!("missing or stale mcpServers.loom in {}", path.display()),
         }
     }
 }
@@ -3762,14 +3317,6 @@ fn read_json_value(path: &Path) -> Result<Value, SetupError> {
         path: path.to_path_buf(),
         source,
     })
-}
-
-fn read_json_if_exists(path: &Path) -> Result<Option<Value>, SetupError> {
-    if path.exists() {
-        read_json_value(path).map(Some)
-    } else {
-        Ok(None)
-    }
 }
 
 fn read_jsonc_if_exists(path: &Path) -> Result<Option<Value>, SetupError> {

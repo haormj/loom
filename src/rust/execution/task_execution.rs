@@ -1095,7 +1095,6 @@ fn code_quality_execution_rules(task: &TaskDefinition) -> Value {
         "referencePathResolution": {
             "pathMeaning": "Loom installed reference path",
             "projectWorkspacePath": false,
-            "codexAndClaudeHint": "Resolve as references/<path> next to the active Loom SKILL.md.",
             "opencodeHint": "Resolve as ../references/loom/<path> from the active OpenCode loom command/plugin files."
         },
         "implementationRules": [

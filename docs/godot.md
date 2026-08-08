@@ -51,27 +51,14 @@ If `godot` is already on `PATH`, `GODOT_PATH` is optional.
 Install Loom for the agent you use:
 
 ```bash
-curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent codex
+curl -fsSL https://github.com/valkor-ai/loom/releases/latest/download/install.sh | bash -s -- --agent opencode
 ```
 
-Replace `codex` with `claude-code`, `opencode`, or `all` when needed. Open a
-new agent session after installation.
+Open a new agent session after installation.
 
 ## 3. Register Godot MCP
 
 `godot-mcp` is a separate MCP server from Loom. Register it as `godot`.
-
-Codex:
-
-```bash
-codex mcp add godot --env GODOT_PATH="$GODOT_PATH" -- npx @coding-solo/godot-mcp
-```
-
-Claude Code:
-
-```bash
-claude mcp add godot -e GODOT_PATH="$GODOT_PATH" -- npx @coding-solo/godot-mcp
-```
 
 OpenCode configuration:
 

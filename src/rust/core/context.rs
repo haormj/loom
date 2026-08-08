@@ -12,23 +12,15 @@ pub struct ProjectToolInput {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HostKind {
-    Codex,
-    ClaudeCode,
     Opencode,
 }
 
 impl HostKind {
     pub fn from_env_value(value: Option<&str>) -> Self {
-        match value
-            .unwrap_or("codex")
-            .trim()
-            .to_ascii_lowercase()
-            .as_str()
-        {
-            "claude_code" | "claude-code" | "claude" => Self::ClaudeCode,
-            "opencode" | "open_code" | "open-code" => Self::Opencode,
-            _ => Self::Codex,
-        }
+        let _ = value
+            .map(|v| v.trim().to_ascii_lowercase())
+            .unwrap_or_else(|| "opencode".to_string());
+        Self::Opencode
     }
 }
 

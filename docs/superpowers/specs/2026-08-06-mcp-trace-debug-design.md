@@ -179,7 +179,7 @@ agent ──stdin──▶ TeeRead ──▶ rmcp AsyncRwTransport ──▶ Loo
   "params": {
     "protocolVersion": "2025-11-25",
     "capabilities": {},
-    "clientInfo": { "name": "codex", "version": "1.0.0" }
+    "clientInfo": { "name": "opencode", "version": "1.0.0" }
   }
 }
 

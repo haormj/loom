@@ -8,7 +8,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
-use toml_edit::DocumentMut;
 
 const CODE_REFERENCE_FILES: &[&str] = &[
     "observability",
@@ -317,247 +316,16 @@ fn setup_platform_key() -> String {
 }
 
 #[test]
-fn install_cleans_confirmed_legacy_and_writes_mcp_registration() {
-    let fixture = Fixture::new("install_cleans_legacy");
-    fixture.write_package();
-    let legacy_plugin = fixture.user_home.join("plugins/loom");
-    fs::create_dir_all(&legacy_plugin).unwrap();
-    fs::write(
-        legacy_plugin.join("SKILL.md"),
-        "old adapter uses $HOME/.loom/bin/loom-cli",
-    )
-    .unwrap();
-    fs::create_dir_all(fixture.loom_home.join("adapters/codex")).unwrap();
-    fs::write(
-        fixture.loom_home.join("adapters/codex/refresh.json"),
-        "{\"adapter\":\"codex\"}",
-    )
-    .unwrap();
-    fs::create_dir_all(fixture.loom_home.join("bin")).unwrap();
-    fs::write(
-        fixture.loom_home.join("bin/loom-cli"),
-        "LOOM_AGENT_PROFILE=codex",
-    )
-    .unwrap();
-    fs::create_dir_all(fixture.user_home.join(".codex")).unwrap();
-    fs::write(
-        fixture.user_home.join(".codex/config.toml"),
-        "model = \"gpt-5\"\n\n[mcp_servers.existing]\ncommand = \"existing-server\"\n",
-    )
-    .unwrap();
-    fs::create_dir_all(fixture.user_home.join(".codex/mcp")).unwrap();
-    fs::write(
-        fixture.user_home.join(".codex/mcp/loom.json"),
-        serde_json::json!({
-            "name": "loom",
-            "transport": "stdio",
-            "command": "/old/runtime/bin/loom-mcp-server"
-        })
-        .to_string(),
-    )
-    .unwrap();
-    let stale_codex_cache = fixture
-        .user_home
-        .join(".codex/plugins/cache/local-plugins/loom/0.1.0/skills/loom/references/delivery");
-    fs::create_dir_all(&stale_codex_cache).unwrap();
-    fs::write(
-        stale_codex_cache.join("planning.md"),
-        "Loom MCP-only stale delivery planning reference",
-    )
-    .unwrap();
-
-    let env = fixture.env();
-    let report = install(&env, &[AgentKind::Codex]).unwrap();
-
-    assert_eq!(report.status, "ok");
-    assert!(env.runtime_current().exists() || env.runtime_current().symlink_metadata().is_ok());
-    assert!(env
-        .agent_plugin_root(AgentKind::Codex)
-        .join(".loom-mcp-install.json")
-        .exists());
-    assert!(!fixture
-        .user_home
-        .join(".codex/plugins/cache/local-plugins/loom")
-        .join("0.1.0/skills/loom/references/delivery")
-        .exists());
-    assert!(fixture
-        .user_home
-        .join(format!(
-            ".codex/plugins/cache/local-plugins/loom/{VERSION}/skills/loom/SKILL.md"
-        ))
-        .exists());
-    assert!(!fixture.loom_home.join("bin/loom-cli").exists());
-    assert!(!env.agent_mcp_registration_path(AgentKind::Codex).exists());
-
-    let codex_config_text = fs::read_to_string(env.codex_config_path()).unwrap();
-    let codex_config = codex_config_text.parse::<DocumentMut>().unwrap();
-    assert_eq!(codex_config["model"].as_str(), Some("gpt-5"));
-    assert_eq!(
-        codex_config["mcp_servers"]["existing"]["command"].as_str(),
-        Some("existing-server")
-    );
-    assert_eq!(
-        codex_config["mcp_servers"]["loom"]["command"].as_str(),
-        Some(path_string_for_test(&env.runtime_current().join("bin/loom-mcp-server")).as_str())
-    );
-    assert_eq!(
-        codex_config["mcp_servers"]["loom"]["env"]["LOOM_HOST"].as_str(),
-        Some("codex")
-    );
-    assert_eq!(
-        report
-            .checks
-            .iter()
-            .find(|check| check.name == "codex.mcpRegistration")
-            .unwrap()
-            .status,
-        "passed"
-    );
-    assert_eq!(
-        report
-            .checks
-            .iter()
-            .find(|check| check.name == "codex.pluginVersion")
-            .unwrap()
-            .status,
-        "passed"
-    );
-}
-
-#[test]
-fn install_rejects_agent_plugin_version_drift() {
-    let fixture = Fixture::new("plugin_version_drift");
-    fixture.write_package();
-    write_json(
-        &fixture
-            .package_root
-            .join("plugins/codex/.codex-plugin/plugin.json"),
-        &serde_json::json!({"name": "loom", "version": "0.2.4"}),
-    );
-
-    let error = install(&fixture.env(), &[AgentKind::Codex]).unwrap_err();
-    match error {
-        SetupError::InvalidArgument(message) => {
-            assert!(message.contains("agent plugin manifest"));
-            assert!(message.contains(&format!("expected {VERSION}")));
-        }
-        other => panic!("expected plugin version validation error, got {other:?}"),
-    }
-}
-
-#[test]
 fn install_projects_shared_references_to_agent_read_paths() {
     let fixture = Fixture::new("install_shared_references");
     fixture.write_package();
     let env = fixture.env();
-    write_json(
-        &env.claude_config_path(),
-        &serde_json::json!({
-            "existing": true,
-            "mcpServers": {
-                "existing-server": {
-                    "type": "stdio",
-                    "command": "existing"
-                }
-            }
-        }),
-    );
     write_file(
         &env.opencode_config_path(),
         "{\n  \"$schema\": \"https://opencode.ai/config.json\",\n  \"mcp\": {\n    \"existing-server\": { \"type\": \"local\", \"command\": [\"existing\"], },\n  },\n}\n",
     );
 
     let report = install(&env, &AgentKind::all()).unwrap();
-
-    for agent in [AgentKind::Codex, AgentKind::ClaudeCode] {
-        let root = env.agent_plugin_root(agent);
-        assert!(root.join("skills/loom/references/uix/core.md").exists());
-        assert!(root
-            .join("skills/loom/references/uix/templates/tokens.css.tpl")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/uix/templates/tokens.tailwind.tpl")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/uix/stacks/svelte.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/uix/stacks/uniapp.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/tech/arch/core.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/tech/arch/nfr.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/tech/arch/adr.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/tech/api/core.md")
-            .exists());
-        assert!(root
-            .join("skills/loom/references/tech/api/contract.md")
-            .exists());
-        for file in REVIEW_REFERENCE_FILES {
-            assert!(root
-                .join(format!("skills/loom/references/tech/review/{file}.md"))
-                .exists());
-        }
-        for file in PLAYWRIGHT_REFERENCE_FILES {
-            assert!(root
-                .join(format!(
-                    "skills/loom/references/tech/test/playwright/{file}.md"
-                ))
-                .exists());
-        }
-        assert!(root
-            .join("skills/loom/references/tech/code/common.md")
-            .exists());
-        for file in CODE_REFERENCE_FILES {
-            assert!(root
-                .join(format!("skills/loom/references/tech/code/{file}.md"))
-                .exists());
-        }
-        for file in [
-            "redis/core",
-            "redis/cache",
-            "redis/session",
-            "redis/atomicity",
-            "redis/messaging",
-        ] {
-            assert!(root
-                .join(format!("skills/loom/references/tech/code/{file}.md"))
-                .exists());
-        }
-        for file in BACKEND_REFERENCE_FILES {
-            assert!(root
-                .join(format!("skills/loom/references/tech/backend/{file}.md"))
-                .exists());
-        }
-        for file in FRONTEND_REFERENCE_FILES {
-            assert!(root
-                .join(format!("skills/loom/references/tech/frontend/{file}.md"))
-                .exists());
-        }
-        assert!(root.join("skills/godot/SKILL.md").exists());
-        assert!(root.join("skills/godot/mcp-driver/SKILL.md").exists());
-        assert!(root.join("skills/godot/reviewer/physics/SKILL.md").exists());
-        assert!(!root.join("skills/loom/references/delivery").exists());
-        assert!(root
-            .join("skills/loom-deploy/references/compose.md")
-            .exists());
-        assert!(root
-            .join("skills/loom-deploy/references/matrix.md")
-            .exists());
-        assert!(root
-            .join("skills/loom-deploy/references/source-model.md")
-            .exists());
-        assert!(root
-            .join("skills/loom-deploy/references/topology.md")
-            .exists());
-        assert!(root.join("skills/loom-deploy/references/redis.md").exists());
-    }
 
     assert!(env
         .opencode_home
@@ -659,26 +427,8 @@ fn install_projects_shared_references_to_agent_read_paths() {
         .join("references/loom-deploy/.loom-mcp-install.json")
         .exists());
     assert!(!env
-        .agent_mcp_registration_path(AgentKind::ClaudeCode)
-        .exists());
-    assert!(!env
         .agent_mcp_registration_path(AgentKind::Opencode)
         .exists());
-
-    let claude_config = read_json(&env.claude_config_path());
-    assert_eq!(claude_config["existing"].as_bool(), Some(true));
-    assert_eq!(
-        claude_config["mcpServers"]["existing-server"]["command"].as_str(),
-        Some("existing")
-    );
-    assert_eq!(
-        claude_config["mcpServers"]["loom"]["command"].as_str(),
-        Some(path_string_for_test(&env.runtime_current().join("bin/loom-mcp-server")).as_str())
-    );
-    assert_eq!(
-        claude_config["mcpServers"]["loom"]["env"]["LOOM_HOST"].as_str(),
-        Some("claude-code")
-    );
 
     let opencode_config = read_json(&env.opencode_config_path());
     assert_eq!(
@@ -693,7 +443,7 @@ fn install_projects_shared_references_to_agent_read_paths() {
         opencode_config["mcp"]["loom"]["environment"]["LOOM_HOST"].as_str(),
         Some("opencode")
     );
-    for check_name in ["claude-code.mcpRegistration", "opencode.mcpRegistration"] {
+    for check_name in ["opencode.mcpRegistration"] {
         assert_eq!(
             report
                 .checks
@@ -703,24 +453,6 @@ fn install_projects_shared_references_to_agent_read_paths() {
                 .status,
             "passed"
         );
-    }
-}
-
-#[test]
-fn install_blocks_unowned_existing_plugin() {
-    let fixture = Fixture::new("install_blocks_unowned");
-    fixture.write_package();
-    let unowned = fixture.user_home.join("plugins/loom");
-    fs::create_dir_all(&unowned).unwrap();
-    fs::write(unowned.join("README.md"), "user owned plugin").unwrap();
-
-    let error = install(&fixture.env(), &[AgentKind::Codex]).unwrap_err();
-    match error {
-        SetupError::LegacyCleanupBlocked(blocked) => {
-            assert_eq!(blocked.len(), 1);
-            assert!(blocked[0].path.contains("plugins/loom"));
-        }
-        other => panic!("expected LegacyCleanupBlocked, got {other:?}"),
     }
 }
 
@@ -808,13 +540,7 @@ fn install_sh_release_plan_resolves_platform_assets_and_checksums() {
     let script = repo.join("install.sh");
     let mac_output = Command::new("sh")
         .arg(&script)
-        .args([
-            "--agent",
-            "claude-code",
-            "--version",
-            "9.8.7",
-            "--print-plan",
-        ])
+        .args(["--agent", "opencode", "--version", "9.8.7", "--print-plan"])
         .env("LOOM_INSTALL_TEST_OS", "Darwin")
         .env("LOOM_INSTALL_TEST_ARCH", "arm64")
         .output()
@@ -825,7 +551,7 @@ fn install_sh_release_plan_resolves_platform_assets_and_checksums() {
         String::from_utf8_lossy(&mac_output.stderr)
     );
     let mac_plan: serde_json::Value = serde_json::from_slice(&mac_output.stdout).unwrap();
-    assert_eq!(mac_plan["agent"], "claude-code");
+    assert_eq!(mac_plan["agent"], "opencode");
     assert_eq!(mac_plan["platform"], "darwin-arm64");
     assert_eq!(mac_plan["package"], "loom-9.8.7-darwin-arm64.tar.gz");
     assert_eq!(
@@ -973,10 +699,6 @@ fn package_layout_copies_current_runtime_and_plugin_sources() {
     assert!(package.join("bin/loom-setup").is_file());
     assert!(package.join("python/algorithms/worker.py").is_file());
     assert!(package.join("python/runtime/README").is_file());
-    assert!(package.join("plugins/codex/skills/loom/SKILL.md").is_file());
-    assert!(package
-        .join("plugins/claude-code/commands/loom.md")
-        .is_file());
     assert!(package
         .join("plugins/opencode/.opencode/plugins/loom.js")
         .is_file());
@@ -1016,14 +738,6 @@ fn plugin_templates_do_not_expose_legacy_protocol_terms() {
         .to_path_buf();
     let plugin_root = repo.join("plugins");
     let files = [
-        "codex/skills/loom/SKILL.md",
-        "codex/skills/loom-deploy/SKILL.md",
-        "codex/.codex-plugin/plugin.json",
-        "claude-code/commands/loom.md",
-        "claude-code/commands/loom-deploy.md",
-        "claude-code/skills/loom/SKILL.md",
-        "claude-code/skills/loom-deploy/SKILL.md",
-        "claude-code/hooks/loom-workflow-guard.js",
         "opencode/.opencode/commands/loom.md",
         "opencode/.opencode/commands/loom-deploy.md",
         "opencode/.opencode/plugins/loom.js",
@@ -1047,56 +761,13 @@ fn plugin_templates_do_not_expose_legacy_protocol_terms() {
             );
         }
     }
-
-    for file in [
-        "codex/.codex-plugin/plugin.json",
-        "claude-code/.claude-plugin/plugin.json",
-    ] {
-        let value = read_json(&plugin_root.join(file));
-        assert_eq!(value["name"], "loom", "{file} must identify Loom");
-        assert_eq!(
-            value["version"].as_str(),
-            Some(VERSION),
-            "{file} must match the MCP runtime version"
-        );
-    }
-}
-
-#[test]
-fn codex_delivery_skill_requires_the_loom_plan_first() {
-    let skill = fs::read_to_string(repo_root().join("plugins/codex/skills/loom/SKILL.md")).unwrap();
-    for required in [
-        "mandatory routing entrypoint",
-        "resolve the Loom route before any repository work",
-        "mcp__loom__plan",
-        "deferred loading hides that tool",
-        "Loom plan software delivery @loom",
-        "Do not search for deploy",
-        "exec_command",
-        "apply_patch",
-    ] {
-        assert!(
-            skill.contains(required),
-            "Codex Loom skill missing {required}"
-        );
-    }
-
-    let deploy_skill =
-        fs::read_to_string(repo_root().join("plugins/codex/skills/loom-deploy/SKILL.md")).unwrap();
-    assert!(deploy_skill.contains("only for an explicit @loom deploy request"));
-    assert!(deploy_skill.contains("not the route for a plain `@loom <request>`"));
 }
 
 #[test]
 fn deploy_plugin_templates_obey_active_operation_policy_fields() {
     let repo = repo_root();
     let plugin_root = repo.join("plugins");
-    for file in [
-        "codex/skills/loom-deploy/SKILL.md",
-        "claude-code/commands/loom-deploy.md",
-        "claude-code/skills/loom-deploy/SKILL.md",
-        "opencode/.opencode/commands/loom-deploy.md",
-    ] {
+    for file in ["opencode/.opencode/commands/loom-deploy.md"] {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
         for required in [
             "observationPolicy",
@@ -1116,11 +787,7 @@ fn agent_templates_obey_user_gate_pre_response_contract() {
     let repo = repo_root();
     let plugin_root = repo.join("plugins");
     for file in [
-        "codex/skills/loom/SKILL.md",
-        "claude-code/skills/loom/SKILL.md",
         "opencode/.opencode/commands/loom.md",
-        "codex/skills/loom-deploy/SKILL.md",
-        "claude-code/skills/loom-deploy/SKILL.md",
         "opencode/.opencode/commands/loom-deploy.md",
     ] {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
@@ -1224,11 +891,7 @@ fn opencode_commands_expose_mcp_result_discipline() {
 fn agent_templates_expose_reference_loading_protocol() {
     let repo = repo_root();
     let plugin_root = repo.join("plugins");
-    let files = [
-        "codex/skills/loom/SKILL.md",
-        "claude-code/skills/loom/SKILL.md",
-        "opencode/.opencode/commands/loom.md",
-    ];
+    let files = ["opencode/.opencode/commands/loom.md"];
 
     for file in files {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
@@ -1274,11 +937,7 @@ fn agent_templates_expose_reference_loading_protocol() {
         }
     }
 
-    for file in [
-        "codex/skills/loom-deploy/SKILL.md",
-        "claude-code/skills/loom-deploy/SKILL.md",
-        "opencode/.opencode/commands/loom-deploy.md",
-    ] {
+    for file in ["opencode/.opencode/commands/loom-deploy.md"] {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
         assert!(
             !content.contains("## Optional References"),
@@ -1313,31 +972,6 @@ fn agent_templates_expose_reference_loading_protocol() {
         assert!(
             !content.contains("external-references"),
             "{file} must not expose maintainer research as a deploy reference"
-        );
-    }
-
-    let claude_deploy_command =
-        fs::read_to_string(plugin_root.join("claude-code/commands/loom-deploy.md")).unwrap();
-    assert!(
-        claude_deploy_command.contains("load the installed `loom-deploy` skill"),
-        "claude-code/commands/loom-deploy.md must delegate deploy reference loading to the installed skill"
-    );
-    assert!(
-        claude_deploy_command.contains("must not maintain a separate deploy reference path map"),
-        "claude-code/commands/loom-deploy.md must document that the command is not a second reference map"
-    );
-    for forbidden in [
-        "## Reference Loading",
-        "MCP-selected deploy references:",
-        "`deploy.providers` ->",
-        "`deploy.matrix` ->",
-        "`deploy.stacks.java`",
-        "../references/loom-deploy/",
-        "../skills/loom/skills/loom-deploy/references/",
-    ] {
-        assert!(
-            !claude_deploy_command.contains(forbidden),
-            "claude-code/commands/loom-deploy.md must not retain duplicated deploy reference map fragment {forbidden}"
         );
     }
 }
@@ -2154,11 +1788,7 @@ fn loom_uix_references_do_not_duplicate_mcp_contract_terms() {
 #[test]
 fn loom_agent_adapters_use_current_ui_reference_evidence_field() {
     let repo = repo_root();
-    let files = [
-        repo.join("plugins/codex/skills/loom/SKILL.md"),
-        repo.join("plugins/claude-code/skills/loom/SKILL.md"),
-        repo.join("plugins/opencode/.opencode/commands/loom.md"),
-    ];
+    let files = [repo.join("plugins/opencode/.opencode/commands/loom.md")];
 
     for path in files {
         let content = fs::read_to_string(&path).unwrap();
@@ -2335,12 +1965,7 @@ fn deploy_references_explain_profile_and_provider_fallback_without_external_runt
 fn agent_templates_expose_knowledge_direct_route_and_semantic_pack_discipline() {
     let repo = repo_root();
     let plugin_root = repo.join("plugins");
-    let files = [
-        "codex/skills/loom/SKILL.md",
-        "claude-code/commands/loom.md",
-        "claude-code/skills/loom/SKILL.md",
-        "opencode/.opencode/commands/loom.md",
-    ];
+    let files = ["opencode/.opencode/commands/loom.md"];
 
     for file in files {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
@@ -2368,12 +1993,7 @@ fn agent_templates_expose_knowledge_direct_route_and_semantic_pack_discipline() 
 fn agent_templates_expose_run_loom_tool_next_discipline() {
     let repo = repo_root();
     let plugin_root = repo.join("plugins");
-    let files = [
-        "codex/skills/loom/SKILL.md",
-        "claude-code/commands/loom.md",
-        "claude-code/skills/loom/SKILL.md",
-        "opencode/.opencode/commands/loom.md",
-    ];
+    let files = ["opencode/.opencode/commands/loom.md"];
 
     for file in files {
         let content = fs::read_to_string(plugin_root.join(file)).unwrap();
@@ -2405,11 +2025,7 @@ fn agent_templates_expose_run_loom_tool_next_discipline() {
 #[test]
 fn product_docs_do_not_expose_legacy_install_or_protocol_paths() {
     let repo = repo_root();
-    let files = [
-        "README.md",
-        "scripts/README.md",
-        "tests/README.md",
-    ];
+    let files = ["README.md", "scripts/README.md", "tests/README.md"];
     let forbidden = [
         "npm run plugin:",
         "loom-cli",
@@ -2495,54 +2111,12 @@ impl Fixture {
             &self.package_root.join("python/algorithms/worker.py"),
             "print('{\"ok\": true}')\n",
         );
-        self.write_codex_template();
-        self.write_claude_template();
         self.write_opencode_template();
         self.write_shared_references();
         self.write_shared_skills();
         let manifest = ReleaseManifest::for_platform(TargetPlatform::DarwinArm64);
         write_json(&self.package_root.join("manifest.json"), &manifest);
         self.write_checksums();
-    }
-
-    fn write_codex_template(&self) {
-        write_json(
-            &self
-                .package_root
-                .join("plugins/codex/.codex-plugin/plugin.json"),
-            &serde_json::json!({"name":"loom","version":VERSION}),
-        );
-        write_file(
-            &self.package_root.join("plugins/codex/skills/loom/SKILL.md"),
-            "Loom MCP-only Codex skill\n",
-        );
-    }
-
-    fn write_claude_template(&self) {
-        write_json(
-            &self
-                .package_root
-                .join("plugins/claude-code/.claude-plugin/plugin.json"),
-            &serde_json::json!({"name":"loom","version":VERSION}),
-        );
-        write_file(
-            &self
-                .package_root
-                .join("plugins/claude-code/commands/loom.md"),
-            "Loom MCP-only Claude command\n",
-        );
-        write_file(
-            &self
-                .package_root
-                .join("plugins/claude-code/commands/loom-deploy.md"),
-            "Loom MCP-only Claude deploy command\n",
-        );
-        write_file(
-            &self
-                .package_root
-                .join("plugins/claude-code/skills/loom/SKILL.md"),
-            "Loom MCP-only Claude skill\n",
-        );
     }
 
     fn write_opencode_template(&self) {
