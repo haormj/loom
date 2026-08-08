@@ -2938,8 +2938,8 @@ fn architecture_coverage_submit_persists_aac_and_routes_to_taskplan_generation()
     .expect("read taskplan rules");
     let taskplan_rules_text =
         serde_json::to_string(&taskplan_rules.fields).expect("serialize taskplan generation rules");
-    assert!(taskplan_rules_text.contains("Keep next-phase seeds"));
-    assert!(taskplan_rules_text.contains("smallest stable verification signal"));
+    assert!(taskplan_rules_text.contains("下一阶段种子"));
+    assert!(taskplan_rules_text.contains("最小稳定验证信号"));
     let compact_taskplan_root = read_request_root_value(fixture.root_str(), taskplan_request_ref);
     assert_no_root_submit_metadata(&compact_taskplan_root);
     assert!(compact_taskplan_root
@@ -3097,7 +3097,7 @@ fn architecture_coverage_submit_persists_aac_and_routes_to_taskplan_generation()
         frontend_requirement_template["uiTaskScope"]["ownershipDimensionRule"]
             .as_str()
             .expect("ownership dimension rule")
-            .contains("not a task-splitting strategy")
+            .contains("不是任务拆分策略")
     );
     let runtime_requirement_template =
         &taskplan_contract_fields["outputContract.runtimeDeliveryRequirementTemplate"].value;
@@ -3122,7 +3122,7 @@ fn architecture_coverage_submit_persists_aac_and_routes_to_taskplan_generation()
     );
     assert!(runtime_closure_template["groupPlacement"]["taskIdsRule"]
         .as_str()
-        .is_some_and(|rule| rule.contains("exactly this one runtime_delivery_closure task")));
+        .is_some_and(|rule| rule.contains("恰好包含这一个 runtime_delivery_closure 任务")));
     let closure_requirement = &runtime_closure_template["runtimeDeliveryRequirement"];
     assert!(closure_requirement["affectedContractFields"]
         .as_array()
@@ -3149,28 +3149,27 @@ fn architecture_coverage_submit_persists_aac_and_routes_to_taskplan_generation()
     let runtime_rules = &taskplan_contract_fields["generationRules.runtimeDeliveryRules"].value;
     assert!(runtime_rules["closureGroupRule"]
         .as_str()
-        .is_some_and(|rule| rule.contains("only task in its group")
-            && rule.contains("final outline.groups entry")));
+        .is_some_and(|rule| rule.contains("组中的唯一任务")
+            && rule.contains("outline.groups 的最后一个条目")));
     let verification_rules =
         &taskplan_contract_fields["generationRules.verificationEvidenceRules"].value;
     let verification_rules_text =
         serde_json::to_string(verification_rules).expect("serialize verification rules");
-    assert!(verification_rules_text.contains("Do not write verificationIntents in proposals"));
-    assert!(verification_rules_text.contains("MCP derives one or more stable verification intents"));
+    assert!(verification_rules_text.contains("不要在提案中编写 verificationIntents"));
+    assert!(
+        verification_rules_text.contains("MCP 从接受的归属和架构行为派生一个或多个稳定的验证意图")
+    );
     let detail_ownership_rules =
         &taskplan_contract_fields["generationRules.detailOwnershipRules"].value;
     assert!(
         detail_ownership_rules["assignmentRule"]
             .as_str()
-            .is_some_and(|rule| rule.contains("every covered detail")
-                && rule.contains("canonical implementation owner")),
+            .is_some_and(|rule| rule.contains("每个覆盖的详情") && rule.contains("规范实现归属方")),
         "{detail_ownership_rules:#}"
     );
     assert!(detail_ownership_rules["acceptNormalization"]
         .as_str()
-        .is_some_and(
-            |rule| rule.contains("canonical task ids") && rule.contains("verification intents")
-        ));
+        .is_some_and(|rule| rule.contains("规范任务 ID") && rule.contains("验证意图")));
     let engineering_template =
         &taskplan_contract_fields["outputContract.engineeringQualityRequirementTemplate"].value;
     assert_eq!(
@@ -3184,13 +3183,13 @@ fn architecture_coverage_submit_persists_aac_and_routes_to_taskplan_generation()
         .contains_key("persistence"));
     assert_eq!(
         engineering_template["taskRefRule"],
-        json!("Loom attaches this generated requirement through engineeringQualityRequirementRefs during accept; agents must not write that field or duplicate the full object in each task.")
+        json!("Loom 在接受期间通过 engineeringQualityRequirementRefs 附加此生成的需求；代理不得编写该字段或在每个任务中重复完整对象。")
     );
     let engineering_rules =
         &taskplan_contract_fields["generationRules.engineeringQualityRules"].value;
     assert!(engineering_rules["acceptNormalization"]
         .as_str()
-        .is_some_and(|rule| rule.contains("do not duplicate full quality requirements")));
+        .is_some_and(|rule| rule.contains("不要在每个任务中重复完整的质量需求")));
     assert!(inspected
         .read_groups
         .iter()
@@ -3278,10 +3277,10 @@ fn taskplan_request_keeps_deferred_scope_out_of_current_scope_refs() {
     );
     assert!(assignment["verificationRule"]
         .as_str()
-        .is_some_and(|rule| rule.contains("must be referenced")));
+        .is_some_and(|rule| rule.contains("必须被至少一个 verificationIntents")));
     assert!(assignment["verificationSubsetRule"]
         .as_str()
-        .is_some_and(|rule| rule.contains("same parent task.requirementDetailRefs")));
+        .is_some_and(|rule| rule.contains("同一父任务的 task.requirementDetailRefs")));
 }
 
 #[test]
@@ -3560,16 +3559,16 @@ fn task_execution_request_carries_task_scoped_frontend_closure_guidance() {
         &fields["executionRules.frontendImplementationOrganizationRules"].value
     )
     .unwrap()
-    .contains("reachable entry"));
+    .contains("可到达的入口"));
     assert!(serde_json::to_string(
         &fields["executionRules.interactiveVerificationProbePolicy"].value
     )
     .unwrap()
-    .contains("smallest applicable probe plan"));
+    .contains("最小适用探针计划"));
     assert!(
         serde_json::to_string(&fields["executionRules.controlledRuntimeProbeRules"].value)
             .unwrap()
-            .contains("Never run long-lived runtime")
+            .contains("不要将长时间运行的运行时")
     );
     assert_eq!(
         fields["outputContract.resultTemplate"].value["frontendExperienceSelfCheck"]
@@ -5160,8 +5159,8 @@ fn taskplan_accept_materializes_task_execution_and_task_result_routes_review() {
         .is_none());
     let execution_rules_text =
         serde_json::to_string(&execution_fields).expect("serialize execution rules");
-    assert!(execution_rules_text.contains("write-producing verification commands"));
-    assert!(execution_rules_text.contains("confirmed business language"));
+    assert!(execution_rules_text.contains("产生写入的验证命令"));
+    assert!(execution_rules_text.contains("已确认的业务语言"));
     assert!(execution_inspected
         .read_groups
         .iter()
@@ -5425,8 +5424,8 @@ fn taskplan_accept_materializes_task_execution_and_task_result_routes_review() {
     .expect("read review rules");
     let review_rules_text =
         serde_json::to_string(&review_rules.fields).expect("serialize review rules");
-    assert!(review_rules_text.contains("spec fidelity and project standards"));
-    assert!(review_rules_text.contains("smallest repair"));
+    assert!(review_rules_text.contains("规范保真度与项目标准"));
+    assert!(review_rules_text.contains("最小修复"));
     assert!(review_fields["outputContract.resultTemplate"].value["coverageAssessment"].is_object());
     let template_evidence_ref =
         &review_fields["outputContract.resultTemplate"].value["findings"][0]["evidenceRefs"][0];
@@ -8171,8 +8170,8 @@ fn manual_review_resolution_routes_to_execution_repair() {
     .expect("read execution repair rules");
     let repair_rules_text =
         serde_json::to_string(&repair_rules.fields).expect("serialize repair rules");
-    assert!(repair_rules_text.contains("Use repairContext as the failure boundary"));
-    assert!(repair_rules_text.contains("rerun that signal"));
+    assert!(repair_rules_text.contains("将 repairContext 作为失败边界"));
+    assert!(repair_rules_text.contains("重跑该信号"));
 }
 
 #[test]
@@ -8897,7 +8896,7 @@ fn taskplan_repair_submit_replaces_taskplan_and_starts_new_run() {
     assert!(
         repair_fields["generationRules.engineeringQualityRules"].value["acceptNormalization"]
             .as_str()
-            .is_some_and(|rule| rule.contains("do not duplicate full quality requirements"))
+            .is_some_and(|rule| rule.contains("不要在每个任务中重复完整的质量需求"))
     );
     let repair_inspected = state::inspect_request(InspectRequestInput {
         project_root: fixture.root_str().to_string(),

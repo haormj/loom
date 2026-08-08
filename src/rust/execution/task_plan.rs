@@ -302,19 +302,19 @@ fn build_request_root(
                 "targetId": "outline",
                 "path": outline_file,
                 "required": true,
-                "description": "Write the TaskPlan outline JSON."
+                "description": "写入 TaskPlan outline JSON。"
             },
             {
                 "targetId": "groups",
                 "path": group_file_pattern,
                 "required": false,
-                "description": "Write one TaskPlan group JSON for each outline.groups[].groupId."
+                "description": "为每个 outline.groups[].groupId 写入一个 TaskPlan 组 JSON。"
             }
         ],
         "pathAuthority": {
             "currentRequestOnly": true,
             "currentRequestId": request_id,
-            "rule": "Only outputContract.outlineFile and outputContract.groupFilePattern belong to this TaskPlan generation."
+            "rule": "只有 outputContract.outlineFile 和 outputContract.groupFilePattern 属于此 TaskPlan 生成。"
         },
         "outlineSchemaShape": outline_schema,
         "groupSchemaShape": group_schema,
@@ -488,15 +488,15 @@ fn taskplan_read_groups(
         json!({
             "groupId": "taskplan_core_context",
             "required": true,
-            "purpose": "Read the compact phase identity, technical baseline signal, and allowed ownership indexes before writing the TaskPlan outline.",
-            "whenToRead": "Read first.",
+            "purpose": "在写入 TaskPlan outline 之前读取紧凑的阶段标识、技术基线信号和允许的归属索引。",
+            "whenToRead": "首先读取。",
             "selectors": read_selectors_value_from_paths(core_fields)
         }),
         json!({
             "groupId": "taskplan_requirement_context",
             "required": true,
-            "purpose": "Read the current-phase requirement detail index, acceptance and business-flow summaries, workflow closure requirements, and task field mapping.",
-            "whenToRead": "Read after taskplan_core_context and before assigning task ownership.",
+            "purpose": "读取当前阶段的需求详情索引、验收和业务流摘要、工作流闭包需求以及任务字段映射。",
+            "whenToRead": "在 taskplan_core_context 之后、分配任务归属之前读取。",
             "projectionMode": "semantic_index",
             "selectors": read_selectors_value_from_paths([
                 "contextProjection.requirementDetailTransfer.requirementDetailAssignment",
@@ -512,8 +512,8 @@ fn taskplan_read_groups(
         json!({
             "groupId": "taskplan_artifact_context",
             "required": true,
-            "purpose": "Read compact artifact ownership, interface, runtime, UI operation-path, architecture-quality, and verification projections.",
-            "whenToRead": "Read after taskplan_requirement_context and before writing group files.",
+            "purpose": "读取紧凑的制品归属、接口、运行时、UI 操作路径、架构质量和验证投影。",
+            "whenToRead": "在 taskplan_requirement_context 之后、写入组文件之前读取。",
             "projectionMode": "artifact_ownership_projection",
             "selectors": read_selectors_value_from_paths([
                 "contextProjection.requirementDetailTransfer.architectureDetails.modules",
@@ -529,8 +529,8 @@ fn taskplan_read_groups(
         json!({
             "groupId": "taskplan_generation_rules",
             "required": true,
-            "purpose": "Read grouping, reference, verification, frontend, workflow, and runtime rules.",
-            "whenToRead": "Read after core context and before writing group files.",
+            "purpose": "读取分组、引用、验证、前端、工作流和运行时规则。",
+            "whenToRead": "在核心上下文之后、写入组文件之前读取。",
             "selectors": read_selectors_value_from_paths([
                 "generationRules.groupedOutputRules",
                 "generationRules.scopeAndReferenceRules",
@@ -550,8 +550,8 @@ fn taskplan_read_groups(
         json!({
             "groupId": "taskplan_candidate_contract",
             "required": true,
-            "purpose": "Read output paths, schema shapes, and enum refs before writing candidates.",
-            "whenToRead": "Read before writing output files.",
+            "purpose": "在写入候选之前读取输出路径、模式形状和枚举引用。",
+            "whenToRead": "在写入输出文件之前读取。",
             "selectors": read_selectors_value_from_paths(taskplan_candidate_contract_fields(
                 frontend_requirement_template,
                 runtime_requirement_template,
@@ -847,7 +847,7 @@ where
                 issues.push(issue(
                     "DUPLICATE_TASK_PROPOSAL_ID",
                     "tasks[].proposalId",
-                    "Task proposal ids must be unique across the current TaskPlan generation.",
+                    "TaskPlan 生成中的任务提案 ID 必须唯一。",
                     Some(&group.group_id),
                 ));
             }
@@ -1241,7 +1241,7 @@ fn validate_outline(
             issues.push(issue(
                 "GROUP_PROPOSAL_ID_INVALID",
                 "outline.groups[].groupId",
-                "Each group must have a unique non-empty proposal id.",
+                "每个组必须有一个唯一的非空提案 ID。",
                 Some("outline"),
             ));
         }
@@ -1249,7 +1249,7 @@ fn validate_outline(
             issues.push(issue(
                 "GROUP_PROPOSAL_CONTENT_MISSING",
                 "outline.groups[]",
-                "Each group proposal must include a title and objective.",
+                "每个组提案必须包含 title 和 objective。",
                 Some(&group.group_id),
             ));
         }
@@ -1267,7 +1267,7 @@ fn validate_group_candidate(
         issues.push(issue(
             "GROUP_ID_MISMATCH",
             "group.groupId",
-            "TaskPlan group candidate must match outline groupId.",
+            "TaskPlan 组候选必须匹配 outline groupId。",
             target,
         ));
     }
@@ -1275,7 +1275,7 @@ fn validate_group_candidate(
         issues.push(issue(
             "GROUP_CANDIDATE_NOT_READY",
             "group.status",
-            "TaskPlan group candidate status must be ready.",
+            "TaskPlan 组候选状态必须为 ready。",
             target,
         ));
     }
@@ -1287,7 +1287,7 @@ fn validate_group_candidate(
             issues.push(issue(
                 "TASK_PROPOSAL_CONTENT_MISSING",
                 "tasks[]",
-                "Each task proposal must include a unique proposalId, title, and objective.",
+                "每个任务提案必须包含唯一的 proposalId、title 和 objective。",
                 target,
             ));
         }
@@ -1299,7 +1299,7 @@ fn validate_group_candidate(
             issues.push(issue(
                 "TASK_KIND_HINT_INVALID",
                 "tasks[].taskKindHint",
-                "taskKindHint must be one of the TaskKind enum values; MCP derives the canonical task kind and actions from it.",
+                "taskKindHint 必须是 TaskKind 枚举值之一；MCP 从中派生规范的任务类型和操作。",
                 target,
             ));
         }
@@ -1475,7 +1475,7 @@ fn validate_taskplan_graph(
                 issues.push(issue(
                     "UNKNOWN_GROUP_DEPENDENCY",
                     "groups[].dependsOn",
-                    "Group dependency must reference an existing group.",
+                    "组依赖必须引用已存在的组。",
                     Some(&group.group_id),
                 ));
             }
@@ -1485,7 +1485,7 @@ fn validate_taskplan_graph(
         issues.push(issue(
             "GROUP_DEPENDENCY_CYCLE",
             "groups[].dependsOn",
-            "Group dependencies must not contain a cycle.",
+            "组依赖不得包含循环。",
             None,
         ));
     }
@@ -1495,7 +1495,7 @@ fn validate_taskplan_graph(
             issues.push(issue(
                 "DUPLICATE_TASK_ID",
                 "tasks[].taskId",
-                "Task ids must be unique.",
+                "任务 ID 必须唯一。",
                 Some(&task.task_id),
             ));
         }
@@ -1503,7 +1503,7 @@ fn validate_taskplan_graph(
             issues.push(issue(
                 "UNKNOWN_TASK_GROUP",
                 "tasks[].groupId",
-                "Task groupId must exist in outline groups.",
+                "任务的 groupId 必须存在于 outline 组中。",
                 Some(&task.task_id),
             ));
         }
@@ -1518,7 +1518,7 @@ fn validate_taskplan_graph(
                 issues.push(issue(
                     "UNKNOWN_TASK_DEPENDENCY",
                     "tasks[].dependsOn",
-                    "Task dependency must reference an existing task.",
+                    "任务依赖必须引用已存在的任务。",
                     Some(&task.task_id),
                 ));
             }
@@ -1528,7 +1528,7 @@ fn validate_taskplan_graph(
         issues.push(issue(
             "TASK_DEPENDENCY_CYCLE",
             "tasks[].dependsOn",
-            "Task dependencies must not contain a cycle.",
+            "任务依赖不得包含循环。",
             None,
         ));
     }
@@ -2729,7 +2729,7 @@ fn normalize_runtime_delivery_requirements(
         if is_closure && task.runtime_delivery_requirement.is_none() {
             task.runtime_delivery_requirement = Some(contracts::TaskRuntimeDeliveryRequirement {
                 applies_to_this_task: true,
-                reason: "Final code-level closure for the RuntimeDeliveryContract.".to_string(),
+                reason: "RuntimeDeliveryContract 的最终代码级闭包。".to_string(),
                 runtime_delivery_ref: Some(runtime_ref.to_string()),
                 affected_contract_fields: contract_fields.clone(),
                 required_code_level_checks: contract_fields
@@ -2747,8 +2747,7 @@ fn normalize_runtime_delivery_requirements(
         };
         if is_closure {
             requirement.applies_to_this_task = true;
-            requirement.reason =
-                "Final code-level closure for the accepted RuntimeDeliveryContract.".to_string();
+            requirement.reason = "已接受 RuntimeDeliveryContract 的最终代码级闭包。".to_string();
             requirement.runtime_delivery_ref = Some(runtime_ref.to_string());
             requirement.affected_contract_fields = contract_fields.clone();
             requirement.required_code_level_checks = contract_fields
@@ -3024,7 +3023,7 @@ fn apply_task_owned_ui_scope(
                         "workflowRefs": workflow_ids.clone(),
                         "operationPathRefs": operation_path_ids.clone(),
                         "interfaces": [interface],
-                        "completionRule": "Wire the task-owned UI action or surface to this accepted interface when the task owns the interaction."
+                        "completionRule": "当任务拥有该交互时，将任务拥有的 UI 操作或界面连接到此已接受的接口。"
                     })
                 })
                 .collect(),
@@ -3802,8 +3801,8 @@ fn normalize_runtime_delivery_closure_group(
     {
         groups.push(TaskPlanGroup {
             group_id: closure_group_id.clone(),
-            title: "Runtime delivery closure".to_string(),
-            objective: "Verify the final RuntimeDeliveryContract code-level closure.".to_string(),
+            title: "运行时交付闭包".to_string(),
+            objective: "验证最终 RuntimeDeliveryContract 的代码级闭包。".to_string(),
             depends_on: vec![],
             scope_refs: vec![],
             acceptance_refs: vec![],
@@ -4016,7 +4015,7 @@ fn validate_requirement_task_ownership<F>(
         issues.push(issue(
             "QUALITY_REQUIREMENT_OWNERSHIP_INVALID",
             field_name,
-            "Every derived quality requirement must have at least one owning task.",
+            "每个派生的质量需求必须至少有一个归属任务。",
             Some(requirement_id),
         ));
         return;
@@ -4026,7 +4025,7 @@ fn validate_requirement_task_ownership<F>(
             issues.push(issue(
                 "QUALITY_REQUIREMENT_OWNERSHIP_INVALID",
                 field_name,
-                "Quality requirement ownership must reference an existing TaskPlan task.",
+                "质量需求归属必须引用已存在的 TaskPlan 任务。",
                 Some(requirement_id),
             ));
             continue;
@@ -4041,7 +4040,7 @@ fn validate_requirement_task_ownership<F>(
             issues.push(issue(
                 "QUALITY_REQUIREMENT_OWNERSHIP_INVALID",
                 field_name,
-                "A quality requirement must be present in the owning task's derived requirement refs.",
+                "质量需求必须存在于归属任务的派生需求引用中。",
                 Some(task_id),
             ));
         }
@@ -4049,7 +4048,7 @@ fn validate_requirement_task_ownership<F>(
             issues.push(issue(
                 "QUALITY_REQUIREMENT_VERIFICATION_MISSING",
                 "tasks[].verificationIntents",
-                "Every task owning a quality requirement must provide a verification intent for its evidence.",
+                "每个拥有质量需求的任务必须为其证据提供验证意图。",
                 Some(task_id),
             ));
         }
@@ -4065,7 +4064,7 @@ fn validate_requirement_task_ownership<F>(
             issues.push(issue(
                 "QUALITY_REQUIREMENT_OWNERSHIP_INVALID",
                 field_name,
-                "A task must not claim a quality requirement that does not apply to it.",
+                "任务不得声明不适用于它的质量需求。",
                 Some(&task.task_id),
             ));
         }
@@ -4092,7 +4091,7 @@ fn validate_must_acceptance_task_coverage(
         issues.push(issue(
             "MUST_ACCEPTANCE_NOT_COVERED",
             "tasks[].acceptanceRefs",
-            "Every must acceptance candidate must be assigned to at least one TaskPlan task.",
+            "每个 must 验收候选必须分配给至少一个 TaskPlan 任务。",
             Some(&acceptance.id),
         ));
     }
@@ -4214,7 +4213,7 @@ fn validate_ui_ownership_dimensions(
             issues.push(issue(
                 "FRONTEND_UI_OWNERSHIP_DIMENSION_INVALID",
                 "tasks[].frontendExperienceRequirement.uiTaskScope.ownershipDimensions",
-                "Each ownership dimension must be a string enum value.",
+                "每个归属维度必须是字符串枚举值。",
                 Some(&task.task_id),
             ));
             continue;
@@ -4223,7 +4222,7 @@ fn validate_ui_ownership_dimensions(
             issues.push(issue(
                 "FRONTEND_UI_OWNERSHIP_DIMENSION_INVALID",
                 "tasks[].frontendExperienceRequirement.uiTaskScope.ownershipDimensions",
-                "ownershipDimensions must use only surface, data_view, action, state, layout, visual_system, content_boundary, or integration_feedback.",
+                "ownershipDimensions 必须仅使用 surface、data_view、action、state、layout、visual_system、content_boundary 或 integration_feedback。",
                 Some(&task.task_id),
             ));
         }
@@ -4243,7 +4242,7 @@ fn validate_ui_task_scope_contract(
         issues.push(issue(
             "FRONTEND_UI_TASK_SCOPE_REQUIRED",
             "tasks[].frontendExperienceRequirement.uiTaskScope",
-            "Frontend tasks must carry one MCP-derived uiTaskScope projection.",
+            "前端任务必须携带一个 MCP 派生的 uiTaskScope 投影。",
             Some(&task.task_id),
         ));
         return;
@@ -4278,7 +4277,7 @@ fn validate_ui_task_scope_contract(
             issues.push(issue(
                 code,
                 &format!("tasks[].frontendExperienceRequirement.uiTaskScope.{field}"),
-                "The MCP-derived UI task scope field must be an array.",
+                "MCP 派生的 UI 任务范围字段必须是数组。",
                 Some(&task.task_id),
             ));
             continue;
@@ -4353,14 +4352,14 @@ fn validate_requirement_detail_assignments(
             issues.push(issue(
                 "DETAIL_TASK_ASSIGNMENT_MISSING",
                 "tasks[].requirementDetailRefs",
-                "Every covered current-phase requirement detail must have exactly one MCP-derived implementation owner.",
+                "每个覆盖的当前阶段需求详情必须恰好有一个 MCP 派生的实现归属方。",
                 Some(&detail.detail_id),
             ));
         } else if owners.len() != 1 {
             issues.push(issue(
                 "DETAIL_TASK_OWNERSHIP_CONFLICT",
                 "tasks[].requirementDetailRefs",
-                "A requirement detail must be owned by exactly one implementation task; verification and closure tasks must not duplicate the business owner.",
+                "一个需求详情必须恰好由一个实现任务拥有；验证和闭包任务不得重复业务归属方。",
                 Some(&detail.detail_id),
             ));
         }
@@ -4381,7 +4380,7 @@ fn validate_requirement_detail_assignments(
             issues.push(issue(
                 "DETAIL_TASK_ASSIGNMENT_MISSING",
                 "tasks[].verificationIntents[].requirementDetailRefs",
-                "The owning implementation task must include each covered detail in an assigned verification intent.",
+                "归属实现任务必须在已分配的验证意图中包含每个覆盖的详情。",
                 Some(&detail.detail_id),
             ));
         }
@@ -4408,7 +4407,7 @@ fn validate_workflow_closure_task_assignments(
         issues.push(issue(
             "WORKFLOW_CLOSURE_NOT_ASSIGNED",
             "tasks[].frontendExperienceRequirement",
-            "Every workflow closure requirement must be assigned to a task that wires the user flow to every declared interface and verifies it with automated or runtime API evidence.",
+            "每个工作流闭包需求必须分配给一个将用户流连接到每个声明接口并使用自动化或运行时 API 证据验证的任务。",
             Some(closure_id),
         ));
     }
@@ -4626,7 +4625,7 @@ fn validate_runtime_delivery_closure_task(
         issues.push(issue(
             "RUNTIME_CLOSURE_GROUP_INVALID",
             "groups[].dependsOn",
-            "The browser quality closure must depend on runtime_delivery_closure.",
+            "浏览器质量闭包必须依赖 runtime_delivery_closure。",
             browser_closure_group.map(|group| group.group_id.as_str()),
         ));
     }
@@ -4638,7 +4637,7 @@ fn validate_runtime_delivery_closure_task(
         issues.push(issue(
             "RUNTIME_CLOSURE_GROUP_INVALID",
             "groups[].dependsOn",
-            "Only the MCP-generated browser quality closure may depend on runtime_delivery_closure.",
+            "只有 MCP 生成的浏览器质量闭包可以依赖 runtime_delivery_closure。",
             Some(&group.group_id),
         ));
     }
@@ -4653,7 +4652,7 @@ fn validate_runtime_delivery_closure_task(
                 issues.push(issue(
                     "RUNTIME_CLOSURE_TASK_DEPENDENCY_INVALID",
                     "tasks[].dependsOn",
-                    "runtime_delivery_closure task must not depend directly on tasks in other groups; use group dependsOn.",
+                    "runtime_delivery_closure 任务不得直接依赖其他组的任务；使用组 dependsOn。",
                     target,
                 ));
             }
@@ -4894,11 +4893,11 @@ fn materialize_browser_quality_closure(
     tasks.push(TaskDefinition {
         task_id: task_id.clone(),
         group_id: group_id.clone(),
-        title: "Verify browser quality closure".to_string(),
+        title: "验证浏览器质量闭包".to_string(),
         task_kind: TaskKind::BrowserQualityClosure,
         implementation_actions,
         implementation_obligations: Vec::new(),
-        objective: "Create or adapt the task-scoped browser checks and close required rendered, interaction, and workflow evidence.".to_string(),
+        objective: "创建或调整任务范围的浏览器检查并关闭所需的渲染、交互和工作流证据。".to_string(),
         depends_on: Vec::new(),
         scope_refs: Vec::new(),
         acceptance_refs: Vec::new(),
@@ -4925,8 +4924,8 @@ fn materialize_browser_quality_closure(
         .collect::<Vec<_>>();
     groups.push(TaskPlanGroup {
         group_id: group_id.clone(),
-        title: "Browser quality closure".to_string(),
-        objective: "Close the phase browser evidence after implementation and runtime delivery are complete.".to_string(),
+        title: "浏览器质量闭包".to_string(),
+        objective: "在实现和运行时交付完成后关闭阶段浏览器证据。".to_string(),
         depends_on: dependency_group_ids,
         scope_refs: Vec::new(),
         acceptance_refs: Vec::new(),
@@ -5189,11 +5188,11 @@ fn requirement_detail_transfer(
                 "coverageReason"
             ],
             "items": requirement_items,
-            "assignmentRule": "Every item with coverageStatus=covered must be assigned to at least one task.requirementDetailRefs entry using its detailId.",
-            "verificationRule": "Every assigned covered detail must be referenced by at least one verificationIntents[].requirementDetailRefs entry that proves the concrete behavior.",
-            "verificationSubsetRule": "Every verificationIntents[].requirementDetailRefs entry must also be present in the same parent task.requirementDetailRefs.",
-            "insufficientAacRule": "If a required detail has coverageStatus other than covered because AAC lacks a taskable artifact, write blocked output with blockedReasonCode AAC_INSUFFICIENT instead of inventing vague tasks.",
-            "artifactRefHintRule": "artifactRefHints are compact routing hints for task grouping. Use architectureDetails, acceptanceDetails, and businessFlowDetails as the authoritative source for full object shape and behavior."
+            "assignmentRule": "每个 coverageStatus=covered 的条目必须使用其 detailId 分配给至少一个 task.requirementDetailRefs 条目。",
+            "verificationRule": "每个已分配的覆盖详情必须被至少一个 verificationIntents[].requirementDetailRefs 条目引用，以证明具体行为。",
+            "verificationSubsetRule": "每个 verificationIntents[].requirementDetailRefs 条目也必须存在于同一父任务的 task.requirementDetailRefs 中。",
+            "insufficientAacRule": "如果必需的详情因 AAC 缺少可任务化的制品而 coverageStatus 不是 covered，写入 blockedReasonCode 为 AAC_INSUFFICIENT 的阻塞输出，而非发明模糊任务。",
+            "artifactRefHintRule": "artifactRefHints 是用于任务分组的紧凑路由提示。使用 architectureDetails、acceptanceDetails 和 businessFlowDetails 作为完整对象形状和行为的权威来源。"
         },
         "currentPhaseScope": {
             "includedRefs": pgc.phase_scope.included.iter().map(|item| item.id.clone()).collect::<Vec<_>>(),
@@ -5204,8 +5203,8 @@ fn requirement_detail_transfer(
         "acceptanceDetails": compact_acceptance_details(&pgc.phase_scope.acceptance_candidates),
         "businessFlowDetails": compact_business_flow_details(&pgc.planning_inputs.business_flows),
         "objectOperationDetailRules": {
-            "taskAssignmentRule": "Task objectives and verification intents must preserve concrete objects, operations, fields, states, blocking rules, and feedback when present.",
-            "evidenceRule": "TaskResult must be able to show which concrete behavior was implemented or verified."
+            "taskAssignmentRule": "任务目标和验证意图必须在存在时保留具体的对象、操作、字段、状态、阻塞规则和反馈。",
+            "evidenceRule": "TaskResult 必须能够显示实现了或验证了哪个具体行为。"
         },
         "architectureDetails": {
             "modules": compact_artifact_values(&aac.modules, &["moduleId", "name", "responsibilities", "layer", "scopeRefs", "acceptanceRefs"]),
@@ -5223,10 +5222,10 @@ fn requirement_detail_transfer(
             "phaseConceptGroundingRef": pgc.context_refs.phase_concept_grounding_ref
         },
         "taskPlanningFieldMapping": {
-            "taskObjective": "Name the concrete business object, rule, flow, state, UI, API, operation path, blocking detail, or feedback detail the task owns.",
-            "taskRequirementDetailRefs": "Use the detailId column from requirementDetailAssignment.items row arrays.",
-            "frontendExperienceRequirement": "Use when the task owns UI surfaces, workflows, states, bindings, or operation paths.",
-            "runtimeDeliveryRequirement": "Use when the task touches build, start, runtime entry, static serving, generated artifacts, or runtime surface."
+            "taskObjective": "命名任务拥有的具体业务对象、规则、流程、状态、UI、API、操作路径、阻塞详情或反馈详情。",
+            "taskRequirementDetailRefs": "使用 requirementDetailAssignment.items 行数组中的 detailId 列。",
+            "frontendExperienceRequirement": "当任务拥有 UI 界面、工作流、状态、绑定或操作路径时使用。",
+            "runtimeDeliveryRequirement": "当任务涉及构建、启动、运行时入口、静态服务、生成的制品或运行时界面时使用。"
         }
     })
 }
@@ -5410,25 +5409,25 @@ fn frontend_experience_requirement_template(aac: &ArchitectureArtifactContract) 
             .unwrap_or("production_internal_product"),
         "mustSatisfy": true,
         "uiTaskScope": {
-            "source": "AAC frontendExperience.uiSurfaceRegistry plus frontend surfaces, dataViews, actions, and operationPaths",
-            "selectionRule": "For each frontend task, select only the surfaces, data views, actions, operation paths, states, backend/API bindings, and ownership dimensions owned by that task. Do not copy unrelated UI surfaces into the task.",
+            "source": "AAC frontendExperience.uiSurfaceRegistry 加上前端界面、dataViews、actions 和 operationPaths",
+            "selectionRule": "对于每个前端任务，仅选择该任务拥有的界面、数据视图、操作、操作路径、状态、后端/API 绑定和归属维度。不要将无关的 UI 界面复制到任务中。",
             "ownershipDimensionEnum": UI_OWNERSHIP_DIMENSION_VALUES,
-            "ownershipDimensionRule": "Choose dimensions from the current task's actual UI responsibility: surface, data_view, action, state, layout, visual_system, content_boundary, integration_feedback. ownershipDimensions are not a task-splitting strategy; use them to describe what this business task owns.",
+            "ownershipDimensionRule": "从当前任务的实际 UI 职责中选择维度：surface、data_view、action、state、layout、visual_system、content_boundary、integration_feedback。ownershipDimensions 不是任务拆分策略；使用它们描述此业务任务拥有什么。",
             "ownershipDimensions": ["surface", "state", "visual_system", "content_boundary"],
-            "surfacesInScope": ["current-task uiSurfaceRegistry surface object"],
-            "dataViewsInScope": ["current-task frontendExperience.dataViews object"],
-            "actionsInScope": ["current-task frontendExperience.actions object"],
-            "operationPathsInScope": ["current-task frontendExperience.operationPaths object"],
-            "frontendBackendBindings": ["current-task binding between UI action/path and AAC interface when known"],
+            "surfacesInScope": ["当前任务 uiSurfaceRegistry 界面对象"],
+            "dataViewsInScope": ["当前任务 frontendExperience.dataViews 对象"],
+            "actionsInScope": ["当前任务 frontendExperience.actions 对象"],
+            "operationPathsInScope": ["当前任务 frontendExperience.operationPaths 对象"],
+            "frontendBackendBindings": ["已知时当前任务 UI 操作/路径与 AAC 接口之间的绑定"],
             "stateExpectation": ["loading", "success", "error", "empty", "business_blocking"],
-            "regionsInScope": ["current-task uiSurfaceDecisionContract.regionModel object"],
-            "actionsInContract": ["current-task uiSurfaceDecisionContract.actionModel object"],
-            "statesInContract": ["current-task uiSurfaceDecisionContract.stateModel object"],
-            "qualityRulesInScope": ["current-task uiSurfaceDecisionContract.qualityRules object"],
-            "layoutBaseline": "current-task layout baseline from AAC UI contract",
-            "informationModel": "current-task information model from AAC UI contract",
-            "contentBoundary": "current-task content boundary from AAC UI contract",
-            "bindingContract": "current-task UI/API binding contract from AAC"
+            "regionsInScope": ["当前任务 uiSurfaceDecisionContract.regionModel 对象"],
+            "actionsInContract": ["当前任务 uiSurfaceDecisionContract.actionModel 对象"],
+            "statesInContract": ["当前任务 uiSurfaceDecisionContract.stateModel 对象"],
+            "qualityRulesInScope": ["当前任务 uiSurfaceDecisionContract.qualityRules 对象"],
+            "layoutBaseline": "来自 AAC UI 合同的当前任务布局基线",
+            "informationModel": "来自 AAC UI 合同的当前任务信息模型",
+            "contentBoundary": "来自 AAC UI 合同的当前任务内容边界",
+            "bindingContract": "来自 AAC 的当前任务 UI/API 绑定合同"
         }
     });
     if frontend.get("uiSurfaceRegistry").is_some() {
@@ -6142,7 +6141,7 @@ pub(crate) fn workflow_closure_requirements(aac: &ArchitectureArtifactContract) 
                 "entry": flow.get("entry").cloned().unwrap_or(Value::Null),
                 "derivation": {
                     "source": "aac_frontend_surface_userflow_interface",
-                    "rule": "Generated from AAC frontendExperience surfaces or operationPaths, structured user-flow happy-path steps, and executable interfaces with request/response shape."
+                    "rule": "从 AAC frontendExperience 界面或操作路径、结构化用户流快乐路径步骤和具有请求/响应形状的可执行接口生成。"
                 },
                 "requiredDataBindingMode": "wired",
                 "satisfiedDataBindingModes": ["wired"],
@@ -6266,74 +6265,74 @@ fn has_interface_shape(interface: &Value) -> bool {
 fn generation_rules(aac: &ArchitectureArtifactContract, code_quality_seed: &Value) -> Value {
     json!({
         "groupedOutputRules": [
-            "First write outputContract.outlineFile.",
-            "Then write one group file per outline.groups[].groupId using outputContract.groupFilePattern.",
-            "Do not write the accepted final TaskPlan artifact.",
-            "The outline and group files are semantic proposals only; Loom materializes canonical task and group ids after submission."
+            "首先写入 outputContract.outlineFile。",
+            "然后使用 outputContract.groupFilePattern 为每个 outline.groups[].groupId 写入一个组文件。",
+            "不要写入已接受的最终 TaskPlan 制品。",
+            "outline 和组文件仅为语义提案；Loom 在提交后生成规范的任务和组 ID。"
         ],
         "scopeAndReferenceRules": [
-            "Use the transferred detail and architecture context to describe task intent, but do not copy scope refs, acceptance refs, artifact refs, implementation actions, verification ids, or quality fields into proposals.",
-            "Do not implement deferred or excluded scope.",
-            "Keep next-phase seeds in deferred scope or next-phase preview only; do not create executable tasks for them."
+            "使用转移的详情和架构上下文描述任务意图，但不要将范围引用、验收引用、制品引用、实现操作、验证 ID 或质量字段复制到提案中。",
+            "不要实现延迟或排除的范围。",
+            "将下一阶段种子保留在延迟范围或下一阶段预览中；不要为它们创建可执行任务。"
         ],
         "writeBoundaryRules": [
-            "TaskPlan proposals contain no writeBoundary. MCP creates the .loom exclusion and canonical artifact ownership after acceptance.",
-            "Project source edits happen only during TaskExecution, not during TaskPlan generation."
+            "TaskPlan 提案不包含 writeBoundary。MCP 在接受后创建 .loom 排除和规范制品归属。",
+            "项目源码编辑仅在 TaskExecution 期间发生，不在 TaskPlan 生成期间。"
         ],
         "verificationEvidenceRules": [
-            "Do not write verificationIntents in proposals. MCP derives one or more stable verification intents from accepted ownership and architecture behavior.",
-            "Prefer the smallest stable verification signal that proves the user-visible behavior or contract obligation."
+            "不要在提案中编写 verificationIntents。MCP 从接受的归属和架构行为派生一个或多个稳定的验证意图。",
+            "优先选择能证明用户可见行为或合同义务的最小稳定验证信号。"
         ],
         "detailOwnershipRules": {
-            "source": "accepted AAC detail coverage, module ownership, interface provider/consumer relations, and semantic proposal kind hints",
-            "assignmentRule": "The agent proposes semantic task slices only. Loom assigns every covered detail, module, entity, interface, flow, and state artifact to one canonical implementation owner before creating the final TaskPlan.",
-            "ownerTaskBoundary": "Business requirements belong to implementation owner tasks; verification, runtime closure, and browser closure tasks receive only consumed inputs and derived verification scope.",
-            "verificationRule": "Loom derives verification intents after ownership assignment; agents do not repeat detail or artifact ids.",
-            "acceptNormalization": "loom.taskPlanAcceptFile creates canonical task ids, artifact refs, scope refs, acceptance refs, implementation actions, obligations, and verification intents from accepted contracts and proposal boundaries.",
-            "artifactOwnershipNormalization": "No candidate artifact refs are accepted or discarded. The canonical owner projection is created once from AAC ownership facts."
+            "source": "已接受的 AAC 详情覆盖、模块归属、接口提供方/消费方关系和语义提案类型提示",
+            "assignmentRule": "代理仅提出语义任务切片。Loom 在创建最终 TaskPlan 之前将每个覆盖的详情、模块、实体、接口、流程和状态制品分配给一个规范实现归属方。",
+            "ownerTaskBoundary": "业务需求属于实现归属任务；验证、运行时闭包和浏览器闭包任务仅接收被消费的输入和派生的验证范围。",
+            "verificationRule": "Loom 在归属分配后派生验证意图；代理不重复详情或制品 ID。",
+            "acceptNormalization": "loom.taskPlanAcceptFile 从接受的合同和提案边界创建规范任务 ID、制品引用、范围引用、验收引用、实现操作、义务和验证意图。",
+            "artifactOwnershipNormalization": "不接受或丢弃任何候选制品引用。规范归属投影从 AAC 归属事实一次性创建。"
         },
         "conceptGroundingRules": {
             "phaseConceptGroundingRef": "sourceRefs.phaseConceptGroundingRef",
-            "rule": "Bind high-risk business concepts when the current task owns their rule, state, field, or operation meaning."
+            "rule": "当当前任务拥有高风险业务概念的规则、状态、字段或操作含义时绑定这些概念。"
         },
         "frontendExperienceRules": {
             "required": aac.frontend_experience.as_ref().and_then(|value| value.get("required")).and_then(Value::as_bool).unwrap_or(false),
             "requirementTemplate": "outputContract.frontendExperienceRequirementTemplate",
             "uiSurfaceDecisionContractSource": "outputContract.frontendExperienceRequirementTemplate.uiSurfaceDecisionContractRef",
-            "rule": "When frontendExperience is required, UI responsibilities must be visible in task objective, verification intents, and frontendExperienceRequirement.",
-            "taskScopeRule": "MCP derives one frontendExperienceRequirement.uiTaskScope from AAC uiSurfaceDecisionContract and task-owned refs. Select only the current task's regions, actions, states, quality rules, surfaces, data views, operation paths, bindings, layout, information model, and content boundary.",
-            "ownershipDimensionRule": "ownershipDimensions describe what this business task owns; they are not a task-splitting strategy. Use surface, data_view, action, state, layout, visual_system, content_boundary, and integration_feedback only when the task changes that concern."
+            "rule": "当需要 frontendExperience 时，UI 职责必须在任务目标、验证意图和 frontendExperienceRequirement 中可见。",
+            "taskScopeRule": "MCP 从 AAC uiSurfaceDecisionContract 和任务拥有的引用派生一个 frontendExperienceRequirement.uiTaskScope。仅选择当前任务的区域、操作、状态、质量规则、界面、数据视图、操作路径、绑定、布局、信息模型和内容边界。",
+            "ownershipDimensionRule": "ownershipDimensions 描述此业务任务拥有什么；它们不是任务拆分策略。仅当任务更改该关注点时使用 surface、data_view、action、state、layout、visual_system、content_boundary 和 integration_feedback。"
         },
         "workflowClosureRules": {
-            "derivationAuthority": "AAC frontendExperience + userFlows + executable interfaces",
+            "derivationAuthority": "AAC frontendExperience + userFlows + 可执行接口",
             "requirementSource": "contextProjection.requirementDetailTransfer.workflowClosureRequirements",
-            "appliesWhen": "Only when workflowClosureRequirements is non-empty.",
-            "taskAssignmentRule": "Assign each closure requirement to at least one executable task whose artifact refs include workflowRef and every interfaceRef.",
-            "taskCoverageShape": "The task must own the user action, declared interface invocation, state or persistence change, and success or blocking feedback evidence.",
-            "resultExpectation": "TaskResult frontendExperienceSelfCheck must reference closureRequirementIds and cannot mark static or unwired UI as satisfied.",
-            "repairRule": "If a closure requirement is unassigned, repair TaskPlan assignment rather than routing back to AAC when AAC already declares the workflow and interfaces.",
+            "appliesWhen": "仅当 workflowClosureRequirements 非空时。",
+            "taskAssignmentRule": "将每个闭包需求分配给至少一个可执行任务，其制品引用包含 workflowRef 和每个 interfaceRef。",
+            "taskCoverageShape": "任务必须拥有用户操作、声明的接口调用、状态或持久化变更以及成功或阻塞反馈证据。",
+            "resultExpectation": "TaskResult frontendExperienceSelfCheck 必须引用 closureRequirementIds，且不能将静态或未接线的 UI 标记为 satisfied。",
+            "repairRule": "如果闭包需求未分配，修复 TaskPlan 分配而非回退到 AAC（当 AAC 已声明工作流和接口时）。",
             "rules": [
-                "Use contextProjection.requirementDetailTransfer.workflowClosureRequirements as the exact workflow closure requirement list.",
-                "Task implementationActions should include wire_reference_in_api_or_ui when the task closes a frontend workflow.",
-                "Verification intents for closure tasks should accept automated_test or runtime_api_check evidence."
+                "使用 contextProjection.requirementDetailTransfer.workflowClosureRequirements 作为确切的工作流闭包需求列表。",
+                "当任务关闭前端工作流时，任务 implementationActions 应包含 wire_reference_in_api_or_ui。",
+                "闭包任务的验证意图应接受 automated_test 或 runtime_api_check 证据。"
             ]
         },
         "runtimeDeliveryRules": {
             "status": aac.runtime_delivery.as_ref().and_then(|value| value.get("status")).cloned().unwrap_or(Value::String("not_applicable".to_string())),
-            "rule": "Runtime-affecting tasks must carry runtimeDeliveryRequirement; final runtime closure is required when runtimeDelivery.status=modified. Loom derives the accepted RuntimeDelivery reference, contract fields, and check ids during accept, so the candidate must not invent those machine fields.",
-            "closureTaskRule": "When outputContract.runtimeDeliveryClosureTaskTemplate is present, create exactly one task with taskKind=runtime_delivery_closure. Declare the closure task and its group placement; Loom materializes the complete runtimeDeliveryRequirement from the accepted RuntimeDeliveryContract even when the candidate omits that machine-owned object.",
-            "closureGroupRule": "The runtime_delivery_closure task must be the only task in its group, that group must be the final outline.groups entry, no other group may depend on it, and its dependsOn must point to the previous group or groups that make runtime-affecting work transitively complete.",
-            "closureTaskDependencyRule": "Do not make the runtime_delivery_closure task depend directly on tasks from other groups; express cross-group ordering through the closure group dependsOn."
+            "rule": "影响运行时的任务必须携带 runtimeDeliveryRequirement；当 runtimeDelivery.status=modified 时需要最终运行时闭包。Loom 在接受期间派生已接受的 RuntimeDelivery 引用、合同字段和检查 ID，因此候选不得发明这些机器字段。",
+            "closureTaskRule": "当 outputContract.runtimeDeliveryClosureTaskTemplate 存在时，创建恰好一个 taskKind=runtime_delivery_closure 的任务。声明闭包任务及其组位置；Loom 从已接受的 RuntimeDeliveryContract 生成完整的 runtimeDeliveryRequirement，即使候选省略了该机器拥有的对象。",
+            "closureGroupRule": "runtime_delivery_closure 任务必须是其组中的唯一任务，该组必须是 outline.groups 的最后一个条目，没有其他组可以依赖它，且其 dependsOn 必须指向使运行时影响工作传递完成的先前组。",
+            "closureTaskDependencyRule": "不要让 runtime_delivery_closure 任务直接依赖其他组的任务；通过闭包组 dependsOn 表达跨组排序。"
         },
         "engineeringQualityRules": {
             "persistenceMappingRequirementSource": "outputContract.engineeringQualityRequirementTemplate",
-            "appliesWhen": "Use this only when the task creates or changes persistence, entities, migrations, repositories, or backend API/business logic that reads or mutates persisted entities.",
-            "notFor": "Do not attach persistence mapping requirements to pure frontend UI tasks, even when they call APIs.",
-            "acceptNormalization": "loom.taskPlanAcceptFile deterministically materializes top-level engineeringQualityRequirements and task engineeringQualityRequirementRefs; do not duplicate full quality requirements inside every task.",
-            "taskPlanningRule": "For applicable tasks, verificationIntents should prove storage schema, data-access mapping, DTO/API contract, query/sort/filter fields, and same-provider persistence behavior stay aligned."
+            "appliesWhen": "仅当任务创建或更改持久化、实体、迁移、仓库或读取或变更持久化实体的后端 API/业务逻辑时使用。",
+            "notFor": "不要将持久化映射需求附加到纯前端 UI 任务，即使它们调用 API。",
+            "acceptNormalization": "loom.taskPlanAcceptFile 确定性地生成顶层 engineeringQualityRequirements 和任务 engineeringQualityRequirementRefs；不要在每个任务中重复完整的质量需求。",
+            "taskPlanningRule": "对于适用任务，verificationIntents 应证明存储模式、数据访问映射、DTO/API 合同、查询/排序/过滤字段和同提供方持久化行为保持对齐。"
         },
         "codeReferenceRules": {
-            "authority": "MCP derives task-scoped code reference groups from the intersection of TechnicalBaseline stack signals and task-owned implementation capabilities; agents must not author referenceLoadPlan or reference group paths.",
+            "authority": "MCP 从 TechnicalBaseline 技术栈信号和任务拥有的实现能力的交集派生任务范围的代码引用组；代理不得编写 referenceLoadPlan 或引用组路径。",
             "frameworkCapabilityActions": {
                 "frontendNavigation": ["create_or_update_frontend_navigation"],
                 "reactiveClientFlow": ["implement_reactive_client_flow"],
@@ -6358,33 +6357,33 @@ fn generation_rules(aac: &ArchitectureArtifactContract, code_quality_seed: &Valu
                 "observability": ["implement_observability"],
                 "frameworkMigration": ["migrate_framework_implementation"]
             },
-            "frameworkCapabilityRule": "Use these implementationActions only when the task really owns the corresponding capability. They are cross-framework implementation facts; MCP maps them to the framework selected by TechnicalBaseline.",
+            "frameworkCapabilityRule": "仅当任务真正拥有相应能力时使用这些 implementationActions。它们是跨框架的实现事实；MCP 将它们映射到 TechnicalBaseline 选择的框架。",
             "structuredCapabilitySources": {
-                "frontendNavigation": "Use create_or_update_frontend_navigation only for the task that owns route definitions, route parameters, guards, resolvers, deep links, nested navigation, or equivalent framework navigation configuration.",
-                "reactiveClientFlow": "Use implement_reactive_client_flow only for a task that owns stream cancellation, ordering, fan-out, subscription lifecycle, or other reactive client behavior beyond a simple one-shot binding.",
-                "sharedClientState": "Use implement_shared_client_state only for the task that owns a selected shared state container, reducer/store, effects, selectors, or a cross-surface client state lifecycle. Local component state does not use this action.",
-                "frontendPerformance": "Use optimize_frontend_performance only for a task that owns a measurable client rendering, rebuild, list, image, animation, memory, startup, or interaction-latency risk and its verification evidence.",
-                "serverRenderedComponent": "Use implement_server_rendered_component only for a task that owns a framework server-rendered component boundary, server/client composition, streaming, hydration, or serializable handoff.",
-                "serverMutation": "Use implement_server_mutation only for a task that owns a framework server-side form/action mutation, its authorization and validation, result state, and cache/readback reconciliation.",
-                "frontendFrameworkVersionFeature": "Use implement_frontend_framework_version_feature only for a frontend task that intentionally owns an API available from the accepted framework version and whose implementation or fallback differs from the repository's baseline patterns.",
-                "mobilePlatformBehavior": "Use implement_mobile_platform_behavior only for a task that owns iOS/Android-specific behavior, native APIs or modules, permissions, safe-area/keyboard/status-bar integration, gestures, or hardware-back semantics.",
-                "clientStorage": "Use implement_client_storage only for a task that owns client-side persistence, secure device storage, persisted drafts/preferences/session state, hydration, migration, expiry, or identity-scoped cleanup.",
-                "languageVersionFeature": "Use implement_language_version_feature only for a task that intentionally owns language-standard/version APIs whose implementation or fallback differs from the repository baseline; include build configuration ownership when the declared compiler/language target changes.",
-                "genericTypeAbstraction": "Use implement_generic_type_abstraction only for a task that owns a reusable generic/template/type-parameter contract with real consumers, constraints, and verification; do not infer it from prose examples or ordinary collection use.",
-                "dependencyAbstraction": "Use implement_dependency_abstraction only for a task that owns a consumer-facing interface/protocol/trait/adapter seam with concrete consumers, implementations, lifecycle/error semantics, and verification; do not create it only to mirror one implementation.",
-                "moduleStructure": "Use refactor_module_structure only for a task that owns module/package/project boundaries, entry-point placement, import visibility, workspace/module files, build tags, generated-code ownership, or dependency direction and verifies affected build targets.",
-                "runtimePerformance": "Use optimize_runtime_performance only for a task that owns a measured CPU, allocation, memory-layout, throughput, latency, binary-size, or runtime resource bottleneck and its benchmark/profile plus correctness evidence.",
-                "security": "A task owning an interface authPolicy or an application interaction with required/optional authRequirement, or an architecture-quality security ref uses implement_authentication_or_authorization. deferred_with_risk records a risk without creating current-phase authentication work.",
-                "async": "A task owning an event/job application interaction uses implement_async_processing.",
-                "cache": "A task owning an explicit application-cache decision, NFR, or implementation boundary uses implement_cache_policy. HTTP cachePolicy, validators, and conditional requests remain API/web behavior and do not activate an application-cache reference.",
-                "externalIntegration": "A task owning an external_adapter application interaction uses implement_external_service_integration.",
-                "resilience": "A task owning an application-interaction retry operationalPolicy or an applicable availability/reliability decision uses implement_resilience_policy. An HTTP interface retryPolicy alone describes caller-visible API behavior and does not activate internal retries.",
-                "observability": "A task owning an observability/operability architecture-quality ref uses implement_observability.",
-                "serviceRoutingOrDiscovery": "Use configure_service_routing_or_discovery only for an explicitly accepted service-routing, discovery, gateway, or centralized-config capability.",
-                "frameworkMigration": "Use migrate_framework_implementation only when the task explicitly owns behavior parity or an accepted contract transition from an existing framework implementation."
+                "frontendNavigation": "仅对拥有路由定义、路由参数、守卫、解析器、深链接、嵌套导航或等效框架导航配置的任务使用 create_or_update_frontend_navigation。",
+                "reactiveClientFlow": "仅对拥有流取消、排序、扇出、订阅生命周期或其他超出简单一次性绑定的响应式客户端行为的任务使用 implement_reactive_client_flow。",
+                "sharedClientState": "仅对拥有选定共享状态容器、reducer/store、effects、selectors 或跨界面客户端状态生命周期的任务使用 implement_shared_client_state。局部组件状态不使用此操作。",
+                "frontendPerformance": "仅对拥有可衡量的客户端渲染、重建、列表、图像、动画、内存、启动或交互延迟风险及其验证证据的任务使用 optimize_frontend_performance。",
+                "serverRenderedComponent": "仅对拥有框架服务端渲染组件边界、服务端/客户端组合、流式传输、水合或可序列化交接的任务使用 implement_server_rendered_component。",
+                "serverMutation": "仅对拥有框架服务端表单/操作变更、其授权和验证、结果状态和缓存/回读协调的任务使用 implement_server_mutation。",
+                "frontendFrameworkVersionFeature": "仅对有意拥有已接受框架版本可用 API 且其实现或回退与仓库基线模式不同的前端任务使用 implement_frontend_framework_version_feature。",
+                "mobilePlatformBehavior": "仅对拥有 iOS/Android 特定行为、原生 API 或模块、权限、安全区域/键盘/状态栏集成、手势或硬件返回语义的任务使用 implement_mobile_platform_behavior。",
+                "clientStorage": "仅对拥有客户端持久化、安全设备存储、持久化草稿/偏好/会话状态、水合、迁移、过期或身份范围清理的任务使用 implement_client_storage。",
+                "languageVersionFeature": "仅对有意拥有语言标准/版本 API 且其实现或回退与仓库基线不同的任务使用 implement_language_version_feature；当声明的编译器/语言目标更改时包含构建配置归属。",
+                "genericTypeAbstraction": "仅对拥有具有真实消费者、约束和验证的可复用泛型/模板/类型参数合同的任务使用 implement_generic_type_abstraction；不要从文字示例或普通集合使用中推断。",
+                "dependencyAbstraction": "仅对拥有面向消费者的接口/协议/trait/适配器接缝且有具体消费者、实现、生命周期/错误语义和验证的任务使用 implement_dependency_abstraction；不要仅为镜像一个实现而创建它。",
+                "moduleStructure": "仅对拥有模块/包/项目边界、入口点位置、导入可见性、workspace/模块文件、构建标签、生成代码归属或依赖方向并验证受影响构建目标的任务使用 refactor_module_structure。",
+                "runtimePerformance": "仅对拥有可衡量的 CPU、分配、内存布局、吞吐量、延迟、二进制大小或运行时资源瓶颈及其基准/性能分析加上正确性证据的任务使用 optimize_runtime_performance。",
+                "security": "拥有接口 authPolicy 或具有必需/可选 authRequirement 的应用交互的任务，或架构质量安全引用使用 implement_authentication_or_authorization。deferred_with_risk 记录风险而不创建当前阶段认证工作。",
+                "async": "拥有事件/作业应用交互的任务使用 implement_async_processing。",
+                "cache": "拥有显式应用缓存决策、NFR 或实现边界的任务使用 implement_cache_policy。HTTP cachePolicy、验证器和条件请求保持 API/Web 行为，不激活应用缓存引用。",
+                "externalIntegration": "拥有 external_adapter 应用交互的任务使用 implement_external_service_integration。",
+                "resilience": "拥有应用交互重试 operationalPolicy 或适用可用性/可靠性决策的任务使用 implement_resilience_policy。单独的 HTTP 接口 retryPolicy 描述调用方可见的 API 行为，不激活内部重试。",
+                "observability": "拥有可观测性/可运维性架构质量引用的任务使用 implement_observability。",
+                "serviceRoutingOrDiscovery": "仅对显式接受的服务路由、发现、网关或集中配置能力使用 configure_service_routing_or_discovery。",
+                "frameworkMigration": "仅当任务显式拥有从现有框架实现的行为对等或已接受的合同过渡时使用 migrate_framework_implementation。"
             },
-            "structuredCapabilityOwnershipRule": "Assign a capability action only to the task whose artifactRefs own the matching interface, provider module, decision, NFR, or risk. Do not infer capability actions from framework availability or generic task prose.",
-            "unmappedStackRule": "When codeQualitySeed.unmappedSignals is non-empty, preserve the accepted stack and repository conventions; do not substitute a nearby language or framework profile.",
+            "structuredCapabilityOwnershipRule": "仅将能力操作分配给其 artifactRefs 拥有匹配接口、提供方模块、决策、NFR 或风险的任务。不要从框架可用性或通用任务文字推断能力操作。",
+            "unmappedStackRule": "当 codeQualitySeed.unmappedSignals 非空时，保持已接受的技术栈和仓库约定；不要用相近的语言或框架配置文件替代。",
             "persistenceActions": {
                 "schema": ["create_or_update_entity", "create_or_update_persistence", "create_entity_migration", "create_entity_crud"],
                 "query": ["create_entity_repository", "create_entity_crud", "create_or_update_persistence_query", "optimize_persistence_query", "implement_analytical_query"],
@@ -6393,35 +6392,35 @@ fn generation_rules(aac: &ArchitectureArtifactContract, code_quality_seed: &Valu
                 "analytics": ["implement_analytical_query"],
                 "persistenceTest": ["add_or_update_persistence_tests"]
             },
-            "dialectRule": "When the accepted persistence provider is MySQL or PostgreSQL, MCP adds only the provider overlay matching the assigned persistence subject. MariaDB is not silently treated as MySQL.",
-            "mybatisPlusRule": "When the accepted dataAccess selection is MyBatis Plus, MCP emits the mybatisplus reference group only for task-owned persistence capabilities. Agents must not select MyBatis-Plus references, JPA references, MyBatis-Flex, or plain MyBatis guidance themselves.",
-            "nonSelectionRule": "Do not attach framework references solely because a language or framework is present in TechnicalBaseline. Do not attach SQL or provider overlays to pure API, controller, frontend, or generic test tasks. Generic add_or_update_tests does not select database references."
+            "dialectRule": "当已接受的持久化提供方为 MySQL 或 PostgreSQL 时，MCP 仅添加匹配分配的持久化主题的提供方覆盖。MariaDB 不会被静默地视为 MySQL。",
+            "mybatisPlusRule": "当已接受的 dataAccess 选择为 MyBatis Plus 时，MCP 仅对任务拥有的持久化能力发出 mybatisplus 引用组。代理不得自行选择 MyBatis-Plus 引用、JPA 引用、MyBatis-Flex 或普通 MyBatis 指导。",
+            "nonSelectionRule": "不要仅因为 TechnicalBaseline 中存在某种语言或框架就附加框架引用。不要将 SQL 或提供方覆盖附加到纯 API、控制器、前端或通用测试任务。通用 add_or_update_tests 不选择数据库引用。"
         },
         "architectureQualityRules": {
-            "requirementSource": "contextProjection.requirementDetailTransfer.architectureDetails.architectureQuality plus task-owned modules and interfaces",
+            "requirementSource": "contextProjection.requirementDetailTransfer.architectureDetails.architectureQuality 加上任务拥有的模块和接口",
             "architectureQualitySource": "contextProjection.requirementDetailTransfer.architectureDetails.architectureQuality",
-            "referenceRule": "Do not write task.writeBoundary.artifactRefs.decisions, nfrs, or risks and do not inline full ADR, NFR, or risk objects inside tasks. Loom derives those refs from the accepted architecture ownerArtifactRefs and the task-owned modules/interfaces.",
-            "assignmentRule": "Tasks must identify the modules and interfaces they own. Loom uses those artifact refs to assign every applicable architecture decision, NFR, and risk deterministically.",
-            "acceptNormalization": "loom.taskPlanAcceptFile derives architecture quality artifact refs, top-level architectureQualityRequirements, and task architectureQualityRequirementRefs from accepted architecture ownership.",
-            "verificationRule": "Assigned tasks must include verificationIntents whose summaries can prove the referenced architecture decision, NFR, or risk mitigation was respected."
+            "referenceRule": "不要编写 task.writeBoundary.artifactRefs.decisions、nfrs 或 risks，也不要在任务中内联完整的 ADR、NFR 或风险对象。Loom 从已接受的架构 ownerArtifactRefs 和任务拥有的模块/接口派生这些引用。",
+            "assignmentRule": "任务必须标识它们拥有的模块和接口。Loom 使用这些制品引用确定性地分配每个适用的架构决策、NFR 和风险。",
+            "acceptNormalization": "loom.taskPlanAcceptFile 从已接受的架构归属派生架构质量制品引用、顶层 architectureQualityRequirements 和任务 architectureQualityRequirementRefs。",
+            "verificationRule": "已分配任务必须包含 verificationIntents，其摘要能证明引用的架构决策、NFR 或风险缓解被尊重。"
         },
         "apiContractRules": {
             "required": aac.interfaces.iter().any(is_http_api_interface),
             "requirementSource": "outputContract.apiContractRequirementTemplate",
-            "interfaceSource": "contextProjection.apiInterfaces (copied from the accepted AAC interfaces)",
-            "exposureSource": "contextProjection.apiContract (copied from the accepted AAC API contract)",
-            "assignmentRule": "Loom assigns each accepted interface id to one implementation owner in task.writeBoundary.artifactRefs.interfaces. Client, integration, and verification tasks receive the same contract in consumedInterfaces and the derived API requirement; they must not claim duplicate write ownership.",
-            "implementationRule": "API tasks must preserve request schema, response schema, status codes, error schema, auth policy, and pagination policy declared by the AAC interface.",
-            "verificationRule": "API tasks should include verification intents that prove at least the declared success path and important business or validation error path. Collection endpoints should also prove declared pagination/filter behavior.",
-            "nonDuplicationRule": "Do not inline full API requirements inside every task; use interface refs and the generated task apiContractRequirementRefs."
+            "interfaceSource": "contextProjection.apiInterfaces（从已接受的 AAC 接口复制）",
+            "exposureSource": "contextProjection.apiContract（从已接受的 AAC API 合同复制）",
+            "assignmentRule": "Loom 将每个已接受的接口 ID 分配给 task.writeBoundary.artifactRefs.interfaces 中的一个实现归属方。客户端、集成和验证任务在 consumedInterfaces 和派生的 API 需求中接收相同的合同；它们不得声明重复的写入归属。",
+            "implementationRule": "API 任务必须保持 AAC 接口声明的请求模式、响应模式、状态码、错误模式、认证策略和分页策略。",
+            "verificationRule": "API 任务应包含至少证明声明的成功路径和重要业务或验证错误路径的验证意图。集合端点还应证明声明的分页/过滤行为。",
+            "nonDuplicationRule": "不要在每个任务中内联完整的 API 需求；使用接口引用和生成的任务 apiContractRequirementRefs。"
         },
         "codeQualityRules": {
             "required": code_quality_seed.get("required").and_then(Value::as_bool).unwrap_or(false),
             "seedSource": "codeQualitySeed",
             "requirementSource": "outputContract.codeQualityRequirementTemplate",
-            "assignmentRule": "loom.taskPlanAcceptFile derives task codeQualityRequirementRefs from TechnicalBaseline stack signals and task scope; do not inline full code quality requirements inside every task.",
-            "referenceRule": "Use codeQualitySeed.codeStackSignals only to describe accurate task ownership. Do not write codeQualityRequirementRefs, reference groups, or reference paths; Loom derives task-scoped requirements and referenceLoadPlan during accept.",
-            "nonDuplicationRule": "Do not repeat language or framework best-practice prose in task objective or verification intents; use codeQualityRequirementRefs and TaskResult codeQualityEvidence."
+            "assignmentRule": "loom.taskPlanAcceptFile 从 TechnicalBaseline 技术栈信号和任务范围派生任务 codeQualityRequirementRefs；不要在每个任务中内联完整的代码质量需求。",
+            "referenceRule": "仅使用 codeQualitySeed.codeStackSignals 描述准确的任务归属。不要编写 codeQualityRequirementRefs、引用组或引用路径；Loom 在接受期间派生任务范围的需求和 referenceLoadPlan。",
+            "nonDuplicationRule": "不要在任务目标或验证意图中重复语言或框架最佳实践文字；使用 codeQualityRequirementRefs 和 TaskResult codeQualityEvidence。"
         }
     })
 }
@@ -6439,9 +6438,9 @@ fn code_quality_requirement_template(code_quality_seed: &Value) -> Value {
         "requirementId": "code-quality-{taskId}",
         "kind": "language_implementation_quality",
         "codeStackSignalSource": "codeQualitySeed.codeStackSignals",
-        "derivationAuthority": "loom.taskPlanAcceptFile derives reference groups and referenceLoadPlan from codeStackSignals plus accepted task ownership.",
+        "derivationAuthority": "loom.taskPlanAcceptFile 从 codeStackSignals 加上已接受的任务归属派生引用组和 referenceLoadPlan。",
         "verificationObligations": code_quality_verification_obligations(),
-        "taskRefRule": "Loom attaches the generated requirement through codeQualityRequirementRefs during accept; agents must not write that field or inline language/framework reference prose inside tasks."
+        "taskRefRule": "Loom 在接受期间通过 codeQualityRequirementRefs 附加生成的需求；代理不得编写该字段或在任务中内联语言/框架参考文字。"
     })
 }
 
@@ -6459,7 +6458,7 @@ fn engineering_quality_requirement_template(
         "alignmentTargets": persistence_alignment_targets(),
         "riskFieldKinds": persistence_risk_field_kinds(),
         "verificationObligations": persistence_verification_obligations(),
-        "taskRefRule": "Loom attaches this generated requirement through engineeringQualityRequirementRefs during accept; agents must not write that field or duplicate the full object in each task."
+        "taskRefRule": "Loom 在接受期间通过 engineeringQualityRequirementRefs 附加此生成的需求；代理不得编写该字段或在每个任务中重复完整对象。"
     })
 }
 
@@ -6476,7 +6475,7 @@ fn api_contract_requirement_template(interfaces: &[Value]) -> Value {
         "kind": "api_contract",
         "interfaceRefs": interface_refs,
         "verificationObligations": api_contract_verification_obligations(),
-        "taskRefRule": "Loom attaches generated requirements through apiContractRequirementRefs during accept for API implementation, client binding, integration, and verification tasks; agents must not write that field or duplicate full API requirements inside every task."
+        "taskRefRule": "Loom 在接受期间为 API 实现、客户端绑定、集成和验证任务通过 apiContractRequirementRefs 附加生成的需求；代理不得编写该字段或在每个任务中重复完整 API 需求。"
     })
 }
 
@@ -6547,11 +6546,9 @@ fn normalize_architecture_quality_requirements(
             nfr_refs,
             risk_refs,
             verification_obligations: vec![
-                "Use task.verificationIntents as verification id source.".to_string(),
-                "Record architectureQualityEvidence for every referenced architecture quality requirement."
-                    .to_string(),
-                "Summarize how changed code respected the referenced decision, NFR, or risk mitigation."
-                    .to_string(),
+                "使用 task.verificationIntents 作为验证 ID 来源。".to_string(),
+                "为每个引用的架构质量需求记录 architectureQualityEvidence。".to_string(),
+                "摘要说明更改的代码如何尊重引用的决策、NFR 或风险缓解。".to_string(),
             ],
         });
     }
@@ -6815,7 +6812,7 @@ fn api_security_reference_load_plan(
     let mut plan = vec![ReferenceLoadPlanItem {
         ref_id: "tech.api.security".to_string(),
         path: "tech/api/security.md".to_string(),
-        reason: "Selected API security contract for protected interfaces.".to_string(),
+        reason: "为受保护的接口选择的 API 安全合同。".to_string(),
     }];
     if protected_profiles
         .iter()
@@ -6824,8 +6821,7 @@ fn api_security_reference_load_plan(
         plan.push(ReferenceLoadPlanItem {
             ref_id: "tech.api.jwt".to_string(),
             path: "tech/api/jwt.md".to_string(),
-            reason: "Selected JWT API contract for interfaces bound to a bearer JWT profile."
-                .to_string(),
+            reason: "为绑定到 bearer JWT 配置文件的接口选择的 JWT API 合同。".to_string(),
         });
     }
     plan
@@ -6869,8 +6865,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "entity_contract",
-                "Implement the task-owned entities, field invariants, and serialization boundary declared by AAC.",
-                vec![VerificationEvidence::AutomatedTest, VerificationEvidence::StaticCheck],
+                "实现 AAC 声明的任务拥有的实体、字段约束和序列化边界。",
+                vec![
+                    VerificationEvidence::AutomatedTest,
+                    VerificationEvidence::StaticCheck,
+                ],
                 artifact_refs_for(artifacts, "entities"),
                 obligation_source_refs(task, &[]),
             );
@@ -6880,8 +6879,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "interface_contract",
-                "Implement the task-owned interfaces with the accepted method, path, schemas, status behavior, and error behavior.",
-                vec![VerificationEvidence::AutomatedTest, VerificationEvidence::RuntimeApiCheck],
+                "使用已接受的方法、路径、模式、状态行为和错误行为实现任务拥有的接口。",
+                vec![
+                    VerificationEvidence::AutomatedTest,
+                    VerificationEvidence::RuntimeApiCheck,
+                ],
                 artifact_refs_for(artifacts, "interfaces"),
                 obligation_source_refs(task, &[]),
             );
@@ -6891,8 +6893,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "state_transition",
-                "Implement the task-owned state transitions and reject invalid transitions according to AAC.",
-                vec![VerificationEvidence::AutomatedTest, VerificationEvidence::RuntimeApiCheck],
+                "根据 AAC 实现任务拥有的状态转换并拒绝无效转换。",
+                vec![
+                    VerificationEvidence::AutomatedTest,
+                    VerificationEvidence::RuntimeApiCheck,
+                ],
                 artifact_refs_for(artifacts, "state_machines"),
                 obligation_source_refs(task, &[]),
             );
@@ -6904,13 +6909,17 @@ fn normalize_implementation_obligations(
                 task,
                 "persistence_mapping",
                 &format!(
-                    "Implement durable storage, data-access mapping, transaction boundaries, and readback for the accepted persistence provider{}.",
+                    "为已接受的持久化提供方{}实现持久存储、数据访问映射、事务边界和回读。",
                     stack_signals
                         .get("dataAccess")
                         .map(|value| format!(" `{value}`"))
                         .unwrap_or_default()
                 ),
-                vec![VerificationEvidence::AutomatedTest, VerificationEvidence::RuntimeApiCheck, VerificationEvidence::StaticCheck],
+                vec![
+                    VerificationEvidence::AutomatedTest,
+                    VerificationEvidence::RuntimeApiCheck,
+                    VerificationEvidence::StaticCheck,
+                ],
                 artifact_refs_for(artifacts, "entities"),
                 obligation_source_refs(
                     task,
@@ -6952,8 +6961,12 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "authentication_authorization",
-                "Enforce the accepted authentication and authorization policy at the task-owned boundary and verify allowed and denied behavior.",
-                vec![VerificationEvidence::AutomatedTest, VerificationEvidence::RuntimeApiCheck, VerificationEvidence::StaticCheck],
+                "在任务拥有的边界执行已接受的认证和授权策略，并验证允许和拒绝行为。",
+                vec![
+                    VerificationEvidence::AutomatedTest,
+                    VerificationEvidence::RuntimeApiCheck,
+                    VerificationEvidence::StaticCheck,
+                ],
                 artifact_refs_for(artifacts, "interfaces"),
                 obligation_source_refs(task, &[]),
             );
@@ -6964,8 +6977,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "frontend_experience",
-                "Implement the task-owned frontend surfaces, actions, states, and feedback declared by AAC.",
-                vec![VerificationEvidence::BrowserAutomation, VerificationEvidence::AutomatedTest],
+                "实现 AAC 声明的任务拥有的前端界面、操作、状态和反馈。",
+                vec![
+                    VerificationEvidence::BrowserAutomation,
+                    VerificationEvidence::AutomatedTest,
+                ],
                 artifacts.clone(),
                 obligation_source_refs(task, &[]),
             );
@@ -6979,8 +6995,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "runtime_delivery",
-                "Implement the task-owned runtime command, configuration, and service binding required by the accepted RuntimeDelivery contract.",
-                vec![VerificationEvidence::StaticCheck, VerificationEvidence::RuntimeApiCheck],
+                "实现已接受的 RuntimeDelivery 合同要求的任务拥有的运行时命令、配置和服务绑定。",
+                vec![
+                    VerificationEvidence::StaticCheck,
+                    VerificationEvidence::RuntimeApiCheck,
+                ],
                 artifacts.clone(),
                 obligation_source_refs(task, &[]),
             );
@@ -6991,8 +7010,11 @@ fn normalize_implementation_obligations(
                 &mut obligations,
                 task,
                 "reference_alignment",
-                "Implement the task using the MCP-selected language and framework references; reading a reference or running a build alone is not implementation evidence.",
-                vec![VerificationEvidence::StaticCheck, VerificationEvidence::AutomatedTest],
+                "使用 MCP 选择的语言和框架引用实现任务；仅阅读参考或运行构建不构成实现证据。",
+                vec![
+                    VerificationEvidence::StaticCheck,
+                    VerificationEvidence::AutomatedTest,
+                ],
                 artifacts.clone(),
                 obligation_source_refs(task, &[]),
             );
@@ -7092,67 +7114,67 @@ fn implementation_obligation_for_action(
         | ImplementationAction::ImplementAnalyticalQuery
         | ImplementationAction::AddOrUpdatePersistenceTests => (
             "persistence_mapping",
-            "Implement the task-owned persistence operation and its provider-compatible data-access behavior.",
+            "实现任务拥有的持久化操作及其提供方兼容的数据访问行为。",
             evidence(true),
         ),
         ImplementationAction::CreateOrUpdateInterface => (
             "interface_contract",
-            "Implement the task-owned API interface against the accepted method, schema, status, error, and security contract.",
+            "按照已接受的方法、模式、状态、错误和安全合同实现任务拥有的 API 接口。",
             evidence(true),
         ),
         ImplementationAction::WireReferenceInApiOrUi => (
             "api_binding",
-            "Implement the task-owned API or client binding against the accepted interface contract.",
+            "按照已接受的接口合同实现任务拥有的 API 或客户端绑定。",
             evidence(true),
         ),
         ImplementationAction::CreateOrUpdateStateMachine => (
             "state_machine",
-            "Implement the task-owned state machine and its invalid-transition behavior.",
+            "实现任务拥有的状态机及其无效转换行为。",
             evidence(true),
         ),
         ImplementationAction::CreateOrUpdateBusinessRule => (
             "business_rule",
-            "Implement the task-owned business rule and its blocking/error behavior.",
+            "实现任务拥有的业务规则及其阻塞/错误行为。",
             evidence(true),
         ),
         ImplementationAction::ImplementAuthenticationOrAuthorization => (
             "authentication_authorization",
-            "Implement the accepted authentication and authorization policy at the task-owned boundary.",
+            "在任务拥有的边界实现已接受的认证和授权策略。",
             evidence(true),
         ),
         ImplementationAction::ImplementAsyncProcessing => (
             "async_processing",
-            "Implement the task-owned asynchronous processing, completion, retry, and failure boundary.",
+            "实现任务拥有的异步处理、完成、重试和失败边界。",
             evidence(true),
         ),
         ImplementationAction::ImplementCachePolicy => (
             "cache_policy",
-            "Implement the accepted cache policy, invalidation behavior, and fallback behavior.",
+            "实现已接受的缓存策略、失效行为和回退行为。",
             evidence(true),
         ),
         ImplementationAction::ImplementExternalServiceIntegration => (
             "external_integration",
-            "Implement the task-owned external service integration and failure handling.",
+            "实现任务拥有的外部服务集成和失败处理。",
             evidence(true),
         ),
         ImplementationAction::ImplementResiliencePolicy => (
             "resilience_policy",
-            "Implement the accepted resilience policy and its bounded failure behavior.",
+            "实现已接受的弹性策略及其有界失败行为。",
             evidence(true),
         ),
         ImplementationAction::ConfigureServiceRoutingOrDiscovery => (
             "service_routing",
-            "Implement the accepted service routing or discovery boundary.",
+            "实现已接受的服务路由或发现边界。",
             evidence(false),
         ),
         ImplementationAction::ImplementObservability => (
             "observability",
-            "Implement the task-owned observability boundary without duplicating events across layers.",
+            "实现任务拥有的可观测性边界，不跨层重复事件。",
             evidence(false),
         ),
         ImplementationAction::ImplementRuntimeDeliveryContract => (
             "runtime_delivery",
-            "Implement the task-owned runtime delivery contract.",
+            "实现任务拥有的运行时交付合同。",
             evidence(false),
         ),
         ImplementationAction::ImplementFrontendExperienceContract
@@ -7168,17 +7190,20 @@ fn implementation_obligation_for_action(
         | ImplementationAction::ImplementClientStorage
         | ImplementationAction::CreateEntityAdminPage => (
             "frontend_experience",
-            "Implement the task-owned frontend behavior and its user-visible states and feedback.",
-            vec![VerificationEvidence::BrowserAutomation, VerificationEvidence::AutomatedTest],
+            "实现任务拥有的前端行为及其用户可见状态和反馈。",
+            vec![
+                VerificationEvidence::BrowserAutomation,
+                VerificationEvidence::AutomatedTest,
+            ],
         ),
         ImplementationAction::CreateOrUpdateEntity => (
             "entity_contract",
-            "Implement the task-owned entity model and its invariants.",
+            "实现任务拥有的实体模型及其约束。",
             evidence(false),
         ),
         ImplementationAction::ImplementEntityLifecycle => (
             "entity_lifecycle",
-            "Implement the task-owned entity lifecycle and persistence effects.",
+            "实现任务拥有的实体生命周期和持久化效果。",
             evidence(true),
         ),
         ImplementationAction::RefactorModuleStructure
@@ -7189,7 +7214,7 @@ fn implementation_obligation_for_action(
         | ImplementationAction::MigrateFrameworkImplementation
         | ImplementationAction::RefactorSupportingCode => (
             "implementation_structure",
-            "Implement the task-owned code structure or framework change and keep affected behavior intact.",
+            "实现任务拥有的代码结构或框架变更并保持受影响行为完整。",
             evidence(false),
         ),
         ImplementationAction::AddReferenceField
@@ -7430,14 +7455,12 @@ fn normalize_structured_verification_intents(
             };
             let method = string_at(interface, "method").unwrap_or_else(|| "operation".to_string());
             let path = string_at(interface, "path").unwrap_or_else(|| interface_id.clone());
-            let mut obligations = vec![(
-                "success",
-                format!("Verify the declared success response for {method} {path}."),
-            )];
+            let mut obligations =
+                vec![("success", format!("验证 {method} {path} 的声明成功响应。"))];
             if matches!(method.as_str(), "POST" | "PUT" | "PATCH" | "DELETE") {
                 obligations.push((
                     "error",
-                    format!("Verify the declared validation or business error response for {method} {path}."),
+                    format!("验证 {method} {path} 的声明验证或业务错误响应。"),
                 ));
             }
             if interface_has_pagination(interface) {
@@ -7445,50 +7468,50 @@ fn normalize_structured_verification_intents(
                     obligations.extend([
                         (
                             "pagination-state",
-                            format!("Verify the UI owns loading, current-page, page-size, and empty-page state for {method} {path}."),
+                            format!(
+                                "验证 UI 拥有 {method} {path} 的加载、当前页、页大小和空页状态。"
+                            ),
                         ),
                         (
                             "pagination-navigation",
-                            format!("Verify the UI page navigation action requests the declared page for {method} {path}."),
+                            format!("验证 UI 页面导航操作请求 {method} {path} 的声明页面。"),
                         ),
                         (
                             "pagination-filter-reset",
-                            format!("Verify changing the declared filter resets the UI page before requesting {method} {path}."),
+                            format!(
+                                "验证更改声明的过滤器在请求 {method} {path} 之前重置 UI 页面。"
+                            ),
                         ),
                     ]);
                 } else {
                     obligations.push((
                         "pagination",
-                        format!("Verify the declared pagination contract for {method} {path}."),
+                        format!("验证 {method} {path} 的声明分页合同。"),
                     ));
                 }
             }
             if interface_has_normalization(interface) {
                 obligations.push((
                     "normalization",
-                    format!("Verify declared input normalization before validation for {method} {path}."),
+                    format!("验证 {method} {path} 在验证之前进行声明的输入规范化。"),
                 ));
             }
             if interface_has_idempotency(interface) {
                 obligations.push((
                     "duplicate",
-                    format!(
-                        "Verify the declared duplicate-submission behavior for {method} {path}."
-                    ),
+                    format!("验证 {method} {path} 的声明重复提交行为。"),
                 ));
             }
             if interface_requires_auth(interface) && task_is_frontend_task(task) {
                 obligations.push((
                     "permission",
-                    format!(
-                        "Verify permission denial feedback for the UI binding of {method} {path}."
-                    ),
+                    format!("验证 {method} {path} 的 UI 绑定的权限拒绝反馈。"),
                 ));
             }
             if persistence_task_ids.contains(&task.task_id) && is_mutating_interface(&method) {
                 obligations.push((
                     "save-failure",
-                    format!("Verify the declared persistence or save failure response for {method} {path}."),
+                    format!("验证 {method} {path} 的声明持久化或保存失败响应。"),
                 ));
             }
             for (kind, behavior) in obligations {
@@ -7535,9 +7558,7 @@ fn normalize_structured_verification_intents(
                 ),
                 acceptance_refs: Vec::new(),
                 requirement_detail_refs: Vec::new(),
-                behavior:
-                    "Verify persisted state remains available after the application restarts."
-                        .to_string(),
+                behavior: "验证持久化状态在应用重启后仍然可用。".to_string(),
                 preferred_evidence: vec![VerificationEvidence::AutomatedTest],
                 acceptable_evidence: vec![
                     VerificationEvidence::AutomatedTest,
@@ -7835,9 +7856,9 @@ fn task_quality_category_matches(
 
 fn code_quality_verification_obligations() -> Vec<String> {
     vec![
-        "Use task.verificationIntents as verification id source.".to_string(),
-        "Run the smallest available language-appropriate compile, type, lint, unit, or integration check that proves the changed code.".to_string(),
-        "Record codeQualityEvidence for every assigned code quality requirement, including selected reference groups, reference files checked, changed files, commands, and known gaps.".to_string(),
+        "使用 task.verificationIntents 作为验证 ID 来源。".to_string(),
+        "运行可证明更改代码的最小可用语言适配的编译、类型、lint、单元或集成检查。".to_string(),
+        "为每个分配的代码质量需求记录 codeQualityEvidence，包括选定的引用组、检查的引用文件、更改的文件、命令和已知差距。".to_string(),
     ]
 }
 
@@ -7889,13 +7910,14 @@ fn task_can_consume_api_contract(task: &TaskDefinition) -> bool {
 
 fn api_contract_verification_obligations() -> Vec<String> {
     vec![
-        "Use task.verificationIntents as verification id source.".to_string(),
-        "Verify at least one declared success path for each task-owned API interface or client/test binding.".to_string(),
-        "Verify important validation or business-blocking error behavior for write/state-transition APIs.".to_string(),
-        "For collection APIs, verify the declared pagination or filtering behavior when present.".to_string(),
-        "For UI-owned collection APIs, verify pagination state, page navigation, and filter-to-page reset as separate observable behaviors.".to_string(),
-        "For normalized inputs, verify trim or other declared canonicalization occurs before validation.".to_string(),
-        "Record apiContractEvidence for every assigned API contract requirement.".to_string(),
+        "使用 task.verificationIntents 作为验证 ID 来源。".to_string(),
+        "为每个任务拥有的 API 接口或客户端/测试绑定验证至少一个声明的成功路径。".to_string(),
+        "对于写入/状态转换 API，验证重要的验证或业务阻塞错误行为。".to_string(),
+        "对于集合 API，存在时验证声明的分页或过滤行为。".to_string(),
+        "对于 UI 拥有的集合 API，将分页状态、页面导航和过滤到页面的重置作为单独的可观察行为验证。"
+            .to_string(),
+        "对于规范化输入，验证在验证之前发生 trim 或其他声明的规范化。".to_string(),
+        "为每个分配的 API 合同需求记录 apiContractEvidence。".to_string(),
     ]
 }
 
@@ -8212,13 +8234,13 @@ fn runtime_delivery_closure_task_template(aac: &ArchitectureArtifactContract) ->
         "groupPlacement": {
             "groupKind": "runtime_delivery_closure",
             "position": "final_group",
-            "taskIdsRule": "The closure group taskIds array must contain exactly this one runtime_delivery_closure task.",
-            "dependsOnRule": "Use group dependsOn to reference the previous group or groups that make runtime-affecting work transitively complete; no other group may depend on the closure group.",
-            "taskDependsOnRule": "Keep the closure task dependsOn empty unless another task is in the same closure group; the closure group itself should carry cross-group dependencies."
+            "taskIdsRule": "闭包组 taskIds 数组必须恰好包含这一个 runtime_delivery_closure 任务。",
+            "dependsOnRule": "使用组 dependsOn 引用使运行时影响工作传递完成的先前组；没有其他组可以依赖闭包组。",
+            "taskDependsOnRule": "保持闭包任务 dependsOn 为空，除非同一闭包组中有另一个任务；闭包组本身应携带跨组依赖。"
         },
         "runtimeDeliveryRequirement": {
             "appliesToThisTask": true,
-            "reason": "Final code-level closure for the RuntimeDeliveryContract.",
+            "reason": "RuntimeDeliveryContract 的最终代码级闭包。",
             "affectedContractFields": affected_contract_fields,
             "requiredCodeLevelChecks": required_code_level_checks,
             "evidenceExpectedInTaskResult": [],
@@ -8260,7 +8282,7 @@ fn runtime_delivery_closure_fields(runtime_delivery: &Value) -> Vec<String> {
 
 fn runtime_delivery_closure_check(contract_field: &str) -> Value {
     json!({
-        "objective": format!("Confirm {contract_field} is closed at code level against RuntimeDeliveryContract."),
+        "objective": format!("确认 {contract_field} 在代码级别针对 RuntimeDeliveryContract 已关闭。"),
         "acceptableEvidence": acceptable_evidence_for_runtime_closure_field(contract_field)
     })
 }
@@ -8269,9 +8291,7 @@ fn runtime_delivery_check_for_field(contract_field: &str) -> contracts::RuntimeC
     contracts::RuntimeCodeLevelCheck {
         check_id: runtime_delivery_check_id(contract_field),
         contract_field: Some(contract_field.to_string()),
-        objective: format!(
-            "Confirm {contract_field} is closed at code level against RuntimeDeliveryContract."
-        ),
+        objective: format!("确认 {contract_field} 在代码级别针对 RuntimeDeliveryContract 已关闭。"),
         acceptable_evidence: acceptable_evidence_for_runtime_closure_field(contract_field)
             .into_iter()
             .filter_map(|evidence| match evidence {
