@@ -1,61 +1,61 @@
-# PostgreSQL Transaction Behavior
+# PostgreSQL 事务行为
 
-Use this file with `tech/code/sql/schema.md` or `tech/code/sql/queries.md` when a task owns PostgreSQL transaction boundaries, locking, retry behavior, or multi-row persistence changes.
+当任务拥有 PostgreSQL 事务边界、锁定、重试行为或多行持久化变更时，将此文件与 `tech/code/sql/schema.md` 或 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Apply these rules to transactional application code and persistence tests. Database server operations and pool tuning are outside this reference.
-- Confirm the ORM/driver transaction boundary and the PostgreSQL provider path used by the application.
+- 将这些规则应用于事务性应用代码和持久化测试。数据库服务器操作和连接池调优在此参考之外。
+- 确认应用使用的 ORM/驱动程序事务边界和 PostgreSQL 提供者路径。
 
 ## Implementation Focus
 
-- Keep each transaction limited to state changes that must commit or roll back together.
-- Select an isolation level only when the business invariant requires behavior beyond the repository default. Record the reason and verify it against PostgreSQL.
-- Define lock ownership, acquisition order, timeout, release, and failure behavior for row or advisory locks.
-- Handle serialization, deadlock, and transient lock errors at the application boundary with bounded retry and idempotency.
-- Keep domain invariants in the service/application layer and durable constraints in the database. Do not use a lock to replace missing validation.
+- 将每个事务限制在必须一起提交或回滚的状态变更内。
+- 仅当业务不变式需要超出仓库默认值的行为时才选择隔离级别。记录原因并针对 PostgreSQL 验证。
+- 为行锁或咨询锁定义锁所有权、获取顺序、超时、释放和失败行为。
+- 在应用边界以有界重试和幂等性处理序列化、死锁和瞬态锁错误。
+- 将领域不变式保留在服务/应用层，持久约束保留在数据库中。不要用锁替代缺失的验证。
 
 ## Verification Focus
 
-- Test commit, rollback, duplicate submission, invalid transition, and relevant serialization/lock branches.
-- Run transaction-sensitive tests against PostgreSQL or the repository's provider-compatible test path.
-- Record the transaction boundary, isolation or lock decision, retry behavior, and provider evidence in the result.
+- 测试提交、回滚、重复提交、无效转换和相关的序列化/锁分支。
+- 针对 PostgreSQL 或仓库的提供者兼容测试路径运行事务敏感测试。
+- 在结果中记录事务边界、隔离或锁决策、重试行为和提供者证据。
 
 ## Evidence Focus
 
-- In the evidence summary, name the transaction boundary, invariant, retry classification, rollback behavior, or provider lock result that was verified.
+- 在证据总结中，说明已验证的事务边界、不变式、重试分类、回滚行为或提供者锁结果。
 
 ## Failure Matrix
 
-- Constraint violation: return the repository's validation or conflict error and do not retry blindly.
-- Serialization, deadlock, or transient lock failure: retry only when the operation is idempotent and the owning application layer has a bounded policy.
-- Duplicate request: preserve the declared uniqueness or idempotency result and avoid a second durable effect.
-- Partial downstream failure: keep the transaction boundary limited to database state and record compensation outside it when required.
-- Request cancellation: release the transaction and database resources through the existing framework boundary.
+- 约束违反：返回 repository 的验证或冲突错误，不要盲目重试。
+- 序列化、死锁或瞬态锁失败：仅当操作幂等且拥有的应用层有有界策略时才重试。
+- 重复请求：保留声明的唯一性或幂等性结果并避免第二次持久效果。
+- 部分下游失败：将事务边界限制在数据库状态，并在需要时在其外部记录补偿。
+- 请求取消：通过现有框架边界释放事务和数据库资源。
 
 ## ORM And Driver Boundary
 
-- Confirm that the transaction annotation, session, unit-of-work, or connection scope includes every write that must be atomic.
-- Do not open a second unmanaged connection inside a transaction-owned service method.
-- Define advisory or row lock ownership and release behavior in the application boundary that requested the lock.
-- Verify rollback behavior through the repository's actual data-access path, not only a mocked service.
+- 确认事务注解、会话、工作单元或连接范围包含每个必须原子的写入。
+- 不要在事务拥有的服务方法内打开第二个未管理的连接。
+- 在请求锁的应用边界中定义咨询锁或行锁所有权和释放行为。
+- 通过仓库的实际数据访问路径验证回滚行为，而非仅通过 mock 服务。
 
 ## Review Questions
 
-- Which writes must commit together, and which are intentionally outside the boundary?
-- What error classes are permanent, transient, or retryable?
-- What makes a retry or lock acquisition safe for this mutation?
-- Which PostgreSQL behavior, version, or extension was verified rather than assumed?
+- 哪些写入必须一起提交，哪些有意在边界之外？
+- 哪些错误类是永久的、瞬态的或可重试的？
+- 什么使此变更的重试或锁获取安全？
+- 哪个 PostgreSQL 行为、版本或扩展是已验证而非假设的？
 
 ## Boundary Checklist
 
-- Identify the service method or repository operation that owns the transaction.
-- Identify the durable constraints that protect the same invariant if the application retries.
-- Keep external calls and user interaction outside the database transaction.
-- State the expected behavior after rollback and after a retry.
+- 标识拥有事务的服务方法或 repository 操作。
+- 标识在应用重试时保护同一不变式的持久约束。
+- 将外部调用和用户交互保持在数据库事务之外。
+- 说明回滚后和重试后的预期行为。
 
 ## Risks To Avoid
 
-- Using a mock transaction as the only proof of PostgreSQL locking or constraint behavior.
-- Retrying every database exception without classifying transient and permanent failures.
-- Holding transactions open across HTTP calls, browser actions, or unbounded loops.
+- 使用 mock 事务作为 PostgreSQL 锁定或约束行为的唯一证明。
+- 在不分类瞬态和永久失败的情况下重试每个数据库异常。
+- 在 HTTP 调用、浏览器操作或无界循环间保持事务打开。

@@ -78,7 +78,7 @@ fn materialize_request_inner(
         .find(|phase| phase.phase_id == phase_id)
         .ok_or_else(|| {
             state::store::StateError::InvalidArgument(format!(
-                "phase {} does not exist in delivery {}",
+                "阶段 {} 在交付 {} 中不存在",
                 phase_id, delivery_id
             ))
         })?;
@@ -87,7 +87,7 @@ fn materialize_request_inner(
         .get("brainstormContract")
         .ok_or_else(|| {
             state::store::StateError::InvalidArgument(
-                "latest brainstormContract ref is missing".to_string(),
+                "缺少最新的 brainstormContract 引用".to_string(),
             )
         })?
         .clone();
@@ -353,13 +353,13 @@ fn build_request_root(
         },
         "rules": {
             "context": [
-                "Use the confirmed Brainstorm scope as the product-scope authority.",
-                "Do not rewrite or weaken the confirmed Brainstorm scope, acceptance, or frontend target while choosing the technology baseline."
+                "以确认的 Brainstorm 范围作为产品范围的权威。",
+                "选择技术基线时，不得改写或削弱已确认的 Brainstorm 范围、验收标准或前端目标。"
             ],
             "candidatePolicy": [
-                "Write only the TechnicalBaseline candidate JSON.",
-                "Do not write accepted baseline files directly.",
-                "Use needs_user_confirmation plus approval.type=none when the baseline still needs explicit user confirmation."
+                "仅写入 TechnicalBaseline 候选 JSON。",
+                "不得直接写入已接受的基线文件。",
+                "当基线仍需用户明确确认时，使用 needs_user_confirmation 加 approval.type=none。"
             ]
         },
         "outputContract": {
@@ -370,7 +370,7 @@ fn build_request_root(
                 "targetId": "candidate",
                 "path": candidate_file,
                 "required": true,
-                "description": "Write the TechnicalBaseline candidate JSON."
+                "description": "写入 TechnicalBaseline 候选 JSON。"
             }],
             "schemaShape": schema_shape,
             "schemaProjection": {
@@ -407,22 +407,22 @@ fn build_request_root(
                 {
                     "groupId": "technical_baseline_context",
                     "required": true,
-                    "purpose": "Read the confirmed Brainstorm scope, acceptance ids, frontend target, current phase lens, and baseline decision needs before drafting the baseline.",
-                    "whenToRead": "Read before producing any TechnicalBaseline recommendation.",
+                    "purpose": "在起草基线之前，阅读已确认的 Brainstorm 范围、验收 ID、前端目标、当前阶段视角和基线决策需求。",
+                    "whenToRead": "在产出任何 TechnicalBaseline 推荐之前阅读。",
                     "selectors": read_selectors_value_from_paths(baseline_context_fields)
                 },
                 {
                     "groupId": "technical_baseline_repo_evidence",
                     "required": false,
-                    "purpose": "Read repository evidence before inferring an existing-project baseline or deciding whether reuse applies.",
-                    "whenToRead": "Read for existing_project or when repository continuity matters.",
+                    "purpose": "在推断现有项目基线或判断是否适用复用之前，阅读仓库证据。",
+                    "whenToRead": "针对 existing_project 或仓库连续性相关时阅读。",
                     "selectors": read_selectors_value_from_paths(repo_evidence_fields)
                 },
                 {
                     "groupId": "technical_baseline_recommendation",
                     "required": selection_projections.is_some(),
-                    "purpose": "Read the full-scope recommendation basis and track ownership before presenting a baseline recommendation.",
-                    "whenToRead": "Read before producing any TechnicalBaseline recommendation.",
+                    "purpose": "在呈现基线推荐之前，阅读完整范围的推荐依据和轨道归属。",
+                    "whenToRead": "在产出任何 TechnicalBaseline 推荐之前阅读。",
                     "selectors": read_selectors_value_from_paths(["recommendationContext"])
                 },
                 {
@@ -432,15 +432,15 @@ fn build_request_root(
                             brainstorm.security_requirement.applies,
                             SecurityRequirementApplicability::NotApplicable
                         ),
-                    "purpose": "Read the exact user-facing option matrix and single-message confirmation contract before presenting the baseline.",
-                    "whenToRead": "Read before presenting the baseline recommendation or asking for user confirmation.",
+                    "purpose": "在呈现基线之前，阅读精确的面向用户的选项矩阵和单消息确认协议。",
+                    "whenToRead": "在呈现基线推荐或请求用户确认之前阅读。",
                     "selectors": read_selectors_value_from_paths(security_selection_fields)
                 },
                 {
                     "groupId": "technical_baseline_write_contract",
                     "required": true,
-                    "purpose": "Read the candidate schema and write target before writing the TechnicalBaseline candidate.",
-                    "whenToRead": "Read only when ready to write the candidate file.",
+                    "purpose": "在写入 TechnicalBaseline 候选之前，阅读候选 schema 和写入目标。",
+                    "whenToRead": "仅在准备写入候选文件时阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.writeTargets",
                         "outputContract.submitTool",
@@ -478,24 +478,24 @@ fn security_profile_guidance(
     );
     let mut guidance = json!({
         "applies": protected_scope,
-        "authority": "securityRequirement from the accepted Brainstorm contract",
+        "authority": "来自已接受 Brainstorm 合约的 securityRequirement",
         "profileRequired": profile_required,
         "capabilityState": "dormant",
-        "activationRule": "A bearer JWT profile is an explicit opt-in capability. A same-origin browser requirement with an accepted server-session dependency uses server_session instead; never recommend JWT from a greenfield default, backend framework, Redis alone, or a generic protected requirement.",
+        "activationRule": "bearer JWT 配置是显式选入能力。具有已接受服务器会话依赖的同源浏览器需求改用 server_session；不得从全新项目默认值、后端框架、仅 Redis 或一般性受保护需求中推荐 JWT。",
         "supportedProfiles": [
             {
                 "mechanism": "server_session",
-                "label": "Server-managed browser session",
+                "label": "服务器管理的浏览器会话",
                 "transport": "same_origin_cookie",
-                "when": "Use for same-origin browser clients when the accepted baseline includes a server-session store such as Redis.",
-                "identityRule": "The backend resolves the authenticated user and roles from the server-side session before applying interface permissions; this is not a bearer-token contract."
+                "when": "当已接受的基线包含 Redis 等服务器会话存储时，用于同源浏览器客户端。",
+                "identityRule": "后端在应用接口权限之前从服务器端会话解析已认证用户和角色；这不是 bearer-token 合约。"
             },
             {
                 "mechanism": "bearer_jwt",
                 "label": "Bearer JWT",
                 "transport": "bearer_header",
-                "when": "Use only after the user explicitly selects a token-authority scenario and its complete profile.",
-                "identityRule": "The backend validates the selected token profile before applying interface permissions."
+                "when": "仅在用户显式选择令牌授权场景及其完整配置后使用。",
+                "identityRule": "后端在应用接口权限之前验证所选的令牌配置。"
             }
         ],
         "agentFields": []
@@ -504,17 +504,17 @@ fn security_profile_guidance(
         json!(baseline_stack.is_some_and(has_accepted_redis_session_capability));
     if profile_required {
         guidance["existingBaselineRule"] = json!(if has_previous_baseline {
-            "Reuse an existing accepted security profile when it satisfies the current requirement; do not change its algorithm without explicit user confirmation."
+            "当现有已接受的安全配置满足当前需求时予以复用；未经用户明确确认不得更改其算法。"
         } else {
-            "When authentication is required or optional, use the structured trust model and runtime capability facts. Same-origin browser plus an accepted Redis session capability uses MCP-derived server_session; only an unresolved trust model needs an explicit user profile selection."
+            "当认证为必需或可选时，使用结构化信任模型和运行时能力事实。同源浏览器加上已接受的 Redis 会话能力使用 MCP 派生的 server_session；仅未解析的信任模型需要显式的用户配置选择。"
         });
         if has_previous_baseline
             && !baseline_stack.is_some_and(has_accepted_redis_session_capability)
         {
             guidance["algorithmPolicy"] = json!([
-                "Only an explicitly selected bearer JWT profile may declare an algorithm.",
-                "Do not derive an algorithm from an incoming token header or choose one as a greenfield default.",
-                "Keep the algorithm closed to the explicitly selected profile; do not add a second algorithm for flexibility."
+                "仅显式选择的 bearer JWT 配置可以声明算法。",
+                "不得从传入的令牌头推导算法，也不得将其作为全新项目的默认值。",
+                "将算法限定在显式选择的配置内；不得为灵活性添加第二个算法。"
             ]);
             guidance["agentFields"] = json!([
                 "securityProfiles[].profileId",
@@ -531,12 +531,12 @@ fn security_profile_guidance(
             ]);
         } else {
             guidance["selectionRule"] = json!(
-                "For same-origin_browser plus an accepted Redis session capability, use the MCP-derived server_session profile; the agent must not ask the user to choose JWT or write token fields. Otherwise keep securityProfiles empty until the user explicitly selects a supported profile. If the user selects bearer_jwt, write the complete profile from that explicit decision; do not invent its scenario, algorithm, issuer, audience, claims, or transport."
+                "对于同源浏览器加上已接受的 Redis 会话能力，使用 MCP 派生的 server_session 配置；代理不得要求用户选择 JWT 或写入令牌字段。否则在用户显式选择受支持的配置之前保持 securityProfiles 为空。如果用户选择 bearer_jwt，从该显式决策写入完整配置；不得臆造其场景、算法、签发方、受众、声明或传输方式。"
             );
             guidance["derivedProfileRule"] = json!({
                 "mechanism": "server_session",
-                "condition": "securityRequirement.applies is required or optional, clientTrustModels contains same_origin_browser, and stack.tracks.externalServices.providers contains Redis with capabilities.purpose=session",
-                "owner": "MCP derives and persists the profile; the agent does not author securityProfiles for this case."
+                "condition": "securityRequirement.applies 为 required 或 optional，clientTrustModels 包含 same_origin_browser，且 stack.tracks.externalServices.providers 包含 capabilities.purpose=session 的 Redis",
+                "owner": "MCP 派生并持久化该配置；代理不得为此情况编写 securityProfiles。"
             });
         }
     } else if matches!(
@@ -544,12 +544,11 @@ fn security_profile_guidance(
         SecurityRequirementApplicability::DeferredWithRisk
     ) {
         guidance["profilePolicy"] = json!(
-            "Security is deferred for the current scope. Keep securityProfiles empty and record the deferred risk; do not activate JWT or another authentication implementation in this phase."
+            "当前范围的安全已推迟。保持 securityProfiles 为空并记录推迟风险；不得在本阶段激活 JWT 或其他认证实现。"
         );
     } else {
-        guidance["profilePolicy"] = json!(
-            "No authentication profile applies to the accepted scope; securityProfiles must remain an empty array."
-        );
+        guidance["profilePolicy"] =
+            json!("已接受范围不适用任何认证配置；securityProfiles 必须保持为空数组。");
     }
     if baseline_stack.is_some_and(has_accepted_redis_session_capability)
         && profile_required
@@ -557,8 +556,8 @@ fn security_profile_guidance(
     {
         guidance["derivedProfileRule"] = json!({
             "mechanism": "server_session",
-            "condition": "The accepted baseline contains Redis with capability purpose=session and the accepted security requirement contains same_origin_browser.",
-            "owner": "MCP derives and persists the profile; the agent does not author securityProfiles for this case."
+            "condition": "已接受的基线包含 capabilities.purpose=session 的 Redis，且已接受的安全需求包含 same_origin_browser。",
+            "owner": "MCP 派生并持久化该配置；代理不得为此情况编写 securityProfiles。"
         });
         guidance["agentFields"] = json!([]);
     }
@@ -656,7 +655,7 @@ fn derive_server_session_profile(
     }
     candidate.security_profiles.push(SecurityProfile {
         profile_id: "security_server_session".to_string(),
-        name: "Redis-backed server session".to_string(),
+        name: "基于 Redis 的服务器会话".to_string(),
         mechanism: SecurityMechanism::ServerSession,
         algorithm: None,
         key_source: SecurityKeySource::NotApplicable,
@@ -665,7 +664,7 @@ fn derive_server_session_profile(
         audiences: Vec::new(),
         claims: Vec::new(),
         source_refs: requirement.source_refs.clone(),
-        rationale: "Same-origin browser requests use a server-managed login session; the backend resolves the authenticated user and roles from Redis before applying permissions.".to_string(),
+        rationale: "同源浏览器请求使用服务器管理的登录会话；后端在应用权限之前从 Redis 解析已认证用户和角色。".to_string(),
     });
     if candidate.approval.r#type == TechnicalBaselineApprovalType::UserConfirmed
         && candidate.status == TechnicalBaselineStatus::NeedsUserConfirmation
@@ -990,107 +989,6 @@ fn collect_go_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
     signals.package_managers.insert("go".to_string());
 }
 
-#[derive(Clone, Copy)]
-struct BackendEcosystemDefinition {
-    ecosystem_id: &'static str,
-    label: &'static str,
-    runtime_family: &'static str,
-    backend_options: &'static [&'static str],
-    backend_matchers: &'static [&'static str],
-    data_access_options: &'static [&'static str],
-    data_access_matchers: &'static [&'static str],
-}
-
-const BACKEND_ECOSYSTEMS: &[BackendEcosystemDefinition] = &[
-    BackendEcosystemDefinition {
-        ecosystem_id: "nextjs_fullstack",
-        label: "Next.js full-stack",
-        runtime_family: "typescript_node",
-        backend_options: &["Next.js + Server Actions / Route Handlers / SSR"],
-        backend_matchers: &["next.js", "nextjs"],
-        data_access_options: &["Prisma", "Drizzle"],
-        data_access_matchers: &["prisma", "drizzle"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "node_http",
-        label: "Node.js HTTP service",
-        runtime_family: "typescript_node",
-        backend_options: &["Node.js + Fastify", "Node.js + Express"],
-        backend_matchers: &["node.js", "nodejs", "typescript", "fastify", "express"],
-        data_access_options: &["Prisma", "Drizzle", "Kysely"],
-        data_access_matchers: &["prisma", "drizzle", "kysely"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "nestjs_service",
-        label: "NestJS service",
-        runtime_family: "typescript_node",
-        backend_options: &["Node.js + NestJS"],
-        backend_matchers: &["nestjs"],
-        data_access_options: &["Prisma", "TypeORM"],
-        data_access_matchers: &["prisma", "typeorm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "python_fastapi",
-        label: "FastAPI service",
-        runtime_family: "python",
-        backend_options: &["Python + FastAPI"],
-        backend_matchers: &["python", "fastapi"],
-        data_access_options: &["SQLAlchemy", "SQLModel"],
-        data_access_matchers: &["sqlalchemy", "sqlmodel"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "python_django",
-        label: "Django application",
-        runtime_family: "python",
-        backend_options: &["Python + Django"],
-        backend_matchers: &["django"],
-        data_access_options: &["Django ORM"],
-        data_access_matchers: &["django orm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "jvm_spring",
-        label: "Spring Boot service",
-        runtime_family: "jvm",
-        backend_options: &["Java + Spring Boot"],
-        backend_matchers: &["java", "kotlin", "spring boot"],
-        data_access_options: &["Spring Data JPA", "MyBatis Plus", "jOOQ"],
-        data_access_matchers: &[
-            "spring data jpa",
-            "mybatis plus",
-            "mybatis-plus",
-            "mybatisplus",
-            "jooq",
-        ],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "dotnet_aspnetcore",
-        label: "ASP.NET Core service",
-        runtime_family: "dotnet",
-        backend_options: &[".NET + ASP.NET Core"],
-        backend_matchers: &[".net", "asp.net", "dotnet"],
-        data_access_options: &["Entity Framework Core", "Dapper"],
-        data_access_matchers: &["entity framework", "ef core", "dapper"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "go_http",
-        label: "Go HTTP service",
-        runtime_family: "go",
-        backend_options: &["Go + net/http or Gin"],
-        backend_matchers: &["go", "net/http", "gin"],
-        data_access_options: &["database/sql", "sqlc", "GORM"],
-        data_access_matchers: &["database/sql", "sqlc", "gorm"],
-    },
-    BackendEcosystemDefinition {
-        ecosystem_id: "no_independent_backend",
-        label: "No independent backend",
-        runtime_family: "none",
-        backend_options: &["No independent backend"],
-        backend_matchers: &["no independent backend", "no backend"],
-        data_access_options: &["No ORM"],
-        data_access_matchers: &["no orm"],
-    },
-];
-
 const PORTABLE_DATA_ACCESS_OPTIONS: &[&str] = &["Raw SQL / framework-native wrapper", "No ORM"];
 const PORTABLE_DATA_ACCESS_MATCHERS: &[&str] = &[
     "raw sql",
@@ -1100,14 +998,15 @@ const PORTABLE_DATA_ACCESS_MATCHERS: &[&str] = &[
 ];
 
 fn backend_ecosystem_guidance() -> Value {
+    let catalog = reference_catalog::vendor_catalog();
     json!({
-        "sourceOfTruth": "This catalog is the single source for backend/dataAccess recommendation relationships and known runtime-family compatibility checks.",
-        "renderingRule": "Render backend and dataAccess as one grouped choice. Do not present an independent flat dataAccess option list.",
-        "optionEnumerationRule": "When presenting an ecosystem in the adjustable range, enumerate every backendOptions entry and every recommendedDataAccessOptions entry from that ecosystem. Do not collapse the list to a single default or show only a representative option.",
-        "coverageRule": "When backend choice is open and no confirmed constraint excludes an ecosystem, keep the adjustable range diverse across TypeScript/Node, Python, JVM/Spring, and .NET. Do not truncate by catalog order; include Go when requirement or user preference makes it relevant.",
-        "customTechnologyPolicy": "Bundles are mainstream recommendations, not a whitelist. Keep user-specified backend and data-access technologies when their relationship is intentional and explain the custom pairing in the final confirmation summary.",
+        "sourceOfTruth": "此目录是 backend/dataAccess 推荐关系和已知运行时家族兼容性检查的唯一来源。",
+        "renderingRule": "将 backend 和 dataAccess 作为一个分组选择来呈现。不得呈现独立的扁平 dataAccess 选项列表。",
+        "optionEnumerationRule": "在可调整范围中呈现生态系统时，枚举该生态系统的每个 backendOptions 条目和每个 recommendedDataAccessOptions 条目。不得将列表折叠为单个默认值或仅展示代表性选项。",
+        "coverageRule": "当 backend 选择开放且没有已确认的约束排除某个生态系统时，保持 TypeScript/Node、Python、JVM/Spring 和 .NET 之间可调整范围的多样性。不得按目录顺序截断；当需求或用户偏好涉及 Go 时应将其纳入。",
+        "customTechnologyPolicy": "捆绑包是主流推荐，不是白名单。当用户指定的后端和数据访问技术的关系是刻意的时予以保留，并在最终确认摘要中解释该自定义配对。",
         "portableDataAccessOptions": PORTABLE_DATA_ACCESS_OPTIONS,
-        "bundles": BACKEND_ECOSYSTEMS.iter().map(|ecosystem| json!({
+        "bundles": catalog.backend_ecosystems().iter().map(|ecosystem| json!({
             "ecosystemId": ecosystem.ecosystem_id,
             "label": ecosystem.label,
             "runtimeFamily": ecosystem.runtime_family,
@@ -1127,37 +1026,37 @@ fn technical_baseline_selection_guidance(
     Some(json!({
         "schemaVersion": "1.0",
         "purpose": if matches!(project_kind, ProjectKind::NewProject) {
-            "Guide the agent-user technical baseline confirmation for a new project in an empty or uninitialized workspace before PGC."
+            "在 PGC 之前，引导空或未初始化工作区中新项目的代理-用户技术基线确认。"
         } else {
-            "Guide the agent-user technical baseline confirmation when a previous baseline exists and the final candidate may add, replace, or conflict with stable baseline elements."
+            "当先前基线存在且最终候选可能添加、替换或与稳定基线元素冲突时，引导代理-用户技术基线确认。"
         },
         "runtimeBoundary": {
-            "role": "The request provides materials, common examples, output contract, and confirmation rules only.",
+            "role": "请求仅提供材料、常见示例、输出合约和确认规则。",
             "doesNotDo": [
-                "The request does not infer the concrete recommended stack for this requirement.",
-                "The request does not parse the user's natural-language technology replies.",
-                "The request does not participate in intermediate confirmation rounds."
+                "请求不推断此需求的具体推荐技术栈。",
+                "请求不解析用户的自然语言技术回复。",
+                "请求不参与中间确认轮次。"
             ],
             "requiredAgentLoop": [
-                "Read the request refs and understand the confirmed requirement scope.",
-                "Generate the concrete recommendation or baseline-change summary yourself.",
-                "Talk with the user for as many rounds as needed.",
-                "Write and submit the candidate only after the user explicitly confirms the final technology baseline."
+                "阅读请求引用并理解已确认的需求范围。",
+                "自行生成具体推荐或基线变更摘要。",
+                "与用户进行所需轮次的对话。",
+                "仅在用户明确确认最终技术基线后写入并提交候选。"
             ]
         },
         "confirmationRules": confirmation_rules(has_previous_baseline),
         "trackModel": {
-            "requiredFinalShape": "Use stack.tracks with web, app, backend, persistence, dataAccess, and externalServices keys. When web is selected, also include qualityAutomation. Each track should include status, selection, source, and rationale. A selected externalServices track must also include structured providers with confirmed capability roles.",
+            "requiredFinalShape": "使用 stack.tracks 包含 web、app、backend、persistence、dataAccess 和 externalServices 键。当选中 web 时，还需包含 qualityAutomation。每个轨道应包含 status、selection、source 和 rationale。选中的 externalServices 轨道还须包含具有已确认能力角色的结构化 providers。",
             "trackStatusValues": ["selected", "not_needed", "not_applicable", "user_custom"],
             "sourceValues": ["agent_recommended_user_confirmed", "user_adjusted", "user_specified", "previous_baseline", "not_applicable"],
             "coreTracks": ["web", "app", "backend", "persistence", "dataAccess", "externalServices"],
             "conditionalTracks": {
-                "qualityAutomation": "Required when web.status is selected or user_custom; choose the browser automation stack in the same confirmed baseline."
+                "qualityAutomation": "当 web.status 为 selected 或 user_custom 时必需；在同一已确认基线中选择浏览器自动化技术栈。"
             },
             "coupledTracks": {
-                "backendDataAccess": "backend and dataAccess remain separate final tracks, but recommendation and confirmation must present them as one compatible ecosystem choice."
+                "backendDataAccess": "backend 和 dataAccess 保持为独立的最终轨道，但推荐和确认必须将它们作为一个兼容的生态系统选择来呈现。"
             },
-            "customTechnologyPolicy": "The ecosystem catalog and independent track options are examples, not a whitelist. User-specified technologies outside these examples are allowed, but mark the relevant track source as user_specified or user_custom and include it in the final confirmation summary and reasoningSummary.",
+            "customTechnologyPolicy": "生态系统目录和独立轨道选项是示例，不是白名单。允许超出这些示例的用户指定技术，但须将相关轨道的 source 标记为 user_specified 或 user_custom，并将其纳入最终确认摘要和 reasoningSummary。",
             "externalServicesProviderShape": {
                 "allowedProviderFields": ["provider", "capabilities"],
                 "capabilitiesType": "array",
@@ -1176,22 +1075,22 @@ fn technical_baseline_selection_guidance(
                 },
                 "allowedCapabilityFields": ["purpose", "durability", "startupRequirement"],
                 "capabilityRoles": ["cache", "session", "queue", "stream", "lock_rate_limit"],
-                "ownership": "TechnicalBaseline confirms provider, capability role, durability, and startup requirement only. MCP derives dependencyId and kind. Failure handling, recovery, consumers, and observability belong to the Architecture quality model when they affect the current phase.",
-                "shapeRule": "In the candidate JSON, providers[].capabilities is always an array of capability objects. A user-facing role map such as session: {...} must be normalized to [{purpose: session, ...}] before writing the candidate; do not write capabilities as an object keyed by role.",
-                "unknownFieldPolicy": "Do not add dependencyId, kind, requiredFor, failureBehavior, recoveryStrategy, observability, TTL, key schema, queue acknowledgment, or deployment settings here. MCP derives dependency identity and the later stages own operational behavior."
+                "ownership": "TechnicalBaseline 仅确认 provider、能力角色、durability 和 startup requirement。MCP 派生 dependencyId 和 kind。故障处理、恢复、消费者和可观测性在影响当前阶段时归属于 Architecture 质量模型。",
+                "shapeRule": "在候选 JSON 中，providers[].capabilities 始终是能力对象的数组。面向用户的角色映射（如 session: {...}）在写入候选之前必须规范化为 [{purpose: session, ...}]；不得将以角色为键的对象作为 capabilities 写入。",
+                "unknownFieldPolicy": "不得在此添加 dependencyId、kind、requiredFor、failureBehavior、recoveryStrategy、observability、TTL、键模式、队列确认或部署设置。MCP 派生依赖标识，后续阶段负责操作行为。"
             }
         },
         "recommendationBasis": {
-            "authority": "Use the complete BrainstormContract as the product-scope authority for the first new-project TechnicalBaseline recommendation.",
+            "authority": "将完整的 BrainstormContract 作为首次新项目 TechnicalBaseline 推荐的产品范围权威。",
             "mustRead": [
                 "brainstormLens.summary",
-                "brainstormLens.scopeIndex included/deferred/excluded labels and assumptions",
-                "brainstormLens.domainModel capabilityNames and businessFlowNames when present",
-                "brainstormLens.frontendTarget when present",
-                "brainstormLens.roadmapSignal phase titles, phase goals, and next-phase preview"
+                "brainstormLens.scopeIndex 的 included/deferred/excluded 标签与假设",
+                "brainstormLens.domainModel 的 capabilityNames 和 businessFlowNames（如存在）",
+                "brainstormLens.frontendTarget（如存在）",
+                "brainstormLens.roadmapSignal 的阶段标题、阶段目标与下一阶段预览"
             ],
-            "currentPhaseLensRole": "currentPhaseLens identifies the first implementation slice only. Do not choose the initial technology baseline from the current phase scope alone when the full requirement or roadmap implies later product surfaces, persistence scale, app clients, services, integrations, or operational needs.",
-            "recommendationRule": "Recommend a stable baseline for the full confirmed delivery/roadmap horizon; explain when the current phase can start small inside that baseline without hiding later known needs."
+            "currentPhaseLensRole": "currentPhaseLens 仅标识首个实现切片。当完整需求或路线图暗示后续产品界面、持久化规模、应用客户端、服务、集成或运维需求时，不得仅从当前阶段范围选择初始技术基线。",
+            "recommendationRule": "为完整已确认的交付/路线图周期推荐稳定基线；说明当前阶段可在该基线内从小处起步而不隐藏后续已知需求的情况。"
         },
         "userFacingConfirmationProtocol": {
             "responseContract": {
@@ -1204,91 +1103,91 @@ fn technical_baseline_selection_guidance(
                     "adjustable_technology_range",
                     "confirmation_or_adjustment_prompt"
                 ],
-                "backendDataAccessRendering": "Render every backendEcosystems bundle with its label, every backendOptions entry, and every recommendedDataAccessOptions entry. Do not abbreviate, collapse, or repeat the matrix.",
-                "deduplicationRule": "Emit the confirmation response once. Do not repeat the same recommendation in commentary and final output."
+                "backendDataAccessRendering": "呈现每个 backendEcosystems 捆绑包及其 label、每个 backendOptions 条目和每个 recommendedDataAccessOptions 条目。不得缩写、折叠或重复该矩阵。",
+                "deduplicationRule": "仅发出一次确认响应。不得在评论和最终输出中重复同一推荐。"
             },
             "mandatorySections": [
-                "Recommendation basis: summarize the full requirement/roadmap signals used, not only the current phase.",
-                "Recommended final baseline: list every core track with selection and short rationale, plus qualityAutomation when web is selected.",
-                "Adjustable technology range: show independent options for web, app, persistence, and externalServices, then show backend and dataAccess as grouped ecosystem choices from backendEcosystems. For every displayed ecosystem, list every compatible backend and dataAccess option supplied by that bundle; the JVM/Spring bundle must include Java + Spring Boot with Spring Data JPA, MyBatis Plus, and jOOQ.",
-                "Reply format: show canonical key=value examples using web, app, backend, persistence, dataAccess, externalServices, and qualityAutomation for web projects.",
-                "When securityRequirement is required or optional, use the structured trust model and accepted runtime capabilities to select server_session for same-origin browser sessions; do not propose or enable JWT as a greenfield default. Ask for explicit profile selection only when the structured facts do not determine the mechanism. When security is deferred, show the deferred risk and keep the current phase free of authentication implementation.",
-                "Final confirmation rule: if the user changes anything, summarize the final baseline and ask for explicit confirmation before submitting."
+                "推荐依据：总结所使用的完整需求/路线图信号，而不仅是当前阶段。",
+                "推荐最终基线：列出每个核心轨道及其选择和简短理由，当选中 web 时还需包含 qualityAutomation。",
+                "可调整技术范围：展示 web、app、persistence 和 externalServices 的独立选项，然后将 backend 和 dataAccess 作为 backendEcosystems 中的分组生态系统选择来展示。对于每个展示的生态系统，列出该捆绑包提供的每个兼容 backend 和 dataAccess 选项；JVM/Spring 捆绑包必须包含 Java + Spring Boot 以及 Spring Data JPA、MyBatis Plus 和 jOOQ。",
+                "回复格式：对于 web 项目，使用 web、app、backend、persistence、dataAccess、externalServices 和 qualityAutomation 展示规范的 key=value 示例。",
+                "当 securityRequirement 为 required 或 optional 时，使用结构化信任模型和已接受的运行时能力为同源浏览器会话选择 server_session；不得将 JWT 作为全新项目默认值提出或启用。仅当结构化事实无法确定机制时才请求显式配置选择。当安全推迟时，展示推迟风险并保持当前阶段不包含认证实现。",
+                "最终确认规则：如果用户更改了任何内容，在提交前总结最终基线并请求明确确认。"
             ],
             "wordingRules": [
-                "Do not present the recommendation as based only on the first phase or current small implementation slice.",
-                "Do not omit the adjustable technology range.",
-                "Do not present backend options as bare language-only labels when a mainstream framework choice is expected; show language + framework combinations in user-facing examples.",
-                "Do not present backend and dataAccess as unrelated option lists. Keep every displayed data-access choice under its compatible backend ecosystem.",
-                "Do not replace a compatible dataAccess list with only its most familiar default. Preserve every catalog option, including MyBatis Plus and jOOQ under Java + Spring Boot.",
-                "Do not truncate backend alternatives by catalog order. When no confirmed constraint excludes them, preserve mainstream ecosystem coverage including Java + Spring Boot.",
-                "Do not use db or orm as the primary reply keys; use persistence and dataAccess in the primary examples.",
-                "When externalServices includes Redis, explain the business role in plain language, allow multiple roles, and ask only the persistence or startup questions needed by the selected roles.",
-                "Do not ask users to choose Redis data structures, TTL values, Lua scripts, or Compose settings during TechnicalBaseline confirmation; those decisions belong to Architecture.",
-                "Do not mention Loom internals, gates, submit permission, workflow blocking, or phrases like Loom allows, Loom requires, Loom is stuck, or Loom will not continue in user-facing text.",
-                "It is fine to understand db as persistence and orm as dataAccess when the user writes those aliases, but normalize the final candidate to stack.tracks.persistence and stack.tracks.dataAccess."
+                "不得将推荐呈现为仅基于首个阶段或当前小型实现切片。",
+                "不得省略可调整技术范围。",
+                "当预期选择主流框架时，不得将 backend 选项呈现为仅语言的标签；在面向用户的示例中展示语言 + 框架组合。",
+                "不得将 backend 和 dataAccess 呈现为不相关的选项列表。将每个展示的数据访问选择保持在其兼容的 backend 生态系统下。",
+                "不得仅用最熟悉的默认值替换兼容的 dataAccess 列表。保留每个目录选项，包括 Java + Spring Boot 下的 MyBatis Plus 和 jOOQ。",
+                "不得按目录顺序截断 backend 备选方案。当没有已确认的约束排除它们时，保留主流生态系统覆盖范围，包括 Java + Spring Boot。",
+                "不得使用 db 或 orm 作为主要回复键；在主要示例中使用 persistence 和 dataAccess。",
+                "当 externalServices 包含 Redis 时，用通俗语言解释业务角色，允许多个角色，并仅询问所选角色所需的持久化或启动问题。",
+                "不得在 TechnicalBaseline 确认期间要求用户选择 Redis 数据结构、TTL 值、Lua 脚本或 Compose 设置；这些决策归属于 Architecture。",
+                "不得在面向用户的文本中提及 Loom 内部机制、门控、提交权限、工作流阻塞，或类似 Loom allows、Loom requires、Loom is stuck、Loom will not continue 等措辞。",
+                "当用户使用 db 和 orm 等别名时可以将其理解为 persistence 和 dataAccess，但须将最终候选规范化为 stack.tracks.persistence 和 stack.tracks.dataAccess。"
             ]
         },
         "independentTrackOptions": {
             "web": {
-                "label": "Web client",
-                "examples": ["Next.js", "React + Vite", "Vue + Vite", "SvelteKit", "Astro", "No Web client"]
+                "label": "Web 客户端",
+                "examples": ["Next.js", "React + Vite", "Vue + Vite", "SvelteKit", "Astro", "无 Web 客户端"]
             },
             "app": {
-                "label": "App client",
-                "examples": ["No App client", "React Native + Expo", "Flutter", "iOS Native (Swift / SwiftUI)", "Android Native (Kotlin / Jetpack Compose)", "Hybrid WebView (Capacitor / Ionic)", "PWA"]
+                "label": "App 客户端",
+                "examples": ["无 App 客户端", "React Native + Expo", "Flutter", "iOS Native (Swift / SwiftUI)", "Android Native (Kotlin / Jetpack Compose)", "Hybrid WebView (Capacitor / Ionic)", "PWA"]
             },
             "persistence": {
-                "label": "Database / persistence",
-                "examples": ["SQLite", "PostgreSQL", "MySQL", "MongoDB", "File storage / local JSON", "No persistence yet"]
+                "label": "数据库 / 持久化",
+                "examples": ["SQLite", "PostgreSQL", "MySQL", "MongoDB", "文件存储 / 本地 JSON", "暂无持久化"]
             },
             "externalServices": {
-                "label": "External services",
-                "examples": ["None", "Redis for cache, sessions, or background jobs", "User specified", "Only recommend services explicitly required by the confirmed requirement"],
+                "label": "外部服务",
+                "examples": ["无", "用于缓存、会话或后台任务的 Redis", "用户指定", "仅推荐已确认需求明确要求的服务"],
                 "capabilityRoles": {
                     "redis": [
-                        "Login state and shared sessions",
-                        "Background jobs and message processing",
-                        "Query result acceleration",
-                        "Atomic locks or rate limiting"
+                        "登录状态与共享会话",
+                        "后台任务与消息处理",
+                        "查询结果加速",
+                        "原子锁或限流"
                     ]
                 },
-                "confirmationRule": "Show only capability roles supported by the confirmed requirement. Allow multiple roles. Do not choose a Redis role from a keyword alone; ask the user when the role is ambiguous."
+                "confirmationRule": "仅展示已确认需求支持的能力角色。允许多个角色。不得仅凭关键词选择 Redis 角色；当角色不明确时询问用户。"
             },
             "qualityAutomation": {
-                "label": "Browser quality automation",
-                "examples": ["Playwright", "User-specified existing browser test stack"]
+                "label": "浏览器质量自动化",
+                "examples": ["Playwright", "用户指定的现有浏览器测试技术栈"]
             },
             "securityProfile": {
-                "label": "Authentication profile when protected",
-                "examples": ["MCP-derived server session for a same-origin browser backed by Redis", "An explicitly selected bearer JWT profile for a confirmed external-client scenario", "An existing accepted security profile reused without change"],
-                "rule": "For same-origin browser plus an accepted Redis session capability, use server_session and resolve identity/roles from the login session. JWT is dormant and must not be selected from a default or keyword; activate it only from an explicit user choice or an existing accepted profile."
+                "label": "受保护时的认证配置",
+                "examples": ["由 Redis 支持的同源浏览器的 MCP 派生服务器会话", "已确认外部客户端场景的显式选择 bearer JWT 配置", "未经更改复用的现有已接受安全配置"],
+                "rule": "对于同源浏览器加上已接受的 Redis 会话能力，使用 server_session 并从登录会话解析身份/角色。JWT 处于休眠状态，不得从默认值或关键词中选择；仅从显式用户选择或现有已接受配置中激活。"
             }
         },
         "backendEcosystems": backend_ecosystem_guidance(),
         "shorthandNormalization": {
             "backend": [
-                "If the user writes backend=Java without a framework, normalize it to Java + Spring Boot unless they explicitly name a different Java backend stack.",
-                "If the user writes backend=Python without a framework, normalize it to Python + FastAPI for service/backend work unless the requirement or user explicitly points to Django-style site/admin/content capabilities.",
-                "If the user writes backend=Node.js without a framework, ask for or summarize a concrete Node.js framework choice such as Fastify, Express, or NestJS before final confirmation.",
-                "If the user writes backend=.NET without a framework, normalize it to .NET + ASP.NET Core unless they explicitly name another .NET backend stack."
+                "如果用户写 backend=Java 但未指定框架，将其规范化为 Java + Spring Boot，除非用户显式指定了不同的 Java 后端技术栈。",
+                "如果用户写 backend=Python 但未指定框架，对于服务/后端工作将其规范化为 Python + FastAPI，除非需求或用户显式指向 Django 风格的站点/管理/内容能力。",
+                "如果用户写 backend=Node.js 但未指定框架，在最终确认之前请求或总结具体的 Node.js 框架选择，如 Fastify、Express 或 NestJS。",
+                "如果用户写 backend=.NET 但未指定框架，将其规范化为 .NET + ASP.NET Core，除非用户显式指定了其他 .NET 后端技术栈。"
             ]
         },
         "recommendationPrinciples": [
-            "Prefer mainstream, maintainable, community-mature technologies.",
-            "Prefer technologies that match the confirmed product shape and implementation effort.",
-            "For Web UI, TypeScript is preferred unless the user chooses otherwise.",
-            "For small or medium local-first CRUD/admin systems, SQLite is a reasonable default unless the user needs a production multi-user database.",
-            "Prefer integrated fullstack options when they reduce orchestration cost and still satisfy the product need.",
-            "Respect explicit user technology choices even when they are outside common examples.",
-            "Avoid niche stacks unless the user asks for them or the requirement clearly needs them."
+            "优先选择主流、可维护、社区成熟的技术。",
+            "优先选择与已确认的产品形态和实现工作量匹配的技术。",
+            "对于 Web UI，除非用户另有选择，否则优先使用 TypeScript。",
+            "对于中小型本地优先 CRUD/管理系统，除非用户需要生产级多用户数据库，否则 SQLite 是合理的默认选择。",
+            "当集成式全栈选项能降低编排成本且仍满足产品需求时予以优先。",
+            "即使超出常见示例，也尊重用户的显式技术选择。",
+            "除非用户要求或需求明确需要，否则避免小众技术栈。"
         ],
         "replyProtocolForUser": {
             "acceptRecommendation": "确认推荐方案",
             "partialAdjustmentExample": "web=Vue+Vite, backend=Java+Spring Boot, persistence=PostgreSQL, dataAccess=Spring Data JPA, qualityAutomation=Playwright, app=不需要, externalServices=不需要",
             "fullCustomExample": "web=React+Vite, app=React Native+Expo, backend=Node.js+Fastify, persistence=SQLite, dataAccess=Prisma, qualityAutomation=Playwright, externalServices=不需要",
             "redisCapabilityExample": "externalServices=Redis，用于登录会话和后台任务；登录会话重启后保留，后台任务失败可重试",
-            "finalConfirmationPrompt": "When the user did not directly accept the recommendation, present a final technology baseline summary and ask them to reply 确认技术栈 or 修改: ..."
+            "finalConfirmationPrompt": "当用户未直接接受推荐时，呈现最终技术基线摘要并要求其回复 确认技术栈 或 修改: ..."
         }
     }))
 }
@@ -1337,21 +1236,21 @@ fn technical_baseline_protocol_fingerprint(
 
 fn confirmation_rules(has_previous_baseline: bool) -> Vec<&'static str> {
     let mut rules = vec![
-        "User requirement confirmation is not technology baseline confirmation.",
-        "If the user accepts the recommendation directly, that reply can be the final technology baseline confirmation.",
-        "If the user adjusts part of the stack or specifies a custom stack, summarize the final baseline and ask for final confirmation before writing the candidate.",
-        "Do not submit a confirmed candidate while any core track is ambiguous. Mark a track as not_applicable/not_needed only when the requirement or user confirmation supports that.",
-        "Write externalServices.providers[].capabilities as an array of objects with purpose, durability, and startupRequirement. Do not use an object keyed by session, cache, queue, or another capability role.",
-        "Build commands, local run commands, and deployment preparation are derived later. For a selected Web client, include qualityAutomation in the same baseline confirmation; do not reopen confirmation only to update test commands or runtime details.",
-        "JWT remains dormant. For same-origin browser work with an accepted Redis session capability, use the server_session profile and resolve identity/roles from the login session. Ask for an explicit security profile only when no deterministic session profile applies or the user requests another trust model.",
-        "A deferred_with_risk security requirement may be accepted without a security profile, but the current phase must not create authentication or JWT implementation work.",
+        "用户需求确认不等于技术基线确认。",
+        "如果用户直接接受推荐，该回复即可作为最终技术基线确认。",
+        "如果用户调整了部分技术栈或指定了自定义技术栈，在写入候选之前总结最终基线并请求最终确认。",
+        "当任何核心轨道不明确时不得提交已确认的候选。仅当需求或用户确认支持时才将轨道标记为 not_applicable/not_needed。",
+        "将 externalServices.providers[].capabilities 写入为包含 purpose、durability 和 startupRequirement 的对象数组。不得使用以 session、cache、queue 或其他能力角色为键的对象。",
+        "构建命令、本地运行命令和部署准备在后续派生。对于选中的 Web 客户端，在同一基线确认中包含 qualityAutomation；不得仅为更新测试命令或运行时细节而重新开启确认。",
+        "JWT 保持休眠。对于具有已接受 Redis 会话能力的同源浏览器工作，使用 server_session 配置并从登录会话解析身份/角色。仅当没有确定性会话配置适用或用户请求其他信任模型时才请求显式安全配置。",
+        "deferred_with_risk 安全需求可以在没有安全配置的情况下被接受，但当前阶段不得创建认证或 JWT 实现工作。",
     ];
     if has_previous_baseline {
         rules.extend([
-            "When a previous baseline exists, unchanged baseline reuse is the default for normal bugfix, repair, optimization, or feature work inside the existing stack.",
-            "Only a current confirmed scope that explicitly adds a new technology surface or replaces a previous baseline element needs explicit technology baseline confirmation.",
-            "Current repository scripts, test commands, build commands, start commands, generated files, or framework implementation nuances are implementation facts; do not treat them as user-facing technology baseline changes by themselves.",
-            "Preserve previous baseline tracks that the user did not confirm changing.",
+            "当先前基线存在时，对于现有技术栈内的常规修复、修缮、优化或功能工作，默认复用未更改的基线。",
+            "仅当当前已确认范围显式添加新技术界面或替换先前基线元素时才需要显式技术基线确认。",
+            "当前仓库的脚本、测试命令、构建命令、启动命令、生成文件或框架实现细节属于实现事实；不得将其本身视为面向用户的技术基线变更。",
+            "保留用户未确认更改的先前基线轨道。",
         ]);
     }
     rules
@@ -1397,7 +1296,7 @@ where
             vec![issue(
                 "TARGET_MISSING",
                 "candidate",
-                "No authorized TechnicalBaseline target was written.",
+                "未写入已授权的 TechnicalBaseline 目标。",
             )],
         ));
     };
@@ -1440,7 +1339,7 @@ where
                     vec![issue(
                         "TECHNICAL_BASELINE_SCHEMA_INVALID",
                         "candidate",
-                        &format!("TechnicalBaseline candidate JSON has an invalid schema: {error}"),
+                        &format!("TechnicalBaseline 候选 JSON 的 schema 无效：{error}"),
                     )],
                 ));
             }
@@ -1458,7 +1357,8 @@ where
         return Ok(technical_baseline_user_gate(
             input,
             authorized,
-            "Ask the user whether this phase continues an existing project or starts a new project, then rewrite the same candidate with the confirmed projectKind.".to_string(),
+            "询问用户本阶段是继续现有项目还是启动新项目，然后使用确认的 projectKind 重写同一候选。"
+                .to_string(),
             "project_kind_confirmation".to_string(),
         ));
     }
@@ -1468,7 +1368,7 @@ where
         return Ok(technical_baseline_user_gate(
             input,
             authorized,
-            "The technology baseline for a new project must be explicitly confirmed by the user before planning continues. Present the recommended stack, capture corrections, then rewrite the same candidate with approval.type=user_confirmed.".to_string(),
+            "新项目的技术基线在规划继续之前必须由用户明确确认。呈现推荐技术栈，捕获修正，然后使用 approval.type=user_confirmed 重写同一候选。".to_string(),
             "new_project_baseline_confirmation".to_string(),
         ));
     }
@@ -1481,7 +1381,7 @@ where
         return Ok(technical_baseline_user_gate(
             input,
             authorized,
-            "Authentication is in scope, but the structured facts do not determine a security profile. JWT remains dormant and is not a default. Ask the user to choose the authentication scenario or adjust the scope, then rewrite the same candidate before continuing.".to_string(),
+            "认证在范围内，但结构化事实无法确定安全配置。JWT 保持休眠且不是默认值。请求用户选择认证场景或调整范围，然后在继续之前重写同一候选。".to_string(),
             "security_profile_confirmation".to_string(),
         ));
     }
@@ -1492,7 +1392,8 @@ where
         return Ok(technical_baseline_user_gate(
             input,
             authorized,
-            "The technology baseline still requires explicit user confirmation. Present the baseline change or recommendation, then rewrite the same candidate with the confirmed baseline.".to_string(),
+            "技术基线仍需用户明确确认。呈现基线变更或推荐，然后使用已确认的基线重写同一候选。"
+                .to_string(),
             "technical_baseline_confirmation".to_string(),
         ));
     }
@@ -1511,7 +1412,7 @@ where
             return Ok(technical_baseline_user_gate(
                 input,
                 authorized,
-                "The proposed technology baseline changes an existing baseline. Present the previous baseline and proposed change to the user, then rewrite the same candidate with approval.type=user_confirmed after explicit confirmation.".to_string(),
+                "提议的技术基线变更了现有基线。向用户呈现先前基线和提议变更，然后在明确确认后使用 approval.type=user_confirmed 重写同一候选。".to_string(),
                 "previous_baseline_change_confirmation".to_string(),
             ));
         }
@@ -1648,7 +1549,7 @@ fn validate_candidate(
         issues.push(issue(
             "TECHNICAL_BASELINE_STACK_INVALID",
             "stack",
-            "stack must be a JSON object that describes the selected technology baseline.",
+            "stack 必须是描述所选技术基线的 JSON 对象。",
         ));
     }
     validate_external_services_track(&candidate.stack, &mut issues);
@@ -1659,7 +1560,7 @@ fn validate_candidate(
         issues.push(issue(
             "TECHNICAL_BASELINE_APPROVAL_INVALID",
             "approval.type",
-            "A confirmed TechnicalBaseline cannot keep approval.type=none.",
+            "已确认的 TechnicalBaseline 不得保留 approval.type=none。",
         ));
     }
     if matches!(candidate.project_kind, ProjectKind::NewProject) {
@@ -1685,7 +1586,7 @@ fn validate_security_profiles(
         issues.push(issue(
             "TECHNICAL_BASELINE_SECURITY_PROFILE_UNEXPECTED",
             "securityProfiles",
-            "securityProfiles must be empty when the accepted security requirement is not_applicable.",
+            "当已接受的安全需求为 not_applicable 时 securityProfiles 必须为空。",
         ));
         return;
     }
@@ -1699,7 +1600,7 @@ fn validate_security_profiles(
         issues.push(issue(
             "TECHNICAL_BASELINE_PROTECTED_PROFILE_REQUIRED",
             "securityProfiles",
-            "A required or optional security requirement must include a supported non-none security profile. Same-origin browser sessions backed by an accepted Redis session use server_session; bearer_jwt remains explicit opt-in.",
+            "required 或 optional 的安全需求必须包含受支持的非 none 安全配置。由已接受 Redis 会话支持的同源浏览器会话使用 server_session；bearer_jwt 保持显式选入。",
         ));
     }
     let mut profile_ids = BTreeSet::new();
@@ -1709,14 +1610,14 @@ fn validate_security_profiles(
             issues.push(issue(
                 "TECHNICAL_BASELINE_SECURITY_PROFILE_ID_INVALID",
                 &format!("{path}.profileId"),
-                "Every security profile needs a unique non-empty profileId.",
+                "每个安全配置需要唯一且非空的 profileId。",
             ));
         }
         if profile.name.trim().is_empty() || profile.rationale.trim().is_empty() {
             issues.push(issue(
                 "TECHNICAL_BASELINE_SECURITY_PROFILE_DESCRIPTION_REQUIRED",
                 &path,
-                "Every security profile needs a non-empty name and rationale.",
+                "每个安全配置需要非空的 name 和 rationale。",
             ));
         }
         match profile.mechanism {
@@ -1728,7 +1629,7 @@ fn validate_security_profiles(
                     issues.push(issue(
                         "TECHNICAL_BASELINE_SECURITY_PROFILE_NONE_INVALID",
                         &path,
-                        "A none security profile must not declare an algorithm, key material, or a transport.",
+                        "none 安全配置不得声明算法、密钥材料或传输方式。",
                     ));
                 }
             }
@@ -1745,7 +1646,7 @@ fn validate_security_profiles(
                     issues.push(issue(
                         "TECHNICAL_BASELINE_SERVER_SESSION_PROFILE_INVALID",
                         &path,
-                        "A server_session profile is valid only for same-origin browser requirements with an accepted Redis session capability; it must use same_origin_cookie and must not declare token algorithms or issuer/audience/claim fields.",
+                        "server_session 配置仅对具有已接受 Redis 会话能力的同源浏览器需求有效；它必须使用 same_origin_cookie 且不得声明令牌算法或 issuer/audience/claim 字段。",
                     ));
                 }
             }
@@ -1754,7 +1655,7 @@ fn validate_security_profiles(
                     issues.push(issue(
                         "TECHNICAL_BASELINE_SECURITY_ALGORITHM_REQUIRED",
                         &format!("{path}.algorithm"),
-                        "A bearer JWT profile must explicitly select one signing algorithm.",
+                        "bearer JWT 配置必须显式选择一个签名算法。",
                     ));
                 }
                 if matches!(profile.key_source, SecurityKeySource::NotApplicable)
@@ -1763,7 +1664,7 @@ fn validate_security_profiles(
                     issues.push(issue(
                         "TECHNICAL_BASELINE_SECURITY_PROFILE_BOUNDARY_REQUIRED",
                         &path,
-                        "A bearer JWT profile must declare a key source and transport.",
+                        "bearer JWT 配置必须声明密钥来源和传输方式。",
                     ));
                 }
                 if profile
@@ -1776,7 +1677,7 @@ fn validate_security_profiles(
                     issues.push(issue(
                         "TECHNICAL_BASELINE_JWT_CLAIMS_INCOMPLETE",
                         &path,
-                        "A bearer JWT profile must declare issuer, at least one audience, and the subject claim before it can be used by an API contract.",
+                        "bearer JWT 配置在被 API 合约使用之前必须声明 issuer、至少一个 audience 和 subject 声明。",
                     ));
                 }
             }
@@ -1801,7 +1702,7 @@ fn validate_external_services_track(stack: &Value, issues: &mut Vec<delivery_cor
         issues.push(issue(
             "TECHNICAL_BASELINE_EXTERNAL_SERVICES_UNSTRUCTURED",
             "stack.tracks.externalServices.providers",
-            "A selected externalServices track must include at least one provider with one or more structured capability roles, each declaring purpose, durability, and startupRequirement.",
+            "选中的 externalServices 轨道必须包含至少一个具有一个或多个结构化能力角色的 provider，每个角色声明 purpose、durability 和 startupRequirement。",
         ));
     }
     if let Some(providers) = track.get("providers").and_then(Value::as_array) {
@@ -1822,7 +1723,7 @@ fn validate_external_services_track(stack: &Value, issues: &mut Vec<delivery_cor
                     issues.push(issue(
                         "TECHNICAL_BASELINE_EXTERNAL_SERVICE_PROVIDER_DUPLICATE",
                         &format!("{provider_path}.provider"),
-                        "Each external service provider may appear once; combine its capability roles in one providers entry so MCP can derive one stable runtime dependency.",
+                        "每个外部服务 provider 只能出现一次；将其能力角色合并在一个 providers 条目中，以便 MCP 派生一个稳定的运行时依赖。",
                     ));
                 }
             }
@@ -1831,7 +1732,7 @@ fn validate_external_services_track(stack: &Value, issues: &mut Vec<delivery_cor
                     issues.push(issue(
                         "TECHNICAL_BASELINE_EXTERNAL_SERVICE_FIELD_UNKNOWN",
                         &format!("{provider_path}.{field}"),
-                        "TechnicalBaseline external service providers may only declare provider and capabilities; MCP derives dependency identity and operational fields belong to Architecture.",
+                        "TechnicalBaseline 外部服务 provider 只能声明 provider 和 capabilities；MCP 派生依赖标识，操作字段归属于 Architecture。",
                     ));
                 }
             }
@@ -1853,7 +1754,7 @@ fn validate_external_services_track(stack: &Value, issues: &mut Vec<delivery_cor
                             issues.push(issue(
                                 "TECHNICAL_BASELINE_EXTERNAL_SERVICE_PURPOSE_DUPLICATE",
                                 &format!("{capability_path}.purpose"),
-                                "Each provider may declare a capability purpose once; merge duplicate role entries before accepting the TechnicalBaseline.",
+                                "每个 provider 只能声明一个能力 purpose 一次；在接受 TechnicalBaseline 之前合并重复的角色条目。",
                             ));
                         }
                     }
@@ -1865,7 +1766,7 @@ fn validate_external_services_track(stack: &Value, issues: &mut Vec<delivery_cor
                             issues.push(issue(
                                 "TECHNICAL_BASELINE_CAPABILITY_FIELD_UNKNOWN",
                                 &format!("{capability_path}.{field}"),
-                                "TechnicalBaseline capability roles may only declare purpose, durability, and startupRequirement; consumer, failure, recovery, and observability fields are not part of this contract.",
+                                "TechnicalBaseline 能力角色只能声明 purpose、durability 和 startupRequirement；consumer、failure、recovery 和 observability 字段不属于此合约。",
                             ));
                         }
                     }
@@ -1904,7 +1805,7 @@ fn validate_new_project_candidate(
         issues.push(issue(
             "NEW_PROJECT_BASELINE_CONFIRMATION_REQUIRED",
             "approval.confirmedAt",
-            "New-project TechnicalBaseline with approval.type=user_confirmed must include the actual user confirmation timestamp.",
+            "具有 approval.type=user_confirmed 的新项目 TechnicalBaseline 必须包含实际的用户确认时间戳。",
         ));
     }
     if !matches!(
@@ -1914,14 +1815,14 @@ fn validate_new_project_candidate(
         issues.push(issue(
             "NEW_PROJECT_BASELINE_CONFIRMATION_REQUIRED",
             "status",
-            "New-project TechnicalBaseline must be confirmed before planning, or use status=needs_user_confirmation when user confirmation is still pending.",
+            "新项目 TechnicalBaseline 在规划之前必须被确认，或当用户确认仍待定时使用 status=needs_user_confirmation。",
         ));
     }
     if !new_project_stack_tracks_complete(&candidate.stack) {
         issues.push(issue(
             "NEW_PROJECT_BASELINE_TRACKS_INCOMPLETE",
             "stack.tracks",
-            "New-project TechnicalBaseline stack.tracks must include web, app, backend, persistence, dataAccess, and externalServices; each track needs a valid status and non-empty selection. A selected externalServices track must provide structured providers and capability roles.",
+            "新项目 TechnicalBaseline 的 stack.tracks 必须包含 web、app、backend、persistence、dataAccess 和 externalServices；每个轨道需要有效的 status 和非空 selection。选中的 externalServices 轨道必须提供结构化 providers 和能力角色。",
         ));
     }
     if new_project_web_selected(&candidate.stack)
@@ -1930,7 +1831,7 @@ fn validate_new_project_candidate(
         issues.push(issue(
             "NEW_PROJECT_QUALITY_AUTOMATION_INCOMPLETE",
             "stack.tracks.qualityAutomation",
-            "New-project Web baselines must include a selected qualityAutomation track with a concrete browser automation stack.",
+            "新项目 Web 基线必须包含具有具体浏览器自动化技术栈的已选中 qualityAutomation 轨道。",
         ));
     }
     if let Some(compatibility_issue) = backend_data_access_compatibility_issue(&candidate.stack) {
@@ -1952,10 +1853,12 @@ fn backend_data_access_compatibility_issue(stack: &Value) -> Option<delivery_cor
     {
         return None;
     }
-    let compatible_options = BACKEND_ECOSYSTEMS
+    let catalog = reference_catalog::vendor_catalog();
+    let compatible_options = catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| backend_families.contains(ecosystem.runtime_family))
-        .flat_map(|ecosystem| ecosystem.data_access_options.iter().copied())
+        .filter(|ecosystem| backend_families.contains(&ecosystem.runtime_family))
+        .flat_map(|ecosystem| ecosystem.data_access_options.iter().cloned())
         .collect::<BTreeSet<_>>()
         .into_iter()
         .collect::<Vec<_>>()
@@ -1964,7 +1867,7 @@ fn backend_data_access_compatibility_issue(stack: &Value) -> Option<delivery_cor
         "NEW_PROJECT_BACKEND_DATA_ACCESS_INCOMPATIBLE",
         "stack.tracks.dataAccess.selection",
         &format!(
-            "backend selection '{backend}' and dataAccess selection '{data_access}' belong to different known runtime ecosystems. Use a compatible option such as {compatible_options}, or provide a genuinely custom data-access selection whose relationship can be explained during confirmation."
+            "backend 选择 '{backend}' 与 dataAccess 选择 '{data_access}' 属于不同的已知运行时生态系统。使用兼容选项如 {compatible_options}，或提供可在确认期间解释其关系的真正自定义数据访问选择。"
         ),
     ))
 }
@@ -1984,26 +1887,30 @@ fn active_track_selection<'a>(stack: &'a Value, track: &str) -> Option<&'a str> 
         .filter(|selection| !selection.is_empty())
 }
 
-fn backend_runtime_families(selection: &str) -> BTreeSet<&'static str> {
-    BACKEND_ECOSYSTEMS
+fn backend_runtime_families(selection: &str) -> BTreeSet<String> {
+    let catalog = reference_catalog::vendor_catalog();
+    catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| technology_matches_any(selection, ecosystem.backend_matchers))
-        .map(|ecosystem| ecosystem.runtime_family)
+        .filter(|ecosystem| technology_matches_any(selection, &ecosystem.backend_matchers))
+        .map(|ecosystem| ecosystem.runtime_family.clone())
         .collect()
 }
 
-fn data_access_runtime_families(selection: &str) -> BTreeSet<&'static str> {
-    BACKEND_ECOSYSTEMS
+fn data_access_runtime_families(selection: &str) -> BTreeSet<String> {
+    let catalog = reference_catalog::vendor_catalog();
+    catalog
+        .backend_ecosystems()
         .iter()
-        .filter(|ecosystem| technology_matches_any(selection, ecosystem.data_access_matchers))
-        .map(|ecosystem| ecosystem.runtime_family)
+        .filter(|ecosystem| technology_matches_any(selection, &ecosystem.data_access_matchers))
+        .map(|ecosystem| ecosystem.runtime_family.clone())
         .collect()
 }
 
-fn technology_matches_any(selection: &str, matchers: &[&str]) -> bool {
+fn technology_matches_any<S: AsRef<str>>(selection: &str, matchers: &[S]) -> bool {
     let selection = format!(" {} ", normalize_technology_phrase(selection));
     matchers.iter().any(|matcher| {
-        let matcher = format!(" {} ", normalize_technology_phrase(matcher));
+        let matcher = format!(" {} ", normalize_technology_phrase(matcher.as_ref()));
         selection.contains(&matcher)
     })
 }
@@ -2134,22 +2041,22 @@ fn technical_baseline_decision_needs(
 ) -> Vec<String> {
     if matches!(project_kind, ProjectKind::NewProject) {
         return vec![
-            "web client technology track when applicable".to_string(),
-            "app client technology track when applicable".to_string(),
-            "backend/service technology track".to_string(),
-            "database or persistence technology track".to_string(),
-            "ORM or data access technology track".to_string(),
-            "external services only when required by the confirmed requirement".to_string(),
-            "browser quality automation when a Web client is selected".to_string(),
+            "适用时的 web 客户端技术轨道".to_string(),
+            "适用时的 app 客户端技术轨道".to_string(),
+            "backend/服务技术轨道".to_string(),
+            "数据库或持久化技术轨道".to_string(),
+            "ORM 或数据访问技术轨道".to_string(),
+            "仅当已确认需求需要时的外部服务".to_string(),
+            "选中 Web 客户端时的浏览器质量自动化".to_string(),
         ];
     }
     if baseline_exists {
         return vec![
-            "whether the current confirmed scope explicitly adds a new technology surface"
+            "当前已确认范围是否显式添加新技术界面"
                 .to_string(),
-            "whether the current confirmed scope explicitly replaces a previous technology baseline element"
+            "当前已确认范围是否显式替换先前的技术基线元素"
                 .to_string(),
-            "otherwise reuse the previous TechnicalBaseline unchanged for normal bugfix, repair, optimization, or feature work inside the existing stack"
+            "否则对于现有技术栈内的常规修复、修缮、优化或功能工作，原样复用先前的 TechnicalBaseline"
                 .to_string(),
         ];
     }
@@ -2157,10 +2064,9 @@ fn technical_baseline_decision_needs(
         return vec!["confirm_project_kind".to_string()];
     }
     vec![
-        "current repository runtime, language, framework, and package-manager evidence".to_string(),
-        "current repository persistence or data-access evidence when present".to_string(),
-        "confirmed requirement technology preferences, if the user explicitly provided any"
-            .to_string(),
+        "当前仓库的运行时、语言、框架和包管理器证据".to_string(),
+        "当前仓库的持久化或数据访问证据（如存在）".to_string(),
+        "已确认需求的技术偏好（如果用户显式提供了）".to_string(),
     ]
 }
 
@@ -2476,7 +2382,7 @@ fn ensure_latest_request(
     if delivery.active_phase_id != phase_id {
         return Ok(Some(stale_failure(
             project_root,
-            "TechnicalBaseline submit must bind to the active phase.".to_string(),
+            "TechnicalBaseline 提交必须绑定到活动阶段。".to_string(),
         )));
     }
     let Some(phase) = delivery
@@ -2486,13 +2392,13 @@ fn ensure_latest_request(
     else {
         return Ok(Some(stale_failure(
             project_root,
-            format!("delivery {} is missing phase {}", delivery_id, phase_id),
+            format!("交付 {} 缺少阶段 {}", delivery_id, phase_id),
         )));
     };
     if phase.latest_refs.get(latest_ref_key).map(String::as_str) != Some(request_ref) {
         return Ok(Some(stale_failure(
             project_root,
-            "TechnicalBaseline submit must use the active phase latest requestRef.".to_string(),
+            "TechnicalBaseline 提交必须使用活动阶段的最新 requestRef。".to_string(),
         )));
     }
     Ok(None)
@@ -2525,7 +2431,7 @@ fn technical_baseline_recommendation_gate(
         request_ref,
         delivery_id,
         phase_id,
-        "Present the recommended technology baseline and complete adjustable option matrix to the user. Wait for explicit confirmation or adjustments; after confirmation, write and submit the same TechnicalBaseline candidate request.".to_string(),
+        "向用户呈现推荐的技术基线和完整的可调整选项矩阵。等待明确确认或调整；确认后写入并提交同一 TechnicalBaseline 候选请求。".to_string(),
         "new_project_baseline_confirmation".to_string(),
     )
 }
@@ -2664,11 +2570,11 @@ mod tests {
         assert!(guidance["renderingRule"]
             .as_str()
             .unwrap()
-            .contains("Do not present an independent flat dataAccess option list"));
+            .contains("不得呈现独立的扁平 dataAccess 选项列表"));
         assert!(guidance["optionEnumerationRule"]
             .as_str()
             .unwrap()
-            .contains("every recommendedDataAccessOptions entry"));
+            .contains("每个 recommendedDataAccessOptions 条目"));
     }
 
     #[test]
@@ -2762,7 +2668,7 @@ mod tests {
         assert!(guidance["activationRule"]
             .as_str()
             .expect("activation rule")
-            .contains("explicit opt-in"));
+            .contains("显式选入"));
     }
 
     #[test]

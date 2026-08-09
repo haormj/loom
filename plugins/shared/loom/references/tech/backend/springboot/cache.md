@@ -1,26 +1,26 @@
-# Spring Boot Cache Implementation
+# Spring Boot 缓存实现
 
-Spring Cache is an optimization around an owned source of truth. It must not become an implicit second source of truth or change authorization and business semantics.
+Spring Cache 是围绕已拥有真值来源的优化。它不得成为隐式的第二真值来源或改变授权和业务语义。
 
-## Cache Contract
+## 缓存契约
 
-Define before adding annotations:
+在添加注解之前定义：
 
-- source of truth
-- cache name and owner
-- key shape and tenant/actor scope
-- cached value shape
-- freshness/TTL expectation
-- mutation invalidation or update behavior
-- null, not-found, and error caching policy
-- provider-unavailable behavior
-- sensitive-data restrictions
+- 真值来源
+- 缓存名和归属
+- 键形态和 tenant/actor scope
+- 缓存值形态
+- 新鲜度/TTL 预期
+- 变更失效或更新行为
+- null、not-found 和错误缓存策略
+- provider 不可用行为
+- 敏感数据限制
 
-No cache is required merely because Spring Boot supports one.
+仅因为 Spring Boot 支持缓存不需要缓存。
 
-## Key Design
+## 键设计
 
-Prefer explicit, stable keys over default argument serialization.
+优先使用显式稳定键而非默认参数序列化。
 
 ```java
 @Cacheable(cacheNames = "order-summary", key = "#tenantId + ':' + #orderId", sync = true)
@@ -29,53 +29,53 @@ public OrderSummary findSummary(String tenantId, UUID orderId) {
 }
 ```
 
-Include every dimension that changes authorization or result content. Do not share entries across tenants, locales, permission scopes, or query filters unintentionally. Avoid mutable objects and JPA entities as cached values; use immutable DTOs/read models.
+包含每个改变授权或结果内容的维度。不要无意间跨 tenant、locale、权限 scope 或查询过滤器共享条目。避免将可变对象和 JPA 实体作为缓存值；使用不可变 DTO/读模型。
 
-## Invalidation And Transaction Timing
+## 失效与事务时序
 
-Mutation and cache timing must agree:
+变更和缓存时序必须一致：
 
-- evict/update only after a successful commit when cached data reflects database state
-- invalidate all keys affected by a mutation, including list/query caches
-- define behavior for bulk updates and external writers
-- avoid `allEntries = true` unless the cache is small and globally invalidated by design
+- 当缓存数据反映数据库状态时，仅在成功提交之后驱逐/更新
+- 使变更影响的所有键失效，包括列表/查询缓存
+- 定义批量更新和外部写入器的行为
+- 除非缓存小且按设计全局失效，否则避免 `allEntries = true`
 
-Spring proxy rules apply to cache annotations. Same-class self-invocation bypasses caching. Annotation ordering with transactions can expose uncommitted or rolled-back data if eviction/update happens at the wrong boundary.
+Spring 代理规则适用于缓存注解。同类自调用绕过缓存。注解与事务的排序可能在错误边界驱逐/更新时暴露未提交或回滚的数据。
 
-Prefer simple cache-aside behavior. `@CachePut` is useful only when the returned value exactly represents committed cache state. Do not combine `@Cacheable` and `@CachePut` on the same method without a proven condition model.
+优先使用简单的 cache-aside 行为。`@CachePut` 仅在返回值精确表示已提交缓存状态时有用。在没有经过验证的条件模型时不要在同一方法上组合 `@Cacheable` 和 `@CachePut`。
 
-## Freshness And Provider Behavior
+## 新鲜度与 Provider 行为
 
-Configure TTL and capacity through the selected provider and typed runtime properties. Do not hardcode provider-specific settings into business code.
+通过所选 provider 和类型化运行时属性配置 TTL 和容量。不要在业务代码中硬编码 provider 特定设置。
 
-For distributed caches, define serialization compatibility, key namespace/versioning, network timeout, and behavior during partial outage. For local caches, define per-instance staleness and memory bounds.
+对于分布式缓存，定义序列化兼容性、键 namespace/版本控制、网络超时和部分中断期间的行为。对于本地缓存，定义每实例陈旧度和内存限制。
 
-`sync = true` can reduce same-key stampedes within one cache manager; it is not a distributed lock. Expensive or high-contention loads may require provider-specific request coalescing or a different read model.
+`sync = true` 可以在一个缓存管理器内减少同键并发请求；它不是分布式锁。昂贵或高争用负载可能需要 provider 特定的请求合并或不同的读模型。
 
-Do not cache exceptions by accident. Decide whether a not-found result is cacheable and for how long; negative caching can hide newly created data.
+不要意外缓存异常。决定 not-found 结果是否可缓存以及缓存多久；负缓存可能隐藏新创建的数据。
 
-## Security And Privacy
+## 安全与隐私
 
-Never cache raw credentials, bearer tokens, or unrestricted entities containing sensitive fields. Authorization must run before returning a cached value unless the cache key and cached object are explicitly scoped to the authorized principal/tenant.
+切勿缓存原始凭证、bearer token 或包含敏感字段的无限制实体。除非缓存键和缓存对象显式 scope 到已授权 principal/tenant，否则授权必须在返回缓存值之前运行。
 
 ## Verification Focus
 
-Useful cache evidence includes:
+有用的缓存证据包括：
 
-- miss then hit behavior with the same key
-- separation of tenant/actor/filter keys
-- invalidation or update after a committed mutation
-- rollback leaves the prior cache state intact
-- TTL/freshness behavior where owned
-- null/not-found/error policy
-- concurrent same-key loading behavior
-- provider-unavailable fallback without corrupting the source of truth
+- 同一键的未命中然后命中行为
+- tenant/actor/过滤器键的分离
+- 已提交变更之后的失效或更新
+- 回滚保留先前的缓存状态
+- 拥有时的 TTL/新鲜度行为
+- null/not-found/错误策略
+- 并发同键加载行为
+- provider 不可用回退而不损坏真值来源
 
-## Unsafe Defaults
+## 不安全默认
 
-- `@Cacheable` with an implicit key on a security-sensitive query.
-- Caching JPA entities or mutable collections.
-- Evicting before a transaction commits.
-- Global cache clears after every write.
-- Introducing Redis or Caffeine without a selected provider/runtime dependency.
-- Treating cache availability as a prerequisite when the accepted design says it is optional.
+- 在安全敏感查询上使用隐式键的 `@Cacheable`。
+- 缓存 JPA 实体或可变集合。
+- 在事务提交之前驱逐。
+- 每次写入后全局缓存清除。
+- 在没有所选 provider/运行时依赖的情况下引入 Redis 或 Caffeine。
+- 当已接受设计说它可选时将缓存可用性视为前提。

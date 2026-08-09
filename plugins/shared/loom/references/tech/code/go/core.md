@@ -1,95 +1,95 @@
-# Go Application And Package Delivery
+# Go 应用与包交付
 
 ## When To Use
 
-Use this reference for task-owned Go application, service, handler, worker, CLI, library, or domain code. Preserve the module's declared Go/toolchain version, package conventions, error/context policy, generated-code boundaries, and exported API compatibility.
+此参考用于任务拥有的 Go 应用、服务、处理器、worker、CLI、库或领域代码。保留模块声明的 Go/toolchain 版本、包约定、错误/context 策略、生成代码边界和导出 API 兼容性。
 
-Concurrency, dependency interfaces, generics, module structure, and testing are selected separately.
+并发、依赖接口、泛型、模块结构和测试单独选择。
 
 ## Implementation Focus
 
 ### Errors And Control Flow
 
-Return errors for recoverable business, validation, I/O, network, persistence, and configuration failures. Reserve panic for impossible programmer/runtime initialization invariants where process failure is intentional.
+为可恢复的业务、验证、I/O、网络、持久化和配置失败返回错误。仅在进程失败是有意的情况下，为不可能的编程/运行时初始化不变式保留 panic。
 
-Wrap with `%w` only when callers should inspect the cause. Use `errors.Is`/`errors.As` against sentinel or typed errors; do not parse message strings or lose causes through `%v`/new text.
+仅当调用者应检查原因时用 `%w` 包装。对哨兵或类型化错误使用 `errors.Is`/`errors.As`；不要解析消息字符串或通过 `%v`/新文本丢失原因。
 
-Add concise operation/resource context without logging/re-wrapping at every layer. Keep user/API error translation at the owning boundary and prevent secrets/provider details from escaping.
+添加简洁的操作/资源上下文，而不在每层记录/重新包装。在拥有边界保持用户/API 错误转换并防止密钥/提供者详情泄露。
 
-When several independent failures must be retained, use the repository's multi-error policy or `errors.Join` with clear caller semantics rather than returning only the last failure.
+当必须保留多个独立失败时，使用仓库的多错误策略或 `errors.Join` 并具有清晰的调用者语义，而非仅返回最后一个失败。
 
-Check cleanup/write/close errors when they can change durability or correctness. Deferred error handling must not silently overwrite or discard a prior error.
+当清理/写入/关闭错误可能影响持久性或正确性时检查它们。延迟错误处理不得静默覆盖或丢弃先前错误。
 
 ### Context And Cancellation
 
-Pass `context.Context` as the first parameter to blocking/request/job operations and forward it into DB/HTTP/files/queues/waits. Do not store request contexts in structs or use `context.Background` to escape caller cancellation.
+将 `context.Context` 作为阻塞/请求/作业操作的第一个参数传递并转发到 DB/HTTP/文件/队列/等待。不要将请求 context 存储在结构体中或使用 `context.Background` 逃避调用者取消。
 
-Derive timeouts/deadlines at the boundary that owns the budget and always call cancel. Preserve cancellation/deadline classification and stop new side effects after cancellation.
+在拥有预算的边界派生超时/截止时间并始终调用 cancel。保留取消/截止时间分类并在取消后停止新副作用。
 
-Do not add context to pure CPU/value helpers solely for consistency; use explicit cancellation where long computation genuinely needs it.
+不要仅为一致性将 context 添加到纯 CPU/值辅助函数；在长时间计算确实需要时使用显式取消。
 
 ### Values, Pointers, And Ownership
 
-Prefer useful zero values when they are safe. Validate required config/dependencies/business fields in constructors/startup rather than making a dangerous zero value appear usable.
+当安全时优先使用有用的零值。在构造函数/启动时验证必需的配置/依赖/业务字段，而非使危险的零值看起来可用。
 
-Use pointers when mutation, identity, nil, or copy cost/semantics require them. Avoid pointer-to-interface and pointer fields merely to distinguish omitted input when a dedicated DTO/optional representation is clearer.
+当变更、标识、nil 或拷贝成本/语义需要时使用指针。当专用 DTO/可选表示更清晰时，避免仅为区分省略输入而使用指向接口的指针和指针字段。
 
-Copy structs containing mutexes, atomics, no-copy resources, large buffers, or internal pointers only with explicit semantics. Choose receiver type consistently based on mutation/size/identity/interface method sets.
+仅在有显式语义时拷贝包含 mutex、atomic、不可拷贝资源、大缓冲区或内部指针的结构体。基于变更/大小/标识/接口方法集一致地选择接收者类型。
 
-Slices/maps/channels/functions/interfaces are reference-like descriptors; copying them does not deep-copy data. Define ownership when retaining caller buffers/maps/slices or returning internal mutable storage.
+Slice/map/channel/function/interface 是类引用描述符；拷贝它们不会深拷贝数据。在保留调用者缓冲区/map/slice 或返回内部可变存储时定义所有权。
 
 ### Collections And Iteration
 
-Preallocate slices/maps when a reliable bound is known, without retaining attacker-controlled/huge capacity. Preserve nil versus empty semantics only when API/encoding/storage contracts distinguish them.
+当已知可靠边界时预分配 slice/map，不保留攻击者控制/巨大容量。仅在 API/编码/存储契约区分时保留 nil 与空语义。
 
-Map iteration order is unspecified. Sort keys or use an ordered representation when output, hashing, tests, pagination, or user display requires determinism.
+Map 迭代顺序未指定。当输出、哈希、测试、分页或用户显示需要确定性时排序键或使用有序表示。
 
-Avoid mutating shared slices/maps concurrently and account for append reallocation/aliasing. Clone at ownership boundaries when independent mutation is required.
+避免并发变更共享 slice/map 并考虑 append 重新分配/别名。在所有权边界需要独立变更时克隆。
 
 ### Resource Lifecycle
 
-Close response bodies, rows, files, streams, timers, tickers, subscriptions, and processes at the owner. Check iteration/scan/final errors (`rows.Err`, scanner errors, command wait) after loops.
+在所有者处关闭响应体、行、文件、流、定时器、ticker、订阅和进程。在循环后检查迭代/扫描/最终错误（`rows.Err`、scanner 错误、command wait）。
 
-Defer cleanup after successful acquisition, not before checking errors. For long loops, explicit per-iteration cleanup may be safer than accumulating defers until function return.
+在成功获取后延迟清理，而非在检查错误之前。对于长循环，显式的每次迭代清理可能比积累 defer 直到函数返回更安全。
 
-Keep HTTP clients/transports, DB pools, and other concurrency-safe pools long-lived; do not recreate them per operation.
+保持 HTTP 客户端/传输、DB 池和其他并发安全池长生命；不要每次操作重建它们。
 
 ### Boundaries And Data
 
-Validate and normalize external JSON/form/query/header/env/file/message input before domain use. Configure decoder unknown-field, number, size, and trailing-data behavior according to the accepted contract.
+在领域使用之前验证和规范化外部 JSON/form/query/header/env/file/message 输入。根据已接受契约配置解码器未知字段、数字、大小和尾数据行为。
 
-Use `time.Time`/`time.Duration`, decimal/money/domain types, URLs/paths, and integer widths according to wire/storage/business semantics. Avoid bare integer duration and float money.
+根据线上/存储/业务语义使用 `time.Time`/`time.Duration`、十进制/货币/领域类型、URL/路径和整数宽度。避免裸整数持续时间和浮点货币。
 
-Parameterize SQL and allowlist dynamic identifiers/order fields. Use `io.Reader`/`Writer` streaming with explicit size limits for untrusted or large payloads.
+参数化 SQL 并允许动态标识符/排序字段。对不可信或大载荷使用 `io.Reader`/`Writer` 流式处理并具有显式大小限制。
 
 ### Configuration, Logging, And Exported APIs
 
-Load and validate configuration at startup/composition boundaries. Distinguish missing/empty/invalid values and avoid silent localhost/insecure production fallback.
+在启动/组合边界加载和验证配置。区分缺失/空/无效值并避免静默本地/不安全的生产回退。
 
-Use structured logging at ownership boundaries without tokens, credentials, personal/sensitive payloads, or full environment dumps.
+在所有权边界使用结构化日志，不包含令牌、凭据、个人/敏感载荷或完整环境转储。
 
-Export the smallest stable API. Document contract when repository/public package policy requires it and avoid leaking internal provider/framework types across package boundaries.
+导出最小的稳定 API。当仓库/公共包策略要求时记录契约，并避免跨包边界泄露内部提供者/框架类型。
 
-Maintain backward source/behavior/serialization compatibility for published modules unless the accepted change owns a breaking version.
+为已发布模块保持向后源码/行为/序列化兼容性，除非已接受的变更拥有破坏性版本。
 
 ## Verification Focus
 
-- Run focused `go test`, `go vet`, configured lint, and build for affected packages/binaries under the declared Go version.
-- Test wrapped error classification, invalid/boundary input, context cancellation/deadline, resource cleanup, and deterministic output.
-- Exercise nil/empty/aliasing/map-order and serialization behavior where contract-visible.
-- Run race/runtime checks when retained mutable data or lifecycle ownership changes.
-- Verify config startup failure and exported/public consumer behavior when changed.
+- 在声明的 Go 版本下为受影响的包/二进制文件运行聚焦的 `go test`、`go vet`、配置的 lint 和构建。
+- 测试包装错误分类、无效/边界输入、context 取消/截止时间、资源清理和确定性输出。
+- 在契约可见处演练 nil/空/别名/map 顺序和序列化行为。
+- 当保留的可变数据或生命周期所有权变更时运行竞争/运行时检查。
+- 变更时验证配置启动失败和导出/公共消费者行为。
 
 ## Evidence Focus
 
-Name the error/context/resource/data ownership decision and public assertion/tool result. `gofmt` or a successful compile does not prove cancellation, cleanup, aliasing, deterministic output, or boundary validation.
+说明错误/context/资源/数据所有权决策和公共断言/工具结果。`gofmt` 或成功编译不证明取消、清理、别名、确定性输出或边界验证。
 
 ## Unsafe Defaults
 
-- Panic for runtime/business/validation failure.
-- Error cause lost or message parsed for control flow.
-- Context stored on structs or replaced with Background mid-flow.
-- Caller/internal mutable slices/maps retained without ownership policy.
-- Map order relied on for stable behavior.
-- Response/rows/process/cleanup errors ignored.
-- Required configuration accepted through unsafe zero values.
+- 对运行时/业务/验证失败使用 panic。
+- 错误原因丢失或为控制流解析消息。
+- Context 存储在结构体上或在流程中途替换为 Background。
+- 调用者/内部可变 slice/map 在没有所有权策略的情况下被保留。
+- 依赖 map 顺序获得稳定行为。
+- 响应/行/进程/清理错误被忽略。
+- 通过不安全的零值接受必需配置。

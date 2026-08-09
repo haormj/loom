@@ -1,31 +1,31 @@
-# Next.js Data Fetching And Freshness
+# Next.js 数据获取与新鲜度
 
-Apply data guidance when the task owns an API/server data binding, client reactive flow, or accepted full-stack persistence read. Choose freshness, cache, streaming, and client ownership from business lifecycle rather than Next.js defaults or external examples.
+当任务拥有 API/服务端数据绑定、客户端响应式流或已接受的全栈持久化读取时应用数据指导。从业务生命周期而非 Next.js 默认值或外部示例选择新鲜度、缓存、流式传输和客户端所有权。
 
-## Data Ownership
+## 数据所有权
 
-Preserve the accepted boundary:
+保留已接受的边界：
 
-- call the authoritative backend interface when architecture separates frontend/backend
-- use server-only repository/data helpers only when full-stack Next owns persistence
-- use client data libraries only for browser-owned refresh/polling/optimistic workflows
-- never duplicate the same source of truth across server fetch, client effect, and store without reconciliation
+- 当架构分离前端/后端时，调用权威的后端接口
+- 仅当全栈 Next 拥有持久化时使用仅服务端 repository/数据助手
+- 仅用于浏览器拥有的刷新/轮询/乐观工作流时使用客户端数据库
+- 永不在无协调的情况下跨服务端 fetch、客户端 effect 和 store 重复同一真相来源
 
-Enforce auth/tenant/ownership at the server/data boundary. Do not pass database clients/secrets/entities into Client Components.
+在服务端/数据边界执行 auth/租户/所有权。不要将数据库 client/密钥/实体传递到 Client Component。
 
-## Freshness And Cache Policy
+## 新鲜度与缓存策略
 
-Make each read's policy explicit: dynamic/no-store, cached/static, time revalidation, tag/path invalidation, or client stale-while-revalidate.
+使每次读取的策略显式：dynamic/no-store、cached/static、time revalidation、tag/path invalidation 或 client stale-while-revalidate。
 
-Use the selected Next version's fetch/cache APIs; semantics changed across versions. Do not assume implicit fetch caching. Define cache key dimensions, user/tenant variation, invalidation triggers, stale tolerance, and failure behavior.
+使用所选 Next 版本的 fetch/cache API；语义跨版本变化。不要假设隐式 fetch 缓存。定义缓存键维度、用户/租户变化、失效触发器、过期容忍和失败行为。
 
-Never share personalized/authorized data through a cache key that omits identity/tenant/permissions. `revalidateTag`/path invalidation should be domain-owned and scoped.
+永不要通过遗漏标识/租户/权限的缓存键共享个性化/授权数据。`revalidateTag`/path 失效应是领域拥有且限定的。
 
-React `cache()`/request memoization can deduplicate server work in a render/request boundary; it is not a durable cross-request cache unless the selected framework API explicitly provides that.
+React `cache()`/请求记忆化可在渲染/请求边界内去重服务端工作；除非所选框架 API 显式提供，否则它不是持久的跨请求缓存。
 
-## Parallel, Sequential, And Preloaded Reads
+## 并行、顺序与预加载读取
 
-Start independent reads before awaiting to avoid server waterfalls:
+在等待之前启动独立读取以避免服务端瀑布：
 
 ```tsx
 const orderPromise = loadOrder(orderId)
@@ -33,60 +33,60 @@ const historyPromise = loadHistory(orderId)
 const [order, history] = await Promise.all([orderPromise, historyPromise])
 ```
 
-Keep sequential calls only when later inputs/security depend on earlier results. Bound fan-out and handle partial failure when one region may remain useful.
+仅当后续输入/安全依赖较早结果时保持顺序调用。当一个区域可能保持有用时限定扇出并处理部分失败。
 
-Preload/deduplicate only when the user flow is likely and cache/scoping is safe. Do not fire duplicate page/layout/metadata/client requests for the same record.
+仅当用户流可能且缓存/限定安全时预加载/去重。不要为同一记录发起重复的页面/布局/元数据/客户端请求。
 
-## Streaming And Loading
+## 流式传输与加载
 
-Use route loading or Suspense around independently useful slow regions with stable fallback layout. Keep page shell/context/actions visible and avoid a blank full-page wait.
+在独立有用的慢区域周围使用路由加载或 Suspense，配以稳定的回退布局。保持页面壳/上下文/操作可见，避免空白全页等待。
 
-Expected empty/not-found/forbidden/unavailable outcomes should map to product states rather than generic exceptions. Unexpected failures reach the owning error boundary.
+预期的空/未找到/禁止/不可用结果应映射到产品状态而非通用异常。意外失败到达所属错误边界。
 
-Do not stream protected record details before authorization resolves.
+不要在授权解决之前流式传输受保护的记录详情。
 
-## Direct Database Reads
+## 直接数据库读取
 
-Only server modules may use accepted database/ORM clients. Reuse connection pools safely for the runtime (Node server, serverless, edge limitations) and project directly to serializable read models.
+仅服务端模块可使用已接受的数据库/ORM client。为运行时（Node server、serverless、edge 限制）安全复用连接池，并直接投射到可序列化的读取模型。
 
-Avoid N+1/unbounded queries, full entity graphs, and database calls from Client Components. Provider mapping/query/transaction quality remains owned by the selected backend/persistence references.
+避免 N+1/无界查询、完整实体图和从 Client Component 发起的数据库调用。Provider 映射/查询/事务质量仍由所选后端/持久化参考拥有。
 
-## Client-Side Data
+## 客户端数据
 
-Use client fetching when interactions require live browser refresh, polling, infinite scroll, optimistic state, or browser-only context. Seed with safe server data when it improves initial render and define hydration/freshness reconciliation.
+当交互需要实时浏览器刷新、轮询、无限滚动、乐观状态或仅浏览器上下文时使用客户端获取。当它改善初始渲染时用安全的服务端数据种子，并定义 hydration/新鲜度协调。
 
-Cancel/ignore stale requests, bound polling/concurrency, preserve typed errors, and invalidate after mutation/user/tenant changes. A `useEffect(fetch)` without race/error/loading cleanup is not a complete data boundary.
+取消/忽略过期请求，限定轮询/并发，保留类型化错误，并在变更/用户/租户变更后失效。没有竞争/错误/加载清理的 `useEffect(fetch)` 不是完整的数据边界。
 
-## Pagination, Filtering, And Serialization
+## 分页、筛选与序列化
 
-Forward accepted query parameters and bound page size/sort/filter allowlists. Preserve deterministic order and stable response metadata.
+转发已接受的查询参数并限定分页大小/排序/筛选白名单。保留确定性顺序和稳定的响应元数据。
 
-Normalize dates, decimal/bigint, enums, nullable fields, and errors before client handoff. Do not leak internal/provider fields in serialized props or route responses.
+在客户端交接之前规范化日期、decimal/bigint、枚举、可空字段和错误。不要在序列化 props 或路由响应中泄漏内部/provider 字段。
 
-## Revalidation After Mutation
+## 变更后重新验证
 
-Mutations must invalidate all and only affected server/client cache entries and reconcile visible list/detail/count/state. Readback evidence should prove new identity/version/status rather than assuming invalidation worked.
+变更必须失效所有且仅受影响的服务端/客户端缓存条目，并协调可见的列表/详情/计数/状态。回读证据应证明新的标识/版本/状态而非假设失效有效。
 
-Avoid invalidating the whole site or using tags that collide across tenants/resources. Define behavior when revalidation succeeds but client state still contains optimistic/stale data.
+避免失效整个站点或使用跨租户/资源碰撞的标签。定义当重新验证成功但客户端状态仍包含乐观/过期数据时的行为。
 
 ## Verification
 
-- Test exact authoritative API/repository binding and auth/tenant scoping.
-- Prove cache hit/freshness/stale behavior and no cross-user/tenant leakage where caching is owned.
-- Verify mutation invalidation and visible readback for list/detail/count.
-- Exercise parallel/sequential/partial failure, loading/empty/forbidden/unavailable states.
-- Test client race/cancellation/polling/infinite-scroll behavior when owned.
-- Run production build for server/client and runtime compatibility.
+- 测试精确的权威 API/repository 绑定和 auth/租户限定。
+- 在拥有缓存处证明缓存命中/新鲜度/过期行为和无跨用户/租户泄漏。
+- 验证变更失效和列表/详情/计数的可见回读。
+- 练习并行/顺序/部分失败、加载/空/禁止/不可用状态。
+- 在拥有时测试客户端竞争/取消/轮询/无限滚动行为。
+- 为服务端/客户端和运行时兼容性运行生产构建。
 
-## Delivery Evidence
+## 交付证据
 
-Identify source of truth, freshness policy, cache key/invalidation, and route/component assertion proving it. A fetch call, Suspense fallback, or revalidation invocation alone cannot prove scoping, freshness, race handling, serialization, or visible coherence.
+标识真相来源、新鲜度策略、缓存键/失效以及证明它的路由/组件断言。仅 fetch 调用、Suspense 回退或重新验证调用不能证明限定、新鲜度、竞争处理、序列化或可见一致性。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Data reference selected from prose/performance without data-binding ownership.
-- Implicit cache behavior assumed across Next versions.
-- Personalized data cached without identity/tenant keying.
-- Same read duplicated in layout/page/metadata/client effect.
-- Client effect fetches without cancellation/error/reconciliation.
-- Whole-site invalidation or direct DB access from client modules.
+- 在无数据绑定所有权时从描述/性能选择数据参考。
+- 跨 Next 版本假设隐式缓存行为。
+- 无标识/租户键的个性化数据缓存。
+- 同一读取在布局/页面/元数据/客户端 effect 中重复。
+- 无取消/错误/协调的客户端 effect fetch。
+- 全站点失效或从客户端模块直接 DB 访问。

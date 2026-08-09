@@ -1,85 +1,85 @@
-# Specification Compliance Review
+# 规范合规评审
 
-Use this reference before implementation-quality review to determine whether the change delivers the accepted behavior, constraints, and boundaries. Exact workflow field names remain outside this reference.
+在实现质量评审之前使用本引用，确定变更是否交付了已接受的行为、约束和边界。确切的工作流字段名不在本引用范围内。
 
-## Compliance Frame
+## 合规框架
 
-Convert accepted requirements into observable obligations: actor, trigger, preconditions, inputs, decisions/rules, state transition, durable/external effects, user/API feedback, readback, and failure behavior.
+将已接受需求转化为可观测义务：参与者、触发器、前置条件、输入、决策/规则、状态转换、持久/外部效果、用户/API 反馈、回读和失败行为。
 
-Distinguish mandatory behavior, conditional behavior, deferred/excluded scope, and assumptions. Do not silently promote an implementation assumption into a requirement or treat deferred work as a current defect.
+区分强制行为、条件行为、推迟/排除范围和假设。不要静默将实现假设提升为需求，或将推迟工作视为当前缺陷。
 
-Use confirmed business language and existing repository behavior to resolve terms. Personal conventions and “typical UX” cannot override an explicit decision.
+使用确认的业务语言和已有仓库行为来解析术语。个人约定和"典型 UX"不能覆盖明确决策。
 
-## Missing Requirement Checks
+## 缺失需求检查
 
-Trace each important obligation to implementation and evidence. Presence of a file, endpoint, model, or button does not prove the workflow completes.
+将每个重要义务追踪到实现和证据。文件、端点、模型或按钮的存在不证明工作流完成。
 
-Check primary behavior plus explicitly required negative paths: blocked transitions, validation, permission denial, duplicate action, stale data, conflict, not-found, unavailable dependency, and retry/recovery.
+检查主要行为加明确要求的否定路径：阻断转换、校验、权限拒绝、重复操作、陈旧数据、冲突、未找到、不可用依赖和重试/恢复。
 
-Confirm durable/external effects when the behavior depends on persistence, events, files, messages, payments, notifications, or another service.
+当行为依赖持久化、事件、文件、消息、支付、通知或其他服务时，确认持久/外部效果。
 
-Confirm readback when users or callers must observe a changed status, identifier, version, total, assignment, or generated output.
+当用户或调用方必须观察变更状态、标识符、版本、总数、分配或生成输出时，确认回读。
 
-Check cross-surface closure: UI command to accepted interface, interface to application/domain behavior, persistence/integration effect, response/error mapping, and visible refresh/reconciliation.
+检查跨面闭环：UI 命令到已接受接口、接口到应用/领域行为、持久化/集成效果、响应/错误映射和可见刷新/对账。
 
-## Scope Creep Checks
+## 范围蔓延检查
 
-Identify user-visible workflows, permissions, entities, integrations, jobs, caches, abstractions, dependencies, infrastructure, and migrations not required by current scope.
+识别当前范围不需要的用户可见工作流、权限、实体、集成、作业、缓存、抽象、依赖、基础设施和迁移。
 
-Extra code is a finding only when it changes behavior, increases risk/maintenance, conflicts with architecture, or consumes an ownership boundary the change did not receive.
+额外代码仅在改变行为、增加风险/维护、与架构冲突或消费变更未获得的所有权边界时才是发现。
 
-Necessary supporting code is not scope creep when it is the smallest way to make accepted behavior build, run, or remain safe.
+必要的支撑代码不是范围蔓延，当它是使已接受行为构建、运行或保持安全的最小方式时。
 
-Generated product UI must not display delivery progress, runtime commands, stack explanations, verification instructions, placeholders, or internal process language.
+生成的产品 UI 不得显示交付进度、运行时命令、堆栈解释、验证指令、占位符或内部流程语言。
 
-## Interpretation Gap Checks
+## 解释差距检查
 
-Compare ambiguous implementation choices with confirmed decisions, accepted examples, existing analogous features, and domain invariants.
+将模糊的实现选择与确认的决策、已接受示例、已有类似功能和领域不变量比较。
 
-Inspect default ordering, timezone/date boundary, money/rounding, status semantics, empty/null meaning, identifier format, ownership/tenant scope, and retry/idempotency because these are common silent interpretation gaps.
+检查默认排序、时区/日期边界、资金/舍入、状态语义、空/null 含义、标识符格式、所有权/租户范围以及重试/幂等性，因为这些是常见的静默解释差距。
 
-If two interpretations remain valid and user-owned, report the exact unresolved choice. Do not invent a preferred answer and call the implementation defective.
+如果两种解释仍有效且由用户拥有，报告确切未解决的选择。不要发明偏好的答案并称实现有缺陷。
 
-## Contract Pair Checks
+## 契约对检查
 
-Review contracts that must stay aligned:
+审查必须保持对齐的契约：
 
-- API method/path/input/output/status/error/auth with client calls and tests.
-- Entity/domain rules with database constraints and migration shape.
-- State transitions with UI eligibility, API enforcement, and audit/history.
-- Configuration variables with local/runtime/deploy consumption.
-- Event/job payloads with producer, consumer, idempotency, and retry policy.
-- UI action target with displayed record identity and returned readback.
+- API 方法/路径/输入/输出/状态/错误/认证与客户端调用和测试。
+- 实体/领域规则与数据库约束和迁移形态。
+- 状态转换与 UI 资格、API 强制和审计/历史。
+- 配置变量与本地/运行时/部署消费。
+- 事件/作业载荷与生产者、消费者、幂等和重试策略。
+- UI action 目标与显示的记录标识和返回的回读。
 
-A mismatch can violate scope even when each side compiles independently.
+即使每侧独立编译通过，不匹配也可能违反范围。
 
-## Existing Behavior And Compatibility
+## 已有行为和兼容性
 
-Determine whether the accepted change preserves or intentionally changes existing public behavior, persisted data, URLs, API consumers, file formats, configuration, and deployment/runtime assumptions.
+确定已接受变更是保持还是有意更改已有的公共行为、持久化数据、URL、API 消费者、文件格式、配置和部署/运行时假设。
 
-Do not demand compatibility when a confirmed breaking migration replaces the old contract. Do require migration/cutover evidence when old data or consumers continue to exist.
+当确认的破坏性迁移替换旧契约时不要要求兼容性。当旧数据或消费者继续存在时，要要求迁移/切换证据。
 
-## Evidence Mapping
+## 证据映射
 
-For each important obligation, identify source and verification evidence that proves the branch. A single broad test name or result summary is insufficient when it does not reveal the exercised behavior.
+对于每个重要义务，识别证明该分支的来源和验证证据。当不揭示所执行行为的单个宽泛测试名或结果摘要是不够的。
 
-Missing evidence is not automatically missing implementation. Classify whether code is absent/wrong or behavior is merely unproved so the repair targets the right boundary.
+缺失证据不自动意味着缺失实现。分类代码是缺失/错误还是行为仅未证明，使修复针对正确边界。
 
-## Compliance Finding Shape
+## 合规发现形态
 
-A strong compliance finding states the accepted obligation, actual behavior, concrete source/evidence, user/system impact, and smallest correction.
+强合规发现说明已接受义务、实际行为、具体来源/证据、用户/系统影响和最小修正。
 
-Avoid “does not match spec” without naming the requirement and mismatch. Avoid bundling separate missing behaviors with unrelated scope creep.
+避免"不匹配规范"而不指名需求和不匹配。避免将分开的缺失行为与无关范围蔓延捆绑。
 
-## Approval Bar
+## 批准标准
 
-The delivered behavior matches mandatory current scope, important negative paths are present, cross-boundary contracts close, deferred/excluded work stays out, and available evidence supports those conclusions.
+交付的行为匹配强制当前范围、重要否定路径存在、跨边界契约闭环、推迟/排除工作保持在外，且可用证据支持这些结论。
 
-## Unsafe Review Defaults
+## 不安全的评审默认
 
-- Checking files or endpoints instead of complete behavior.
-- Reviewing only the happy path when rejection/blocking is required.
-- Treating all extra code as scope creep regardless of necessity/impact.
-- Filling ambiguity with reviewer preference.
-- Assuming compilation proves cross-surface contract alignment.
-- Confusing missing evidence with confirmed missing implementation.
+- 检查文件或端点而非完整行为。
+- 当需要拒绝/阻断时仅评审正常路径。
+- 不论必要性/影响将所有额外代码视为范围蔓延。
+- 用评审者偏好填补歧义。
+- 假设编译证明跨面契约对齐。
+- 将缺失证据与已确认的缺失实现混淆。

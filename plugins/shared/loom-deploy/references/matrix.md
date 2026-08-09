@@ -1,97 +1,97 @@
-# Deploy Stability Matrix
+# 部署稳定性矩阵
 
-Use this reference when Loom selects `deploy.matrix`. It defines the deployment matrix that generated specs, source models, topology, Compose, Dockerfiles, validation, and repair must agree on.
+当 Loom 选择 `deploy.matrix` 时使用本参考文档。它定义了生成的 spec、源模型、拓扑、Compose、Dockerfile、验证和修复必须达成一致的部署矩阵。
 
-## Matrix Dimensions
+## 矩阵维度
 
-Every `loom.deployPrepare` result should be explainable by these dimensions:
+每个 `loom.deployPrepare` 结果应可通过这些维度解释：
 
-- Topology class: `single_service_app`, `api_only_single_service`, `static_site`, `backend_served_frontend_api`, `frontend_gateway_backend_api`, `multi_service`, `existing_compose`, or `existing_dockerfile_wrapper`.
-- Runtime families: Node, Java, Python, Go, .NET, PHP, Ruby, Static, or Unknown.
-- Repository layout: root app, same-root fullstack, split frontend/backend, workspace app, or existing assets.
-- Provider strategy: generated assets, existing Compose, or existing Dockerfile wrapper.
-- Port plan: public preview/API ports, internal app ports, and dependency ports.
-- State and dependency model: no dependency, file database volume, SQL/Redis/etc dependency service, or protected external service.
+- 拓扑类别：`single_service_app`、`api_only_single_service`、`static_site`、`backend_served_frontend_api`、`frontend_gateway_backend_api`、`multi_service`、`existing_compose` 或 `existing_dockerfile_wrapper`。
+- 运行时家族：Node、Java、Python、Go、.NET、PHP、Ruby、Static 或 Unknown。
+- 仓库布局：根应用、同根 fullstack、拆分前端/后端、workspace 应用或现有资产。
+- 提供者策略：生成的资产、现有 Compose 或现有 Dockerfile 包装。
+- 端口方案：公共预览/API 端口、内部应用端口和依赖端口。
+- 状态和依赖模型：无依赖、文件数据库卷、SQL/Redis 等依赖服务或受保护的外部服务。
 
-Do not collapse the matrix into a single "one container serves everything" assumption unless the facts say the same runtime process really serves every required surface.
+不要将矩阵折叠为单一“一个容器服务一切”假设，除非事实表明同一运行时进程确实服务每个所需界面。
 
-## Topology Expectations
+## 拓扑预期
 
-`api_only_single_service`:
+`api_only_single_service`：
 
-- One application service.
-- API probe paths may be validated directly against the public service.
-- No HTTP proxy route is required.
-- Frontend/static preview assumptions must not be invented.
+- 一个应用服务。
+- API 探测路径可直接针对公共服务验证。
+- 不需要 HTTP 代理路由。
+- 不得发明前端/static 预览假设。
 
-`single_service_app`:
+`single_service_app`：
 
-- One public application service exposes an HTTP preview/root path.
-- No extra API proxy or static gateway is generated.
-- Compose, Dockerfile, healthcheck, and port plan all point to the same service/container port.
+- 一个公共应用服务暴露 HTTP 预览/根路径。
+- 不生成额外的 API 代理或 static 网关。
+- Compose、Dockerfile、healthcheck 和端口方案都指向同一服务/容器端口。
 
-`static_site`:
+`static_site`：
 
-- One public static service.
-- No API route validation unless the source model contains a backend/API service.
-- Use Nginx or an equivalent static server; do not run a frontend development server as the deployed runtime.
+- 一个公共 static 服务。
+- 除非源模型包含后端/API 服务，否则不验证 API 路由。
+- 使用 Nginx 或等效的 static server；不要将前端开发服务器作为已部署运行时运行。
 
-`backend_served_frontend_api`:
+`backend_served_frontend_api`：
 
-- One backend/runtime service owns both preview traffic and API paths.
-- Static assets are built/copied into the backend artifact before packaging or runtime start.
-- No frontend gateway proxy is required.
+- 一个后端/runtime 服务同时拥有预览流量和 API 路径。
+- Static 资产在打包或运行时启动前构建/复制到后端 artifact 中。
+- 不需要前端网关代理。
 
-`frontend_gateway_backend_api`:
+`frontend_gateway_backend_api`：
 
-- Public entry service is the frontend/static gateway.
-- Backend API service is internal.
-- API paths must be proxied by the public entry before SPA fallback.
-- Browser-facing API env points to the public proxy path, not `localhost:<backend-port>`.
+- 公共入口服务是前端/static 网关。
+- 后端 API 服务为内部。
+- API 路径必须在 SPA fallback 之前由公共入口代理。
+- 面向浏览器的 API env 指向公共代理路径，而非 `localhost:<backend-port>`。
 
-`multi_service`:
+`multi_service`：
 
-- More than one deployable service exists, but not necessarily a frontend/API pair.
-- Public and internal ports must be explicit in `DeploymentSpec.runtime.ports`.
-- Compose service ids must match `sourceModel.services[].serviceId`.
+- 存在多个可部署服务，但不一定是前端/API 对。
+- 公共和内部端口必须在 `DeploymentSpec.runtime.ports` 中明确。
+- Compose 服务 id 必须与 `sourceModel.services[].serviceId` 匹配。
 
-`existing_compose`:
+`existing_compose`：
 
-- User Compose is protected.
-- Loom may inspect, validate, and report selected services.
-- Loom must not rewrite the user Compose file during prepare or repair.
+- 用户 Compose 受保护。
+- Loom 可以检查、验证和报告选定服务。
+- Loom 不得在 prepare 或 repair 期间重写用户 Compose 文件。
 
-`existing_dockerfile_wrapper`:
+`existing_dockerfile_wrapper`：
 
-- User Dockerfile is protected.
-- Loom may generate a Compose wrapper.
-- The wrapper build context must match the Dockerfile's assumptions.
+- 用户 Dockerfile 受保护。
+- Loom 可以生成 Compose 包装。
+- 包装构建上下文必须与 Dockerfile 的假设匹配。
 
-## Port Matrix
+## 端口矩阵
 
-Use `DeploymentSpec.runtime.ports` as the only host/container port plan.
+使用 `DeploymentSpec.runtime.ports` 作为唯一的主机/容器端口方案。
 
-- `hostPort` is the real available local port chosen by Loom.
-- `preferredHostPort` is diagnostic only after allocation.
-- `containerPort` must match the runtime process and Dockerfile `EXPOSE`.
-- `internalOnly=true` services are not published to the host.
-- Dependency services use Compose DNS names and `expose`; do not publish dependency ports to make app code work.
-- Multiple public ports are allowed when the source model requires them, but each must have one clear purpose.
+- `hostPort` 是 Loom 选择的实际可用本地端口。
+- `preferredHostPort` 在分配后仅用于诊断。
+- `containerPort` 必须与运行时进程和 Dockerfile `EXPOSE` 匹配。
+- `internalOnly=true` 服务不发布到主机。
+- 依赖服务使用 Compose DNS 名和 `expose`；不要通过发布依赖端口来使应用代码工作。
+- 当源模型需要多个公共端口时允许，但每个必须有明确用途。
 
-## Dependency Matrix
+## 依赖矩阵
 
-Generated dependency services are local deployment conveniences, not production infrastructure.
+生成的依赖服务是本地部署便利设施，非生产基础设施。
 
-- File databases need the writable `containerPath` and `volumeName` supplied by `DeploymentSpec.storageFacts`; the directory is stack- and repository-derived.
-- SQL/Redis/Mongo/etc services use stable Compose service names.
-- Application connection URLs use service DNS names, not `localhost`.
-- Real credentials are blockers unless Loom can supply safe local placeholders.
+- 文件数据库需要 `DeploymentSpec.storageFacts` 提供的可写 `containerPath` 和 `volumeName`；该目录是技术栈和仓库派生的。
+- SQL/Redis/Mongo 等服务使用稳定的 Compose 服务名。
+- 应用连接 URL 使用服务 DNS 名，而非 `localhost`。
+- 除非 Loom 能提供安全本地占位符，否则真实凭证是阻塞项。
 
-## Repair Boundary
+## 修复边界
 
-Repair may patch generated assets when the generated files are inconsistent with the facts. Repair must not compensate for an incorrect matrix by inventing a different topology.
+当生成的文件与事实不一致时，修复可以修补生成的资产。修复不得通过发明不同的拓扑来补偿错误的矩阵。
 
-- Facts/source/topology mismatch: fix MCP generation logic or generated assets aligned with facts.
-- Generated Dockerfile/Compose mismatch: repair generated assets only.
-- Application build/start/runtime failure: route to deploy execution repair.
-- Protected existing assets mismatch: report protected-asset blocker or generated fallback according to provider policy.
+- 事实/源/拓扑不匹配：修复 MCP 生成逻辑或与事实对齐的生成资产。
+- 生成的 Dockerfile/Compose 不匹配：仅修复生成资产。
+- 应用 build/start/runtime 失败：路由到部署执行修复。
+- 受保护的现有资产不匹配：根据提供者策略报告受保护资产阻塞项或生成 fallback。

@@ -225,13 +225,13 @@ fn materialize_browser_runtime_prepare_action(
         "browserRuntimePreparation": {
             "projectTargets": crate::browser::browser_runtime_targets(root),
             "requestedBrowsers": ["chromium"],
-            "policy": "Resolve exact project versions, try host launch, then managed container fallback."
+            "policy": "解析确切的项目版本，尝试宿主启动，然后回退到托管容器。"
         },
         "requestReadPlan": {"groups": [{
             "groupId": "browser_runtime_prepare_context",
             "required": true,
-            "purpose": "Read the exact project targets and runtime fallback policy.",
-            "whenToRead": "Read before calling loom.browserRuntimePrepare.",
+            "purpose": "读取确切的项目目标和运行时回退策略。",
+            "whenToRead": "在调用 loom.browserRuntimePrepare 之前读取。",
             "selectors": read_selectors_value_from_paths([
                 "source.taskPlanId",
                 "source.taskId",
@@ -304,7 +304,7 @@ fn close_unavailable_browser_environment(
         .collect::<Vec<_>>()
         .join(" ");
     let blocked_reason = if diagnostic.is_empty() {
-        "Browser launch is unavailable on both the host and Loom-managed container.".to_string()
+        "浏览器启动在宿主环境和 Loom 托管容器上均不可用。".to_string()
     } else {
         diagnostic
     };
@@ -316,7 +316,7 @@ fn close_unavailable_browser_environment(
                 "verificationId": intent.verification_id,
                 "status": "inconclusive",
                 "evidenceType": "browser_automation",
-                "summary": "Browser evidence could not run because both supported execution environments are unavailable.",
+                "summary": "浏览器证据无法运行，因为两个支持的执行环境均不可用。",
                 "browserChecks": profile.checks.iter()
                     .filter(|check| check.verification_id == intent.verification_id)
                     .map(|check| json!({
@@ -343,13 +343,13 @@ fn close_unavailable_browser_environment(
         "changedFiles": [],
         "noChangeReason": {
             "code": "ENVIRONMENT_CHECK_ONLY",
-            "summary": "MCP closed the browser environment check without changing project files."
+            "summary": "MCP 在未更改项目文件的情况下关闭了浏览器环境检查。"
         },
         "verificationResults": verification_results,
         "executionContinuity": {
             "taskResultSubmittedAfterVerification": true,
             "agentOwnedLongRunningWork": "none",
-            "notes": ["Browser environment failure was classified by MCP and did not enter execution repair."]
+            "notes": ["浏览器环境故障已由 MCP 分类，未进入执行修复流程。"]
         },
         "notes": [blocked_reason],
         "createdAt": now.clone(),
@@ -603,7 +603,7 @@ fn build_execution_request(
                 "targetId": "result",
                 "path": result_file,
                 "required": true,
-                "description": "Write the TaskResult JSON for this planned task."
+                "description": "为此计划任务写入 TaskResult JSON。"
             }],
             "requiredTopLevelFields": result_contract["requiredTopLevelFields"].clone(),
             "blockedReasonOptions": [
@@ -707,38 +707,38 @@ pub(crate) fn task_execution_rules(
         "completionBarrier": {
             "resultFile": result_file,
             "submitTool": "loom.recordTaskResultFile",
-            "rule": "The task is not complete until TaskResult exists at outputContract.resultFile and loom.recordTaskResultFile succeeds."
+            "rule": "在 TaskResult 存在于 outputContract.resultFile 且 loom.recordTaskResultFile 成功之前，任务未完成。"
         },
-        "writeTargetRule": "When a file-submit tool accepts writtenTargetIds, pass the active outputContract.writeTargets[].targetId (for TaskResult: result), never the target path or resultFile string.",
+        "writeTargetRule": "当文件提交工具接受 writtenTargetIds 时，传入当前 outputContract.writeTargets[].targetId（对于 TaskResult 为 result），切勿传入目标路径或 resultFile 字符串。",
         "finalResponseGuard": {
             "mustNotReportProgressBeforeSubmit": true,
-            "rule": "Do not stop with a progress-only summary before submitting TaskResult."
+            "rule": "在提交 TaskResult 之前，不得以仅含进度摘要的方式停止。"
         },
         "completionContinuityRequirement": {
-            "rule": "Verification method is agent-chosen, but it must return control before TaskResult submission.",
-            "forbiddenOutcome": "Do not leave this task waiting on a long-running command, browser session, interactive tool, server, watcher, worker, progress summary, or handoff note.",
-            "requiredCloseout": "Write TaskResult and run loom.recordTaskResultFile in this same task turn unless a declared stop condition is reached.",
+            "rule": "验证方法由代理选择，但必须在提交 TaskResult 之前返回控制权。",
+            "forbiddenOutcome": "不要让此任务等待长时间运行的命令、浏览器会话、交互式工具、服务器、监视器、工作进程、进度摘要或交接说明。",
+            "requiredCloseout": "除非达到声明的停止条件，否则在当前任务轮次中写入 TaskResult 并运行 loom.recordTaskResultFile。",
             "taskResultField": "executionContinuity",
-            "statusRule": "If agent-owned long-running work was started and its release state is unknown, use completed_with_notes with notes unless an independent failure or blocked condition remains."
+            "statusRule": "如果代理拥有的长时间运行工作已启动且其释放状态未知，使用 completed_with_notes 并附带说明，除非存在独立的失败或阻塞条件。"
         },
         "implementationClosureContract": {
             "source": "task.implementationObligations",
             "ownership": "MCP",
-            "agentRule": "Implement every required obligation in this task before reporting completed. Report one implementationObligationResults entry for every obligation in the supplied canonical order; fill only status, evidenceRefs, and summary. Do not author obligationId or verificationIds.",
-            "completionRule": "A task is complete only when every required obligation is satisfied with concrete evidence and no obligation is partial, blocked, or not_verified.",
-            "repairRule": "When an obligation is incomplete, submit execution repair with the unchanged obligationId and the missing implementation or evidence; do not change the task contract."
+            "agentRule": "在报告 completed 之前，实现此任务中的每个必需义务。按照提供的规范顺序为每个义务报告一个 implementationObligationResults 条目；仅填写 status、evidenceRefs 和 summary。不要编写 obligationId 或 verificationIds。",
+            "completionRule": "只有当每个必需义务都有具体证据满足且没有义务处于 partial、blocked 或 not_verified 状态时，任务才算完成。",
+            "repairRule": "当义务未完成时，提交执行修复，保持 obligationId 不变并补充缺失的实现或证据；不要更改任务合同。"
         },
         "verificationCommandSchedulingRules": verification_command_scheduling_rules(),
         "userFacingLanguage": {
             "constraint": user_facing_language,
-            "rule": "Preserve the confirmed user-facing language in generated UI, validation, feedback, test labels, and TaskResult evidence when applicable."
+            "rule": "在生成的 UI、验证、反馈、测试标签和 TaskResult 证据中，适当时保留已确认的用户面向语言。"
         },
         "boundaryRules": [
-            "Execute only the current task.",
-            "Do not modify Brainstorm, TechnicalBaseline, PGC, AAC, TaskPlan, or other protected Loom artifacts.",
-            "Do not implement deferred scope.",
-            "Use confirmed business language in user-visible UI, feedback, test names, and TaskResult evidence when applicable.",
-            "Write TaskResult JSON only to outputContract.resultFile."
+            "仅执行当前任务。",
+            "不要修改 Brainstorm、TechnicalBaseline、PGC、AAC、TaskPlan 或其他受保护的 Loom 制品。",
+            "不要实现延迟范围。",
+            "适当时在用户可见的 UI、反馈、测试名称和 TaskResult 证据中使用已确认的业务语言。",
+            "仅将 TaskResult JSON 写入 outputContract.resultFile。"
         ],
         "taskResponsibilityBoundary": task_responsibility_boundary(task)
     });
@@ -814,21 +814,32 @@ fn task_responsibility_boundary(task: &TaskDefinition) -> Value {
         .as_ref()
         .is_some_and(|requirement| requirement.applies_to_this_task);
     let mut rules = vec![
-        "Only implement the responsibilities listed in ownedResponsibilities and the supplied implementationObligations.".to_string(),
-        "A consumed interface is an integration input, not permission to rewrite the provider's persistence, domain, or API implementation.".to_string(),
-        "When another task owns a responsibility, call its accepted boundary and record the dependency; do not duplicate its implementation in this task.".to_string(),
+        "仅实现 ownedResponsibilities 和所提供 implementationObligations 中列出的职责。"
+            .to_string(),
+        "被消费的接口是集成输入，不是重写提供方持久化、领域或 API 实现的许可。".to_string(),
+        "当另一个任务拥有某职责时，调用其已接受的边界并记录依赖关系；不要在此任务中重复其实现。"
+            .to_string(),
     ];
     if !owns_persistence {
-        rules.push("This task does not own persistence mapping, schema, migration, repository, or transaction implementation. Do not add or modify those artifacts.".to_string());
+        rules.push(
+            "此任务不拥有持久化映射、模式、迁移、仓库或事务实现。不要添加或修改这些制品。"
+                .to_string(),
+        );
     }
     if !owns_interface {
-        rules.push("This task does not own server API interfaces. Do not add controllers, routes, request handlers, or API contract changes.".to_string());
+        rules.push(
+            "此任务不拥有服务端 API 接口。不要添加控制器、路由、请求处理器或 API 合同变更。"
+                .to_string(),
+        );
     }
     if !owns_frontend {
-        rules.push("This task does not own frontend surfaces. Do not add or modify client UI, browser flows, or frontend-only state.".to_string());
+        rules.push(
+            "此任务不拥有前端界面。不要添加或修改客户端 UI、浏览器流程或仅前端的状态。".to_string(),
+        );
     }
     if !owns_runtime {
-        rules.push("This task does not own runtime delivery assets or package start commands. Do not rewrite deployment or runtime configuration.".to_string());
+        rules
+            .push("此任务不拥有运行时交付资产或包启动命令。不要重写部署或运行时配置。".to_string());
     }
     json!({
         "ownedResponsibilities": task.implementation_actions,
@@ -865,7 +876,7 @@ fn source_edit_preparation_contract(result_file: &str) -> Value {
         "contractKind": "source_edit_preparation",
         "resultFile": result_file,
         "requiredWritePlanFields": {
-            "targetPath": "Concrete project-relative or absolute path to create, replace, edit, or write as result artifact.",
+            "targetPath": "用于创建、替换、编辑或写入作为结果制品的具体项目相对或绝对路径。",
             "writeKind": ["create", "replace", "edit", "multi_edit", "artifact_result"],
             "contentBasis": [
                 "task.objective",
@@ -875,83 +886,83 @@ fn source_edit_preparation_contract(result_file: &str) -> Value {
                 "task.runtimeDeliveryRequirement when present",
                 "current source file contents for source edits"
             ],
-            "writePayloadReady": "true only when complete file content or a complete edit set has been formed before invoking the write method"
+            "writePayloadReady": "true 仅当在调用写入方法之前已形成完整文件内容或完整编辑集时"
         },
         "sequence": [
-            "Read required requestReadPlan groups and current source files that will be changed.",
-            "Form an internal write plan with targetPath, writeKind, contentBasis, and writePayloadReady=true.",
-            "Invoke file write/edit only after path and payload are complete.",
-            "If a write tool rejects missing or invalid path/content/edit arguments, rebuild complete arguments before retrying.",
-            "If targetPath or payload cannot be determined within this task boundary, write a failed or blocked TaskResult and submit it."
+            "读取所需的 requestReadPlan 组和将要更改的当前源文件。",
+            "形成包含 targetPath、writeKind、contentBasis 和 writePayloadReady=true 的内部写入计划。",
+            "仅在路径和载荷完整后调用文件写入/编辑。",
+            "如果写入工具拒绝缺失或无效的路径/内容/编辑参数，在重试前重建完整参数。",
+            "如果 targetPath 或载荷无法在此任务边界内确定，写入失败或阻塞的 TaskResult 并提交。"
         ],
         "forbiddenOutcomes": [
-            "Do not invoke write/edit tools with missing path, content, or edit arguments.",
-            "Do not repeat a malformed write/edit tool call.",
-            "Do not begin a write while writePayloadReady is false.",
-            "Do not ask the user how to continue when the uncertainty can be represented as a failed or blocked TaskResult.",
-            "Do not stop with a progress-only summary after source edits."
+            "不要以缺失路径、内容或编辑参数调用写入/编辑工具。",
+            "不要重复格式错误的写入/编辑工具调用。",
+            "不要在 writePayloadReady 为 false 时开始写入。",
+            "当不确定性可以表示为失败或阻塞的 TaskResult 时，不要询问用户如何继续。",
+            "源码编辑后不要以仅含进度的摘要停止。"
         ]
     })
 }
 
 pub(crate) fn verification_command_scheduling_rules() -> Value {
     json!([
-        "Run verification commands serially by default; only read-only inspection commands may be parallelized.",
-        "Do not issue multiple tool calls in the same response for commands that may install dependencies, build artifacts, run tests, start or probe runtimes, clean outputs, generate code, format files, mutate caches, or write files.",
-        "For write-producing verification commands, run one command, wait for it to finish, inspect the result, then decide the next command.",
-        "Treat commands as write-producing when unsure, including install, build, clean, test, e2e, lint with cache/fix, format with write, codegen, dev/start/preview servers, runtime checks, and commands that may write node_modules, dist, build, coverage, cache, reports, logs, or lockfiles.",
-        "When a temporary runtime is running for a bounded probe, run only readiness, HTTP, API, or browser probes against that runtime until cleanup is complete.",
-        "Record verification commands in TaskResult in the actual order they completed."
+        "默认串行运行验证命令；仅只读检查命令可以并行化。",
+        "对于可能安装依赖、构建制品、运行测试、启动或探针运行时、清理输出、生成代码、格式化文件、变更缓存或写入文件的命令，不要在同一响应中发出多个工具调用。",
+        "对于产生写入的验证命令，运行一个命令，等待其完成，检查结果，然后决定下一个命令。",
+        "不确定时将命令视为产生写入，包括 install、build、clean、test、e2e、带 cache/fix 的 lint、带 write 的 format、codegen、dev/start/preview 服务器、运行时检查以及可能写入 node_modules、dist、build、coverage、cache、reports、logs 或 lockfiles 的命令。",
+        "当临时运行时为有界探针运行时，仅对该运行时运行就绪、HTTP、API 或浏览器探针，直到清理完成。",
+        "按实际完成顺序在 TaskResult 中记录验证命令。"
     ])
 }
 
 pub(crate) fn controlled_runtime_probe_rules() -> Value {
     json!([
-        "Never run long-lived runtime or server commands as foreground blocking verification commands.",
-        "This applies to commands that listen on a port, serve requests, watch files, open preview/dev servers, start workers, start queues, or keep the process alive.",
-        "If a runtime probe is needed, start only a task-owned temporary runtime in the background with a bounded readiness window, record pid, port, and command when available, run the probe, then stop that task-owned runtime before writing TaskResult.",
-        "If the runtime reports ready or listening, do not wait for natural process exit; probe the ready target and close out.",
-        "If the environment cannot safely start, probe, and clean up a temporary runtime, skip the live probe and record static/code-level evidence plus unverifiedItems or completed_with_notes.",
-        "Runtime probe cleanup failure, unknown cleanup, or not-safe cleanup is non-blocking by itself; record runtimeProbeCleanup and use completed_with_notes unless an independent defect remains."
+        "不要将长时间运行的运行时或服务器命令作为前台阻塞验证命令运行。",
+        "这适用于监听端口、服务请求、监视文件、打开 preview/dev 服务器、启动工作进程、启动队列或保持进程存活的命令。",
+        "如果需要运行时探针，仅在后台启动任务拥有的临时运行时，带有有界就绪窗口，可用时记录 pid、端口和命令，运行探针，然后在写入 TaskResult 之前停止该任务拥有的运行时。",
+        "如果运行时报告就绪或正在监听，不要等待自然进程退出；探针就绪目标并完成收尾。",
+        "如果环境无法安全启动、探针和清理临时运行时，跳过实时探针并记录静态/代码级证据加上 unverifiedItems 或 completed_with_notes。",
+        "运行时探针清理失败、未知清理或不安全清理本身是非阻塞的；记录 runtimeProbeCleanup 并使用 completed_with_notes，除非存在独立的缺陷。"
     ])
 }
 
 fn frontend_implementation_organization_rules() -> Value {
     json!([
-        "For frontend tasks, organize implementation by responsibility boundaries rather than one giant mixed file.",
-        "Use the project's existing frontend structure when present.",
-        "When adding a frontend module to an existing app, add it as a reachable entry, route, tab, or navigation item in the existing app shell.",
-        "Do not replace, hide, or remove existing reachable module entries unless the requirement explicitly asks for that replacement or removal.",
-        "Follow sourceContext.userFacingLanguage or executionRules.userFacingLanguage for user-visible copy; do not translate code identifiers, API paths, database fields, enum values, package names, framework terms, or internal artifact ids.",
-        "Make UI/view, API or service interaction, state or feedback handling, and verification evidence distinguishable.",
-        "Do not force every responsibility into a separate file for small tasks, and do not collapse multiple frontend responsibilities into an unmaintainable single blob."
+        "对于前端任务，按职责边界组织实现，而不是一个巨大的混合文件。",
+        "存在时使用项目已有的前端结构。",
+        "向现有应用添加前端模块时，将其添加为现有应用 shell 中可到达的入口、路由、标签页或导航项。",
+        "不要替换、隐藏或移除已有的可到达模块入口，除非需求明确要求替换或移除。",
+        "用户可见文案遵循 sourceContext.userFacingLanguage 或 executionRules.userFacingLanguage；不要翻译代码标识符、API 路径、数据库字段、枚举值、包名、框架术语或内部制品 ID。",
+        "使 UI/视图、API 或服务交互、状态或反馈处理以及验证证据可区分。",
+        "不要为小任务强制将每个职责拆分到单独文件，也不要将多个前端职责合并为不可维护的单个文件。"
     ])
 }
 
 fn interactive_verification_probe_policy() -> Value {
     json!({
-        "appliesWhen": "The task uses browser, e2e, interactive UI, runtime UI, or API-backed UI verification.",
+        "appliesWhen": "任务使用浏览器、e2e、交互式 UI、运行时 UI 或 API 支持的 UI 验证。",
         "deriveProbePlanFrom": [
             "task.verificationIntents[].behavior",
             "task.frontendExperienceRequirement.executionGuidance.uiTaskScope",
             "task.runtimeDeliveryRequirement.requiredCodeLevelChecks"
         ],
         "requiredExecutionPattern": [
-            "Before running browser, e2e, or interactive code, derive the smallest applicable probe plan from the current task fields.",
-            "Select only probes that match the current task responsibility; do not run probes for absent surfaces, workflows, actions, bindings, or runtime checks.",
-            "Each probe must verify one interaction target: one verification intent, workflow step, user action, frontend/backend binding, or runtime check.",
-            "Each probe must be bounded, return before the next probe starts, and produce an observable result such as reachable page, visible state, response status, result message, list/detail change, or state transition.",
-            "Do not bundle multiple business workflows into one browser/e2e script."
+            "在运行浏览器、e2e 或交互式代码之前，从当前任务字段派生最小适用探针计划。",
+            "仅选择与当前任务职责匹配的探针；不要为缺失的界面、工作流、操作、绑定或运行时检查运行探针。",
+            "每个探针必须验证一个交互目标：一个验证意图、工作流步骤、用户操作、前端/后端绑定或运行时检查。",
+            "每个探针必须有界，在下一个探针开始之前返回，并产生可观察结果，如可达页面、可见状态、响应状态、结果消息、列表/详情变更或状态转换。",
+            "不要将多个业务工作流打包到一个浏览器/e2e 脚本中。"
         ],
         "failureProgressRule": [
-            "When a probe fails, the next attempt must be smaller, more specific, reset tool context, or change the failure condition.",
-            "Continue while new observable evidence appears or the failure signature changes.",
-            "Stop retrying that verification method when the same failure signature repeats without new observable evidence."
+            "探针失败时，下一次尝试必须更小、更具体、重置工具上下文或改变失败条件。",
+            "当出现新的可观察证据或失败特征改变时继续。",
+            "当相同失败特征重复且没有新的可观察证据时停止重试该验证方法。"
         ],
         "taskResultEvidence": [
-            "Record successful probe facts in verificationResults[].summary for the matching verificationId and keep verificationResults[].provenance tied to concrete evidence refs, changed files, test cases, command, and exit code.",
-            "Record runtime command or probe evidence in runtimeDeliveryEvidence.commandsRun when runtimeDeliveryEvidence applies.",
-            "Record remaining unverified responsibility in notes or runtimeDeliveryEvidence.unverifiedItems according to TaskResult rules."
+            "在 verificationResults[].summary 中为匹配的 verificationId 记录成功探针事实，并保持 verificationResults[].provenance 与具体证据引用、更改的文件、测试用例、命令和退出码关联。",
+            "当 runtimeDeliveryEvidence 适用时，在 runtimeDeliveryEvidence.commandsRun 中记录运行时命令或探针证据。",
+            "根据 TaskResult 规则，在 notes 或 runtimeDeliveryEvidence.unverifiedItems 中记录剩余未验证的职责。"
         ]
     })
 }
@@ -976,51 +987,51 @@ fn runtime_delivery_execution_rules() -> Value {
 
 fn task_result_rules(task: &TaskDefinition, has_browser_verification: bool) -> Value {
     let mut rules = vec![
-        "TaskResult must include every requiredTopLevelFields entry.".to_string(),
-        "If status is completed, every verification intent should have passed evidence.".to_string(),
-        "If status is failed, failure is required.".to_string(),
-        "TaskResult must include executionContinuity; if agent-owned long-running work release state is unknown, status cannot be completed.".to_string(),
-        "For every task.implementationObligations entry, provide exactly one implementationObligationResults entry in the supplied order, filling status, evidenceRefs, and summary only. Loom derives obligationId and verificationIds. Required obligations must be satisfied before status=completed; partial, blocked, or not_verified obligations require execution repair or a non-completed status.".to_string(),
-        "implementationObligationResults.evidenceRefs must point to concrete implementation or verification evidence. A build, compile, or reference-read result alone cannot satisfy a persistence, security, state transition, API behavior, or runtime obligation unless its declared evidence capability proves that target.".to_string(),
-        "implementationObligationResults.evidenceRefs must cite task-owned source or test files. Do not cite dist, target, build, coverage, report, log, cache, or node_modules output; verification provenance carries command and generated report references.".to_string(),
-        "changedFiles must list intended deliverable files, not incidental dependency directories, caches, logs, or generated build output.".to_string(),
-        "noChangeReason must be null when changedFiles is non-empty; when changedFiles is empty and a reason is needed, noChangeReason must be an object with code and summary, never a string or array.".to_string(),
-        "For completed or completed_with_notes results, provide substantive status, evidenceRefs, and summary for every requirementDetailEvidence entry; Loom derives detailId and verificationIds from the task contract.".to_string(),
-        "The result template is a conservative starting shape: not_run, not_verified, partial, missing, and not_applicable entries are not completion evidence. Replace them only after the corresponding work or verification actually happened.".to_string(),
+        "TaskResult 必须包含每个 requiredTopLevelFields 条目。".to_string(),
+        "如果状态为 completed，每个验证意图都应有通过的证据。".to_string(),
+        "如果状态为 failed，failure 是必需的。".to_string(),
+        "TaskResult 必须包含 executionContinuity；如果代理拥有的长时间运行工作释放状态未知，状态不能为 completed。".to_string(),
+        "对于每个 task.implementationObligations 条目，按提供的顺序提供恰好一个 implementationObligationResults 条目，仅填写 status、evidenceRefs 和 summary。Loom 派生 obligationId 和 verificationIds。必需义务在 status=completed 之前必须被满足；partial、blocked 或 not_verified 义务需要执行修复或非 completed 状态。".to_string(),
+        "implementationObligationResults.evidenceRefs 必须指向具体的实现或验证证据。单独的构建、编译或引用读取结果不能满足持久化、安全、状态转换、API 行为或运行时义务，除非其声明的证据能力证明了该目标。".to_string(),
+        "implementationObligationResults.evidenceRefs 必须引用任务拥有的源码或测试文件。不要引用 dist、target、build、coverage、report、log、cache 或 node_modules 输出；验证来源携带命令和生成的报告引用。".to_string(),
+        "changedFiles 必须列出预期的交付文件，而非附带的依赖目录、缓存、日志或生成的构建输出。".to_string(),
+        "当 changedFiles 非空时 noChangeReason 必须为 null；当 changedFiles 为空且需要原因时，noChangeReason 必须是包含 code 和 summary 的对象，绝不能是字符串或数组。".to_string(),
+        "对于 completed 或 completed_with_notes 结果，为每个 requirementDetailEvidence 条目提供实质性的 status、evidenceRefs 和 summary；Loom 从任务合同派生 detailId 和 verificationIds。".to_string(),
+        "结果模板是一个保守的起始形状：not_run、not_verified、partial、missing 和 not_applicable 条目不是完成证据。仅在相应的工作或验证实际发生后替换它们。".to_string(),
     ];
     if frontend_self_check_applies(task) {
-        rules.push("For frontend tasks, fill frontendExperienceSelfCheck using task.frontendExperienceRequirement.executionGuidance and frontend/backend bindings when present; Loom derives closureRequirementIds from the assigned closure contract.".to_string());
-        rules.push("For browser/e2e/interactive verification, follow executionRules.interactiveVerificationProbePolicy and record evidence through existing TaskResult fields.".to_string());
+        rules.push("对于前端任务，存在时使用 task.frontendExperienceRequirement.executionGuidance 和前端/后端绑定填写 frontendExperienceSelfCheck；Loom 从分配的闭包合同派生 closureRequirementIds。".to_string());
+        rules.push("对于浏览器/e2e/交互式验证，遵循 executionRules.interactiveVerificationProbePolicy 并通过现有 TaskResult 字段记录证据。".to_string());
     }
     if frontend_quality_self_check_applies(task) {
-        rules.push("For frontendQualitySelfCheck, provide substantive status, files, evidence, contentBoundaryEvidence, referencePlanFilesChecked, and token evidence for the task-scoped uiProductionBrief.surfaceDecisionContract. Submit surface evidence arrays in the contract order; Loom derives surfaceDecisionContractRef and every evidence id. Do not leave replace_with_* values in submitted results.".to_string());
+        rules.push("对于 frontendQualitySelfCheck，为任务范围的 uiProductionBrief.surfaceDecisionContract 提供实质性的 status、files、evidence、contentBoundaryEvidence、referencePlanFilesChecked 和令牌证据。按合同顺序提交界面证据数组；Loom 派生 surfaceDecisionContractRef 和每个证据 ID。不要在提交的结果中保留 replace_with_* 值。".to_string());
     }
     if has_browser_verification {
-        rules.push("Record every sourceContext.browserVerificationContext.profile.checks outcome under verificationResults[].browserChecks in the profile order. Loom derives verificationId and checkId; do not write or copy those linkage fields, and do not paste trace, screenshot, or report contents into TaskResult prose.".to_string());
-        rules.push("Passed browser checks require the exact command, attempt count, and concise observed outcome. Blocked checks require a concrete blockedReason. Keep retry success visible with attempts greater than one.".to_string());
+        rules.push("在 verificationResults[].browserChecks 下按 profile 顺序记录每个 sourceContext.browserVerificationContext.profile.checks 结果。Loom 派生 verificationId 和 checkId；不要写入或复制那些链接字段，也不要将 trace、screenshot 或 report 内容粘贴到 TaskResult 正文中。".to_string());
+        rules.push("通过的浏览器检查需要确切的命令、尝试次数和简明的观察结果。阻塞的检查需要具体的 blockedReason。保持重试成功可见，尝试次数大于一。".to_string());
     }
     if runtime_delivery_evidence_applies(task) {
-        rules.push("For runtimeDeliveryRequirement tasks, include runtimeDeliveryEvidence with checkedFields, codeLevelChecks, commandsRun when commands were run, and unverifiedItems when environment prevents a check.".to_string());
-        rules.push("For runtimeDeliveryEvidence.codeLevelChecks, report status and evidence in the task.runtimeDeliveryRequirement.requiredCodeLevelChecks order. Every applicable check must be passed or explicitly unverified; replace the template's not_applicable status when the check applies. Loom derives requirementRef, checkedFields, checkId, and contractField.".to_string());
-        rules.push("If a temporary runtime/probe/server/container was started, include runtimeDeliveryEvidence.runtimeProbeCleanup; cleanup failure alone should be completed_with_notes, not failed or blocked.".to_string());
+        rules.push("对于 runtimeDeliveryRequirement 任务，包含 runtimeDeliveryEvidence 及 checkedFields、codeLevelChecks、运行命令时的 commandsRun 以及环境阻止检查时的 unverifiedItems。".to_string());
+        rules.push("对于 runtimeDeliveryEvidence.codeLevelChecks，按 task.runtimeDeliveryRequirement.requiredCodeLevelChecks 顺序报告 status 和 evidence。每个适用检查必须为 passed 或显式 unverified；当检查适用时替换模板的 not_applicable 状态。Loom 派生 requirementRef、checkedFields、checkId 和 contractField。".to_string());
+        rules.push("如果启动了临时运行时/探针/服务器/容器，包含 runtimeDeliveryEvidence.runtimeProbeCleanup；单独的清理失败应为 completed_with_notes，而非 failed 或 blocked。".to_string());
     }
     if !task.engineering_quality_requirement_refs.is_empty() {
-        rules.push("For referenced engineeringQualityRequirements, verificationResults summaries must state how implementation kept the declared alignmentTargets aligned for this task.".to_string());
-        rules.push("For persistence_mapping requirements, evidence must cover changed risk field kinds across domain model, storage schema or migration, data access mapping, DTO/API contract, and same-provider persistence behavior when those parts are in task scope.".to_string());
+        rules.push("对于引用的 engineeringQualityRequirements，verificationResults 摘要必须说明实现如何保持此任务的声明 alignmentTargets 对齐。".to_string());
+        rules.push("对于 persistence_mapping 需求，证据必须覆盖领域模型、存储模式或迁移、数据访问映射、DTO/API 合同和同提供方持久化行为中更改的风险字段类型（当这些部分在任务范围内时）。".to_string());
     }
     if !task.architecture_quality_requirement_refs.is_empty() {
-        rules.push("For referenced architectureQualityRequirements, provide one architectureQualityEvidence entry per assigned requirement in task order; Loom derives requirementId and verificationIds. The template starts as not_verified; set satisfied only when the changed files and passed verification evidence demonstrate the referenced decision, NFR, or risk mitigation.".to_string());
+        rules.push("对于引用的 architectureQualityRequirements，按任务顺序为每个分配的需求提供一个 architectureQualityEvidence 条目；Loom 派生 requirementId 和 verificationIds。模板起始为 not_verified；仅当更改的文件和通过的验证证据证明了引用的决策、NFR 或风险缓解时才设置为 satisfied。".to_string());
     }
     if !task.api_contract_requirement_refs.is_empty() {
-        rules.push("For referenced apiContractRequirements, provide one apiContractEvidence entry per assigned requirement in task order; Loom derives requirementId, interfaceRefs, and verificationIds. Summaries must state how changed files implemented or preserved the referenced API interfaces.".to_string());
-        rules.push("For a protected API requirement, use only the referenced securityProfileRefs and the matching sourceContext.technicalBaseline.securityProfiles entry. Read every file in the requirement referenceLoadPlan, including tech/api/jwt.md when selected; do not choose an algorithm, issuer, audience, or token transport in the task result.".to_string());
-        rules.push("The apiContractEvidence template starts as not_verified. Set status=satisfied only after the assigned API behavior has concrete passed verification evidence; for completed or completed_with_notes results, keep knownGaps empty and explain non-applicable checks in summary instead of recording a gap.".to_string());
+        rules.push("对于引用的 apiContractRequirements，按任务顺序为每个分配的需求提供一个 apiContractEvidence 条目；Loom 派生 requirementId、interfaceRefs 和 verificationIds。摘要必须说明更改的文件如何实现或保持了引用的 API 接口。".to_string());
+        rules.push("对于受保护的 API 需求，仅使用引用的 securityProfileRefs 和匹配的 sourceContext.technicalBaseline.securityProfiles 条目。阅读需求 referenceLoadPlan 中的每个文件，包括选中时的 tech/api/jwt.md；不要在任务结果中选择算法、签发者、受众或令牌传输方式。".to_string());
+        rules.push("apiContractEvidence 模板起始为 not_verified。仅在分配的 API 行为有具体通过的验证证据后才设置 status=satisfied；对于 completed 或 completed_with_notes 结果，保持 knownGaps 为空并在摘要中解释不适用的检查，而非记录为 gap。".to_string());
     }
     if !task.code_quality_requirement_refs.is_empty() {
-        rules.push("For referenced codeQualityExecutionContext entries, provide one codeQualityEvidence entry per assigned requirement in task order; Loom derives requirementId and verificationIds. referenceFilesChecked must list exactly the files read from sourceContext.codeQualityExecutionContext[].referenceLoadPlan, and summaries must state how changed files followed selected language, framework, SQL dialect, and existing repository references.".to_string());
-        rules.push("referenceLoadPlan paths are Loom installed reference paths, not project source paths; resolve them under the current Loom skill reference root before editing or writing codeQualityEvidence.".to_string());
-        rules.push("Treat task.implementationObligations as the implementation closure contract. task.implementationActions is only the normalized action classification; do not invent or duplicate obligations in TaskResult.".to_string());
-        rules.push("The codeQualityEvidence template starts as not_verified. Set status=satisfied only after every selected reference file was read and the changed code is covered by concrete passed verification evidence; for completed or completed_with_notes results, knownGaps must be empty.".to_string());
+        rules.push("对于引用的 codeQualityExecutionContext 条目，按任务顺序为每个分配的需求提供一个 codeQualityEvidence 条目；Loom 派生 requirementId 和 verificationIds。referenceFilesChecked 必须准确列出从 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 读取的文件，摘要必须说明更改的文件如何遵循选定的语言、框架、SQL 方言和现有仓库引用。".to_string());
+        rules.push("referenceLoadPlan 路径是 Loom 安装的参考路径，而非项目源码路径；在编辑或写入 codeQualityEvidence 之前，在当前 Loom 技能参考根目录下解析它们。".to_string());
+        rules.push("将 task.implementationObligations 视为实现闭包合同。task.implementationActions 仅是规范化的操作分类；不要在 TaskResult 中发明或重复义务。".to_string());
+        rules.push("codeQualityEvidence 模板起始为 not_verified。仅在每个选定的参考文件被读取且更改的代码被具体通过的验证证据覆盖后才设置 status=satisfied；对于 completed 或 completed_with_notes 结果，knownGaps 必须为空数组。".to_string());
     }
     json!(rules)
 }
@@ -1029,17 +1040,17 @@ fn engineering_quality_execution_rules(task: &TaskDefinition) -> Value {
     json!({
         "appliesToRequirementRefs": task.engineering_quality_requirement_refs,
         "requirementSource": "sourceContext.engineeringQualityRequirements",
-        "scopeRule": "Apply only the listed requirements whose appliesToTaskIds include this task; do not create new requirements inside TaskResult.",
+        "scopeRule": "仅应用 appliesToTaskIds 包含此任务的列出需求；不要在 TaskResult 中创建新需求。",
         "implementationRules": [
-            "Before editing persistence-affecting code, compare sourceContext.engineeringQualityRequirements[].alignmentTargets against this task's changed entities, schema or migrations, repositories, DTOs, API payloads, query fields, and tests.",
-            "Keep field type semantics aligned across code, storage, data access, serialization, and tests; do not rely on provider defaults for declared riskFieldKinds.",
-            "Use the actual stackSignals from the request as evidence to choose provider-compatible mappings; do not hardcode assumptions from an unrelated stack."
+            "在编辑影响持久化的代码之前，将 sourceContext.engineeringQualityRequirements[].alignmentTargets 与此任务更改的实体、模式或迁移、仓库、DTO、API 载荷、查询字段和测试进行比较。",
+            "保持字段类型语义在代码、存储、数据访问、序列化和测试之间对齐；不要为声明的 riskFieldKinds 依赖提供方默认值。",
+            "使用请求中的实际 stackSignals 作为证据来选择提供方兼容的映射；不要硬编码来自不相关技术栈的假设。"
         ],
         "verificationRules": [
-            "Use task.verificationIntents as the verification id source.",
-            "When implementation touches persistence, prefer same-provider tests or runtime checks over mock-only evidence.",
-            "When a MySQL or PostgreSQL dialect reference is selected, verify provider-specific behavior against that provider or record the exact unavailable provider behavior; do not claim dialect support from SQLite, H2, or another database.",
-            "Record concise alignment evidence in verificationResults[].summary and requirementDetailEvidence[].summary."
+            "使用 task.verificationIntents 作为验证 ID 来源。",
+            "当实现涉及持久化时，优先使用同提供方测试或运行时检查而非仅模拟证据。",
+            "当选择了 MySQL 或 PostgreSQL 方言参考时，针对该提供方验证提供方特定行为或记录确切不可用的提供方行为；不要从 SQLite、H2 或其他数据库声称方言支持。",
+            "在 verificationResults[].summary 和 requirementDetailEvidence[].summary 中记录简明的对齐证据。"
         ]
     })
 }
@@ -1049,16 +1060,16 @@ fn architecture_quality_execution_rules(task: &TaskDefinition) -> Value {
         "appliesToRequirementRefs": task.architecture_quality_requirement_refs,
         "requirementSource": "sourceContext.architectureQualityRequirements",
         "architectureSource": "sourceContext.architectureArtifactProjection.architectureQuality",
-        "scopeRule": "Apply only the listed requirements whose appliesToTaskIds include this task; do not create new architecture requirements inside TaskResult.",
+        "scopeRule": "仅应用 appliesToTaskIds 包含此任务的列出需求；不要在 TaskResult 中创建新架构需求。",
         "implementationRules": [
-            "Before editing, compare sourceContext.architectureQualityRequirements against the task-owned modules, interfaces, data model, runtime surfaces, and workflows.",
-            "Respect referenced decisions, implement referenced risk mitigations when in scope, and keep referenced NFRs observable through code or verification evidence.",
-            "Do not expand architecture scope beyond the current task to satisfy an unrelated decision, NFR, or risk."
+            "编辑前，将 sourceContext.architectureQualityRequirements 与任务拥有的模块、接口、数据模型、运行时界面和工作流进行比较。",
+            "尊重引用的决策，在范围内时实现引用的风险缓解，并通过代码或验证证据保持引用的 NFR 可观察。",
+            "不要为满足不相关的决策、NFR 或风险而将架构范围扩展到当前任务之外。"
         ],
         "verificationRules": [
-            "Use task.verificationIntents as the verification id source.",
-            "Record concise evidence in architectureQualityEvidence for every referenced architecture quality requirement.",
-            "Verification summaries must state how the changed files respected the referenced decision, NFR, or risk mitigation."
+            "使用 task.verificationIntents 作为验证 ID 来源。",
+            "为每个引用的架构质量需求在 architectureQualityEvidence 中记录简明证据。",
+            "验证摘要必须说明更改的文件如何尊重引用的决策、NFR 或风险缓解。"
         ]
     })
 }
@@ -1069,19 +1080,19 @@ fn api_contract_execution_rules(task: &TaskDefinition) -> Value {
         "requirementSource": "sourceContext.apiContractRequirements",
         "interfaceSource": "sourceContext.architectureArtifactProjection.interfaces",
         "bindingSource": "sourceContext.architectureArtifactProjection.apiContract",
-        "scopeRule": "Apply only the listed API contract requirements whose appliesToTaskIds include this task; do not create new API requirements inside TaskResult.",
+        "scopeRule": "仅应用 appliesToTaskIds 包含此任务的列出 API 合同需求；不要在 TaskResult 中创建新 API 需求。",
         "implementationRules": [
-            "Before editing API or client binding code, compare sourceContext.apiContractRequirements with the task-owned AAC interfaces.",
-            "Keep method, path, request schema, response schema, status code categories, error schema, auth policy, and pagination policy aligned with the AAC interface.",
-            "For protected interfaces, keep securityProfileRef and the selected profile's mechanism, algorithm, key source, transport, issuer, audience, and claims aligned; do not widen or replace the canonical profile.",
-            "Do not replace business errors with generic 500 responses or silent success.",
-            "Do not add versioned paths or OpenAPI files unless the AAC interface or requirement explicitly declares them."
+            "在编辑 API 或客户端绑定代码之前，将 sourceContext.apiContractRequirements 与任务拥有的 AAC 接口进行比较。",
+            "保持方法、路径、请求模式、响应模式、状态码类别、错误模式、认证策略和分页策略与 AAC 接口对齐。",
+            "对于受保护的接口，保持 securityProfileRef 和所选配置文件的机制、算法、密钥来源、传输、签发者、受众和声明对齐；不要扩大或替换规范配置文件。",
+            "不要用通用 500 响应或静默成功替换业务错误。",
+            "除非 AAC 接口或需求明确声明，不要添加版本化路径或 OpenAPI 文件。"
         ],
         "verificationRules": [
-            "Use task.verificationIntents as the verification id source.",
-            "Record concise evidence in apiContractEvidence for every referenced API contract requirement.",
-            "For write or state-transition APIs, verification should cover one success path and one validation or business-blocking error path when feasible.",
-            "For collection APIs, verification should cover declared pagination or filtering behavior when present."
+            "使用 task.verificationIntents 作为验证 ID 来源。",
+            "为每个引用的 API 合同需求在 apiContractEvidence 中记录简明证据。",
+            "对于写入或状态转换 API，可行时验证应覆盖一个成功路径和一个验证或业务阻塞错误路径。",
+            "对于集合 API，存在时验证应覆盖声明的分页或过滤行为。"
         ]
     })
 }
@@ -1090,29 +1101,28 @@ fn code_quality_execution_rules(task: &TaskDefinition) -> Value {
     json!({
         "appliesToRequirementRefs": task.code_quality_requirement_refs,
         "requirementSource": "sourceContext.codeQualityExecutionContext",
-        "scopeRule": "Apply only listed code quality requirements whose appliesToTaskIds include this task; do not create new language or framework requirements inside TaskResult.",
-        "referenceLoadRule": "Load only files listed in sourceContext.codeQualityExecutionContext[].referenceLoadPlan. These paths are relative to the installed Loom skill references root, not the project workspace. Do not derive paths from referenceGroups, scan the tech/code or tech/backend trees, or load external language/framework skills.",
+        "scopeRule": "仅应用 appliesToTaskIds 包含此任务的列出代码质量需求；不要在 TaskResult 中创建新语言或框架需求。",
+        "referenceLoadRule": "仅加载 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 中列出的文件。这些路径相对于已安装的 Loom 技能参考根目录，而非项目工作区。不要从 referenceGroups 派生路径、扫描 tech/code 或 tech/backend 树或加载外部语言/框架技能。",
         "referencePathResolution": {
-            "pathMeaning": "Loom installed reference path",
+            "pathMeaning": "Loom 安装的参考路径",
             "projectWorkspacePath": false,
-            "codexAndClaudeHint": "Resolve as references/<path> next to the active Loom SKILL.md.",
-            "opencodeHint": "Resolve as ../references/loom/<path> from the active OpenCode loom command/plugin files."
+            "opencodeHint": "从活动的 OpenCode loom 命令/插件文件解析为 ../references/loom/<path>。"
         },
         "implementationRules": [
-            "Use task.implementationActions and task.objective as the source-edit decisions within this task's write boundary; code quality references constrain implementation choices but do not create a second task scope.",
-            "Before editing, compare selected language/framework references with existing repository patterns and prefer the existing project convention when both are valid.",
-            "Keep API, UI, architecture, runtime, and persistence obligations in their dedicated contracts; use code quality requirements for language/framework implementation discipline only.",
-            "When the selected reference plan contains tech/backend/springboot/mybatis-plus, use that plan as the only MyBatis-Plus guidance for the task; do not load JPA, MyBatis-Flex, plain MyBatis, or unlisted external persistence references.",
-            "When a code quality requirement contains packageNamingPolicy, production source package declarations must follow that policy; placeholder package roots are not acceptable deliverable code.",
-            "When a selected language or framework reference is not applicable to a changed file but the requirement is still satisfied, explain the non-applicability in the summary without adding knownGaps.",
-            "If a selected Loom reference cannot be loaded from the installed reference root, do not mark codeQualityEvidence satisfied; report the unresolved reference as a blocking contract problem instead of treating the project workspace as missing source files."
+            "将 task.implementationActions 和 task.objective 作为此任务写入边界内的源码编辑决策；代码质量参考约束实现选择但不创建第二个任务范围。",
+            "编辑前，将选定的语言/框架参考与现有仓库模式进行比较，当两者都有效时优先使用现有项目约定。",
+            "将 API、UI、架构、运行时和持久化义务保留在各自的专用合同中；代码质量需求仅用于语言/框架实现规范。",
+            "当选定的参考计划包含 tech/backend/springboot/mybatis-plus 时，将该计划作为此任务唯一的 MyBatis-Plus 指导；不要加载 JPA、MyBatis-Flex、普通 MyBatis 或未列出的外部持久化参考。",
+            "当代码质量需求包含 packageNamingPolicy 时，生产源码包声明必须遵循该策略；占位符包根不可接受为交付代码。",
+            "当选定的语言或框架参考不适用于更改的文件但需求仍被满足时，在摘要中解释不适用性而不添加 knownGaps。",
+            "如果选定的 Loom 参考无法从安装的参考根目录加载，不要将 codeQualityEvidence 标记为 satisfied；将未解析的参考报告为阻塞的合同问题，而非将项目工作区视为缺失源文件。"
         ],
         "verificationRules": [
-            "Use task.verificationIntents as the verification id source.",
-            "Run the smallest available compile, type, lint, unit, or integration check that proves the changed code.",
-            "Record selected reference groups and reference files in codeQualityEvidence. Changed files and commands belong to the canonical TaskResult changedFiles and verificationResults[].provenance fields; do not duplicate them inside codeQualityEvidence.",
-            "For completed or completed_with_notes results, codeQualityEvidence.status must be satisfied and knownGaps must be an empty array; a reference that is irrelevant to one changed file is explained in summary, not recorded as a gap.",
-            "Do not author requirementId or verificationIds when the result template marks them as MCP-derived; keep evidence entries in the assigned requirement order and let Loom normalize linkage fields."
+            "使用 task.verificationIntents 作为验证 ID 来源。",
+            "运行可证明更改代码的最小编译、类型、lint、单元或集成检查。",
+            "在 codeQualityEvidence 中记录选定的参考组和参考文件。更改的文件和命令属于规范 TaskResult changedFiles 和 verificationResults[].provenance 字段；不要在 codeQualityEvidence 中重复它们。",
+            "对于 completed 或 completed_with_notes 结果，codeQualityEvidence.status 必须为 satisfied 且 knownGaps 必须为空数组；与某个更改文件无关的参考在摘要中解释，不记录为 gap。",
+            "当结果模板将 requirementId 或 verificationIds 标记为 MCP 派生时不要编写它们；按分配的需求顺序保持证据条目，让 Loom 规范化链接字段。"
         ]
     })
 }
@@ -1170,14 +1180,14 @@ pub(crate) fn browser_verification_context(
 pub(crate) fn browser_verification_rules() -> Value {
     json!({
         "profileAuthority": "sourceContext.browserVerificationContext.profile",
-        "referenceLoadRule": "Read only files listed in sourceContext.browserVerificationContext.profile.referenceLoadPlan. Paths are relative to the installed Loom skill references root; do not browse sibling test references or load an external Playwright skill.",
-        "scopeRule": "Run only profile.checks in this MCP-generated browser quality closure and keep each check bounded to its source task, source verification, viewport, backend mode, and enforcement.",
-        "runnerRule": "Reuse sourceContext.browserVerificationContext.projectRunner when present. Do not replace an existing project runner or install a second project-local Playwright stack.",
-        "runnerBootstrapRule": "When projectRunner is absent and profile.runnerSource is baseline_selected or loom_managed, create the first project-owned Playwright dependency/config only for this closure, pin @playwright/test to the exact resolvedVersion supplied by runtime.runtimeEnvironments, and update the project lockfile. The shared runner remains a preparation/doctor asset and is never copied into the project.",
-        "runtimeAuthority": "MCP prepared sourceContext.browserVerificationContext.runtime before creating this execution request. Do not call loom.browserRuntimePrepare from inside the task, install browsers ad hoc, or edit shared cache state.",
-        "runtimeExecutionRule": "Select the runtime environment whose requested/resolved version matches the project runner. For host backend, apply browserEnvironment to the project-local runner. For managed_container backend, use its commandPrefix and browserEnvironment without copying shared assets into the project; when the tested service runs on the host, translate loopback base URLs to managedContainer.hostGateway while preserving the actual port.",
-        "environmentFailureRule": "Use blocked only when the supplied host/container browser environment cannot launch or execute, and include the exact environment diagnostic; Loom classifies that outside generic execution repair. Application startup, API, selector, assertion, and workflow failures are product evidence and must remain failed.",
-        "resultRule": "Record browser outcomes through verificationResults[].browserChecks; do not paste Playwright reports, traces, screenshots, or console logs into prose fields. MCP correlates closure checks to source UI tasks."
+        "referenceLoadRule": "仅读取 sourceContext.browserVerificationContext.profile.referenceLoadPlan 中列出的文件。路径相对于已安装的 Loom 技能参考根目录；不要浏览同级测试参考或加载外部 Playwright 技能。",
+        "scopeRule": "仅运行此 MCP 生成的浏览器质量闭包中的 profile.checks，并将每个检查限定在其源任务、源验证、视口、后端模式和强制级别。",
+        "runnerRule": "存在时复用 sourceContext.browserVerificationContext.projectRunner。不要替换已有的项目运行器或安装第二个项目局部 Playwright 栈。",
+        "runnerBootstrapRule": "当 projectRunner 缺失且 profile.runnerSource 为 baseline_selected 或 loom_managed 时，仅为此闭包创建首个项目拥有的 Playwright 依赖/配置，将 @playwright/test 固定到 runtime.runtimeEnvironments 提供的确切 resolvedVersion，并更新项目 lockfile。共享运行器仍是准备/诊断资产，从不复制到项目中。",
+        "runtimeAuthority": "MCP 在创建此执行请求之前准备了 sourceContext.browserVerificationContext.runtime。不要从任务内部调用 loom.browserRuntimePrepare、临时安装浏览器或编辑共享缓存状态。",
+        "runtimeExecutionRule": "选择请求/解析版本与项目运行器匹配的运行时环境。对于 host 后端，将 browserEnvironment 应用于项目局部运行器。对于 managed_container 后端，使用其 commandPrefix 和 browserEnvironment，不将共享资产复制到项目中；当被测服务运行在宿主上时，将回环 base URL 转换为 managedContainer.hostGateway，同时保留实际端口。",
+        "environmentFailureRule": "仅当提供的宿主/容器浏览器环境无法启动或执行时使用 blocked，并包含确切的环境诊断；Loom 将其分类在通用执行修复之外。应用启动、API、选择器、断言和工作流失败是产品证据，必须保持 failed。",
+        "resultRule": "通过 verificationResults[].browserChecks 记录浏览器结果；不要将 Playwright 报告、trace、screenshot 或控制台日志粘贴到正文字段中。MCP 将闭包检查关联到源 UI 任务。"
     })
 }
 
@@ -1355,15 +1365,15 @@ fn task_execution_read_groups(
         json!({
             "groupId": "task_execution_core",
             "required": true,
-            "purpose": "Read task identity, edit boundary, and source edit rules before editing.",
-            "whenToRead": "Read before any source edit.",
+            "purpose": "在编辑前读取任务标识、编辑边界和源码编辑规则。",
+            "whenToRead": "在任何源码编辑之前读取。",
             "selectors": read_selectors_value_from_paths(core_fields)
         }),
         json!({
             "groupId": "task_execution_scope_context",
             "required": true,
-            "purpose": "Read task-scoped acceptance, requirement detail, dependency, and language context.",
-            "whenToRead": "Read before deciding implementation scope.",
+            "purpose": "读取任务范围的验收、需求详情、依赖和语言上下文。",
+            "whenToRead": "在决定实现范围之前读取。",
             "selectors": read_selectors_value_from_paths(scope_fields)
         }),
     ];
@@ -1371,8 +1381,8 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_architecture_context",
             "required": true,
-            "purpose": "Read only task-owned architecture artifacts needed for this task.",
-            "whenToRead": "Read before editing architecture-owned code.",
+            "purpose": "仅读取此任务所需的任务拥有架构制品。",
+            "whenToRead": "在编辑架构拥有的代码之前读取。",
             "selectors": read_selectors_value_from_paths(architecture_fields)
         }));
     }
@@ -1380,8 +1390,8 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_frontend_context",
             "required": true,
-            "purpose": "Read task-owned frontend guidance and UI quality contract.",
-            "whenToRead": "Read before editing frontend surfaces.",
+            "purpose": "读取任务拥有的前端指导和 UI 质量合同。",
+            "whenToRead": "在编辑前端界面之前读取。",
             "selectors": read_selectors_value_from_paths(frontend_fields)
         }));
     }
@@ -1389,8 +1399,8 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_runtime_context",
             "required": true,
-            "purpose": "Read runtime delivery and controlled probe rules only when this task needs runtime evidence.",
-            "whenToRead": "Read before runtime-impacting edits or probes.",
+            "purpose": "仅在此任务需要运行时证据时读取运行时交付和受控探针规则。",
+            "whenToRead": "在运行时影响的编辑或探针之前读取。",
             "selectors": read_selectors_value_from_paths(runtime_fields)
         }));
     }
@@ -1398,8 +1408,8 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_browser_verification",
             "required": true,
-            "purpose": "Read the MCP-derived browser checks, selected runner facts, and task-scoped Playwright reference plan.",
-            "whenToRead": "Read before creating, changing, or running browser verification.",
+            "purpose": "读取 MCP 派生的浏览器检查、选定的运行器事实和任务范围的 Playwright 参考计划。",
+            "whenToRead": "在创建、更改或运行浏览器验证之前读取。",
             "selectors": read_selectors_value_from_paths(browser_fields)
         }));
     }
@@ -1407,8 +1417,8 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_quality_context",
             "required": true,
-            "purpose": "Read only quality contracts assigned to this task.",
-            "whenToRead": "Read before applying engineering, architecture, API, or code quality obligations.",
+            "purpose": "仅读取分配给此任务的质量合同。",
+            "whenToRead": "在应用工程、架构、API 或代码质量义务之前读取。",
             "selectors": read_selectors_value_from_paths(quality_fields)
         }));
     }
@@ -1416,20 +1426,18 @@ fn task_execution_read_groups(
         groups.push(json!({
             "groupId": "task_execution_concept_context",
             "required": true,
-            "purpose": "Read concept responsibilities assigned to this task.",
-            "whenToRead": "Read before implementing concept-sensitive behavior.",
+            "purpose": "读取分配给此任务的概念职责。",
+            "whenToRead": "在实现概念敏感行为之前读取。",
             "selectors": read_selectors_value_from_paths(concept_fields)
         }));
     }
-    groups.push(
-        json!({
-            "groupId": "task_execution_result_contract",
-            "required": true,
-            "purpose": "Read TaskResult output file, schema fields, enum values, and completion barrier.",
-            "whenToRead": "Read before writing TaskResult.",
-            "selectors": read_selectors_value_from_paths(result_fields)
-        }),
-    );
+    groups.push(json!({
+        "groupId": "task_execution_result_contract",
+        "required": true,
+        "purpose": "读取 TaskResult 输出文件、模式字段、枚举值和完成屏障。",
+        "whenToRead": "在写入 TaskResult 之前读取。",
+        "selectors": read_selectors_value_from_paths(result_fields)
+    }));
     Value::Array(groups)
 }
 
@@ -1695,7 +1703,7 @@ fn task_scoped_architecture_projection(
     let mut projection = json!({
         "compaction": {
             "mode": "task_scoped_artifact_projection",
-            "rule": "This projection includes only artifacts selected by task.writeBoundary.artifactRefs, directly linked workflow refs, or task scope/acceptance refs."
+            "rule": "此投影仅包含由 task.writeBoundary.artifactRefs、直接关联的工作流引用或任务范围/验收引用选择的制品。"
         },
         "modules": selected_values(&aac.modules, "moduleId", &refs.modules, task, true),
         "entities": selected_entities(&aac.data_model, &refs.entities, task),
@@ -1755,7 +1763,7 @@ fn build_frontend_execution_guidance(
     let Some(frontend) = aac.frontend_experience.as_ref() else {
         return json!({
             "schemaVersion": "1.0",
-            "purpose": "No AAC frontendExperience is present for this task.",
+            "purpose": "此任务没有 AAC frontendExperience。",
             "userFacingLanguage": user_facing_language,
             "responsibility": task.objective,
             "uiTaskScope": empty_ui_task_scope(),
@@ -1765,11 +1773,11 @@ fn build_frontend_execution_guidance(
             "closureRequirementRefs": [],
             "workflowClosureDetailSource": {
                 "closureRequirementIds": [],
-                "derivationRule": "No AAC frontendExperience is present for this task."
+                "derivationRule": "此任务没有 AAC frontendExperience。"
             },
             "uiProductionBrief": Value::Null,
             "styleAssetPlan": Value::Null,
-            "guidanceWarnings": ["AAC frontendExperience is absent."]
+            "guidanceWarnings": ["AAC frontendExperience 缺失。"]
         });
     };
     let closure_requirements = workflow_closure_requirements_for_task(task, aac);
@@ -1795,14 +1803,14 @@ fn build_frontend_execution_guidance(
         .collect::<Vec<_>>();
     let mut warnings = Vec::new();
     if closure_requirements.is_empty() {
-        warnings.push("No workflow closure requirement matched this task; UI scope was derived from AAC uiSurfaceRegistry, detail coverage, task refs, and frontend operation paths.".to_string());
+        warnings.push("没有工作流闭包需求匹配此任务；UI 范围从 AAC uiSurfaceRegistry、详情覆盖、任务引用和前端操作路径派生。".to_string());
     }
     if surfaces.is_empty() && task_has_frontend_execution(task) {
-        warnings.push("No task-specific UI surface matched this task; use uiProductionBrief to keep any implementation business-surface scoped and avoid unrelated UI expansion.".to_string());
+        warnings.push("没有任务特定的 UI 界面匹配此任务；使用 uiProductionBrief 将实现保持在业务界面范围内，避免无关的 UI 扩展。".to_string());
     }
     json!({
         "schemaVersion": "1.0",
-        "purpose": "Task-scoped frontend execution guidance derived from AAC and TaskPlan refs.",
+        "purpose": "从 AAC 和 TaskPlan 引用派生的任务范围前端执行指导。",
         "userFacingLanguage": user_facing_language,
         "responsibility": task.objective,
         "uiTaskScope": ui_task_scope_projection(
@@ -1824,8 +1832,8 @@ fn build_frontend_execution_guidance(
         "closureRequirementRefs": workflow_closure_requirement_execution_view(&closure_requirements),
         "workflowClosureDetailSource": {
             "closureRequirementIds": closure_requirements.iter().filter_map(|item| string_at(item, "closureId")).collect::<Vec<_>>(),
-            "detailAuthority": "Use closureRequirementRefs, frontendBackendBindings, and sourceContext.architectureArtifactProjection from this request.",
-            "derivationRule": "Closure refs are derived from AAC frontendExperience surfaces or operationPaths, task userFlows, structured happy-path steps, and executable interfaces."
+            "detailAuthority": "使用此请求中的 closureRequirementRefs、frontendBackendBindings 和 sourceContext.architectureArtifactProjection。",
+            "derivationRule": "闭包引用从 AAC frontendExperience 界面或操作路径、任务 userFlows、结构化快乐路径步骤和可执行接口派生。"
         },
         "uiProductionBrief": ui_production_brief(task, frontend, &task_scope, user_facing_language),
         "styleAssetPlan": style_asset_plan(frontend),
@@ -1835,7 +1843,7 @@ fn build_frontend_execution_guidance(
 
 fn empty_ui_task_scope() -> Value {
     json!({
-        "source": "MCP-derived TaskPlan uiTaskScope projection",
+        "source": "MCP 派生的 TaskPlan uiTaskScope 投影",
         "surfacesInScope": [],
         "dataViewsInScope": [],
         "actionsInScope": [],
@@ -1862,7 +1870,7 @@ fn ui_task_scope_projection(
         .get("uiSurfaceDecisionContract")
         .unwrap_or(&Value::Null);
     json!({
-        "source": "MCP-derived TaskPlan uiTaskScope projection",
+        "source": "MCP 派生的 TaskPlan uiTaskScope 投影",
         "surfaceIds": scope.surface_refs,
         "surfacesInScope": surfaces,
         "dataViewsInScope": data_views,
@@ -2374,7 +2382,7 @@ fn frontend_backend_bindings_from_scope(
                 "workflowRefs": scope.workflow_refs.clone(),
                 "operationPathRefs": scope.operation_path_refs.clone(),
                 "interfaces": [compact_interface_binding(interface)],
-                "completionRule": "Wire the task-owned UI action or surface to this AAC-declared interface when the task owns the interaction."
+                "completionRule": "当任务拥有该交互时，将任务拥有的 UI 操作或界面连接到此 AAC 声明的接口。"
             })
         })
         .collect()
@@ -2422,18 +2430,18 @@ fn ui_production_brief(
 fn product_intent(task: &TaskDefinition, surfaces: &[Value], data_views: &[Value]) -> Value {
     json!({
         "userRole": surface_model_string(surfaces, "/productIntent/userRole")
-            .unwrap_or_else(|| "task user".to_string()),
+            .unwrap_or_else(|| "任务用户".to_string()),
         "businessObject": surface_model_string(surfaces, "/productIntent/businessObject")
             .unwrap_or_else(|| {
                 compact_join(
                     unique_strings(data_views.iter().filter_map(value_display_name).collect()),
-                    "task-owned business object",
+                    "任务拥有的业务对象",
                 )
             }),
         "primaryJob": surface_model_string(surfaces, "/productIntent/primaryJob")
             .unwrap_or_else(|| task.objective.clone()),
         "successOutcome": surface_model_string(surfaces, "/productIntent/successOutcome")
-            .unwrap_or_else(|| "The user can complete the task-owned workflow and see the updated business state.".to_string())
+            .unwrap_or_else(|| "用户可以完成任务拥有的工作流并看到更新后的业务状态。".to_string())
     })
 }
 
@@ -2533,9 +2541,9 @@ fn layout_contract(surfaces: &[Value], surface_contract: &Value) -> Value {
         "responsiveBehavior": surface_responsive_behavior(layout_model, surfaces),
         "primaryRegion": string_at(layout_model, "primaryWorkRegionId")
             .or_else(|| surface_model_string(surfaces, "/compositionModel/primaryRegion"))
-            .unwrap_or_else(|| "task-relevant data, form, detail, or action region".to_string()),
+            .unwrap_or_else(|| "任务相关的数据、表单、详情或操作区域".to_string()),
         "supportingRegions": surface_model_array(surfaces, "/compositionModel/supportingRegions")
-            .unwrap_or_else(|| vec!["navigation/context".to_string(), "feedback".to_string()])
+            .unwrap_or_else(|| vec!["导航/上下文".to_string(), "反馈".to_string()])
     })
 }
 
@@ -2569,7 +2577,7 @@ fn information_contract(
             .collect::<Vec<_>>(),
         "longContentPolicy": string_at(information_model, "longContentPolicy")
             .or_else(|| surface_model_string(surfaces, "/informationModel/longContentPolicy"))
-            .unwrap_or_else(|| "Long labels, notes, and identifiers must wrap, truncate with access to full value, or move into detail views without breaking layout.".to_string()),
+            .unwrap_or_else(|| "长标签、备注和标识符必须换行、截断并提供访问完整值的途径，或移入详情视图，不得破坏布局。".to_string()),
         "dataViews": data_view_names
     })
 }
@@ -2599,12 +2607,12 @@ fn action_contract(
         "dangerousActions": surface_model_array(surfaces, "/actionModel/dangerousActions")
             .unwrap_or_default(),
         "placementRule": surface_model_string(surfaces, "/actionModel/placementRule")
-            .unwrap_or_else(|| "Place actions where the user makes the decision, keeping affected object identity visible.".to_string()),
+            .unwrap_or_else(|| "将操作放置在用户做出决策的位置，保持受影响的对象标识可见。".to_string()),
         "postSuccessUpdate": selected_surface_contract_values(surface_contract, "actionModel", "actionId", &scope.surface_action_refs)
             .iter()
             .find_map(|action| string_at(action, "postSuccessUpdate"))
             .or_else(|| surface_model_string(surfaces, "/actionModel/postSuccessUpdate"))
-            .unwrap_or_else(|| "Update the affected row, detail, count, state, or route; do not rely only on a toast.".to_string())
+            .unwrap_or_else(|| "更新受影响的行、详情、计数、状态或路由；不要仅依赖提示。".to_string())
     })
 }
 
@@ -2619,13 +2627,13 @@ fn state_contract(
     json!({
         "statesInScope": state_refs,
         "stateModelsInScope": states_in_scope,
-        "loading": state_rule(surfaces, "loading", "Near the region or control waiting for data or mutation."),
-        "empty": state_rule(surfaces, "empty", "In the data/form region with filters and business next action when applicable."),
-        "error": state_rule(surfaces, "error", "Near the affected region with recovery path and without stack traces."),
-        "success": state_rule(surfaces, "success", "Inline object update plus short confirmation when useful."),
-        "business_blocking": state_rule(surfaces, "business_blocking", "Near the blocked field, row, detail, or action with product-language reason."),
-        "validation": state_rule(surfaces, "validation", "Near the field and in a summary for longer forms."),
-        "disabled": state_rule(surfaces, "disabled", "On or near disabled controls with unlock reason when actionable.")
+        "loading": state_rule(surfaces, "loading", "在等待数据或变更的区域或控件附近。"),
+        "empty": state_rule(surfaces, "empty", "在数据/表单区域中，适用时显示过滤器和业务下一步操作。"),
+        "error": state_rule(surfaces, "error", "在受影响区域附近，显示恢复路径，不显示堆栈跟踪。"),
+        "success": state_rule(surfaces, "success", "内联对象更新加上有用的简短确认。"),
+        "business_blocking": state_rule(surfaces, "business_blocking", "在受阻字段、行、详情或操作附近，使用产品语言说明原因。"),
+        "validation": state_rule(surfaces, "validation", "在字段附近，较长表单时在摘要中显示。"),
+        "disabled": state_rule(surfaces, "disabled", "在或靠近禁用控件处，可操作时显示解锁原因。")
     })
 }
 
@@ -2643,10 +2651,10 @@ fn visual_contract(surface_contract: &Value, surfaces: &[Value]) -> Value {
         .unwrap_or_else(|| "balanced".to_string());
     json!({
         "tokenPolicy": surface_model_string(surfaces, "/visualModel/tokenPolicy")
-            .unwrap_or_else(|| "Use existing or planned semantic tokens before page-local styling; do not create a second token system beside an existing one.".to_string()),
+            .unwrap_or_else(|| "在页面局部样式之前使用已有或计划中的语义令牌；不要在已有令牌系统旁创建第二个令牌系统。".to_string()),
         "componentPolicy": surface_model_string(surfaces, "/visualModel/componentPolicy")
-            .unwrap_or_else(|| "Use task-fit components for data, forms, details, actions, feedback, and navigation instead of decorative capability cards.".to_string()),
-        "densityRule": format!("Use {density} density consistently for spacing, row height, control sizing, and information grouping."),
+            .unwrap_or_else(|| "为数据、表单、详情、操作、反馈和导航使用任务适配的组件，而非装饰性能力卡片。".to_string()),
+        "densityRule": format!("一致地使用 {density} 密度进行间距、行高、控件尺寸和信息分组。"),
         "antiDemoRules": string_array_at(composition, "antiDemoRules")
             .into_iter()
             .chain(surface_model_array(surfaces, "/visualModel/antiDemoRules").unwrap_or_default())
@@ -2665,7 +2673,7 @@ fn content_boundary(
         "userFacingLanguage": user_facing_language
             .as_ref()
             .map(|constraint| constraint.rule.clone())
-            .unwrap_or_else(|| "Use the project's confirmed user-facing language and product vocabulary.".to_string()),
+            .unwrap_or_else(|| "使用项目已确认的用户面向语言和产品词汇。".to_string()),
         "allowedUserVisibleContent": surface_boundary
             .get("allowedUserVisibleContent")
             .cloned()
@@ -2677,7 +2685,7 @@ fn content_boundary(
         "copyRule": surface_boundary
             .get("copyRule")
             .and_then(Value::as_str)
-            .unwrap_or("Write product copy for the user's business task. Do not expose runtime commands, technical stack explanations, delivery progress, verification instructions, internal workflow terms, generated artifact ids, or validator language unless the product itself is a developer/runtime tool.")
+            .unwrap_or("为用户的业务任务编写产品文案。不要暴露运行时命令、技术栈说明、交付进度、验证指令、内部工作流术语、生成的制品 ID 或验证器语言，除非产品本身是开发者/运行时工具。")
     })
 }
 
@@ -2723,7 +2731,7 @@ fn responsive_behavior(surfaces: &[Value]) -> String {
         parts.push(format!("mobile: {value}"));
     }
     if parts.is_empty() {
-        "Keep task order, object identity, primary action, and scoped feedback usable across required viewports; use cards, drill-down, stacking, or horizontal overflow only when they preserve the task.".to_string()
+        "在所需视口中保持任务顺序、对象标识、主要操作和范围反馈可用；仅在保持任务的前提下使用卡片、下钻、堆叠或横向溢出。".to_string()
     } else {
         parts.join("; ")
     }
@@ -2760,7 +2768,7 @@ fn style_asset_plan(frontend: &Value) -> Value {
         "designTokenAssetPlan": surface_contract.get("designTokenAssetPlan").cloned().unwrap_or(Value::Null),
         "semanticTokenPolicy": surface_contract.get("semanticTokenPolicy").cloned().unwrap_or(Value::Null),
         "referencePlan": surface_contract.get("referencePlan").cloned().unwrap_or_else(|| json!([])),
-        "implementationRule": "Load only UIX files listed in referencePlan when this task changes user-visible frontend code. Use designTokenAssetPlan as the single token asset authority for this task."
+        "implementationRule": "当此任务更改用户可见前端代码时，仅加载 referencePlan 中列出的 UIX 文件。将 designTokenAssetPlan 作为此任务的单个令牌资产权威。"
     })
 }
 
@@ -2778,18 +2786,16 @@ fn value_display_name(value: &Value) -> Option<String> {
 
 fn default_required_composition() -> Vec<String> {
     vec![
-        "business navigation or local context".to_string(),
-        "task-relevant data view, form, table, detail, or action area".to_string(),
-        "local loading, empty, error, success, and business-blocking states where applicable"
-            .to_string(),
+        "业务导航或局部上下文".to_string(),
+        "任务相关的数据视图、表单、表格、详情或操作区域".to_string(),
+        "适用时局部加载、空、错误、成功和业务阻塞状态".to_string(),
     ]
 }
 
 fn default_forbidden_composition() -> Vec<String> {
     vec![
-        "surface composition unrelated to the task-owned business workflow".to_string(),
-        "decorative or explanatory sections that displace required data, actions, states, or feedback"
-            .to_string(),
+        "与任务拥有的业务工作流无关的界面组合".to_string(),
+        "取代所需数据、操作、状态或反馈的装饰性或解释性区域".to_string(),
     ]
 }
 
@@ -2867,7 +2873,7 @@ fn workflow_closure_requirement_execution_view(requirements: &[Value]) -> Vec<Va
                 "stateMachineRefs": string_array_at(requirement, "stateMachineRefs"),
                 "requiredDataBindingMode": "wired",
                 "requiredEvidence": requirement.get("requiredEvidence").cloned().unwrap_or(Value::Array(vec![])),
-                "evidenceRule": "Evidence must cover user action, declared interface invocation, state or persistence change, and success or blocking feedback."
+                "evidenceRule": "证据必须覆盖用户操作、声明的接口调用、状态或持久化变更以及成功或阻塞反馈。"
             })
         })
         .collect()
@@ -2892,7 +2898,7 @@ fn frontend_backend_bindings(requirements: &[Value]) -> Vec<Value> {
                         "workflowName": workflow_name,
                         "stepRef": step_ref,
                         "interfaces": [interface.clone()],
-                        "completionRule": "Wire the user action to this AAC-declared interface and verify readback or feedback."
+                        "completionRule": "将用户操作连接到此 AAC 声明的接口并验证回读或反馈。"
                     })
                 })
         })
@@ -3338,7 +3344,7 @@ mod tests {
             .any(|item| item.as_str() == Some("implement_observability")));
         assert!(boundary["rules"].as_array().unwrap().iter().any(|item| item
             .as_str()
-            .is_some_and(|text| text.contains("does not own persistence"))));
+            .is_some_and(|text| text.contains("不拥有持久化"))));
     }
 
     #[test]

@@ -1,28 +1,28 @@
-# Playwright Fixtures And Reusable Models
+# Playwright Fixture 与可复用模型
 
-Fixtures should make state ownership explicit and keep tests readable. Reuse is valuable when it removes repeated setup or captures a stable product interaction; abstraction is harmful when it hides the behavior a check must prove.
+Fixture 应使状态所有权显式并保持测试可读。当复用移除重复设置或捕获稳定的产品交互时是有价值的；当抽象隐藏检查必须证明的行为时是有害的。
 
-## Choose The Smallest Reuse Unit
+## 选择最小复用单元
 
-Use a plain helper when setup is local to one file. Use a fixture when multiple tests need the same lifecycle-managed dependency. Use a page or component object when a stable product surface has several repeated interactions.
+当设置仅在一个文件本地时使用普通 helper。当多个测试需要相同的生命周期管理依赖时使用 fixture。当稳定的产品界面有多个重复交互时使用页面或组件对象。
 
-Do not create a Page Object Model directory for a single short test. Do not place assertions, test data factories, API clients, navigation, and every page interaction into one base class.
+不要为单个短测试创建 Page Object Model 目录。不要将断言、测试数据工厂、API client、导航和每个页面交互放入一个基类中。
 
-| Need | Preferred form |
+| 需求 | 首选形式 |
 | --- | --- |
-| One test creates one record | local helper |
-| Multiple tests need isolated records | worker/test fixture or typed factory |
-| Repeated interaction with a stable surface | page/component model |
-| Shared authenticated role | storage-state project or role fixture |
-| Global mutable database state | avoid; use namespaced data and controlled reset |
+| 一个测试创建一条记录 | local helper |
+| 多个测试需要隔离记录 | worker/test fixture or typed factory |
+| 与稳定界面的重复交互 | page/component model |
+| 共享认证角色 | storage-state project or role fixture |
+| 全局可变数据库状态 | avoid; use namespaced data and controlled reset |
 
-## Fixture Lifecycle
+## Fixture 生命周期
 
-- Test-scoped fixtures own mutable page, context, record, and temporary-file state.
-- Worker-scoped fixtures may own expensive immutable services or unique worker namespaces.
-- Teardown must be safe after partial setup and must not delete another worker's records.
-- Fixtures should expose meaningful domain capabilities, not raw bags of unrelated values.
-- Keep fixture dependencies acyclic and visible in their parameter list.
+- 测试范围的 fixture 拥有可变 page、context、记录和临时文件状态。
+- Worker 范围的 fixture 可拥有昂贵的不可变 service 或唯一 worker 命名空间。
+- 拆卸必须在部分设置后安全且不得删除另一个 worker 的记录。
+- Fixture 应暴露有意义的领域能力，而非原始的不相关值袋。
+- 保持 fixture 依赖无环且在其参数列表中可见。
 
 ```typescript
 import { test as base, expect, type APIRequestContext } from '@playwright/test';
@@ -48,15 +48,15 @@ export const test = base.extend<Fixtures>({
 export { expect } from '@playwright/test';
 ```
 
-Use an existing test-support API only when the project already permits it. Do not ship insecure reset or seed endpoints in production code just to make a browser test convenient.
+仅在项目已允许时使用现有测试支持 API。不要在生产代码中发布不安全的重置或种子端点来使浏览器测试方便。
 
-## Authentication
+## 认证
 
-- Prefer project-supported test identities, local auth bypasses, or controlled login fixtures.
-- Store generated auth state under ignored test output, never in source control.
-- Separate roles into named projects or fixtures so a test cannot accidentally inherit admin privileges.
-- Refresh state when expiry matters; do not mask expiry behavior with permanently valid tokens.
-- For a login workflow task, test the real login interaction instead of preloading storage state.
+- 优先使用项目支持的测试身份、本地 auth 绕过或受控登录 fixture。
+- 将生成的 auth 状态存储在忽略的测试输出下，永远不在源控制中。
+- 将角色分离到命名项目或 fixture 中，使测试不能意外继承管理员权限。
+- 在过期重要时刷新状态；不要用永久有效的令牌掩盖过期行为。
+- 对于登录工作流任务，测试真实登录交互而非预加载存储状态。
 
 ```typescript
 import { test as setup, expect } from '@playwright/test';
@@ -73,11 +73,11 @@ setup('authenticate as reviewer', async ({ page }) => {
 });
 ```
 
-Credentials come from the project environment. Missing credentials are an environment blocker, not a reason to hard-code secrets.
+凭据来自项目环境。缺失凭据是环境阻止项，不是硬编码密钥的理由。
 
-## Page And Component Models
+## 页面与组件模型
 
-A model should expose product language and stable interactions:
+模型应暴露产品语言和稳定交互：
 
 ```typescript
 export class WorkspaceSettings {
@@ -96,29 +96,29 @@ export class WorkspaceSettings {
 }
 ```
 
-Keep assertions in the test when they express the scenario outcome. A model may expose a status locator; it should not decide that every call must assert the same message.
+当断言表达场景结果时将它们保留在测试中。模型可暴露状态定位器；它不应决定每次调用都必须断言相同消息。
 
-Avoid model inheritance. Compose page-level and component-level models when navigation, table, dialog, or editor interactions are shared.
+避免模型继承。当导航、表格、对话框或编辑器交互共享时组合页面级和组件级模型。
 
-## Test Data
+## 测试数据
 
-- Use domain-valid minimal records. A giant generic fixture obscures which fields matter.
-- Generate unique keys for mutable data; keep readable display values where assertions need them.
-- Build invalid input in the test that owns the validation rule instead of weakening a global factory.
-- Never depend on production data, clock-sensitive existing records, or test ordering.
-- Freeze or inject time only through existing project support when time is the behavior under test.
+- 使用领域有效的最小记录。巨大的通用 fixture 模糊了哪些字段重要。
+- 为可变数据生成唯一键；在断言需要处保留可读的显示值。
+- 在拥有验证规则的测试中构建无效输入，而非削弱全局工厂。
+- 永远不要依赖生产数据、时钟敏感的现有记录或测试排序。
+- 仅通过现有项目支持在时间是被测行为时冻结或注入时间。
 
-## Parallel Safety
+## 并行安全
 
-Before enabling full parallel execution, verify:
+在启用完全并行执行之前，验证：
 
-- record keys are unique per worker;
-- auth sessions do not mutate the same user state;
-- file downloads use `testInfo.outputPath()`;
-- cleanup targets ids created by the same fixture;
-- shared rate limits, queues, and background jobs are controlled;
-- tests do not reuse a singleton page or browser context.
+- 记录键在每个 worker 中唯一；
+- auth session 不修改同一用户状态；
+- 文件下载使用 `testInfo.outputPath()`；
+- 清理目标由相同 fixture 创建的 ID；
+- 共享速率限制、队列和后台作业受控；
+- 测试不复用单例 page 或浏览器 context。
 
-Serial mode is acceptable for a genuinely ordered workflow, but it should be local to that group and documented by the product dependency. Do not make the entire suite serial to hide state leakage.
+串行模式对于真正有序的工作流是可接受的，但它应限定到该组并由产品依赖文档化。不要使整个套件串行来隐藏状态泄漏。
 
-Fixture setup failures should state which prerequisite failed. Do not catch and replace all errors with a generic "setup failed" message. Attach ids or safe response summaries to test annotations when they help diagnose the failure, but do not emit secrets or full payload dumps.
+Fixture 设置失败应说明哪个先决条件失败。不要捕获并用通用"setup failed"消息替换所有错误。当它们有助于诊断失败时将 ID 或安全响应摘要附加到测试注解，但不要输出密钥或完整载荷转储。

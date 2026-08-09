@@ -1,65 +1,65 @@
-# MySQL Schema Mapping
+# MySQL Schema 映射
 
-Use this file with `tech/code/sql/schema.md` when the accepted persistence provider is MySQL and the task owns schema, migration, entity mapping, or database-backed invariants.
+当已接受的持久化提供者是 MySQL 且任务拥有 schema、迁移、实体映射或数据库支持的不变式时，将此文件与 `tech/code/sql/schema.md` 一起使用。
 
 ## When To Use
 
-- Read the repository's MySQL version, driver, ORM, migration tool, SQL mode, and existing migration style before choosing syntax.
-- Apply provider rules only to fields, constraints, indexes, and migrations owned by the task.
-- Keep server administration and unrelated platform work outside this implementation reference.
+- 在选择语法之前，阅读仓库的 MySQL 版本、驱动程序、ORM、迁移工具、SQL 模式和现有迁移风格。
+- 仅将提供者规则应用于任务拥有的字段、约束、索引和迁移。
+- 将服务器管理和不相关的平台工作排除在此实现参考之外。
 
 ## Implementation Focus
 
-- Use InnoDB for transactional business tables unless the repository contains an explicit legacy engine decision that the task must preserve.
-- Choose integer identity, UUID, or another key strategy from domain scale, external references, ORM support, and existing schema. `UNSIGNED` is not automatically better when values cross application or service boundaries.
-- Use `DECIMAL` for money and other exact quantities. Match precision and scale to the domain and serialized API representation.
-- Treat MySQL boolean storage, enum storage, nullable fields, default expressions, and timestamp behavior as explicit mapping decisions. Do not let driver defaults define the contract.
-- Use `utf8mb4` for user-visible text and choose collation from comparison, ordering, and case-sensitivity requirements. Do not copy a collation without checking the target MySQL version.
-- Use JSON or generated columns only when the flexible shape and indexed access path are part of the current requirement. Frequently queried stable fields belong in typed columns when that preserves the domain model.
+- 对事务性业务表使用 InnoDB，除非仓库包含任务必须保留的显式遗留引擎决策。
+- 从领域规模、外部引用、ORM 支持和现有 schema 中选择整数标识、UUID 或其他键策略。当值跨越应用或服务边界时 `UNSIGNED` 不一定更好。
+- 对货币和其他精确量使用 `DECIMAL`。将精度和标度与领域和序列化 API 表示匹配。
+- 将 MySQL 布尔存储、枚举存储、可空字段、默认表达式和时间戳行为视为显式映射决策。不要让驱动程序默认值定义契约。
+- 对用户可见文本使用 `utf8mb4` 并从比较、排序和大小写敏感性要求选择排序规则。不要在不检查目标 MySQL 版本的情况下复制排序规则。
+- 仅当灵活结构和索引访问路径是当前需求的一部分时才使用 JSON 或生成列。频繁查询的稳定字段在保留领域模型时应属于类型化列。
 
 ## Constraints And Indexes
 
-- Define foreign keys, uniqueness, not-null rules, and check behavior in a form supported by the target MySQL version and migration tool.
-- Add indexes for actual foreign-key, filter, join, uniqueness, or ordering paths. Index column order must follow the query predicates and sort requirements, not a blanket selectivity slogan.
-- Treat full-text, spatial, functional, and generated-column indexes as explicit provider features. Include the query that needs them and verify the resulting plan.
-- Keep cascade behavior aligned with domain ownership. Do not use cascade deletes to hide an unexamined lifecycle decision.
+- 以目标 MySQL 版本和迁移工具支持的形式定义外键、唯一性、非空规则和检查行为。
+- 为实际的从外键、过滤、连接、唯一性或排序路径添加索引。索引列顺序必须遵循查询谓词和排序要求，而非通用选择性口号。
+- 将全文、空间、函数和生成列索引视为显式提供者特性。包含需要它们的查询并验证结果计划。
+- 保持级联行为与领域所有权对齐。不要用级联删除隐藏未审查的生命周期决策。
 
 ## Migration And ORM Alignment
 
-- Keep migration column definitions, ORM annotations/configuration, enum conversion, nullability, generated values, and API DTOs aligned.
-- Do not rely on Hibernate or another ORM to silently create production schema when the repository has migrations.
-- Review changes against a clean MySQL schema and an upgrade path when existing data is in scope.
+- 保持迁移列定义、ORM 注解/配置、枚举转换、可空性、生成值和 API DTO 对齐。
+- 当仓库有迁移时，不要依赖 Hibernate 或其他 ORM 静默创建生产 schema。
+- 当现有数据在范围内时，针对干净的 MySQL schema 和升级路径审查变更。
 
 ## Compatibility Checklist
 
-- Confirm whether the migration tool emits or preserves the selected engine, charset, collation, generated values, and foreign-key behavior.
-- Compare application nullability with MySQL column nullability. A nullable application field and a non-null column are different contracts.
-- Check timestamp defaults and update behavior against the application's explicit clock and timezone policy.
-- Check enum or state storage against future state additions. A database enum is not automatically safer than a validated string or reference table.
-- Check UUID and binary storage mappings in the driver and ORM before changing an existing identifier representation.
-- Check generated columns and functional indexes against the exact MySQL version used by the project.
-- Check foreign-key column types, signedness, length, and collation on both sides of every relationship.
+- 确认迁移工具是否发出或保留选中的引擎、字符集、排序规则、生成值和外键行为。
+- 将应用可空性与 MySQL 列可空性比较。可空应用字段和非空列是不同的契约。
+- 根据应用的显式时钟和时区策略检查时间戳默认值和更新行为。
+- 针对未来状态添加检查枚举或状态存储。数据库枚举不一定比已验证的字符串或引用表更安全。
+- 在更改现有标识符表示之前，检查驱动程序和 ORM 中的 UUID 和二进制存储映射。
+- 针对项目使用的确切 MySQL 版本检查生成列和函数索引。
+- 检查每个关系两侧的外键列类型、符号性、长度和排序规则。
 
 ## Persistence Shape Review
 
-- Name the entity or table owner, durable invariant, migration owner, and query path affected by the change.
-- State whether the change is additive, compatible with existing rows, or requires a data backfill.
-- Keep API read/write models separate from generated columns, internal flags, and storage-only values.
-- Verify that a failed migration or partial write does not leave a state that the application cannot read.
+- 说明受变更影响的实体或表所有者、持久不变式、迁移所有者和查询路径。
+- 说明变更是添加性的、与现有行兼容的，还是需要数据回填。
+- 将 API 读写模型与生成列、内部标志和仅存储值分开。
+- 验证失败的迁移或部分写入不会留下应用无法读取的状态。
 
 ## Verification Focus
 
-- Run the changed migration or application startup against the configured MySQL target or compatible provider.
-- Prove write/read mapping, generated identity, decimal precision, timestamps, enum/state conversion, constraints, and indexes touched by the task.
-- Record the MySQL version or compatibility source and the exact provider behavior verified.
+- 针对配置的 MySQL 目标或兼容提供者运行变更的迁移或应用启动。
+- 证明任务涉及的写入/读取映射、生成标识、decimal 精度、时间戳、枚举/状态转换、约束和索引。
+- 记录 MySQL 版本或兼容性来源以及验证的确切提供者行为。
 
 ## Evidence Focus
 
-- In the evidence summary, name the schema decision made: type mapping, identity, collation, constraint, index, migration compatibility, or ORM alignment.
+- 在证据总结中，说明所做的 schema 决策：类型映射、标识、排序规则、约束、索引、迁移兼容性或 ORM 对齐。
 
 ## Risks To Avoid
 
-- Copying database administration examples into application code.
-- Assuming MySQL syntax is valid for MariaDB or another SQL engine.
-- Using MyISAM for a transactional workflow without an accepted legacy decision.
-- Testing MySQL-specific behavior only with SQLite, H2, or an in-memory mock.
+- 将数据库管理示例复制到应用代码中。
+- 假设 MySQL 语法对 MariaDB 或其他 SQL 引擎有效。
+- 在没有已接受遗留决策的情况下对事务性工作流使用 MyISAM。
+- 仅用 SQLite、H2 或内存 mock 测试 MySQL 特定行为。

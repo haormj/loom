@@ -1,23 +1,23 @@
-# Angular Reactive Client Flows With RxJS
+# Angular 与 RxJS 的响应式客户端流
 
-Use RxJS guidance for task-owned stream semantics, API bindings, cancellation, ordering, fan-out, subscription lifecycle, or shared observable results. Do not turn straightforward local signal state into streams by convention.
+为任务所属的流语义、API 绑定、取消、排序、扇出、订阅生命周期或共享 observable 结果使用 RxJS 指导。不要按约定将直接的本地 signal 状态转为流。
 
-## Choose The Correct Reactive Primitive
+## 选择正确的响应式原语
 
-Use signals for synchronous local/derived view state and Observables for asynchronous sequences, cancellation, multiple emissions, router/events, HTTP composition, and NgRx effects. Convert at the UI boundary with `toSignal`/`toObservable` when it clarifies ownership; avoid repeated conversion loops.
+对同步本地/派生视图状态使用 signal，对异步序列、取消、多次发射、路由/事件、HTTP 组合和 NgRx effect 使用 Observable。在 UI 边界用 `toSignal`/`toObservable` 转换以澄清所有权；避免重复转换循环。
 
-Subjects are event sources, not generic mutable stores. Expose `asObservable()` when a subject is necessary and keep writes private. Prefer `BehaviorSubject` only when every subscriber needs a current value and the initial value is meaningful.
+Subject 是事件源，不是通用可变 store。在需要 subject 时暴露 `asObservable()` 并保持写入私有。仅当每个订阅者需要当前值且初始值有意义时优先使用 `BehaviorSubject`。
 
-## Flattening Semantics
+## 扁平化语义
 
-Select higher-order operators from business concurrency:
+从业务并发选择高阶操作符：
 
-| Requirement | Operator |
+| 需求 | 操作符 |
 |---|---|
-| Latest search/filter/detail wins | `switchMap` |
-| Independent bounded operations may overlap | `mergeMap` with concurrency |
-| Writes must preserve order | `concatMap` |
-| Ignore duplicate submit while active | `exhaustMap` |
+| 最新搜索/筛选/详情优先 | `switchMap` |
+| 独立有界操作可重叠 | `mergeMap` with concurrency |
+| 写入必须保持顺序 | `concatMap` |
+| 活动时忽略重复提交 | `exhaustMap` |
 
 ```typescript
 readonly results$ = this.query.valueChanges.pipe(
@@ -31,61 +31,61 @@ readonly results$ = this.query.valueChanges.pipe(
 );
 ```
 
-Do not use `switchMap` for writes that must complete or `mergeMap` for double-click-sensitive commands. Operator choice is part of product correctness.
+不要对必须完成的写入使用 `switchMap`，或对双击敏感命令使用 `mergeMap`。操作符选择是产品正确性的一部分。
 
-## Loading, Error, And Finalization
+## 加载、错误与终结
 
-Place `catchError` inside the boundary that should recover. Catching outside a long-lived action/search stream can terminate it permanently. Do not convert every failure to `[]`/`null`; preserve typed validation, conflict, permission, unavailable, and transport states.
+在应恢复的边界内放置 `catchError`。在长寿命操作/搜索流外部捕获可能永久终止它。不要将每次失败转为 `[]`/`null`；保留类型化的验证、冲突、权限、不可用和传输状态。
 
-Use `finalize` for loading cleanup that must run on success, error, and cancellation, but distinguish cancellation from a visible failure when UX behavior differs.
+对必须在成功、错误和取消时运行的加载清理使用 `finalize`，但当 UX 行为不同时区分取消和可见失败。
 
-Retry only accepted transient/idempotent operations with bounded attempts, delay/jitter, cancellation, and final error. Never retry validation/auth/business conflict or non-idempotent writes by generic interceptor/operator.
+仅对已接受的瞬时/幂等操作进行有界尝试、延迟/抖动、取消和最终错误的重试。永远不要通过通用拦截器/操作符重试验证/auth/业务冲突或非幂等写入。
 
-## Combination And Completion
+## 组合与完成
 
-Use `combineLatest` for long-lived latest-value inputs, `forkJoin` for finite operations that must all complete, `zip` for positional pairs, and `merge` for independent emissions. Ensure each source has the required initial/completion behavior; a `combineLatest` source that never emits can stall the view.
+对长寿命最新值输入使用 `combineLatest`，对必须全部完成的有限操作使用 `forkJoin`，对位置配对使用 `zip`，对独立发射使用 `merge`。确保每个源有所需的初始/完成行为；一个从不发射的 `combineLatest` 源可能使视图停滞。
 
-Model partial failure explicitly when one source may fail without invalidating the entire surface. Avoid nested subscriptions for dependent calls; compose through operators so cancellation and errors remain visible.
+当一个源可能失败而不使整个界面失效时显式建模部分失败。避免依赖调用的嵌套订阅；通过操作符组合使取消和错误保持可见。
 
-## Lifecycle And Teardown
+## 生命周期与清理
 
-Prefer async pipe, `toSignal`, or `takeUntilDestroyed` for component/route lifetimes. Capture `DestroyRef` when calling outside an injection context.
+为组件/路由生命周期优先使用 async pipe、`toSignal` 或 `takeUntilDestroyed`。在注入上下文之外调用时捕获 `DestroyRef`。
 
-Services with application lifetime should not use component destruction as a cleanup model. Define cache/subscription lifetime explicitly and release WebSocket/event/browser resources when the owning provider ends.
+具有应用生命周期的 service 不应使用组件销毁作为清理模型。显式定义缓存/订阅生命周期并在所属 provider 结束时释放 WebSocket/事件/浏览器资源。
 
-Avoid subscriptions inside subscriptions, forgotten event streams, and imperative subscription arrays. Never subscribe only to trigger an HTTP request while discarding its error/cancellation semantics.
+避免订阅中的订阅、被遗忘的事件流和命令式订阅数组。永远不要仅为触发 HTTP 请求而订阅同时丢弃其错误/取消语义。
 
-## Sharing And Caching
+## 共享与缓存
 
-Use `shareReplay({ bufferSize: 1, refCount: true })` only when sharing one result is intentional and reset/invalidation semantics are understood. Process-wide replay can leak user/tenant-specific data or keep stale results after mutation/login changes.
+仅当有意共享一个结果且理解重置/失效语义时使用 `shareReplay({ bufferSize: 1, refCount: true })`。进程范围的 replay 可能泄漏用户/租户特定数据或在变更/登录变更后保持过期结果。
 
-For server data, define source of truth, freshness, invalidation, error retention, and refetch behavior. RxJS sharing is not automatically a durable cache or state-management architecture.
+对于服务端数据，定义真相来源、新鲜度、失效、错误保留和重新获取行为。RxJS 共享不自动是持久缓存或状态管理架构。
 
-## Backpressure And Event Volume
+## 背压与事件量
 
-Bound typeahead, resize, scroll, upload, and polling event rates with suitable debounce/throttle/sample/buffer behavior. Keep polling visibility, cancellation, overlap, and retry explicit; stop polling when the surface/identity no longer owns it.
+用合适的防抖/节流/采样/缓冲行为限定 typeahead、resize、scroll、upload 和轮询事件速率。保持轮询可见性、取消、重叠和重试显式；当界面/标识不再拥有时停止轮询。
 
-Limit `mergeMap` concurrency for file/batch/network work. Unbounded parallel requests can exhaust browser/provider resources and scramble user feedback.
+为文件/批次/网络工作限制 `mergeMap` 并发。无界并行请求可能耗尽浏览器/provider 资源并扰乱用户反馈。
 
 ## Verification
 
-- Use focused scheduler/marble tests when timing, cancellation, order, or retry is the claimed behavior.
-- Prove latest-wins, duplicate-submit prevention, ordered writes, bounded concurrency, and partial failure where owned.
-- Verify loading/disabled state after success, failure, cancellation, and rapid repeated actions.
-- Test teardown on component destroy, route change, modal close, identity change, and stream error.
-- Verify shared result invalidation and no cross-user/tenant leakage.
-- Exercise the real HTTP adapter mapping when status/error semantics drive the stream.
+- 当时序、取消、顺序或重试是声称的行为时使用聚焦的 scheduler/marble 测试。
+- 在拥有处证明最新优先、重复提交预防、有序写入、有界并发和部分失败。
+- 验证成功、失败、取消和快速重复操作后的加载/禁用状态。
+- 测试组件销毁、路由变更、模态关闭、标识变更和流错误时的清理。
+- 验证共享结果失效和无跨用户/租户泄漏。
+- 当状态/错误语义驱动流时练习真实 HTTP adapter 映射。
 
-## Delivery Evidence
+## 交付证据
 
-Name the source stream, chosen concurrency/recovery rule, and emission/subscription assertion proving it. A stream type or one successful emission cannot prove cancellation, teardown, retry bounds, ordering, or cache invalidation.
+命名源流、所选并发/恢复规则和证明它的发射/订阅断言。流类型或一次成功发射不能证明取消、清理、重试边界、排序或缓存失效。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Prose keywords selecting RxJS guidance without a reactive/API-binding task.
-- Subjects used as unstructured global mutable state.
-- `switchMap` applied to required writes or `mergeMap` to duplicate submissions.
-- Errors converted to empty data and long-lived streams terminated accidentally.
-- Unbounded retry, polling, replay, or parallelism.
-- Nested subscriptions and missing teardown.
-- Shared replay retaining identity-sensitive stale data.
+- 在无响应式/API 绑定任务时用描述关键词选择 RxJS 指导。
+- 将 Subject 用作非结构化全局可变状态。
+- 对必需写入应用 `switchMap` 或对重复提交应用 `mergeMap`。
+- 错误转换为空数据且长寿命流意外终止。
+- 无界重试、轮询、replay 或并行。
+- 嵌套订阅和缺失清理。
+- 共享 replay 保留标识敏感的过期数据。

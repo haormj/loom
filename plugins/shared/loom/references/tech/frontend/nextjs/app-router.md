@@ -1,10 +1,10 @@
 # Next.js App Router
 
-Apply this reference only when TechnicalBaseline selects App Router and the task owns route definitions, segments, layouts, navigation, boundaries, route handlers, or metadata. Generic Next.js and component-only tasks must not receive it.
+仅当 TechnicalBaseline 选择 App Router 且任务拥有路由定义、segment、布局、导航、边界、route handler 或元数据时应用此参考。通用 Next.js 和仅组件任务不得接收它。
 
-## Segment Ownership
+## Segment 所有权
 
-Map product surfaces to clear segments. Use route groups for code/layout organization without URL changes, not to hide unrelated workflows.
+将产品界面映射到清晰的 segment。使用 route group 进行代码/布局组织而不改变 URL，而非隐藏不相关的工作流。
 
 ```text
 app/
@@ -19,72 +19,72 @@ app/
         not-found.tsx
 ```
 
-The root layout owns required document shell/providers. Nested layouts persist across child navigation; `template.tsx` remounts and should be used only when reset-on-navigation is intended.
+根布局拥有所需的文档壳/provider。嵌套布局在子导航间持久化；`template.tsx` 重新挂载，仅在需要导航时重置时使用。
 
-Keep route-specific UI/data near the segment and shared product components outside route folders according to repository convention. Avoid circular imports between layout and feature modules.
+按仓库约定将路由特定的 UI/数据保留在 segment 附近，将共享产品组件保留在路由文件夹之外。避免布局和功能模块之间的循环导入。
 
-## Dynamic, Catch-All, And Search Params
+## 动态、Catch-All 与搜索参数
 
-Type and validate params/search params before data/actions. Account for the selected Next version's async params API. Missing/malformed/unauthorized/not-found states require explicit outcomes.
+在数据/操作之前对 params/search params 进行类型化和验证。考虑所选 Next 版本的 async params API。缺失/格式错误/未授权/未找到状态需要显式结果。
 
-Use catch-all/optional catch-all only for real hierarchical content. Do not create broad dynamic routes that swallow static paths or internal assets.
+仅对真实的层级内容使用 catch-all/optional catch-all。不要创建吞噬静态路径或内部资源的宽泛动态路由。
 
-Query/search params are suitable for shareable filters, sort, page, tab, and return context. Parse/allowlist them server-side and preserve/clear intentionally during navigation.
+Query/search params 适用于可共享的筛选、排序、分页、标签和返回上下文。在服务端解析/白名单它们，并在导航时有意识地保留/清除。
 
-## Loading, Error, And Not Found
+## 加载、错误与未找到
 
-Place `loading.tsx` at an async segment boundary where fallback helps; avoid replacing the full working shell for a small slow region. Use Suspense for independently streamable regions.
+在异步 segment 边界处放置 `loading.tsx`，使回退有帮助；避免为一个小慢区域替换完整的工作壳。对可独立流式传输的区域使用 Suspense。
 
-`error.tsx` is a Client Component and owns unexpected segment failures plus reset/retry. It should log through the selected boundary without exposing stack/provider data.
+`error.tsx` 是 Client Component，拥有意外片段失败以及重置/重试。它应通过所选边界记录，不暴露堆栈/provider 数据。
 
-Call `notFound()`/provide `not-found.tsx` for genuine missing records. Do not convert forbidden/unavailable/validation outcomes into not found unless the disclosure contract says so.
+对真正缺失的记录调用 `notFound()`/提供 `not-found.tsx`。不要将禁止/不可用/验证结果转换为未找到，除非披露契约如此要求。
 
-Expected business errors should render task-owned states rather than throw into a generic error boundary.
+预期的业务错误应渲染任务所属的状态，而非抛入通用错误边界。
 
-## Parallel And Intercepting Routes
+## Parallel 与 Intercepting 路由
 
-Use parallel routes for independently navigable/rendered slots with explicit defaults and refresh behavior. Use intercepting routes for product-approved modal/detail navigation that also has a direct full-page URL.
+对独立可导航/可渲染的 slot 使用 parallel 路由，配以显式默认值和刷新行为。对产品批准的模态/详情导航（同时有直接整页 URL）使用 intercepting 路由。
 
-These patterns add back-stack, default, refresh, and accessibility complexity. Provide close/back/focus behavior and direct deep-link fallback; do not use them for ordinary layout columns.
+这些模式增加返回栈、默认值、刷新和可访问性复杂性。提供关闭/返回/焦点行为和直接深链接回退；不要将它们用于普通布局列。
 
-## Navigation And Redirects
+## 导航与重定向
 
-Use links for navigable destinations and router methods for event-driven transitions. Preserve list/filter/scroll context for detail-return workflows.
+对可导航目标使用链接，对事件驱动转换使用 router 方法。为详情-返回工作流保留列表/筛选/滚动上下文。
 
-Use server `redirect` for server-known outcomes and client router navigation only at interactive boundaries. Avoid mount effects that redirect after flashing protected/wrong content.
+对服务端已知结果使用服务端 `redirect`，仅在交互边界使用客户端 router 导航。避免在闪烁受保护/错误内容后重定向的挂载 effect。
 
-Define middleware/auth redirects without loops and retain a safe intended destination. Navigation checks do not replace server authorization.
+定义中间件/auth 重定向而无循环，保留安全的目标目的地。导航检查不替代服务端授权。
 
-## Route Handlers
+## Route Handler
 
-Route handlers are server HTTP interfaces. Implement only the accepted method, path, schemas, statuses, errors, authorization, and exposure behavior. Validate inputs, scope identity/tenant, map failures, and keep persistence/business logic in the accepted application boundary.
+Route handler 是服务端 HTTP 接口。仅实现已接受的方法、路径、schema、状态、错误、授权和暴露行为。验证输入，限定标识/租户，映射失败，并将持久化/业务逻辑保留在已接受的应用边界中。
 
-Avoid creating route handlers solely to proxy an existing same-origin backend unless architecture requires a BFF. Preserve cookies, streaming, caching, headers, and body limits deliberately.
+避免仅为代理现有同源后端而创建 route handler，除非架构需要 BFF。有意识地保留 cookie、流式传输、缓存、header 和体限制。
 
-## Metadata
+## 元数据
 
-Use static metadata for stable pages and `generateMetadata` for dynamic accepted content. Deduplicate data reads safely and provide canonical/OpenGraph/robots only where product/SEO owns them.
+对稳定页面使用静态元数据，对动态已接受内容使用 `generateMetadata`。安全地去重数据读取，仅在产品/SEO 拥有时提供 canonical/OpenGraph/robots。
 
-Never expose private record details, internal IDs, or failed lookup messages in metadata. Metadata failures need bounded behavior.
+绝不在元数据中暴露私有记录详情、内部 ID 或失败的查找消息。元数据失败需要有界行为。
 
 ## Verification
 
-- Run production build for changed route file contracts and server/client boundaries.
-- Exercise exact static/dynamic/catch-all/query paths, redirects, and not-found/forbidden outcomes.
-- Verify loading streaming, error reset, and expected business state placement.
-- Test layout persistence versus template remount and list-detail-return context.
-- Exercise parallel/intercepting direct refresh, back/close, and focus when owned.
-- For route handlers, assert exact HTTP contract and auth/failure branches.
+- 为变更的路由文件契约和服务端/客户端边界运行生产构建。
+- 练习精确的静态/动态/catch-all/query 路径、重定向和未找到/禁止结果。
+- 验证加载流式传输、错误重置和预期业务状态放置。
+- 测试布局持久化与 template 重新挂载以及列表-详情-返回上下文。
+- 在拥有时练习 parallel/intercepting 直接刷新、返回/关闭和焦点。
+- 对 route handler，断言精确的 HTTP 契约和 auth/失败分支。
 
-## Delivery Evidence
+## 交付证据
 
-Name the segment/effective URL and build/route/browser assertion proving activation, persistence, boundary, redirect, metadata, or handler behavior. File presence alone cannot prove matching precedence, deep-link refresh, streaming, back stack, or deployment fallback.
+命名 segment/有效 URL 以及证明激活、持久化、边界、重定向、元数据或 handler 行为的构建/路由/浏览器断言。仅文件存在不能证明匹配优先级、深链接刷新、流式传输、返回栈或部署回退。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- App Router reference selected without an accepted App Router signal and navigation task.
-- Route groups/dynamic catch-alls used to hide unclear ownership.
-- Full-shell loading fallback for one slow region.
-- Every failure converted to `notFound()` or generic `error.tsx`.
-- Parallel/intercepting routes used for ordinary page layout.
-- Route handlers duplicating an accepted backend contract.
+- 在无已接受 App Router 信号和导航任务时选择 App Router 参考。
+- 用 route group/dynamic catch-all 隐藏不清晰的所有权。
+- 为一个慢区域使用全壳加载回退。
+- 将每次失败转换为 `notFound()` 或通用 `error.tsx`。
+- 将 parallel/intercepting 路由用于普通页面布局。
+- Route handler 重复已接受的后端契约。

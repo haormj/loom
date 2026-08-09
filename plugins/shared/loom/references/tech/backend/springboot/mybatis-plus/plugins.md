@@ -1,37 +1,37 @@
-# MyBatis-Plus Interceptors And Plugins
+# MyBatis-Plus Interceptor 与插件
 
-## When To Use
+## 何时使用
 
-Use this reference when the task owns MyBatis-Plus pagination, tenant, data-permission, optimistic-lock, dynamic-table, block-attack, illegal-SQL, or SQL-diagnostic interception.
+当任务拥有 MyBatis-Plus 分页、租户、数据权限、乐观锁、动态表、防攻击、非法 SQL 或 SQL 诊断拦截时使用此参考。
 
 ## Implementation Focus
 
-Configure only the plugins required by the accepted architecture and task ownership.
+仅配置已接受架构和任务归属所需的插件。
 
-| Capability | Required boundary |
+| 能力 | 所需边界 |
 |---|---|
-| Pagination | Provider type, page-size limit, deterministic ordering, and no unbounded fallback |
-| Optimistic locking | `@Version`, update-count conflict handling, and retry/rejection semantics |
-| Tenant or data permission | Trusted context, uniform query coverage, explicit system-job and admin policy |
-| Dynamic table name | Allowlisted suffix or routing rule; never free-form client input |
-| Block attack | Final guard against unscoped update/delete, not a replacement for business conditions |
-| Illegal SQL | Existing complex SQL must be checked for false positives before enabling |
-| SQL analysis or printing | Development diagnostics only; redact sensitive values and avoid production overhead |
+| 分页 | Provider 类型、页大小限制、确定性排序且无无界回退 |
+| 乐观锁 | `@Version`、更新计数冲突处理和重试/拒绝语义 |
+| 租户或数据权限 | 受信任上下文、统一查询覆盖、显式系统 job 和 admin 策略 |
+| 动态表名 | 允许列表后缀或路由规则；切勿使用自由格式客户端输入 |
+| 防攻击 | 针对无 scope 更新/删除的最终守卫，非业务条件的替代 |
+| 非法 SQL | 启用前必须检查已有复杂 SQL 的误报 |
+| SQL 分析或打印 | 仅开发诊断；脱敏敏感值并避免生产开销 |
 
-Plugin order is part of behavior. Verify every active `SqlSessionFactory`, interceptor order, excluded statements, tenant bypass rules, and interactions with XML/native SQL.
+插件顺序是行为的一部分。验证每个活跃 `SqlSessionFactory`、interceptor 顺序、排除语句、租户绕过规则以及与 XML/原生 SQL 的交互。
 
-Do not add a global plugin to solve a local query. Do not claim that a plugin provides authentication, authorization, audit, or complete tenant isolation by itself.
+不要为解决局部查询而添加全局插件。不要声称插件单独提供认证、授权、审计或完整的租户隔离。
 
 ## Verification Focus
 
-Test permitted and denied tenant contexts, scoped and unscoped writes, stale versions, page limits, dynamic-table allowlists, plugin ordering, and false-positive interception paths.
+测试允许和拒绝的租户上下文、有 scope 和无 scope 的写入、陈旧版本、页限制、动态表允许列表、插件排序和误报拦截路径。
 
-## Change Boundary
+## 变更边界
 
-- Register a plugin only on the factory and statements that own the capability.
-- Document intentional bypasses for system jobs or administrative operations and test them separately.
-- Keep provider-specific pagination and SQL rewriting evidence in the selected SQL reference.
+- 仅在拥有该能力的工厂和语句上注册插件。
+- 为系统 job 或管理操作记录有意绕过并单独测试它们。
+- 将 provider 特定的分页和 SQL 重写证据保留在所选 SQL 参考中。
 
 ## Evidence Focus
 
-Record the active session factories, plugin order, excluded statements, bypass policy, provider assumptions, and focused permitted and denied-path results.
+记录活跃 session factory、插件顺序、排除语句、绕过策略、provider 假设以及聚焦的允许和拒绝路径结果。

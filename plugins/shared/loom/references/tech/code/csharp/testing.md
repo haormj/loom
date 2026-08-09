@@ -1,88 +1,88 @@
-# C# Test And Verification Design
+# C# 测试与验证设计
 
 ## When To Use
 
-Use this reference only for explicit C# test ownership outside an already selected ASP.NET Core testing boundary, or for C# library/worker/CLI/Blazor tests needing language/runtime guidance.
+仅用于在已选中的 ASP.NET Core 测试边界之外的显式 C# 测试所有权，或需要语言/运行时指导的 C# 库/worker/CLI/Blazor 测试。
 
 ## Implementation Focus
 
 ### Framework And Boundary
 
-Follow the repository's xUnit, NUnit, MSTest, TUnit, SpecFlow, snapshot, property, benchmark, and integration conventions. Do not add another framework for one task.
+遵循仓库的 xUnit、NUnit、MSTest、TUnit、SpecFlow、快照、属性、基准和集成约定。不要为单个任务添加另一个框架。
 
-Test public/domain/service/worker/CLI/component behavior through observable result/effect. Avoid private method/reflection/call-order tests that prevent safe refactoring.
+通过可观察结果/效果测试公共/领域/服务/worker/CLI/组件行为。避免阻止安全重构的私有方法/反射/调用顺序测试。
 
-Use backend framework-specific references for ASP.NET host/routes/auth/EF integration rather than duplicating those rules here.
+对 ASP.NET 宿主/路由/认证/EF 集成使用后端框架特定参考而非在此重复这些规则。
 
 ### Cases And Assertions
 
-Cover success, null/invalid/boundary, expected business failure, unexpected dependency failure, cancellation, repeated/concurrent operation, and cleanup changed by the task.
+覆盖任务变更的成功、null/无效/边界、预期业务失败、意外依赖失败、取消、重复/并发操作和清理。
 
-Use theories/parameterized cases for meaningful input partitions and keep case names/data readable. Avoid giant shared member data hiding which invariant failed.
+对有意义的输入分区使用 theory/参数化用例并保持用例名/数据可读。避免隐藏哪个不变式失败的巨大共享成员数据。
 
-Assert typed results/exceptions and stable public fields. Full exception/log/message string equality is brittle unless user-facing text is the contract.
+断言类型化结果/异常和稳定公共字段。除非面向用户的文本是契约，否则完整异常/日志/消息字符串相等是脆弱的。
 
 ### Async, Cancellation, And Background Work
 
-Await every task and observe exceptions. Do not use `async void`, arbitrary delay, or fire-and-forget in tests.
+等待每个任务并观察异常。不要在测试中使用 `async void`、任意延迟或发后即忘。
 
-Use controlled task completions, fake clocks, channels, barriers, cancellation sources, and deadlines to exercise ordering/cancellation/shutdown deterministically.
+使用受控任务完成、假时钟、通道、屏障、取消源和截止时间来确定性地演练顺序/取消/关闭。
 
-For workers/hosted services, start/stop through the public host/lifetime and assert pending work, scope disposal, errors, and no work after shutdown.
+对于 worker/托管服务，通过公共宿主/生命周期启动/停止并断言待处理工作、作用域销毁、错误和关闭后无工作。
 
 ### Fixtures And Isolation
 
-Use fixture scopes matching expensive resource lifetime and ensure parallel tests do not share mutable database/files/environment/clock/static/cache/container state accidentally.
+使用匹配昂贵资源生命周期的夹具作用域并确保并行测试不会意外共享可变数据库/文件/环境/时钟/静态/缓存/容器状态。
 
-Dispose hosts, scopes, clients, streams, temp directories/files, servers, timers, subscriptions, and cancellation sources. Restore culture/timezone/environment/current directory/global handlers.
+销毁宿主、作用域、客户端、流、临时目录/文件、服务器、定时器、订阅和取消源。恢复文化/时区/环境/当前目录/全局处理器。
 
-Generate unique resource names and clean even after assertion/exception.
+生成唯一资源名即使在断言/异常后也清理。
 
 ### Mocks, Fakes, And HTTP
 
-Mock external boundaries (clock, filesystem, remote service, queue, mail, identity) with typed interfaces/handlers. Prefer stateful fakes when protocol/lifecycle matters.
+用类型化接口/处理器 mock 外部边界（时钟、文件系统、远程服务、队列、邮件、身份）。当协议/生命周期重要时优先使用有状态 fake。
 
-For `HttpClient`, use a controlled `HttpMessageHandler` or repository test server; do not mock extension methods or create behavior unlike actual request/response disposal/cancellation.
+对于 `HttpClient`，使用受控的 `HttpMessageHandler` 或仓库测试服务器；不要 mock 扩展方法或创建不同于实际请求/响应销毁/取消的行为。
 
-Avoid mocking the service/domain/serializer/query under test or setting up every internal call.
+避免 mock 被测服务/领域/序列化器/查询或设置每个内部调用。
 
 ### Blazor And UI
 
-Use the repository component test framework for parameters, rendered states, forms, events, auth, lifecycle, and JS interop contracts. Keep real browser/hosting/render-mode evidence separate.
+为参数、渲染状态、表单、事件、认证、生命周期和 JS 互操作契约使用仓库组件测试框架。保持真实浏览器/托管/渲染模式证据分开。
 
-Assert semantic controls and stable action targets, not only markup snapshots. Dispose rendered components to prove subscriptions/interop cleanup.
+断言语义控件和稳定操作目标，而非仅标记快照。销毁渲染的组件以证明订阅/互操作清理。
 
 ### Property, Snapshot, And Mutation Tests
 
-Property tests fit parsers, value objects, serialization, ordering, state machines, and algebraic invariants. Preserve minimal regression examples for failures.
+属性测试适合解析器、值对象、序列化、排序、状态机和代数不变式。为失败保留最小回归示例。
 
-Snapshots are appropriate for stable structured output with reviewed diffs; avoid huge volatile UI/log/exception snapshots.
+快照适用于具有审查差异的稳定结构化输出；避免巨大的易变 UI/日志/异常快照。
 
-Mutation testing can assess assertion sensitivity for critical pure logic but is not a universal coverage target.
+变异测试可以评估关键纯逻辑的断言敏感性，但不是通用覆盖率目标。
 
 ### Runtime And Public API
 
-Run tests under affected TFM/runtime/OS when behavior differs. For public packages, build a consumer and test nullability/analyzers/source generators/serialization/trim compatibility as applicable.
+当行为不同时在受影响的 TFM/运行时/OS 下运行测试。对于公共包，构建消费者并按适用情况测试可空/分析器/源码生成器/序列化/修剪兼容性。
 
-Code coverage percentage is supporting data, not proof; branch/invariant quality matters more than an arbitrary universal threshold.
+代码覆盖率百分比是支持数据，非证明；分支/不变式质量比任意通用阈值更重要。
 
 ## Verification Focus
 
-- Run the narrow changed project/filter and ensure tests are discovered; expand only to affected solution lanes.
-- Exercise deterministic cancellation/order/cleanup and isolate parallel global/resource state.
-- Run actual integration/runtime/component layer when mocks cannot prove provider/hosting behavior.
-- Verify release/published/trimmed behavior when build mode affects semantics.
-- Record unavailable infrastructure precisely without claiming broader coverage.
+- 运行变更的最窄项目/过滤器并确保测试被发现；仅扩展到受影响的解决方案通道。
+- 演练确定性取消/顺序/清理并隔离并行全局/资源状态。
+- 当 mock 不能证明提供者/托管行为时运行实际集成/运行时/组件层。
+- 当构建模式影响语义时验证发布/已发布/修剪行为。
+- 精确记录不可用基础设施而不声称更广泛覆盖。
 
 ## Evidence Focus
 
-Name the public behavior/invariant, test layer, TFM/runtime/platform, and assertion. Test count, coverage percentage, mock expectations, or a green build without discovered tests is weak evidence.
+说明公共行为/不变式、测试层、TFM/运行时/平台和断言。没有发现测试的测试计数、覆盖率百分比、mock 期望或绿色构建是弱证据。
 
 ## Unsafe Defaults
 
-- C# testing loaded alongside duplicate ASP.NET Core testing guidance.
-- New test framework or universal coverage target imposed on one task.
-- Async void, fire-and-forget, arbitrary sleeps, or unobserved background errors.
-- Shared mutable fixture state leaking across parallel tests.
-- Internal call order asserted instead of public behavior.
-- Component tests used to claim browser/render-mode/native integration.
+- C# 测试与重复的 ASP.NET Core 测试指导一起加载。
+- 在单个任务上强加新测试框架或通用覆盖率目标。
+- async void、发后即忘、任意 sleep 或未观察的后台错误。
+- 跨并行测试泄露的共享可变夹具状态。
+- 断言内部调用顺序而非公共行为。
+- 组件测试用于声称浏览器/渲染模式/原生集成。

@@ -1,63 +1,63 @@
-# SQL Server Query Semantics
+# SQL Server 查询语义
 
-Use this file with `tech/code/sql/queries.md` when a SQL Server task owns query behavior, repository queries, CRUD reads/writes, pagination, JSON access, or query-plan changes.
+当 SQL Server 任务拥有查询行为、repository 查询、CRUD 读写、分页、JSON 访问或查询计划变更时，将此文件与 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Confirm SQL Server version, compatibility level, driver/ORM query mode, and existing indexes before using provider-specific syntax.
-- Preserve the common SQL result shape, authorization filters, and deterministic ordering.
-- Do not add a SQL Server-only feature when a portable query satisfies the accepted behavior without a measured need.
+- 在使用提供者特定语法之前，确认 SQL Server 版本、兼容级别、驱动程序/ORM 查询模式和现有索引。
+- 保持公共 SQL 结果形态、授权过滤和确定性排序。
+- 当可移植查询在没有测量需求的情况下满足已接受行为时，不要添加 SQL Server 专有特性。
 
 ## Implementation Focus
 
-- Use `OFFSET ... FETCH` for the accepted paginated contract and include a unique tie-breaker in the ordering. Keep `TOP` semantics explicit when a bounded result is required.
-- Use `COALESCE` or `ISNULL` deliberately; their type precedence and nullability inference can differ in expressions and computed columns.
-- Use `STRING_AGG`, `JSON_VALUE`, `JSON_QUERY`, or `OPENJSON` only when the provider version, typed result shape, and indexed access path are accepted.
-- Preserve affected-row and no-op behavior for mutations. If an upsert is required, define the conflict key, update columns, concurrency behavior, and retry boundary explicitly; do not assume `MERGE` is safe for every workload.
-- Keep casts, collation, implicit conversions, and functions on indexed columns visible because they can change both result semantics and access plans.
+- 为已接受的分页契约使用 `OFFSET ... FETCH` 并在排序中包含唯一决胜键。当需要有界结果时保持 `TOP` 语义显式。
+- 有意使用 `COALESCE` 或 `ISNULL`；它们的类型优先级和可空性推断在表达式和计算列中可能不同。
+- 仅当提供者版本、类型化结果形态和索引访问路径被接受时才使用 `STRING_AGG`、`JSON_VALUE`、`JSON_QUERY` 或 `OPENJSON`。
+- 保留变更的受影响行和无操作行为。如果需要 upsert，显式定义冲突键、更新列、并发行为和重试边界；不要假设 `MERGE` 对每个工作负载都安全。
+- 保持转换、排序规则、隐式转换和索引列上的函数可见，因为它们可能同时改变结果语义和访问计划。
 
 ## Index And Pagination Alignment
 
-- Design indexes from equality, range, join, and ordering predicates. Filtered indexes and included columns must match the query predicate and result shape.
-- Inspect the SQL Server execution plan for performance work. A correct result or a newly created index is not proof of a lower scan or sort cost.
-- Record representative data assumptions when cardinality, parameter sensitivity, or plan choice depends on distribution.
+- 从等值、范围、连接和排序谓词设计索引。筛选索引和包含列必须匹配查询谓词和结果形态。
+- 为性能工作检查 SQL Server 执行计划。正确结果或新创建的索引不是更低扫描或排序成本的证明。
+- 当基数、参数敏感性或计划选择依赖分布时，记录代表性数据假设。
 
 ## Plan Review
 
-- Check access method, estimated versus actual rows, join cardinality, residual predicates, sort/spill work, and implicit conversions.
-- Compare the plan with the expected filter and ordering path. Do not force an index or hint until provider evidence shows the optimizer choice is harmful for the owned workload.
+- 检查访问方法、估计与实际行、连接基数、残余谓词、排序/溢出工作和隐式转换。
+- 将计划与预期过滤和排序路径比较。在提供者证据显示优化器选择对拥有的工作负载有害之前，不要强制索引或提示。
 
 ## Read And Write Boundary
 
-- Return only fields required by the service or API contract; do not expose storage-only columns.
-- Keep authorization, tenant, and soft-delete predicates in the query boundary that owns the read or write.
-- For retries, preserve the uniqueness/conflict rule and make duplicate execution observable and safe.
+- 仅返回服务或 API 契约所需的字段；不暴露仅存储列。
+- 将授权、租户和软删除谓词保留在拥有读取或写入的查询边界中。
+- 为重试保留唯一性/冲突规则并使重复执行可观察且安全。
 
 ## Review Questions
 
-- What exact behavior requires this query?
-- Which SQL Server feature and compatibility level support it?
-- Which index, ordering, cast, JSON path, or affected-row rule does the query depend on?
-- Which empty, duplicate, null, timestamp, and boundary cases prove the result shape?
+- 什么确切行为需要此查询？
+- 哪个 SQL Server 特性和兼容级别支持它？
+- 查询依赖哪个索引、排序、转换、JSON 路径或受影响行规则？
+- 哪些空、重复、null、时间戳和边界情况证明了结果形态？
 
 ## Transactions And Mutations
 
-- Keep multi-row mutations inside the application transaction boundary defined by Architecture.
-- Define locking and isolation only when the invariant requires it. Keep lock hints out of portable query code.
-- Handle deadlock and transient failures with bounded retry and idempotency in the owning application layer.
+- 将多行变更保留在 Architecture 定义的应用事务边界内。
+- 仅当不变式需要时才定义锁定和隔离。将锁提示排除在可移植查询代码之外。
+- 在拥有的应用层中以有界重试和幂等性处理死锁和瞬态失败。
 
 ## Verification Focus
 
-- Test empty results, duplicate-prone joins, nulls, boundary dates/numbers, stable pagination, JSON extraction, and business filters relevant to the query.
-- For a plan or index change, record SQL Server version, compatibility level, query shape, relevant index, and plan observation.
-- For writes, prove affected-row behavior and read-back against SQL Server when provider behavior is part of the change.
+- 测试空结果、易重复连接、null 值、边界日期/数字、稳定分页、JSON 提取和与查询相关的业务过滤。
+- 对于计划或索引变更，记录 SQL Server 版本、兼容级别、查询形态、相关索引和计划观察。
+- 对于写入，当提供者行为是变更的一部分时，针对 SQL Server 证明受影响行行为和回读。
 
 ## Evidence Focus
 
-- Name the query decision proved: result shape, predicate/index alignment, pagination, provider function, affected-row behavior, or read-back proof.
+- 说明已证明的查询决策：结果形态、谓词/索引对齐、分页、提供者函数、受影响行行为或回读证明。
 
 ## Risks To Avoid
 
-- Relying on implicit conversion or parameter typing for a hot predicate.
-- Using `MERGE`, hints, or JSON functions without a provider-specific contract and evidence.
-- Claiming SQL Server compatibility from a different provider's query test.
+- 依赖隐式转换或参数类型作为热谓词。
+- 在没有提供者特定契约和证据的情况下使用 `MERGE`、提示或 JSON 函数。
+- 从不同提供者的查询测试声称 SQL Server 兼容性。

@@ -1,90 +1,90 @@
-# .NET Runtime Performance
+# .NET 运行时性能
 
 ## When To Use
 
-Use this reference only when the task owns a measured CPU, allocation, GC, memory, throughput, latency, startup, publish size, query, stream, or runtime-resource bottleneck.
+仅当任务拥有测量的 CPU、分配、GC、内存、吞吐量、延迟、启动、发布大小、查询、流或运行时资源瓶颈时才使用此参考。
 
 ## Implementation Focus
 
 ### Measure First
 
-Name workload, input/concurrency, TFM/runtime, OS/hardware/container limits, build tier, warmup, repetitions, statistic, baseline, and correctness output.
+命名工作负载、输入/并发、TFM/运行时、OS/硬件/容器限制、构建层、预热、重复、统计、基线和正确性输出。
 
-Use BenchmarkDotNet for microbenchmarks and appropriate tracing/profilers/counters for application behavior. A debug stopwatch or one request is not reliable evidence.
+对微基准使用 BenchmarkDotNet，对应用行为使用适当的追踪/profiler/计数器。调试秒表或单个请求不是可靠证据。
 
-Check algorithm, query/network I/O, serialization, blocking, contention, and redundant work before low-level allocation tuning.
+在低级分配调优之前检查算法、查询/网络 I/O、序列化、阻塞、争用和冗余工作。
 
 ### Enumeration And Collections
 
-Know whether `IEnumerable<T>` is lazy, repeatable, remote, streaming, or side-effectful. Avoid multiple enumeration; materialize once only when bounded ownership/reuse justifies memory.
+了解 `IEnumerable<T>` 是延迟的、可重复的、远程的、流式的还是有副作用的。避免多次枚举；仅当有界所有权/复用证明内存合理时才物化一次。
 
-Choose list/dictionary/hash/frozen/immutable/concurrent structures from access/mutation/concurrency/lifetime. Pre-size with realistic cardinality and avoid retained oversized capacity.
+从访问/变更/并发/生命周期选择 list/dictionary/hash/frozen/immutable/concurrent 结构。以现实基数预分配大小并避免保留过大容量。
 
-Use LINQ when clear; remove allocations/enumerations only in measured hot paths and preserve provider translation for `IQueryable`.
+在清晰时使用 LINQ；仅在测量的热路径中移除分配/枚举并为 `IQueryable` 保留提供者翻译。
 
 ### Span, Memory, And Pools
 
-Use spans for synchronous contiguous parsing/formatting/processing where backing lifetime is explicit. They cannot cross async/yield/heap capture.
+在后端生命周期显式的同步连续解析/格式化/处理中使用 span。它们不能跨越异步/yield/堆捕获。
 
-Use `Memory<T>`/`ReadOnlyMemory<T>` across async only with a clear owner. Do not retain memory over a pooled buffer after return.
+仅在有明确所有者时跨异步使用 `Memory<T>`/`ReadOnlyMemory<T>`。不要在返回后将内存保留在池化缓冲区上。
 
-Rent bounded buffers/objects from established facilities such as `ArrayPool<T>` only for hot repeated allocation. Return in `finally`, clear sensitive data, avoid double return/use-after-return, cap pooled object capacity, and document thread safety.
+仅对热重复分配从已建立的设施如 `ArrayPool<T>` 租用有界缓冲区/对象。在 `finally` 中返回，清除敏感数据，避免双重返回/返回后使用，限制池化对象容量并记录线程安全。
 
-Keep `stackalloc` size bounded or conditional; user-controlled/large allocation can overflow the stack.
+保持 `stackalloc` 大小有界或条件；用户控制/大分配可能溢出栈。
 
 ### Async And Concurrency Cost
 
-Use `ValueTask<T>` only for frequently synchronous hot APIs with measured benefit and consumer semantics (normally one await/consumption). Ordinary `Task<T>` is safer for general APIs.
+仅对频繁同步的热 API 且有测量收益和消费者语义（通常一次 await/消费）时使用 `ValueTask<T>`。普通 `Task<T>` 对通用 API 更安全。
 
-Avoid fake async (`Task.Run` around I/O), unbounded `WhenAll`, thread-pool starvation, blocking locks, and sync-over-async. Bound channels/concurrency and propagate cancellation.
+避免假异步（围绕 I/O 的 `Task.Run`）、无界 `WhenAll`、线程池饥饿、阻塞锁和同步 over 异步。绑定通道/并发并传播取消。
 
-Measure lock/contention/context-switch costs before replacing safe synchronization.
+在替换安全同步之前测量锁/争用/上下文切换成本。
 
 ### Streams, Serialization, And Networking
 
-Stream bounded chunks instead of buffering entire large payloads; preserve cancellation, length limits, disposal, and partial failure behavior.
+流式有界块而非缓冲整个大载荷；保留取消、长度限制、销毁和部分失败行为。
 
-Use source-generated serialization only when startup/AOT/allocation or trimming needs justify it and every runtime type/options path is registered. Avoid reflection fallbacks hidden until production.
+仅当启动/AOT/分配或修剪需求证明且每个运行时类型/选项路径已注册时才使用源码生成序列化。避免隐藏到生产才暴露的反射回退。
 
-Reuse clients/connections through accepted factories/pools and consume/dispose responses correctly. Compression/caching must preserve endpoint/user semantics.
+通过已接受的工厂/池复用客户端/连接并正确消费/销毁响应。压缩/缓存必须保留端点/用户语义。
 
 ### GC And Object Lifetime
 
-Measure allocation rate, generations, LOH, pause time, roots, and retained memory. Reducing allocation count is insufficient if retained size or latency worsens.
+测量分配速率、代、LOH、暂停时间、根和保留内存。如果保留大小或延迟恶化，减少分配计数不够。
 
-Avoid long-lived event/static/cache closures retaining request/user/large graphs. Bound caches and unsubscribe/dispose lifecycle owners.
+避免保留请求/用户/大图的长期事件/静态/缓存闭包。绑定缓存并取消订阅/销毁生命周期所有者。
 
-Do not force collections/NoGC regions globally without a proven controlled latency scenario.
+没有已验证的受控延迟场景就不要全局强制 GC/NoGC 区域。
 
 ### AOT, Trimming, And Startup
 
-Native AOT, ReadyToRun, single-file, trimming, invariant globalization, and source generation trade compatibility, size, startup, build time, reflection/dynamic behavior, and diagnostics.
+Native AOT、ReadyToRun、单文件、修剪、不变全球化和源码生成权衡兼容性、大小、启动、构建时间、反射/动态行为和诊断。
 
-Test the actual published artifact and deployment platform; ordinary build/tests cannot prove trim/AOT compatibility.
+测试实际发布的产物和部署平台；普通构建/测试不能证明修剪/AOT 兼容性。
 
 ### EF And External Systems
 
-Use provider/task-specific data guidance for query shape. Measure projection/tracking/round trips/query plan/index before application caching or compiled queries.
+对查询形态使用提供者/任务特定的数据指导。在应用缓存或编译查询之前测量投影/跟踪/往返/查询计划/索引。
 
-Include network/database/queue limits when optimizing end-to-end throughput; a faster CPU loop may not affect the real bottleneck.
+优化端到端吞吐量时包含网络/数据库/队列限制；更快的 CPU 循环可能不影响真实瓶颈。
 
 ## Verification Focus
 
-- Run correctness tests before/after under release/published configuration.
-- Record repeatable benchmark/profile/counter evidence with environment and variability.
-- Test span/pool/stream empty/boundary/error/cancellation and ownership after return/disposal.
-- Verify memory retention/GC and concurrency/resource limits under representative load.
-- Publish/run trimming/AOT/single-file changes on the target runtime and exercise reflection/serialization/plugins.
+- 在发布/发布配置下在优化前后运行正确性测试。
+- 记录可重复的基准/profile/计数器证据及环境和变异性。
+- 测试 span/pool/stream 的空/边界/错误/取消和返回/销毁后的所有权。
+- 在代表性负载下验证内存保留/GC 和并发/资源限制。
+- 在目标运行时上发布/运行修剪/AOT/单文件变更并演练反射/序列化/插件。
 
 ## Evidence Focus
 
-Report bottleneck, workload/runtime, measurement, intervention, result/variability, and correctness/resource tradeoff. `Span<T>`, pooling, ValueTask, or source generation presence does not prove meaningful improvement.
+报告瓶颈、工作负载/运行时、测量、干预、结果/变异性和正确性/资源权衡。`Span<T>`、池化、ValueTask 或源码生成存在不证明有意义的改善。
 
 ## Unsafe Defaults
 
-- Performance reference selected from prose without measured ownership.
-- Span/pool/unsafe complexity added to ordinary business code.
-- Pooled memory retained after return or sensitive data left uncleared.
-- ValueTask used broadly without consumer/lifetime constraints.
-- Debug/microbenchmark result generalized to production workload.
-- AOT/trimming claimed complete from `dotnet build` only.
+- 从正文选择性能参考而没有测量所有权。
+- 对普通业务代码添加 span/pool/unsafe 复杂性。
+- 返回后保留池化内存或敏感数据未清除。
+- 没有消费者/生命周期约束就广泛使用 ValueTask。
+- 调试/微基准结果推广到生产工作负载。
+- 仅从 `dotnet build` 声称 AOT/修剪完成。

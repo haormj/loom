@@ -1,41 +1,41 @@
-# Python Async Quality
+# Python 异步质量
 
 ## When To Use
 
-- The task changes `async`/`await`, asyncio tasks, TaskGroup usage, async clients, queues, streams, background jobs, async context managers, or sync/async boundaries.
-- Use this when correctness depends on cancellation, timeouts, concurrent ordering, resource cleanup, or event loop safety.
-- If the changed Python code is synchronous, do not convert it to async unless the task requires it or the surrounding framework is already async.
+- 任务变更了 `async`/`await`、asyncio 任务、TaskGroup 使用、异步客户端、队列、流、后台作业、异步上下文管理器或同步/异步边界。
+- 当正确性依赖于取消、超时、并发排序、资源清理或事件循环安全时使用此参考。
+- 如果变更的 Python 代码是同步的，不要将其转换为异步，除非任务要求或周围框架已经是异步的。
 
 ## Implementation Focus
 
-- Keep async call chains async from the boundary inward. Do not call `asyncio.run` inside an already-running application loop or framework handler.
-- Use structured concurrency where supported by the project's Python version, such as `asyncio.TaskGroup` for related tasks that should complete or fail together.
-- Bound concurrent work with semaphores, queues, or task groups when input size can grow. Avoid unbounded task creation from user input, database rows, or remote lists.
-- Propagate cancellation. Do not catch `CancelledError` and continue unless shutdown semantics explicitly require cleanup before re-raising.
-- Apply timeouts around network calls, external services, queues, locks, and long-running operations where callers need a bounded response.
-- Use async context managers for async clients, sessions, database transactions, locks, and resource lifecycles. Ensure `__aexit__` or `finally` closes resources.
-- Keep blocking CPU or synchronous I/O out of the event loop. Use existing sync code in an executor only when replacing it is out of scope and the task owns the blocking boundary.
-- Track background tasks in an owner that can cancel and await them during shutdown. Do not create fire-and-forget tasks without error handling.
-- For async queues, define producer completion, consumer shutdown, `task_done`, and `join` behavior. Do not let consumers wait forever after production ends.
-- Keep exception handling explicit for concurrent work: choose first-error fail-fast, partial success, or collected errors according to the business contract.
+- 从边界向内保持异步调用链异步。不要在已运行的应用循环或框架处理器内部调用 `asyncio.run`。
+- 在项目 Python 版本支持时使用结构化并发，例如对应一起完成或一起失败的相关任务使用 `asyncio.TaskGroup`。
+- 当输入规模可能增长时，用信号量、队列或任务组绑定并发工作。避免从用户输入、数据库行或远程列表无限制创建任务。
+- 传播取消。不要捕获 `CancelledError` 并继续，除非关闭语义显式要求在重新抛出之前进行清理。
+- 在网络调用、外部服务、队列、锁和长时间运行的操作周围应用超时，当调用者需要有限响应时。
+- 对异步客户端、会话、数据库事务、锁和资源生命周期使用异步上下文管理器。确保 `__aexit__` 或 `finally` 关闭资源。
+- 将阻塞 CPU 或同步 I/O 排除在事件循环之外。仅在替换它超出范围且任务拥有阻塞边界时，才在执行器中使用现有同步代码。
+- 在一个能在关闭时取消并等待它们的所有者中跟踪后台任务。不要创建没有错误处理的发后即忘任务。
+- 对于异步队列，定义生产者完成、消费者关闭、`task_done` 和 `join` 行为。不要让消费者在生产结束后永远等待。
+- 对并发工作保持异常处理显式：根据业务契约选择首个错误快速失败、部分成功或收集的错误。
 
 ## Decision Rules
 
-- Use `TaskGroup` when sibling tasks form one structured unit and should fail together; use separately owned tasks only when their lifecycle and error reporting are intentionally independent.
-- Bound fan-out from inputs, rows, or remote pages with a semaphore or queue. State whether ordering is preserved, whether partial results are acceptable, and how producer completion wakes consumers.
-- Put timeouts at the boundary that owns the latency contract. Distinguish timeout, cancellation, transport failure, and business rejection instead of converting all of them to a generic exception.
-- Keep `asyncio.run` at a process/CLI boundary. Framework handlers and tests should use the existing event loop and runner rather than nesting event loops.
-- Use async context managers for clients, sessions, locks, and transactions. A background task must have an owner, a done/error observation path, and shutdown cancellation.
-- If synchronous work must remain, identify its executor/offload boundary and its capacity. Do not hide blocking database, filesystem, or CPU work in an `async def` body.
+- 当兄弟任务形成一个结构化单元且应一起失败时使用 `TaskGroup`；仅当生命周期和错误报告有意独立时才使用单独拥有的任务。
+- 用信号量或队列绑定来自输入、行或远程页面的扇出。说明是否保留排序、是否接受部分结果，以及生产者完成如何唤醒消费者。
+- 将超时放在拥有延迟契约的边界。区分超时、取消、传输失败和业务拒绝，而不是将它们全部转换为通用异常。
+- 将 `asyncio.run` 保持在进程/CLI 边界。框架处理器和测试应使用现有事件循环和运行器，而非嵌套事件循环。
+- 对客户端、会话、锁和事务使用异步上下文管理器。后台任务必须有所有者、完成/错误观察路径和关闭取消。
+- 如果同步工作必须保留，标识其执行器/卸载边界及其容量。不要将阻塞的数据库、文件系统或 CPU 工作隐藏在 `async def` 体中。
 
 ## Verification Focus
 
-- Run async tests using the repository's configured pytest/asyncio plugin or framework test runner.
-- Test success, exception, timeout, cancellation, and cleanup paths for changed async behavior.
-- Add checks that blocking work is not executed on the event loop path when that risk is part of the change.
-- Confirm background tasks, clients, queues, locks, and temporary resources are closed or cancelled after tests.
-- Verify no pending tasks remain after the test runner completes and that cancellation is re-raised after cleanup.
+- 使用仓库配置的 pytest/asyncio 插件或框架测试运行器运行异步测试。
+- 为变更的异步行为测试成功、异常、超时、取消和清理路径。
+- 当该风险是变更的一部分时，添加检查确保阻塞工作不在事件循环路径上执行。
+- 确认后台任务、客户端、队列、锁和临时资源在测试后被关闭或取消。
+- 验证测试运行器完成后没有遗留的待处理任务，且取消在清理后被重新抛出。
 
 ## Evidence Focus
 
-- In the evidence summary, name the async decision: structured concurrency, bounded concurrency, cancellation, timeout, async context manager, sync/async boundary, background task lifecycle, or queue shutdown.
+- 在证据总结中，说明异步决策：结构化并发、有界并发、取消、超时、异步上下文管理器、同步/异步边界、后台任务生命周期或队列关闭。

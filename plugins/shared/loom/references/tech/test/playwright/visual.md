@@ -1,24 +1,24 @@
-# Playwright Rendered And Visual Verification
+# Playwright 渲染与视觉验证
 
-Rendered verification proves that the assigned product surface is visible, usable, and stable at required viewports. It is broader than pixel comparison and narrower than a subjective redesign review.
+渲染验证证明分配的产品界面在所需视口下可见、可用且稳定。它比像素比较更广泛，比主观重新设计审查更窄。
 
-## Two Distinct Practices
+## 两种不同实践
 
-Use rendered inspection to check layout, hierarchy, content, states, interaction, and viewport fit. Use visual regression snapshots only when the repository has a reviewed baseline workflow or the task explicitly owns stable visual output.
+使用渲染检查来检查布局、层级、内容、状态、交互和视口适配。仅当仓库有审查过的基线工作流或任务显式拥有稳定视觉输出时使用视觉回归快照。
 
-A screenshot artifact does not prove quality by itself. The check must state what was observed.
+截图产物本身不能证明质量。检查必须陈述观察到了什么。
 
-## Viewport Procedure
+## 视口流程
 
-For each profile viewport:
+对于每个 profile 视口：
 
-1. Enter the task-owned route or workflow with deterministic data.
-2. Wait for the meaningful ready state.
-3. Confirm the actual product surface is present in the first viewport when required by its scenario.
-4. Inspect fixed headers, sidebars, toolbars, dialogs, tables, forms, and action regions for overlap or clipping.
-5. Exercise the assigned primary action and state feedback.
-6. Check long labels, representative data density, and scroll behavior.
-7. Capture a screenshot only after the state is stable.
+1. 用确定性数据进入任务所属的路由或工作流。
+2. 等待有意义的就绪状态。
+3. 当场景需要时确认实际产品界面出现在首视口中。
+4. 检查固定头、侧边栏、工具栏、对话框、表格、表单和操作区域是否有重叠或裁剪。
+5. 练习分配的主要操作和状态反馈。
+6. 检查长标签、代表性数据密度和滚动行为。
+7. 仅在状态稳定后捕获截图。
 
 ```typescript
 await page.setViewportSize({ width: 1440, height: 900 });
@@ -29,9 +29,9 @@ await expect(page.getByRole('button', { name: 'Export report' })).toBeVisible();
 await page.screenshot({ path: testInfo.outputPath('revenue-desktop.png'), fullPage: true });
 ```
 
-## Layout Assertions
+## 布局断言
 
-Prefer observable product assertions over hard-coded pixel coordinates. Use measurements only for a real geometry contract:
+优先使用可观察的产品断言而非硬编码像素坐标。仅对真实几何契约使用测量：
 
 ```typescript
 const toolbar = page.getByRole('toolbar', { name: 'Report filters' });
@@ -44,19 +44,19 @@ const chartBox = await chart.boundingBox();
 expect(toolbarBox && chartBox && toolbarBox.y + toolbarBox.height <= chartBox.y).toBeTruthy();
 ```
 
-Do not assert every padding value. Token consistency belongs to implementation and UI quality review; browser geometry checks target overlap, occlusion, unusable size, and required fixed relationships.
+不要断言每个 padding 值。令牌一致性属于实现和 UI 质量审查；浏览器几何检查针对重叠、遮挡、不可用尺寸和所需的固定关系。
 
-## Mobile And Responsive Behavior
+## 移动与响应式行为
 
-- Verify that primary actions remain reachable without hover.
-- Check navigation transformation, data-view fallback, dialogs/sheets, sticky actions, keyboard-safe forms, and horizontal overflow.
-- A desktop table squeezed below its minimum usable width is a failure even when no element technically overflows.
-- Verify text wraps or truncates intentionally and controls retain adequate target size.
-- Check orientation or tablet layouts only when the product contract includes them.
+- 验证主要操作在无 hover 的情况下保持可达。
+- 检查导航转换、数据视图回退、对话框/sheet、粘性操作、键盘安全表单和水平溢出。
+- 挤压低于其最小可用宽度的桌面表格是失败，即使没有元素技术上溢出。
+- 验证文本有意换行或截断且控件保持足够的目标尺寸。
+- 仅当产品契约包含时检查方向或平板布局。
 
-## Visual Snapshots
+## 视觉快照
 
-Use `toHaveScreenshot()` for a stable component/page whose visual baseline is reviewed:
+对视觉基线已审查的稳定组件/页面使用 `toHaveScreenshot()`：
 
 ```typescript
 await expect(page.getByRole('region', { name: 'Pricing summary' }))
@@ -66,46 +66,46 @@ await expect(page.getByRole('region', { name: 'Pricing summary' }))
   });
 ```
 
-Baseline rules:
+基线规则：
 
-- Pin fonts, browser version, viewport, color scheme, locale, timezone, and deterministic data.
-- Mask only genuinely variable values; do not mask the area that changed.
-- Keep snapshot scope as small as the visual contract allows.
-- Review baseline updates as product changes, not automatic test repairs.
-- Do not raise diff tolerance until a defect disappears.
+- 固定字体、浏览器版本、视口、配色方案、区域设置、时区和确定性数据。
+- 仅遮罩真正可变的值；不要遮罩已变更的区域。
+- 保持快照范围尽可能小，以视觉契约为限。
+- 将基线更新审查为产品变更，而非自动测试修复。
+- 在缺陷消失之前不要提高差异容忍度。
 
-## Dynamic Content
+## 动态内容
 
-Control timestamps, random ids, animations, carousels, maps, remote images, and live charts through accepted test support. Prefer deterministic fixture values over broad masks. Wait for fonts and critical media when their rendering affects layout.
+通过已接受的测试支持控制时间戳、随机 ID、动画、轮播、地图、远程图像和实时图表。优先使用确定性 fixture 值而非宽泛遮罩。当字体和关键媒体的渲染影响布局时等待它们。
 
-- Freeze or inject values through existing application/test seams; do not patch rendered text after the app loads.
-- Disable motion for capture while retaining the normal interactive path in functional checks.
-- Keep one representative long/empty/error value when those states affect geometry.
+- 通过现有应用/测试缝隙冻结或注入值；不要在应用加载后修补渲染文本。
+- 为捕获禁用动画，同时在功能检查中保留正常交互路径。
+- 当这些状态影响几何时保留一个代表性的长/空/错误值。
 
-## Canvas, WebGL, Charts, And Media
+## Canvas、WebGL、图表与媒体
 
-- Prove the canvas or media has non-zero dimensions and nonblank output.
-- Check the assigned control or interaction changes the scene/state.
-- Use screenshot or pixel sampling for blank-render detection, not source existence.
-- Verify fallback/error state when assets fail if that state is in scope.
-- Keep semantic labels or accessible summaries for charts/media where the product requires them.
+- 证明 canvas 或媒体有非零尺寸和非空白输出。
+- 检查分配的控件或交互改变场景/状态。
+- 使用截图或像素采样进行空白渲染检测，而非源存在。
+- 如果资产失败时的回退/错误状态在范围内则验证它。
+- 在产品需要处为图表/媒体保留语义标签或可访问摘要。
 
-## State Captures
+## 状态捕获
 
-Capture the state that proves the check: loading only when loading behavior is assigned; validation after the invalid action; business blocking with its reason; success after data refresh. Avoid producing many screenshots with no stated purpose.
+捕获证明检查的状态：仅在加载行为被分配时加载；无效操作后验证；带原因的业务阻止；数据刷新后成功。避免产生许多没有陈述目的的截图。
 
-Name artifacts by surface, state, and viewport so a reviewer can identify them without opening every file. Do not reuse one screenshot ref for several states that were not actually rendered.
+按界面、状态和视口命名产物，使审查者无需打开每个文件即可识别它们。不要为几个实际未渲染的状态复用一个截图引用。
 
-## Environment Blockers
+## 环境阻止项
 
-Missing browser binaries, unavailable fonts/assets, credentials, inaccessible preview, or unsupported GPU may block rendered evidence. Record the attempted check and concrete blocker. Source inspection can be fallback evidence, but it cannot be reported as a successful rendered check.
+缺失浏览器二进制文件、不可用字体/资源、凭据、不可访问的预览或不受支持的 GPU 可能阻止渲染证据。记录尝试的检查和具体阻止项。源检查可以是回退证据，但不能报告为成功的渲染检查。
 
-MCP owns browser runtime recovery. Host launch failure first uses the managed-container fallback; failure of both environments is carried to Review as an environment limitation. Do not modify application CSS, Playwright assertions, or global timeouts to compensate for a browser that never launched. Required rendered evidence then needs an environment retry, complete external evidence, or an explicit quality waiver.
+MCP 拥有浏览器运行时恢复。主机启动失败首先使用受管容器回退；两个环境都失败作为环境限制带到 Review。不要修改应用 CSS、Playwright 断言或全局超时来补偿从未启动的浏览器。所需的渲染证据然后需要环境重试、完整的外部证据或显式质量豁免。
 
-Separate host-specific rendering differences from product layout defects by confirming the selected browser revision, font availability, device scale, and color scheme before changing application styles or snapshot tolerance.
+通过确认所选浏览器修订、字体可用性、设备缩放和配色方案来区分主机特定的渲染差异和产品布局缺陷，然后更改应用样式或快照容忍度。
 
-## Evidence Summary
+## 证据摘要
 
-Name the viewport, route/workflow, state, observed layout/interaction outcome, and artifact ref. Keep the image binary outside prose. A successful build is supporting evidence; it does not replace rendered verification.
+命名视口、路由/工作流、状态、观察到的布局/交互结果和产物引用。将图像二进制排除在描述之外。成功的构建是支持证据；它不替代渲染验证。
 
-For visual regression, also identify the baseline name and whether the comparison passed first attempt, passed after retry, or remains blocked/failed.
+对于视觉回归，还标识基线名称以及比较是首次尝试通过、重试后通过还是保持 blocked/failed。

@@ -74,9 +74,9 @@ pub fn deploy_validate(input: DeployToolInput) -> LoomMcpActionResult {
             LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
                 summary: if result.valid {
-                    "Deployment validation passed.".to_string()
+                    "部署验证通过。".to_string()
                 } else {
-                    "Deployment validation found issues.".to_string()
+                    "部署验证发现问题。".to_string()
                 },
                 details: Some(details),
                 warnings: vec![],
@@ -84,8 +84,7 @@ pub fn deploy_validate(input: DeployToolInput) -> LoomMcpActionResult {
         }
         Err(error) => LoomMcpActionResult::Done(LoomMcpDoneResult {
             project_root: input.project_root,
-            summary: "Deployment validation could not run because deploy is not prepared."
-                .to_string(),
+            summary: "部署验证无法运行，因为部署未准备就绪。".to_string(),
             details: Some(json!({ "valid": false, "error": error.to_string() })),
             warnings: vec![error.to_string()],
         }),
@@ -139,7 +138,7 @@ fn missing_public_port_probe(path: &str) -> HttpProbeResult {
         },
         status: "invalid".to_string(),
         status_code: None,
-        error: Some("Deployment runtime has no public host port.".to_string()),
+        error: Some("部署运行时没有公共主机端口。".to_string()),
         html_fallback: false,
     }
 }
@@ -153,7 +152,7 @@ pub fn validate_generated_assets(
     let compose_file = from_project_relative(project_root, &spec.files.compose_path)?;
     let compose = read_text(&compose_file)?;
     if !compose.contains("services:") {
-        issues.push("compose file must include services.".to_string());
+        issues.push("compose 文件必须包含 services。".to_string());
     }
     let compose_dir = compose_file.parent().unwrap_or(project_root);
     let build_specs = compose_build_specs(&compose);
@@ -162,7 +161,7 @@ pub fn validate_generated_assets(
         let dockerfile_path = normalize_path(context_dir.join(&build.dockerfile));
         if !dockerfile_path.exists() {
             issues.push(format!(
-                "compose dockerfile path {} for service {} does not resolve from build context {}.",
+                "compose dockerfile 路径 {}（服务 {}）无法从构建上下文 {} 解析。",
                 build.dockerfile, build.service_id, build.context
             ));
             continue;
@@ -175,7 +174,7 @@ pub fn validate_generated_assets(
             let source_path = normalize_path(context_dir.join(&source));
             if !source_path.exists() {
                 issues.push(format!(
-                    "dockerfile for service {} copies missing source {} from build context {}.",
+                    "服务 {} 的 dockerfile 从构建上下文 {} 复制了缺失的源 {}。",
                     build.service_id, source, build.context
                 ));
             }
@@ -184,10 +183,7 @@ pub fn validate_generated_assets(
     if spec.provider != DeployProvider::ComposeExisting {
         for service in &spec.source_model.services {
             if !compose.contains(&format!("  {}:", service.service_id)) {
-                issues.push(format!(
-                    "compose is missing service {}.",
-                    service.service_id
-                ));
+                issues.push(format!("compose 缺少服务 {}。", service.service_id));
             }
             match build_specs
                 .iter()
@@ -217,7 +213,7 @@ pub fn validate_generated_assets(
                     }
                 }
                 None => issues.push(format!(
-                    "compose is missing build config for service {}.",
+                    "compose 缺少服务 {} 的构建配置。",
                     service.service_id
                 )),
             }
@@ -241,7 +237,7 @@ pub fn validate_generated_assets(
                 };
                 let proxy_index = nginx.find(&format!("proxy_pass {proxy_pass}"));
                 if proxy_index.is_none() {
-                    issues.push(format!("nginx config for {service_id} is missing proxy to {target_service_id}:{target_port}."));
+                    issues.push(format!("服务 {service_id} 的 nginx 配置缺少到 {target_service_id}:{target_port} 的代理。"));
                 }
                 if proxy_index
                     .zip(spa_index)
@@ -249,12 +245,12 @@ pub fn validate_generated_assets(
                     .unwrap_or(false)
                 {
                     issues.push(format!(
-                        "nginx config for {service_id} places API proxy after SPA fallback."
+                        "服务 {service_id} 的 nginx 配置将 API 代理放在了 SPA 回退之后。"
                     ));
                 }
                 if !nginx.contains(&format!("location {}", normalize_nginx_path(public_path))) {
                     issues.push(format!(
-                        "nginx config for {service_id} is missing public API route {public_path}."
+                        "服务 {service_id} 的 nginx 配置缺少公共 API 路由 {public_path}。"
                     ));
                 }
             }
@@ -268,7 +264,7 @@ pub fn validate_generated_assets(
             .any(|route| matches!(route, DeploymentRoute::HttpProxy { .. }))
         && topology_requires_api_proxy(spec)
     {
-        issues.push("topology has API probes but no http-proxy route.".to_string());
+        issues.push("topology 有 API 探针但没有 http-proxy 路由。".to_string());
     }
     validate_deployment_facts(&mut issues, spec);
     Ok(issues)
@@ -277,7 +273,7 @@ pub fn validate_generated_assets(
 fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpec) {
     let model = &spec.source_model;
     if model.services.is_empty() {
-        issues.push("sourceModel must declare at least one service.".to_string());
+        issues.push("sourceModel 必须声明至少一个服务。".to_string());
         return;
     }
     let service_ids = model
@@ -287,13 +283,13 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
         .collect::<std::collections::BTreeSet<_>>();
     if !service_ids.contains(model.primary_service_id.as_str()) {
         issues.push(format!(
-            "sourceModel primaryServiceId {} is not present in services.",
+            "sourceModel primaryServiceId {} 不在 services 中。",
             model.primary_service_id
         ));
     }
     if !service_ids.contains(model.preview_service_id.as_str()) {
         issues.push(format!(
-            "sourceModel previewServiceId {} is not present in services.",
+            "sourceModel previewServiceId {} 不在 services 中。",
             model.preview_service_id
         ));
     }
@@ -301,7 +297,7 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
         DeploymentShape::SingleService => {
             if model.services.len() != 1 {
                 issues.push(
-                    "sourceModel shape single-service requires exactly one application service; dependencies belong in sourceModel.dependencies.".to_string(),
+                    "sourceModel 形状 single-service 需要恰好一个应用服务；依赖项属于 sourceModel.dependencies。".to_string(),
                 );
             }
         }
@@ -316,7 +312,7 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
                 .any(|service| service.role == SourceServiceRole::Backend);
             if !has_frontend || !has_backend {
                 issues.push(
-                    "sourceModel shape frontend-and-backend requires both frontend and backend services."
+                    "sourceModel 形状 frontend-and-backend 需要前端和后端服务同时存在。"
                         .to_string(),
                 );
             }
@@ -332,7 +328,7 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
                         && service.role == SourceServiceRole::Frontend
                 }) {
                     issues.push(format!(
-                        "topology static SPA route target {} must be a sourceModel frontend service.",
+                        "topology 静态 SPA 路由目标 {} 必须是 sourceModel 前端服务。",
                         target_service_id
                     ));
                 }
@@ -352,13 +348,13 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
                 };
                 if target.role == SourceServiceRole::Frontend {
                     issues.push(format!(
-                        "topology HTTP proxy target {} must not be a frontend service.",
+                        "topology HTTP 代理目标 {} 不得是前端服务。",
                         target_service_id
                     ));
                 }
                 if target.port != *target_port {
                     issues.push(format!(
-                        "topology HTTP proxy target {} port {} must match sourceModel port {}.",
+                        "topology HTTP 代理目标 {} 端口 {} 必须与 sourceModel 端口 {} 匹配。",
                         target_service_id, target_port, target.port
                     ));
                 }
@@ -385,7 +381,7 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
         });
         if !covered {
             issues.push(format!(
-                "topology API probe {} is outside every HTTP proxy route.",
+                "topology API 探针 {} 不在任何 HTTP 代理路由内。",
                 probe.path
             ));
         }
@@ -399,8 +395,7 @@ fn validate_source_model_contract(issues: &mut Vec<String>, spec: &DeploymentSpe
             .any(|route| matches!(route, DeploymentRoute::HttpProxy { .. }))
     {
         issues.push(
-            "frontend-and-backend sourceModel with API probes requires an HTTP proxy route."
-                .to_string(),
+            "带有 API 探针的 frontend-and-backend sourceModel 需要 HTTP 代理路由。".to_string(),
         );
     }
 }
@@ -413,7 +408,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
         .any(|service| service.service_id == spec.topology.public_entry_service_id)
     {
         issues.push(format!(
-            "topology publicEntryServiceId {} is not present in sourceModel services.",
+            "topology publicEntryServiceId {} 不在 sourceModel services 中。",
             spec.topology.public_entry_service_id
         ));
     }
@@ -429,7 +424,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
                 .any(|service| &service.service_id == target_service_id)
             {
                 issues.push(format!(
-                    "topology http-proxy target service {target_service_id} is not present in sourceModel services."
+                    "topology http-proxy 目标服务 {target_service_id} 不在 sourceModel services 中。"
                 ));
             }
         }
@@ -443,7 +438,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
                 .any(|route| matches!(route, DeploymentRoute::HttpProxy { .. }))
             {
                 issues.push(
-                    "deploy facts classify this as frontend_gateway_backend_api but topology has no http-proxy route."
+                    "deploy facts 将此分类为 frontend_gateway_backend_api，但 topology 没有 http-proxy 路由。"
                         .to_string(),
                 );
             }
@@ -453,7 +448,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
         | DeploymentTopologyClass::ApiOnlySingleService => {
             if spec.source_model.services.len() != 1 {
                 issues.push(format!(
-                    "deploy facts classify this as {:?} but sourceModel has {} services.",
+                    "deploy facts 将此分类为 {:?}，但 sourceModel 有 {} 个服务。",
                     spec.facts.topology_class,
                     spec.source_model.services.len()
                 ));
@@ -462,7 +457,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
         DeploymentTopologyClass::StaticSite => {
             if !spec.topology.validation.api_probes.is_empty() {
                 issues.push(
-                    "deploy facts classify this as static_site but topology still validates API paths."
+                    "deploy facts 将此分类为 static_site，但 topology 仍在验证 API 路径。"
                         .to_string(),
                 );
             }
@@ -470,12 +465,15 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
         DeploymentTopologyClass::ExistingCompose
             if spec.provider != DeployProvider::ComposeExisting =>
         {
-            issues.push("deploy facts classify this as existing_compose but provider is not compose-existing.".to_string());
+            issues.push(
+                "deploy facts 将此分类为 existing_compose，但 provider 不是 compose-existing。"
+                    .to_string(),
+            );
         }
         DeploymentTopologyClass::ExistingDockerfileWrapper
             if spec.provider != DeployProvider::DockerfileExisting =>
         {
-            issues.push("deploy facts classify this as existing_dockerfile_wrapper but provider is not dockerfile-existing.".to_string());
+            issues.push("deploy facts 将此分类为 existing_dockerfile_wrapper，但 provider 不是 dockerfile-existing。".to_string());
         }
         DeploymentTopologyClass::MultiService
         | DeploymentTopologyClass::ExistingCompose
@@ -490,7 +488,7 @@ fn validate_deployment_facts(issues: &mut Vec<String>, spec: &DeploymentSpec) {
         .count() as u32;
     if public_ports != spec.facts.public_port_count {
         issues.push(format!(
-            "deploy facts publicPortCount {} does not match runtime public ports {}.",
+            "deploy facts publicPortCount {} 与运行时公共端口 {} 不匹配。",
             spec.facts.public_port_count, public_ports
         ));
     }
@@ -563,7 +561,7 @@ fn validate_service_asset_graph(
 ) {
     if service.root != "." && !normalize_path(context_dir.join(&service.root)).exists() {
         issues.push(format!(
-            "sourceModel service {} root {} does not exist inside build context.",
+            "sourceModel 服务 {} root {} 在构建上下文内不存在。",
             service.service_id, service.root
         ));
     }
@@ -576,7 +574,7 @@ fn validate_service_asset_graph(
                 continue;
             }
             issues.push(format!(
-                "sourceModel service {} manifestRef {} does not exist inside build context.",
+                "sourceModel 服务 {} manifestRef {} 在构建上下文内不存在。",
                 service.service_id, manifest
             ));
         }
@@ -587,7 +585,7 @@ fn validate_service_asset_graph(
         }
         if !normalize_path(context_dir.join(lockfile)).exists() {
             issues.push(format!(
-                "sourceModel service {} lockfileRef {} does not exist inside build context.",
+                "sourceModel 服务 {} lockfileRef {} 在构建上下文内不存在。",
                 service.service_id, lockfile
             ));
         }
@@ -602,7 +600,7 @@ fn validate_service_asset_graph(
             && spec.provider == DeployProvider::Generated
         {
             issues.push(format!(
-                "dockerfile for service {} does not set WORKDIR to service root {}.",
+                "服务 {} 的 dockerfile 未将 WORKDIR 设置为服务 root {}。",
                 service.service_id, service.root
             ));
         }
@@ -658,7 +656,7 @@ fn validate_install_lockfile_command(
         };
         if !normalize_path(context_dir.join(&expected_path)).exists() {
             issues.push(format!(
-                "dockerfile for service {} uses `{command}` but {} is missing.",
+                "服务 {} 的 dockerfile 使用了 `{command}` 但 {} 缺失。",
                 service.service_id, expected_path
             ));
         }
@@ -682,7 +680,7 @@ fn validate_artifact_closure(
             && !dockerfile.contains(&format!("/workspace/{expected_output}"))
         {
             issues.push(format!(
-                "dockerfile for service {} does not copy declared frontend outputDirectory {}.",
+                "服务 {} 的 dockerfile 未复制声明的 frontend outputDirectory {}。",
                 service.service_id, expected_output
             ));
         }
@@ -693,7 +691,7 @@ fn validate_artifact_closure(
         && !dockerfile.contains("find . -type f -name '*.jar'")
     {
         issues.push(format!(
-            "dockerfile for Java service {} does not declare a runnable jar discovery step.",
+            "Java 服务 {} 的 dockerfile 未声明可运行 jar 的发现步骤。",
             service.service_id
         ));
     }
@@ -707,7 +705,7 @@ fn validate_port_closure(
     let expose = format!("EXPOSE {}", service.port);
     if service.role != SourceServiceRole::Frontend && !dockerfile.contains(&expose) {
         issues.push(format!(
-            "dockerfile for service {} does not expose sourceModel port {}.",
+            "服务 {} 的 dockerfile 未暴露 sourceModel 端口 {}。",
             service.service_id, service.port
         ));
     }
@@ -726,7 +724,7 @@ fn validate_dockerignore_inputs(
     for path in required {
         if dockerignore_excludes_path(dockerignore, path) {
             issues.push(format!(
-                "dockerignore for service {} excludes required build input {}.",
+                "服务 {} 的 dockerignore 排除了必需的构建输入 {}。",
                 service.service_id, path
             ));
         }

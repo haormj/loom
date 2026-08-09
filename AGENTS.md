@@ -1,16 +1,16 @@
-# Repository Guidelines
+# 仓库指南
 
-## Project Structure & Module Organization
+## 项目结构与模块组织
 
-- `src/rust/`: workspace crates. `mcp-server` exposes tools; domain crates such as `planning`, `execution`, `deploy`, and `knowledge` own workflow behavior; `contracts`, `core`, and `state` provide shared protocols.
-- `src/python/algorithms/`: bundled BM25, TF-IDF, tokenization, and worker code.
-- `tests/rust/` and `tests/python/algorithms/`: integration and algorithm tests, organized by product domain.
-- `plugins/{codex,claude-code,opencode}/`: agent adapters. Shared Loom and deploy guidance lives under `plugins/shared/`; avoid duplicating shared rules in adapter files.
-- `docs/`, `assets/`, and `scripts/`: user documentation, README media, and local install helpers.
+- `src/rust/`:工作区 crate。`mcp-server` 暴露工具;`planning`、`execution`、`deploy`、`knowledge` 等领域 crate 负责工作流行为;`contracts`、`core`、`state` 提供共享协议。
+- `src/python/algorithms/`:内置 BM25、TF-IDF、分词与 worker 代码。
+- `tests/rust/` 与 `tests/python/algorithms/`:集成与算法测试,按产品域组织。
+- `plugins/opencode/`:agent 适配器。共享的 Loom 与 deploy 指南位于 `plugins/shared/`;避免在适配器文件中重复共享规则。
+- `docs/`、`assets/`、`scripts/`:用户文档、README 媒体与本地安装辅助脚本。
 
-## Build, Test, and Development Commands
+## 构建、测试与开发命令
 
-Run commands from the repository root:
+在仓库根目录运行命令:
 
 ```bash
 npm run rust:test
@@ -19,39 +19,39 @@ cargo fmt --manifest-path src/rust/Cargo.toml --all --check
 cargo build --manifest-path src/rust/Cargo.toml -p mcp-server -p setup
 ```
 
-Use targeted Rust tests while iterating, for example:
+迭代时使用定向 Rust 测试,例如:
 
 ```bash
 cargo test --manifest-path src/rust/Cargo.toml -p deploy --test deploy_workflow
 ```
 
-Refresh a local integration after runtime or plugin changes with `./install.sh --agent codex --local-build`; Claude Code and OpenCode helpers are in `scripts/`.
+在运行时或插件变更后,用 `./install.sh --agent opencode --local-build` 刷新本地集成。
 
-## Coding Style & Naming Conventions
+## 代码风格与命名约定
 
-Use Rust 2021 conventions and keep code `rustfmt`-clean. Name modules, functions, and files with `snake_case`; types and traits with `UpperCamelCase`; constants with `SCREAMING_SNAKE_CASE`. Python follows four-space indentation, `snake_case`, and `test_*.py` naming. Keep changes within existing domain boundaries and prefer structured Serde models over ad hoc JSON manipulation.
+使用 Rust 2021 约定并保持代码 `rustfmt` 合规。模块、函数、文件用 `snake_case` 命名;类型与 trait 用 `UpperCamelCase`;常量用 `SCREAMING_SNAKE_CASE`。Python 遵循四空格缩进、`snake_case` 与 `test_*.py` 命名。变更保持在现有领域边界内,优先使用结构化 Serde 模型而非临时 JSON 拼接。
 
-## Documentation Language
+## 文档语言
 
-Write all documentation (specs, design docs, README sections, troubleshooting notes) in Chinese (简体中文), unless the user explicitly requests another language for a specific document. Code identifiers, commands, file paths, and JSON/protocol terms remain in English.
+除非用户为特定文档明确指定其他语言,所有文档(规格、设计文档、README 章节、排障说明)使用中文(简体中文)编写。代码标识符、命令、文件路径与 JSON/协议术语保持英文。
 
-## Testing Guidelines
+## 测试指南
 
-Add focused regression coverage for behavioral changes. Rust integration tests belong in the matching `tests/rust/<domain>/` suite; local unit tests may remain beside implementation code. Python tests use `pytest`. Run the affected package or test target first, then both product test lanes before release-impacting changes. Fixes should reproduce the prior failure.
+为行为变更添加聚焦的回归覆盖。Rust 集成测试归入对应的 `tests/rust/<domain>/` 测试套件;本地单元测试可保留在实现代码旁。Python 测试使用 `pytest`。先运行受影响的包或测试目标,再在影响发布的变更前运行两条产品测试通道。修复应能复现此前的失败。
 
-## Reference and Contract Design
+## 参考与契约设计
 
-- Select references from structured repository facts and task ownership; never globally default a focus or group.
-- Audit existing contracts before adding fields or references; remove superseded and duplicate guidance in the same change.
-- Do not ask agents to author fields that MCP derives.
-- Test both selection and non-selection for every reference route.
-- Do not infer testing work from a language, framework, or frontend task alone. Testing references and browser checks require explicit task-owned evidence.
-- Classify browser launch/runtime failures as environment state; never send them through generic code execution repair.
+- 从结构化仓库事实和任务所有权中选择参考;绝不全局默认某个 focus 或 group。
+- 在添加字段或参考前审计既有契约;在同一变更中移除已废弃和重复的指导。
+- 不要让 agent 编写 MCP 派生的字段。
+- 为每条参考路由测试选中与不选中两种情况。
+- 不要仅凭语言、框架或前端任务推断测试工作。测试参考与浏览器检查需要明确的任务所属证据。
+- 将浏览器启动/运行时失败归类为环境状态;绝不通过通用代码执行修复流程处理。
 
-## Commit & Pull Request Guidelines
+## 提交与 Pull Request 指南
 
-Branches must match CI patterns such as `feature/name`, `fix/name`, or `docs/name`. Commit subjects use Conventional Commits, including an optional lowercase scope: `fix(deploy): validate source roots`. Keep subjects under 200 characters.
+分支必须匹配 CI 模式,如 `feature/name`、`fix/name` 或 `docs/name`。提交标题使用 Conventional Commits,可带小写 scope:`fix(deploy): validate source roots`。标题保持在 200 字符以内。
 
-PRs should stay focused, explain the user-visible or contract impact, list verification commands, and link relevant issues. Include screenshots for documentation or UI-visible changes. Keep unrelated formatting and refactors out of the diff; never commit generated `.loom/` runtime state.
+PR 应保持聚焦,说明用户可见或契约层面影响,列出验证命令,并链接相关 issue。文档或 UI 可见变更应附截图。不要在 diff 中混入无关的格式化与重构;绝不提交生成的 `.loom/` 运行时状态。
 
-Spend time on thinking; you do not need to use the commentary channel to report progress to me. DO NOT send optional commentary.
+多花时间思考;无需通过评论通道向我汇报进度。不要发送可选评论。

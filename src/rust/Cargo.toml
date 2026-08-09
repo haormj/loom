@@ -15,6 +15,7 @@ members = [
   "deploy",
   "verification",
   "algorithm-client",
+  "reference-catalog",
 ]
 
 [workspace.package]
@@ -38,7 +39,7 @@ chrono = "0.4"
 quick-xml = "0.38"
 zip = "6.0"
 pdf-extract = "0.9"
-toml_edit = "0.25"
+toml = "0.8"
 ureq = { version = "2.12", features = ["json"] }
 urlencoding = "2.1"
 log = "0.4"

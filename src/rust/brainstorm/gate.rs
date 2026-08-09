@@ -89,16 +89,16 @@ pub fn required_knowledge_step_ids(block: &ClarificationBlockName) -> &'static [
 pub fn block_message(block: &ClarificationBlockName) -> String {
     match block {
         ClarificationBlockName::PhaseScope => {
-            "Read the current block's knowledge plan, query request-scoped knowledge, then present 2-3 active phase boundary options in the user's language, not a full multi-stage project roadmap. Wait for the user's visible confirmation, then continue to business understanding and rule confirmation. Do not show internal block ids to the user.".to_string()
+            "阅读当前块的知识计划，查询 request-scoped knowledge，然后用用户语言呈现 2-3 个当前阶段边界选项，而非完整的多阶段项目路线图。等待用户可见确认后，继续进入业务理解与规则确认。不要向用户展示内部 block ids。".to_string()
         }
         ClarificationBlockName::ConceptGrounding => {
-            "Read the current block's knowledge plan, query request-scoped knowledge, then confirm the business objects, operations, rules, fields, blockers, outcomes, and misunderstanding boundaries for the user-confirmed current scope. Use a user-facing title such as business understanding and rule confirmation.".to_string()
+            "阅读当前块的知识计划，查询 request-scoped knowledge，然后确认用户已确认的当前范围内的业务对象、操作、规则、字段、阻断条件、结果和误解边界。使用用户可见标题，如\"业务理解与规则确认\"。".to_string()
         }
         ClarificationBlockName::FrontendExperience => {
-            "Read the current block's knowledge plan, query request-scoped knowledge, then confirm the page or workspace operation path, target discovery, action entry, feedback, and readback, or explicitly record why UI is not applicable. Use a user-facing title such as page operation path confirmation.".to_string()
+            "阅读当前块的知识计划，查询 request-scoped knowledge，然后确认页面或工作空间的操作路径、目标发现、操作入口、反馈和回读，或明确记录 UI 不适用的原因。使用用户可见标题，如\"页面办理路径确认\"。".to_string()
         }
         ClarificationBlockName::FinalSummary => {
-            "Present the pre-submit coverage checklist, apply any user corrections back to structured fields, then confirm before writing the final structured requirement result. Do not show internal block ids to the user.".to_string()
+            "呈现提交前覆盖检查清单，将用户修正回写到结构化字段，然后在写入最终结构化需求结果前确认。不要向用户展示内部 block ids。".to_string()
         }
     }
 }

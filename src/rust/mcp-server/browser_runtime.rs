@@ -97,7 +97,7 @@ fn prepare_with_setup(
                 &paths,
                 project_root_display,
                 "BROWSER_RUNTIME_SETUP_FAILED",
-                format!("loom-setup could not start: {error}"),
+                format!("loom-setup 无法启动：{error}"),
                 &targets,
                 &versions,
             )
@@ -110,7 +110,7 @@ fn prepare_with_setup(
             project_root_display,
             "BROWSER_RUNTIME_SETUP_FAILED",
             format!(
-                "Playwright runtime preparation failed with exit status {}: {}",
+                "Playwright 运行时准备失败，退出状态码 {}：{}",
                 output.status.code().unwrap_or(-1),
                 bounded_text(&output.stderr)
             ),
@@ -124,7 +124,7 @@ fn prepare_with_setup(
             return failed(
                 project_root_display,
                 "BROWSER_RUNTIME_REPORT_INVALID",
-                format!("loom-setup returned invalid browser runtime JSON: {error}"),
+                format!("loom-setup 返回了无效的浏览器运行时 JSON：{error}"),
             )
         }
     };
@@ -168,7 +168,7 @@ fn prepare_with_setup(
         "status": runtime_status.clone(),
         "runtime": report,
         "runtimeEnvironments": runtime_environments,
-        "projectDependencyPolicy": "Keep @playwright/test in the project package manifest and lockfile. Reuse only Loom's shared browser cache across projects.",
+        "projectDependencyPolicy": "将 @playwright/test 保留在项目的包清单和锁文件中。跨项目仅复用 Loom 的共享浏览器缓存。",
         "projectTargets": targets,
         "requestedRuntimeVersions": versions
     });
@@ -176,22 +176,20 @@ fn prepare_with_setup(
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root_display.to_string(),
         summary: match runtime_status.as_str() {
-            "ready" => "Playwright browser runtime is ready.".to_string(),
+            "ready" => "Playwright 浏览器运行时已就绪。".to_string(),
             "partial" => {
-                "Playwright browser runtime is ready for part of the project target matrix."
-                    .to_string()
+                "Playwright 浏览器运行时已为部分项目目标矩阵就绪。".to_string()
             }
-            _ => "Playwright browser runtime is unavailable on both host and managed container."
-                .to_string(),
+            _ => "Playwright 浏览器运行时在主机和托管容器上均不可用。".to_string(),
         },
         details: Some(details),
         warnings: match runtime_status.as_str() {
             "ready" => vec![],
             "partial" => vec![
-                "Some project Playwright targets are unavailable; the browser closure must use the runtime matching each project runner and report only affected checks as blocked."
+                "部分项目 Playwright 目标不可用；浏览器闭包必须使用与每个项目运行器匹配的运行时，并仅将受影响的检查报告为 blocked。"
                     .to_string(),
             ],
-            _ => vec!["Browser environment evidence requires manual resolution.".to_string()],
+            _ => vec!["浏览器环境证据需要手动解决。".to_string()],
         },
     })
 }
@@ -205,7 +203,7 @@ fn unavailable_after_setup_failure(
     versions: &std::collections::BTreeSet<String>,
 ) -> LoomMcpActionResult {
     let message = if message.trim().is_empty() {
-        "Playwright runtime preparation failed before a browser could be launched.".to_string()
+        "Playwright 运行时准备在浏览器启动前失败。".to_string()
     } else {
         message
     };
@@ -229,21 +227,19 @@ fn unavailable_after_setup_failure(
                     "summary": message,
                     "failureCode": code,
                     "diagnostic": message,
-                    "remediation": "Repair the package, registry, Node.js, browser, or container environment before selecting retry_browser_environment."
+                    "remediation": "在选择 retry_browser_environment 之前，修复包、注册表、Node.js、浏览器或容器环境。"
                 }]
             })).collect::<Vec<_>>()
         },
         "runtimeEnvironments": [],
-        "projectDependencyPolicy": "Keep @playwright/test in the project package manifest and lockfile. Reuse only Loom's shared browser cache across projects.",
+        "projectDependencyPolicy": "将 @playwright/test 保留在项目的包清单和锁文件中。跨项目仅复用 Loom 的共享浏览器缓存。",
         "projectTargets": targets,
         "requestedRuntimeVersions": versions
     });
     let _ = state::store::write_json_atomic(&paths.latest_file, &details);
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root.to_string(),
-        summary:
-            "Playwright browser runtime is unavailable in the supported execution environments."
-                .to_string(),
+        summary: "Playwright 浏览器运行时在受支持的执行环境中不可用。".to_string(),
         details: Some(details),
         warnings: vec![message],
     })
@@ -316,7 +312,7 @@ impl BrowserRuntimeOperationGuard {
             .write(true)
             .create_new(true)
             .open(&paths.lock_file)
-            .map_err(|error| format!("browser runtime preparation is already active: {error}"))?;
+            .map_err(|error| format!("浏览器运行时准备已在进行中：{error}"))?;
         let operation = BrowserRuntimeOperation {
             schema_version: 1,
             operation_id: format!("browser_runtime_{}", state::store::now_millis()),
@@ -423,9 +419,8 @@ fn active_operation(project_root: &str, operation: BrowserRuntimeOperation) -> L
             final_response_policy: "forbidden_while_operation_active".to_string(),
         }),
         forbidden_actions: vec![
-            "Do not start another Playwright runtime installation while this operation is active."
-                .to_string(),
-            "Do not delete or modify the shared Loom runtime cache during preparation.".to_string(),
+            "在此操作进行期间，不要启动另一个 Playwright 运行时安装。".to_string(),
+            "在准备期间，不要删除或修改共享的 Loom 运行时缓存。".to_string(),
         ],
         progress_summary: Some(json!({
             "phase": operation.phase,
@@ -506,7 +501,7 @@ printf '{"status":"ready","cacheRoot":"/tmp/loom-cache","browsersPath":"/tmp/loo
         let LoomMcpActionResult::Done(done) = result else {
             panic!("expected done result");
         };
-        assert_eq!(done.summary, "Playwright browser runtime is ready.");
+        assert_eq!(done.summary, "Playwright 浏览器运行时已就绪。");
         assert_eq!(
             done.details.as_ref().unwrap()["requestedRuntimeVersions"],
             json!(["^1.55.0"])
@@ -599,7 +594,7 @@ printf '{"status":"ready","cacheRoot":"/tmp/loom-cache","browsersPath":"/tmp/loo
         let LoomMcpActionResult::Done(done) = result else {
             panic!("setup environment failure must become a reviewable unavailable state");
         };
-        assert!(done.summary.contains("unavailable"));
+        assert!(done.summary.contains("不可用"));
         let latest: Value =
             state::store::read_json(&root.join(".loom/runtime/browser-automation/latest.json"))
                 .unwrap();
@@ -637,7 +632,7 @@ printf '{"status":"partial","cacheRoot":"/tmp/loom-cache","browsersPath":"/tmp/l
         let LoomMcpActionResult::Done(done) = result else {
             panic!("partial runtime matrix must remain runnable");
         };
-        assert!(done.summary.contains("part of the project target matrix"));
+        assert!(done.summary.contains("部分项目目标矩阵"));
         assert_eq!(done.warnings.len(), 1);
         let latest: Value =
             state::store::read_json(&root.join(".loom/runtime/browser-automation/latest.json"))

@@ -1,79 +1,79 @@
-# Next.js Runtime And Production Build
+# Next.js 运行时与生产构建
 
-This reference owns task-scoped Next application configuration, environment validation, runtime selection, middleware/headers/rewrites, image settings, output mode, build/performance instrumentation, and health routes. Deployment assets remain in Loom deploy.
+此参考拥有任务范围的 Next 应用配置、环境验证、运行时选择、中间件/header/rewrite、图像设置、输出模式、构建/性能插桩和健康路由。部署资产保留在 Loom deploy 中。
 
-## Environment And Build-Time Semantics
+## 环境与构建时语义
 
-Next environment values may be consumed at build time, server runtime, or browser bundle time. Define when each value is read and validate mandatory server settings before serving the affected capability.
+Next 环境值可在构建时、服务端运行时或浏览器包时被消费。定义每个值的读取时机，并在服务受影响能力之前验证必需的服务端设置。
 
-Only deliberate `NEXT_PUBLIC_*` values are exposed to clients and they may be frozen into build output. Never put secrets in public variables or expect a built client bundle to adopt runtime env changes automatically.
+只有刻意的 `NEXT_PUBLIC_*` 值暴露给客户端，它们可能被冻结到构建输出中。永远不要将密钥放在公共变量中，也不要期望已构建的客户端包自动采用运行时 env 变更。
 
-Use typed/config schema validation at the server boundary and avoid importing server env modules into Client Components. Keep local defaults runnable and production defaults safe.
+在服务端边界使用类型化/配置 schema 验证，避免将服务端 env 模块导入 Client Component。保持本地默认值可运行，生产默认值安全。
 
-## next.config And Output
+## next.config 与输出
 
-Preserve the project's config module format and selected Next version. Change `output: 'standalone'` only when self-host/deploy facts require it; deployment packaging must copy standalone server, static assets, and public assets correctly.
+保留项目的配置模块格式和所选 Next 版本。仅当自托管/部署事实需要时更改 `output: 'standalone'`；部署打包必须正确复制 standalone server、静态资源和公共资源。
 
-Configure `basePath`, asset prefix, trailing slash, output mode, transpilation, experimental flags, and compiler options only from accepted runtime/repository needs. These affect routes/assets/deploy topology globally.
+仅从已接受的运行时/仓库需求配置 `basePath`、asset prefix、trailing slash、输出模式、转译、实验性标志和编译器选项。这些全局影响路由/资源/部署拓扑。
 
-Remote image patterns should allow only actual schemes/hosts/ports/path patterns. Keep image sizes/formats/loader aligned with content and hosting. Do not use wildcard remote images as a convenience.
+远程图像模式应仅允许实际的方案/主机/端口/路径模式。保持图像尺寸/格式/loader 与内容和托管对齐。不要将通配远程图像作为便利。
 
-## Node, Edge, And Static Runtime
+## Node、Edge 与静态运行时
 
-Choose Node runtime for Node APIs, database/native drivers, filesystem, and broad library compatibility. Choose Edge only when all dependencies and behavior are compatible and latency/distribution benefit is accepted.
+为 Node API、数据库/原生驱动、文件系统和广泛库兼容性选择 Node 运行时。仅当所有依赖和行为兼容且延迟/分布收益被接受时选择 Edge。
 
-Static export cannot provide Server Actions, dynamic server reads, cookies/headers, route handlers requiring runtime, or ISR in the same way as a server runtime. Do not select it for an incompatible app.
+静态导出不能以与服务端运行时相同的方式提供 Server Actions、动态服务端读取、cookie/header、需要运行时的 route handler 或 ISR。不要为不兼容的应用选择它。
 
-Verify runtime inheritance per segment/handler/middleware and do not mix unsupported modules into Edge bundles.
+按 segment/handler/middleware 验证运行时继承，不要将不支持的模块混入 Edge 包。
 
-## Middleware, Rewrites, Redirects, And Headers
+## 中间件、Rewrite、Redirect 与 Header
 
-Keep matchers narrow and exclude `_next` assets, images, metadata/static files, health, and API routes unless intentionally handled. Middleware must remain lightweight and runtime-compatible.
+保持 matcher 窄并排除 `_next` 资源、图像、元数据/静态文件、健康和 API 路由，除非有意处理。中间件必须保持轻量且运行时兼容。
 
-Rewrites/redirects/proxy paths must preserve accepted public API and frontend route ownership. Avoid catch-all rewrites that turn API requests into HTML or create redirect loops.
+Rewrite/redirect/代理路径必须保留已接受的公共 API 和前端路由所有权。避免将 API 请求变为 HTML 或创建重定向循环的 catch-all rewrite。
 
-Add CSP/HSTS/frame/referrer/permissions/cache/security headers according to hosting/security design. Nonces and third-party scripts require a complete CSP strategy, not copied literals.
+按托管/安全设计添加 CSP/HSTS/frame/referrer/permissions/cache/security header。Nonce 和第三方脚本需要完整的 CSP 策略，而非复制的字面量。
 
-## Health And Observability
+## 健康与可观测性
 
-Health/readiness route handlers should be lightweight, bounded, non-mutating, and expose only necessary status. Separate process liveness from required dependency readiness when the platform uses both.
+健康/就绪 route handler 应轻量、有界、非变更，仅暴露必要状态。当平台使用两者时，将进程活跃性与所需依赖就绪分开。
 
-Use repository logging/instrumentation/analytics conventions and redact cookies, tokens, headers, personal data, and internal provider details. Keep telemetry initialization/runtime compatible and avoid duplicate client/server events.
+使用仓库记录/插桩/分析约定，编辑 cookie、令牌、header、个人数据和内部 provider 详情。保持遥测初始化/运行时兼容，避免重复的客户端/服务端事件。
 
-## Performance And Bundles
+## 性能与包
 
-Use production build output, bundle analyzer, route sizes, Web Vitals, and representative browser traces when performance is task-owned. Do not impose a universal Lighthouse score copied from an external skill.
+当性能为任务所属时使用生产构建输出、包分析器、路由大小、Web Vitals 和代表性浏览器追踪。不要施加从外部技能复制的通用 Lighthouse 分数。
 
-Reduce client boundaries/dependencies, parallelize server reads, optimize images/fonts, and split expensive browser libraries based on measured risk. Avoid broad dynamic imports, `ssr: false`, or caching as generic optimization.
+减少客户端边界/依赖，并行化服务端读取，优化图像/字体，基于已测量的风险拆分昂贵的浏览器库。避免将宽泛动态导入、`ssr: false` 或缓存作为通用优化。
 
-Instrument Web Vitals only through accepted telemetry and bounded dimensions. Development mode is not performance evidence.
+仅通过已接受的遥测和有界维度插桩 Web Vitals。开发模式不是性能证据。
 
-## Self-Hosting Runtime
+## 自托管运行时
 
-Preserve package manager/scripts and required Node version. Understand standalone/public/static copying, proxy trust, host/port, graceful shutdown, connection pooling, file-system persistence, and multi-instance cache/revalidation behavior.
+保留包管理器/脚本和所需 Node 版本。理解 standalone/public/静态复制、代理信任、主机/端口、优雅关闭、连接池、文件系统持久化和多实例缓存/重新验证行为。
 
-Do not write durable uploads/database files to ephemeral application paths unless runtime delivery declares persistent storage. Avoid assuming in-memory caches/queues/sessions are shared across replicas.
+不要将持久上传/数据库文件写入临时应用路径，除非运行时交付声明持久存储。避免假设内存缓存/队列/会话跨副本共享。
 
-Docker/Compose/proxy generation and route topology remain Loom deploy responsibilities; application config should expose accurate structured facts and runtime-safe behavior.
+Docker/Compose/代理生成和路由拓扑仍是 Loom deploy 责任；应用配置应暴露准确的结构化事实和运行时安全行为。
 
 ## Verification
 
-- Run production build for config/env/runtime/middleware/output/image/performance changes.
-- Start the built artifact with valid/missing settings and assert clear behavior.
-- Probe exact matcher/header/rewrite/redirect/health routes and API exclusions.
-- Verify Node/Edge/static compatibility with changed dependencies/features.
-- Inspect client/server bundles for public env, secrets, server imports, and measured size claims.
-- Verify standalone/self-host static/public assets and runtime binding when owned.
+- 为配置/env/运行时/中间件/输出/图像/性能变更运行生产构建。
+- 用有效/缺失设置启动构建产物并断言清晰行为。
+- 探测精确的 matcher/header/rewrite/redirect/健康路由和 API 排除。
+- 验证 Node/Edge/静态与变更依赖/特性的兼容性。
+- 检查客户端/服务端包中的公共 env、密钥、服务端导入和已测量大小声明。
+- 在拥有时验证 standalone/自托管静态/公共资源和运行时绑定。
 
-## Delivery Evidence
+## 交付证据
 
-Identify config/runtime/build decision and production build/start/route/bundle assertion proving it. Dev server success or config text alone cannot prove build-time env behavior, runtime compatibility, matcher topology, standalone packaging, or secret isolation.
+标识配置/运行时/构建决策以及证明它的生产构建/启动/路由/包断言。仅开发服务器成功或配置文本不能证明构建时 env 行为、运行时兼容性、matcher 拓扑、standalone 打包或密钥隔离。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Deployment Docker/Vercel instructions duplicated in application references.
-- Secrets placed in `NEXT_PUBLIC_*` or server env imported client-side.
-- Standalone/Edge/static output enabled without feature/runtime compatibility.
-- Catch-all middleware/rewrites intercepting assets or API paths.
-- Universal Lighthouse threshold used as a contract.
-- Durable files or shared state assumed on ephemeral/multi-instance runtime.
+- 在应用参考中重复部署 Docker/Vercel 指令。
+- 密钥放在 `NEXT_PUBLIC_*` 或服务端 env 被客户端导入。
+- 在无特性/运行时兼容性的情况下启用 standalone/Edge/静态输出。
+- Catch-all 中间件/rewrite 拦截资源或 API 路径。
+- 通用 Lighthouse 阈值用作契约。
+- 在临时/多实例运行时上假设持久文件或共享状态。

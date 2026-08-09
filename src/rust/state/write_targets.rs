@@ -56,7 +56,7 @@ pub fn authorize_write_targets(
         return Err(fatal(
             "REQUEST_PROJECT_MISMATCH",
             format!(
-                "requestRef projectId {} does not match project root projectId {}.",
+                "requestRef 的 projectId {} 与项目根目录的 projectId {} 不匹配。",
                 parsed.project_id, config.project_id
             ),
         ));
@@ -74,7 +74,7 @@ pub fn authorize_write_targets(
         if !delivery_core::contract_fingerprint_matches(output_contract) {
             return Err(fatal(
                 "WRITE_CONTRACT_FINGERPRINT_INVALID",
-                "The request write contract fingerprint does not match its current contract contents.",
+                "请求的写入契约指纹与当前契约内容不匹配。",
             ));
         }
     }
@@ -111,7 +111,7 @@ pub fn authorize_write_targets(
     if !submit_tool_accepts_artifact(submit_tool, artifact_kind) {
         return Err(fatal(
             "SUBMIT_TOOL_ARTIFACT_MISMATCH",
-            format!("{submit_tool} cannot submit artifact kind {artifact_kind:?}."),
+            format!("{submit_tool} 无法提交产物类型 {artifact_kind:?}。"),
         ));
     }
     let declared_submit_tool = extract_submit_tool(&root)?;
@@ -119,7 +119,7 @@ pub fn authorize_write_targets(
         return Err(fatal(
             "SUBMIT_TOOL_MISMATCH",
             format!(
-                "request declares submitTool {declared_submit_tool}, but {submit_tool} was called."
+                "请求声明的 submitTool 为 {declared_submit_tool}，但实际调用的是 {submit_tool}。"
             ),
         ));
     }
@@ -129,7 +129,7 @@ pub fn authorize_write_targets(
     if all_targets.is_empty() {
         return Err(fatal(
             "WRITE_TARGETS_REQUIRED",
-            "request outputContract.writeTargets must declare at least one target.",
+            "请求的 outputContract.writeTargets 必须声明至少一个目标。",
         ));
     }
     validate_target_paths(&paths.root, &all_targets)?;
@@ -149,7 +149,7 @@ pub fn authorize_write_targets(
             .map(|group_id| RepairIssue {
                 code: "WRITE_CONTRACT_NOT_READ".to_string(),
                 message: format!(
-                    "Read the current write contract group {group_id} with loom.readFieldGroup before submitting this artifact."
+                    "在提交此产物之前，请使用 loom.readFieldGroup 读取当前写入契约分组 {group_id}。"
                 ),
                 target_id: Some("candidate".to_string()),
                 field_path: Some(format!("requestReadPlan.groups.{group_id}")),
@@ -273,9 +273,7 @@ pub fn record_pending_repair(
         .iter_mut()
         .find(|phase| phase.phase_id == *phase_id)
         .ok_or_else(|| {
-            StateError::StateCorrupted(format!(
-                "delivery {delivery_id} is missing phase {phase_id}"
-            ))
+            StateError::StateCorrupted(format!("交付 {delivery_id} 缺少阶段 {phase_id}"))
         })?;
     phase.pending_repair = Some(PendingRepair::from_result(
         authorized.request_ref.clone(),
@@ -295,7 +293,7 @@ pub fn record_pending_repair_for_request(
             StateError::InvalidArgument(message)
         }
         WriteTargetAuthorizationError::Repairable { .. } => {
-            StateError::InvalidArgument("requestRef cannot be used for repair state".to_string())
+            StateError::InvalidArgument("requestRef 不能用于修复状态".to_string())
         }
     })?;
     let index_entry = get_request_index_entry(project_root, &parsed.request_id)?;
@@ -311,9 +309,7 @@ pub fn record_pending_repair_for_request(
         .iter_mut()
         .find(|phase| phase.phase_id == phase_id)
         .ok_or_else(|| {
-            StateError::StateCorrupted(format!(
-                "delivery {delivery_id} is missing phase {phase_id}"
-            ))
+            StateError::StateCorrupted(format!("交付 {delivery_id} 缺少阶段 {phase_id}"))
         })?;
     phase.pending_repair = Some(PendingRepair::from_result(request_ref, result));
     delivery.updated_at = crate::store::now_string();
@@ -331,16 +327,16 @@ fn parse_request_ref(request_ref: &str) -> Result<ParsedRequestRef, WriteTargetA
     let rest = request_ref.strip_prefix(prefix).ok_or_else(|| {
         fatal(
             "INVALID_REQUEST_REF",
-            "requestRef must start with loom://projects/.",
+            "requestRef 必须以 loom://projects/ 开头。",
         )
     })?;
     let (project_id, rest) = rest
         .split_once("/requests/")
-        .ok_or_else(|| fatal("INVALID_REQUEST_REF", "requestRef must include /requests/."))?;
+        .ok_or_else(|| fatal("INVALID_REQUEST_REF", "requestRef 必须包含 /requests/。"))?;
     if project_id.is_empty() || rest.is_empty() || rest.contains('/') {
         return Err(fatal(
             "INVALID_REQUEST_REF",
-            format!("invalid requestRef: {request_ref}"),
+            format!("无效的 requestRef：{request_ref}"),
         ));
     }
     Ok(ParsedRequestRef {
@@ -354,16 +350,11 @@ fn extract_artifact_kind(root: &Value) -> Result<ArtifactKind, WriteTargetAuthor
         .get("artifactKind")
         .or_else(|| root.pointer("/outputContract/artifactKind"))
         .cloned()
-        .ok_or_else(|| {
-            fatal(
-                "ARTIFACT_KIND_REQUIRED",
-                "request must declare artifactKind.",
-            )
-        })?;
+        .ok_or_else(|| fatal("ARTIFACT_KIND_REQUIRED", "请求必须声明 artifactKind。"))?;
     serde_json::from_value(value).map_err(|error| {
         fatal(
             "ARTIFACT_KIND_INVALID",
-            format!("invalid artifactKind: {error}"),
+            format!("无效的 artifactKind：{error}"),
         )
     })
 }
@@ -375,7 +366,7 @@ fn extract_write_mode(root: &Value) -> Result<WriteMode, WriteTargetAuthorizatio
         .cloned()
         .unwrap_or_else(|| Value::String("single_json".to_string()));
     serde_json::from_value(value)
-        .map_err(|error| fatal("WRITE_MODE_INVALID", format!("invalid writeMode: {error}")))
+        .map_err(|error| fatal("WRITE_MODE_INVALID", format!("无效的 writeMode：{error}")))
 }
 
 fn extract_submit_tool(root: &Value) -> Result<String, WriteTargetAuthorizationError> {
@@ -383,7 +374,7 @@ fn extract_submit_tool(root: &Value) -> Result<String, WriteTargetAuthorizationE
         .or_else(|| root.pointer("/outputContract/submitTool"))
         .and_then(Value::as_str)
         .map(str::to_string)
-        .ok_or_else(|| fatal("SUBMIT_TOOL_REQUIRED", "request must declare submitTool."))
+        .ok_or_else(|| fatal("SUBMIT_TOOL_REQUIRED", "请求必须声明 submitTool。"))
 }
 
 fn extract_write_targets(root: &Value) -> Result<Vec<WriteTarget>, WriteTargetAuthorizationError> {
@@ -395,7 +386,7 @@ fn extract_write_targets(root: &Value) -> Result<Vec<WriteTarget>, WriteTargetAu
     serde_json::from_value(value).map_err(|error| {
         fatal(
             "WRITE_TARGETS_INVALID",
-            format!("invalid writeTargets: {error}"),
+            format!("无效的 writeTargets：{error}"),
         )
     })
 }
@@ -407,7 +398,7 @@ fn extract_next_action(root: &Value) -> Result<Option<RouteAction>, WriteTargetA
     serde_json::from_value(value).map(Some).map_err(|error| {
         fatal(
             "NEXT_ACTION_INVALID",
-            format!("invalid postSubmit.nextAction: {error}"),
+            format!("无效的 postSubmit.nextAction：{error}"),
         )
     })
 }
@@ -428,10 +419,7 @@ fn hydrate_submit_refs(
     let ref_file = from_project_relative(project_root, &relative).map_err(fatal_state)?;
     let value = read_json_value(&ref_file).map_err(fatal_state)?;
     let Some(object) = root.as_object_mut() else {
-        return Err(fatal(
-            "REQUEST_ROOT_INVALID",
-            "request root must be a JSON object.",
-        ));
+        return Err(fatal("REQUEST_ROOT_INVALID", "请求根必须为 JSON 对象。"));
     };
     object.insert("outputContract".to_string(), value);
     Ok(())
@@ -445,7 +433,7 @@ fn validate_target_paths(
         if target.target_id.trim().is_empty() {
             return Err(fatal(
                 "TARGET_ID_REQUIRED",
-                "write target targetId is required.",
+                "写入目标的 targetId 为必填项。",
             ));
         }
         let absolute = from_project_relative(project_root, &target.path).map_err(fatal_state)?;
@@ -454,7 +442,7 @@ fn validate_target_paths(
             return Err(fatal(
                 "TARGET_PATH_NOT_AGENT_WRITABLE",
                 format!(
-                    "write target {} path must be under an agent-writable .loom directory.",
+                    "写入目标 {} 的路径必须位于 agent-writable 的 .loom 目录下。",
                     target.target_id
                 ),
             ));
@@ -463,7 +451,7 @@ fn validate_target_paths(
             return Err(fatal(
                 "TARGET_PATH_PROTECTED",
                 format!(
-                    "write target {} points at protected Loom state: {}",
+                    "写入目标 {} 指向受保护的 Loom 状态：{}",
                     target.target_id, target.path
                 ),
             ));
@@ -503,7 +491,7 @@ fn select_targets(
             return Err(fatal(
                 "TARGET_NOT_ALLOWED",
                 format!(
-                    "writtenTargetIds contains unknown targetId: {value}; use one of the declared outputContract.writeTargets.targetId values."
+                    "writtenTargetIds 包含未知的 targetId：{value}；请使用 outputContract.writeTargets.targetId 中声明的值之一。"
                 ),
             ));
         })
@@ -534,7 +522,7 @@ fn validate_target_files(
             issues.push(issue(
                 "TARGET_PATH_INVALID",
                 &target.target_id,
-                format!("target path is invalid: {}", target.path),
+                format!("目标路径无效：{}", target.path),
             ));
             continue;
         };
@@ -542,7 +530,7 @@ fn validate_target_files(
             issues.push(issue(
                 "TARGET_MISSING",
                 &target.target_id,
-                format!("target file does not exist: {}", target.path),
+                format!("目标文件不存在：{}", target.path),
             ));
             continue;
         }
@@ -551,12 +539,12 @@ fn validate_target_files(
             Ok(_) => issues.push(issue(
                 "TARGET_NOT_JSON_OBJECT",
                 &target.target_id,
-                format!("target file must contain a JSON object: {}", target.path),
+                format!("目标文件必须包含 JSON 对象：{}", target.path),
             )),
             Err(error) => issues.push(issue(
                 "INVALID_JSON",
                 &target.target_id,
-                format!("target file is not valid JSON: {error}"),
+                format!("目标文件不是有效的 JSON：{error}"),
             )),
         }
     }

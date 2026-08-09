@@ -1,41 +1,41 @@
-# Python Core Quality
+# Python 核心质量
 
 ## When To Use
 
-- The task changes Python application, library, CLI, service, data processing, configuration, or shared module code.
-- Use this for baseline Python correctness: version compatibility, standard library choices, resource handling, exceptions, logging, and domain data modeling.
-- If the task only changes generated files, notebooks, documentation, or non-Python assets, do not expand scope because this reference is available.
+- 任务变更了 Python 应用、库、CLI、服务、数据处理、配置或共享模块代码。
+- 用于基线 Python 正确性：版本兼容性、标准库选择、资源处理、异常、日志和领域数据建模。
+- 如果任务仅变更生成的文件、notebook、文档或非 Python 资产，不要因为此参考可用就扩大范围。
 
 ## Implementation Focus
 
-- Match the repository's supported Python version before using newer syntax or library features. Do not assume Python 3.11+ unless project metadata, tooling, or runtime states it.
-- Use `pathlib.Path` for filesystem paths in new code unless the surrounding API requires strings. Keep encoding explicit for text I/O.
-- Use context managers for files, network clients, database sessions, locks, temporary directories, and other resources that need cleanup.
-- Use dataclasses, enums, or small domain classes for structured domain values when behavior or validation belongs with the data. Do not pass large untyped dictionaries through business logic when field names are contractual.
-- Avoid mutable default arguments. Use `field(default_factory=...)` for dataclasses and initialize mutable values inside functions or constructors.
-- Raise explicit domain or standard exceptions with actionable messages. Do not use bare `except`, and do not swallow exceptions unless the fallback behavior is part of the contract.
-- Use logging instead of `print` in application/runtime code. Keep loggers module-scoped, avoid logging secrets, and reserve stack traces for errors that need diagnosis.
-- Keep configuration loading and validation at startup or adapter boundaries. Do not read environment variables throughout domain code.
-- Prefer standard library tools that match the need: `collections.abc` for protocols, `contextlib` for resource lifecycles, `itertools` for streaming transforms, `functools` for caching/decorators, and `collections` for queues/counters/grouping.
-- Avoid global mutable state unless it is existing framework state or a deliberately initialized singleton with clear reset behavior for tests.
+- 在使用较新的语法或库特性之前匹配仓库支持的 Python 版本。不要假设 Python 3.11+，除非项目元数据、工具或运行时声明了它。
+- 在新代码中对文件系统路径使用 `pathlib.Path`，除非周围 API 要求字符串。对文本 I/O 保持编码显式。
+- 对文件、网络客户端、数据库会话、锁、临时目录和其他需要清理的资源使用上下文管理器。
+- 当行为或验证属于数据时，对结构化领域值使用 dataclass、枚举或小型领域类。当字段名是契约性的时，不要在业务逻辑中传递大型无类型字典。
+- 避免可变默认参数。对 dataclass 使用 `field(default_factory=...)`，在函数或构造函数内部初始化可变值。
+- 用可操作的消息抛出显式的领域或标准异常。不要使用裸 `except`，除非回退行为是契约的一部分，否则不要吞掉异常。
+- 在应用/运行时代码中使用 logging 而非 `print`。保持日志器模块范围，避免记录密钥，并为需要诊断的错误保留堆栈跟踪。
+- 在启动或适配器边界保持配置加载和验证。不要在整个领域代码中读取环境变量。
+- 优先使用匹配需求的标准库工具：`collections.abc` 用于 protocol，`contextlib` 用于资源生命周期，`itertools` 用于流式转换，`functools` 用于缓存/装饰器，`collections` 用于队列/计数器/分组。
+- 除非是现有框架状态或有明确测试重置行为的刻意初始化单例，否则避免全局可变状态。
 
 ## Boundary Decisions
 
-- Confirm the supported Python version from `pyproject.toml`, packaging metadata, CI, and runtime images before using syntax or standard-library APIs. The local interpreter is not the project contract.
-- Keep external data as a boundary concern: parse and validate JSON, environment, CLI, and database values before passing them into typed domain objects. Do not let `dict[str, Any]` become the domain model by default.
-- Choose dataclasses for owned data with value semantics, enums for finite states, and a validation model when coercion or error aggregation is part of the boundary. Keep mutable collections behind deliberate ownership.
-- Keep resource lifetime visible through `with`/`async with`, and make cleanup behavior part of the exception path. A context manager is preferable to a comment promising that a client or temporary file will be closed.
-- Use module loggers and structured context for operational events. Never log secrets, tokens, full request bodies, or exception data that can contain credentials.
-- Keep configuration loading at startup or an adapter boundary and pass the resulting typed settings inward. Do not read environment variables from unrelated domain functions.
-- Prefer `collections.abc`, `contextlib`, `functools`, `itertools`, and `pathlib` according to the data/lifecycle problem; do not replace a clear local convention with a broad utility abstraction.
+- 在使用语法或标准库 API 之前，从 `pyproject.toml`、打包元数据、CI 和运行时镜像确认支持的 Python 版本。本地解释器不是项目契约。
+- 将外部数据视为边界关注点：在将 JSON、环境、CLI 和数据库值传递到类型化领域对象之前解析和验证它们。不要让 `dict[str, Any]` 默认成为领域模型。
+- 为具有值语义的拥有数据选择 dataclass，为有限状态选择枚举，当强制转换或错误聚合是边界的一部分时选择验证模型。将可变集合保持在刻意的所有权之后。
+- 通过 `with`/`async with` 保持资源生命周期可见，并使清理行为成为异常路径的一部分。上下文管理器比承诺客户端或临时文件将被关闭的注释更可取。
+- 为操作事件使用模块日志器和结构化上下文。永远不要记录密钥、令牌、完整请求体或可能包含凭据的异常数据。
+- 在启动或适配器边界保持配置加载，并将结果类型化设置向内传递。不要从不相关的领域函数读取环境变量。
+- 根据数据/生命周期问题优先使用 `collections.abc`、`contextlib`、`functools`、`itertools` 和 `pathlib`；不要用宽泛的实用抽象替换清晰的本地约定。
 
 ## Verification Focus
 
-- Run the configured Python test command, typically `pytest` or the package-specific test script.
-- Run configured formatting/linting such as `ruff`, `black --check`, or project scripts when available.
-- Add tests for validation, exception paths, resource cleanup, configuration defaults/overrides, and domain transformations changed by the task.
-- Confirm no mutable defaults, bare `except`, secret logging, or scattered configuration reads were introduced.
+- 运行配置的 Python 测试命令，通常是 `pytest` 或包特定的测试脚本。
+- 在可用时运行配置的格式化/lint 如 `ruff`、`black --check` 或项目脚本。
+- 为验证、异常路径、资源清理、配置默认值/覆盖和任务变更的领域转换添加测试。
+- 确认没有引入可变默认参数、裸 `except`、密钥日志或分散的配置读取。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Python decision made: version compatibility, pathlib/resource handling, dataclass/enum modeling, exception contract, logging boundary, config boundary, or standard library use.
+- 在证据总结中，说明做出的 Python 决策：版本兼容性、pathlib/资源处理、dataclass/枚举建模、异常契约、日志边界、配置边界或标准库使用。

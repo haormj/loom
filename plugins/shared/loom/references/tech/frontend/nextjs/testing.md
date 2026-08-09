@@ -1,74 +1,74 @@
-# Next.js Testing
+# Next.js 测试
 
-Use Next.js framework testing only for tasks that own tests. Choose the smallest proof for route/server/client/action/runtime behavior. MCP-assigned Playwright references own real browser navigation, hydration, multi-viewport rendering, and deployed workflow evidence.
+仅对拥有测试的任务使用 Next.js 框架测试。为路由/服务端/客户端/action/运行时行为选择最小证明。MCP 分配的 Playwright 参考拥有真实浏览器导航、hydration、多视口渲染和部署工作流证据。
 
-## Proof Boundary
+## 证明边界
 
-| Claim | Suitable proof |
+| 声明 | 适用证明 |
 |---|---|
-| Pure parser/mapper/schema | TypeScript unit test |
-| Client component behavior | selected React component test tooling |
-| Server data/helper | server unit/integration test with owned ports |
+| 纯解析器/映射器/schema | TypeScript 单元测试 |
+| 客户端组件行为 | selected React component test tooling |
+| 服务端数据/助手 | server unit/integration test with owned ports |
 | Server Action | action/application integration pattern |
 | Route handler | Request/Response HTTP contract test |
-| Route file/build boundary | production `next build` plus focused route test |
-| Hydration/navigation/rendered workflow | assigned browser test |
+| 路由文件/构建边界 | production `next build` plus focused route test |
+| Hydration/导航/渲染工作流 | assigned browser test |
 
-Do not render every Server Component with brittle framework internals or claim component tests prove middleware, deployment rewrites, browser hydration, streaming, or server/client bundles.
+不要用脆弱的框架内部渲染每个 Server Component，也不要声称组件测试能证明中间件、部署 rewrite、浏览器 hydration、流式传输或服务端/客户端包。
 
-## Client Components
+## 客户端组件
 
-Test visible behavior with accessible queries and realistic events through the repository's React runner. Provide router/action/data adapters at owned boundaries without mocking the component/state logic being claimed.
+通过仓库的 React runner 用可访问查询和真实事件测试可见行为。在所属边界提供 router/action/数据适配器，不 mock 被声称的组件/状态逻辑。
 
-Cover pending, validation, conflict, forbidden, unavailable, disabled, success, optimistic rollback, and target identity where relevant. Avoid private state/hook implementation assertions.
+在相关处覆盖 pending、验证、冲突、禁止、不可用、禁用、成功、乐观回滚和目标标识。避免私有状态/hook 实现断言。
 
-## Server Components And Data
+## 服务端组件与数据
 
-Test pure server helpers and application/data boundaries directly. For server components, prove authorization/scoping, expected outcome mapping, and serialization where the repository has a stable harness; production build remains required for import/serialization contracts.
+直接测试纯服务端助手和应用/数据边界。对于服务端组件，在仓库有稳定 harness 时证明授权/限定、预期结果映射和序列化；导入/序列化契约仍需生产构建。
 
-Use deterministic request identity, cache state, time, and data. Reset/invalidate shared/request caches between tests so order does not affect outcomes.
+使用确定性请求标识、缓存状态、时间和数据。在测试之间重置/失效共享/请求缓存，使顺序不影响结果。
 
-Mock/fake external services, clocks, and selected repositories at ports. Do not mock the authorization, cache key, or mapping behavior being tested.
+在端口处 mock/fake 外部服务、时钟和所选 repository。不要 mock 被测试的授权、缓存键或映射行为。
 
-## Server Actions
+## Server Action
 
-Exercise typed input parsing, authentication, ownership, business validation/conflict, successful durable mutation, duplicate handling, returned serializable state, and exact revalidation/readback.
+练习类型化输入解析、认证、所有权、业务验证/冲突、成功持久化变更、重复处理、返回可序列化状态和精确重新验证/回读。
 
-Do not unit-test only the exported function while bypassing framework form/cookie/redirect behavior if that behavior is the claim. Preserve thrown redirect/notFound semantics in the harness.
+如果框架表单/cookie/重定向行为是声称的内容，不要仅单元测试导出函数而绕过它。在 harness 中保留抛出的 redirect/notFound 语义。
 
-## Route Handlers And Middleware
+## Route Handler 与中间件
 
-Construct real `Request` objects and assert status, headers, content type, body/error shape, cookies, auth, and method/path behavior. Test body/size/format limits when owned.
+构造真实 `Request` 对象并断言状态、header、内容类型、体/错误形状、cookie、auth 和方法/路径行为。在拥有时测试体/大小/格式限制。
 
-Middleware matcher/redirect/rewrite/header behavior requires focused integration/build/runtime or browser probes; a direct function call does not prove matcher exclusions or effective path topology.
+中间件 matcher/redirect/rewrite/header 行为需要聚焦的集成/构建/运行时或浏览器探测；直接函数调用不能证明 matcher 排除或有效路径拓扑。
 
-## App Router Boundaries
+## App Router 边界
 
-Exercise dynamic/search params, loading/error/not-found, redirects, and metadata through stable repository tooling where available. Production build catches route file contracts, server/client imports, action serialization, and runtime incompatibility.
+在可用时通过稳定仓库工具练习动态/search params、加载/错误/未找到、重定向和元数据。生产构建捕获路由文件契约、服务端/客户端导入、action 序列化和运行时不兼容。
 
-Parallel/intercepting/deep-link/back-stack behavior belongs in browser tests when it requires actual navigation/history/focus.
+Parallel/intercepting/深链接/返回栈行为在需要实际导航/历史/焦点时属于浏览器测试。
 
-## Runtime And Environment
+## 运行时与环境
 
-For config/runtime tasks, build/start with valid and invalid required env, then probe exact headers/rewrites/health/image/runtime behavior. Ensure tests do not print secrets.
+对于配置/运行时任务，用有效和无效的必需 env 构建/启动，然后探测精确的 header/rewrite/健康/图像/运行时行为。确保测试不打印密钥。
 
-Inspect client output/import graph when public/server env or server-only dependency isolation is the claim. Use bundle evidence only for measured performance tasks.
+当公共/服务端 env 或仅服务端依赖隔离是声称内容时检查客户端输出/导入图。仅对已测量的性能任务使用包证据。
 
-## Verification And Cleanup
+## 验证与清理
 
-Run the changed test target first, then production build when routes, server/client boundaries, actions, middleware, metadata, config, or runtime changed. Do not invent a test runner/coverage threshold for a small task absent repository policy.
+首先运行变更的测试目标，当路由、服务端/客户端边界、action、中间件、元数据、配置或运行时变更时运行生产构建。在无仓库策略时不要为小任务发明测试 runner/覆盖率阈值。
 
-Reset mocks, caches, environment, cookies, timers, test servers, database fixtures, and global fetch implementations. Avoid arbitrary sleeps and test-order dependencies.
+重置 mock、缓存、环境、cookie、定时器、测试服务器、数据库 fixture 和全局 fetch 实现。避免任意休眠和测试顺序依赖。
 
-## Delivery Evidence
+## 交付证据
 
-Record boundary, scenario, command, and meaningful HTTP/visible/build assertion. Passing counts or `next build` alone cannot prove business/auth branches, cache coherence, browser hydration, navigation history, responsive UI, or deployed binding.
+记录边界、场景、命令和有意义的 HTTP/可见/构建断言。仅通过计数或 `next build` 不能证明业务/auth 分支、缓存一致性、浏览器 hydration、导航历史、响应式 UI 或部署绑定。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Load this reference only when the accepted task owns Next.js test creation, test modification, or test-specific verification.
-- Client component tests claimed as Server Component/runtime/middleware proof.
-- Action tests bypassing auth/transaction/revalidation/readback.
-- Shared cache/env/cookie state leaking across tests.
-- Build success used as the only behavioral evidence.
-- Browser behavior asserted without an actual browser boundary.
+- 仅当已接受任务拥有 Next.js 测试创建、测试修改或测试专用验证时才加载此参考。
+- 客户端组件测试声称是 Server Component/运行时/中间件证明。
+- Action 测试绕过 auth/事务/重新验证/回读。
+- 跨测试泄漏的共享缓存/env/cookie 状态。
+- 构建成功用作唯一行为证据。
+- 在无实际浏览器边界的情况下断言浏览器行为。

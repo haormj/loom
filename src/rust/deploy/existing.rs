@@ -28,14 +28,14 @@ pub fn find_existing_deployment_files(root: &Path) -> ExistingDeploymentFiles {
 pub fn analyze_existing_compose(compose_path: &Path) -> DeploymentComposeInfo {
     let raw = match fs::read_to_string(compose_path) {
         Ok(raw) => raw,
-        Err(error) => return empty_compose_info(format!("Could not read Compose file: {error}")),
+        Err(error) => return empty_compose_info(format!("无法读取 Compose 文件：{error}")),
     };
     let document = match serde_yaml::from_str::<Value>(&raw) {
         Ok(document) => document,
-        Err(error) => return empty_compose_info(format!("Could not parse Compose file: {error}")),
+        Err(error) => return empty_compose_info(format!("无法解析 Compose 文件：{error}")),
     };
     let Some(services) = document.get("services").and_then(Value::as_mapping) else {
-        return empty_compose_info("Compose file has no services block.".to_string());
+        return empty_compose_info("Compose 文件没有 services 块。".to_string());
     };
     let mut analyzed = Vec::new();
     for (name, service) in services {
@@ -45,21 +45,19 @@ pub fn analyze_existing_compose(compose_path: &Path) -> DeploymentComposeInfo {
         analyzed.push(analyze_compose_service(name, service));
     }
     if analyzed.is_empty() {
-        return empty_compose_info("Compose file has no named services.".to_string());
+        return empty_compose_info("Compose 文件没有命名服务。".to_string());
     }
     let selected = select_compose_service(&analyzed);
     DeploymentComposeInfo {
         selected_service: selected.map(|service| service.name.clone()),
         service_reason: selected
             .map(|service| service.reason.clone())
-            .unwrap_or_else(|| {
-                "No application service could be selected from Compose.".to_string()
-            }),
+            .unwrap_or_else(|| "无法从 Compose 中选择应用服务。".to_string()),
         warnings: selected
             .filter(|service| service.dependency_like)
             .map(|service| {
                 vec![format!(
-                    "Selected service {} looks dependency-like; generated fallback may be safer.",
+                    "选中的服务 {} 看起来像依赖服务；生成回退可能更安全。",
                     service.name
                 )]
             })
@@ -114,42 +112,40 @@ fn analyze_compose_service(name: &str, service: &Value) -> DeploymentComposeServ
 
     if is_app_service_name(name) {
         score += 70;
-        signals.push(format!(
-            "service name {name} looks like an application service"
-        ));
+        signals.push(format!("服务名 {name} 看起来像应用服务"));
     }
     if build {
         score += 45;
-        signals.push("has build configuration".to_string());
+        signals.push("有构建配置".to_string());
     }
     if ports.iter().any(|port| port.host_port.is_some()) {
         score += 35;
-        signals.push("publishes a host port".to_string());
+        signals.push("发布了主机端口".to_string());
     } else if !ports.is_empty() {
         score += 20;
-        signals.push("declares service ports".to_string());
+        signals.push("声明了服务端口".to_string());
     }
     if !expose.is_empty() {
         score += 10;
-        signals.push("exposes internal ports".to_string());
+        signals.push("暴露了内部端口".to_string());
     }
     if !depends_on.is_empty() {
         score += 5;
-        signals.push("depends on other services".to_string());
+        signals.push("依赖其他服务".to_string());
     }
     if dependency_like {
         score -= 90;
-        signals.push("looks like an infrastructure dependency".to_string());
+        signals.push("看起来像基础设施依赖".to_string());
     }
     if profiles
         .iter()
         .any(|profile| contains_any(profile, &["test", "ci", "debug"]))
     {
         score -= 20;
-        signals.push("is behind a test/debug profile".to_string());
+        signals.push("在 test/debug profile 之后".to_string());
     }
     if signals.is_empty() {
-        signals.push("no strong service signals".to_string());
+        signals.push("没有强服务信号".to_string());
     }
 
     DeploymentComposeService {

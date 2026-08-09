@@ -1,71 +1,71 @@
-# Flutter Performance And Profiling
+# Flutter 性能与性能分析
 
-Apply this reference only when the task owns a measurable rendering, rebuild, list, image, animation, memory, startup, or interaction-latency risk. Do not attach it to every Flutter screen or claim improvement from code shape alone.
+仅当任务拥有可测量的渲染、重建、列表、图像、动画、内存、启动或交互延迟风险时应用此参考。不要将其附加到每个 Flutter 屏幕或仅从代码形状声称改进。
 
-## Measure The Right Mode
+## 测量正确的模式
 
-Use profile mode on representative target hardware/data; debug mode includes assertions/JIT/tooling overhead and release mode lacks much profiling visibility. Record the affected workflow, device/platform, dataset, frame/build/raster/memory metric, and before/after condition.
+在代表性目标硬件/数据上使用 profile 模式；debug 模式包含断言/JIT/工具开销，release 模式缺乏大部分性能分析可见性。记录受影响的工作流、设备/平台、数据集、帧/构建/光栅/内存指标和前后条件。
 
-Use Flutter DevTools performance/frame chart, rebuild tracking, raster stats, memory/allocation snapshots, network/image diagnostics, and app-size tooling as appropriate. Optimize the measured bottleneck, not every possible micro-pattern.
+按需使用 Flutter DevTools 性能/帧图表、重建跟踪、光栅统计、内存/分配快照、网络/图像诊断和应用大小工具。优化已测量的瓶颈，而非每个可能的微模式。
 
-## Rebuild Scope
+## 重建范围
 
-Use const/static child extraction, smaller widgets, Riverpod `select`, Bloc `buildWhen`, `ValueListenableBuilder`, or equivalent selected state boundaries to prevent unrelated rebuilds.
+使用 const/static 子项提取、更小的 widget、Riverpod `select`、Bloc `buildWhen`、`ValueListenableBuilder` 或等价的所选状态边界来防止不相关重建。
 
-Do not move all widgets into functions for "optimization"; widget classes/const identity and clear ownership are usually more useful. Avoid expensive sort/filter/map/date/format/allocation work in `build()`.
+不要为"优化"将所有 widget 移入函数；widget 类/const 标识和清晰所有权通常更有用。避免在 `build()` 中进行昂贵的排序/筛选/map/日期/格式/分配工作。
 
-Stable keys preserve dynamic element identity, but `GlobalKey` is expensive and should be limited to semantics requiring cross-tree/state access. Do not assign unique/global keys indiscriminately.
+稳定键保留动态元素标识，但 `GlobalKey` 昂贵，应限于需要跨树/状态访问的语义。不要不分青红皂白地分配唯一/全局键。
 
-## Lists And Scrolling
+## 列表与滚动
 
-Use lazy builders/slivers and pagination for large/unknown collections. Bound prefetch, cache extent, keep-alive, and concurrent page loads. Avoid nested scrollables, broad shrinkWrap, eager mapped children, and unbounded `AutomaticKeepAlive`.
+对大型/未知集合使用惰性 builder/sliver 和分页。限定预取、缓存范围、keep-alive 和并发页面加载。避免嵌套可滚动、宽泛 shrinkWrap、急切映射子项和无界 `AutomaticKeepAlive`。
 
-Preserve row identity and prevent multiple page requests during rapid scroll. Measure layout/raster and memory with representative item complexity/data volume.
+保留行标识并防止快速滚动期间的多次页面请求。用代表性条目复杂度/数据量测量布局/光栅和内存。
 
-## Paint, Images, And Animation
+## 绘制、图像与动画
 
-Use `RepaintBoundary` only around independently repainting expensive regions confirmed by profiling. Too many boundaries consume memory/compositing resources.
+仅在通过性能分析确认的独立重绘昂贵区域周围使用 `RepaintBoundary`。过多边界消耗内存/合成资源。
 
-Provide image dimensions/fit/placeholders/errors, use appropriately resized/cache-width assets, and follow selected caching policy. Huge source images decoded for tiny thumbnails waste memory/raster time.
+提供图像尺寸/fit/占位符/错误，使用适当调整大小/cache-width 的资源，并遵循所选缓存策略。为微小缩略图解码的巨大源图像浪费内存/光栅时间。
 
-Keep animations bounded and avoid rebuilding/painting the full page each tick. Use selected implicit/explicit animation patterns, cached children, and reduced-motion behavior. Profile both UI and raster threads.
+保持动画有界并避免每个 tick 重建/绘制整个页面。使用所选的隐式/显式动画模式、缓存子项和减少动画行为。同时分析 UI 和光栅线程。
 
-## CPU, Isolates, And I/O
+## CPU、Isolate 与 I/O
 
-Move genuinely heavy pure computation/decoding to `compute`/isolates or native/background boundaries after measurement. Isolate startup/copying has cost and plugins/platform channels may not work in arbitrary isolates.
+在测量后将真正沉重的纯计算/解码移到 `compute`/isolate 或原生/后台边界。Isolate 启动/复制有成本，plugin/platform channel 可能无法在任意 isolate 中工作。
 
-Do not perform synchronous file/database/crypto/network or large JSON processing on the UI isolate. Batch/debounce work and propagate cancellation/staleness so outdated results do not overwrite current state.
+不要在 UI isolate 上执行同步文件/数据库/crypto/网络或大型 JSON 处理。批处理/防抖工作并传播取消/过期，使过时结果不覆盖当前状态。
 
-## Memory And Lifecycle
+## 内存与生命周期
 
-Dispose animation/text/scroll/focus controllers, subscriptions, timers, streams, image resources, and manually owned providers/blocs. Use memory snapshots and repeated navigation to detect retained screens/objects.
+释放动画/文本/滚动/焦点 controller、订阅、定时器、stream、图像资源和手动拥有的 provider/bloc。使用内存快照和重复导航检测保留的屏幕/对象。
 
-Bound caches, provider families, keep-alives, list pages, and image memory. A smooth first render that leaks on every route visit is not a successful optimization.
+限定缓存、provider family、keep-alive、列表页面和图像内存。每次路由访问都泄漏的流畅首次渲染不是成功的优化。
 
-## Startup And Bundle
+## 启动与包
 
-Keep startup initialization to required local work; defer noncritical network/analytics/heavy setup with explicit readiness behavior. Avoid duplicate plugin/provider initialization.
+将启动初始化保持为所需的本地工作；用显式就绪行为推迟非关键网络/分析/重型设置。避免重复 plugin/provider 初始化。
 
-Use app-size/deferred loading/tree-shaking tools when binary/web bundle size is task-owned. Do not add/remap dependencies solely for smaller size without platform/functionality verification.
+当二进制/Web 包大小为任务所属时使用应用大小/延迟加载/tree-shaking 工具。不要在无平台/功能验证的情况下仅为更小尺寸添加/重映射依赖。
 
 ## Verification
 
-- Capture before/after profile evidence for the same target, data, and interaction.
-- Verify no broad rebuilds from unrelated state and preserved visible correctness.
-- Exercise representative list scrolling, pagination, images, animation, typing, and route transitions.
-- Test outdated work cancellation and no UI-isolate blocking for moved computations.
-- Repeat navigation/actions while inspecting memory and disposal.
-- Run focused tests/analyze to guard behavior while optimizing.
+- 为相同目标、数据和交互捕获前后性能分析证据。
+- 验证无不相关状态引起的宽泛重建和保留的可见正确性。
+- 练习代表性的列表滚动、分页、图像、动画、输入和路由转换。
+- 测试过时工作取消和移动计算无 UI isolate 阻塞。
+- 检查内存和释放时重复导航/操作。
+- 运行聚焦测试/分析以在优化时保护行为。
 
-## Delivery Evidence
+## 交付证据
 
-Record the measured bottleneck, environment, before/after metric/trace, changed boundary, and regression assertions. Added `const`, `RepaintBoundary`, `compute`, or builder APIs alone are not evidence of better performance.
+记录已测量的瓶颈、环境、前后指标/跟踪、变更边界和回归断言。仅添加 `const`、`RepaintBoundary`、`compute` 或 builder API 不是更好性能的证据。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Performance reference selected from generic Flutter work/prose.
-- Debug-mode impressions or code shape used as proof.
-- `const`, keys, keep-alive, repaint boundaries, or isolates applied everywhere.
-- Large eager/shrink-wrapped lists and unbounded page requests.
-- Huge images decoded at display-independent source size.
-- Controllers/providers/caches retained after route disposal.
+- 从通用 Flutter 工作/描述选择性能参考。
+- Debug 模式印象或代码形状用作证明。
+- `const`、键、keep-alive、重绘边界或 isolate 到处应用。
+- 大型急切/shrink-wrap 列表和无界页面请求。
+- 以显示独立源尺寸解码的巨大图像。
+- 路由释放后保留的 controller/provider/缓存。

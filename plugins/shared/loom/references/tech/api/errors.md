@@ -1,25 +1,25 @@
-# API Error Handling
+# API 错误处理
 
-## Error Contract Purpose
+## 错误契约目的
 
-API errors are part of product behavior. They should let the caller or UI explain what happened and what can be done next without exposing implementation internals.
+API 错误是产品行为的一部分。它们应让调用方或 UI 解释发生了什么以及下一步可以做什么，同时不暴露实现内部细节。
 
-## Required Error Categories
+## 必需的错误类别
 
-| Category | Status Guidance | Contract Requirement |
+| 类别 | 状态码指导 | 契约要求 |
 |---|---|---|
-| Validation | `400` or `422` according to project convention | Field or request-level reason. |
-| Business conflict/blocking | `409` or domain-specific `4xx` | Stable code and user-actionable message. |
-| Not found | `404` | Resource type/id context when safe. |
-| Auth missing/invalid | `401` | Authentication required or expired. |
-| Permission denied | `403` | Action not allowed, no sensitive detail leakage. |
-| Rate limit | `429` | Retry timing and stable client behavior when throttled. |
-| Temporary unavailable | `503` | Dependency or maintenance outage that may succeed later. |
-| Unexpected failure | `500` | Generic message plus server-side logging/request id when available. |
+| 校验 | `400` 或 `422`，按项目约定 | 字段或请求级原因。 |
+| 业务冲突/阻断 | `409` 或领域特定的 `4xx` | 稳定代码和用户可操作的消息。 |
+| 未找到 | `404` | 在安全的前提下提供资源类型/标识符上下文。 |
+| 认证缺失/无效 | `401` | 需要认证或认证已过期。 |
+| 权限拒绝 | `403` | 操作不允许，不泄露敏感细节。 |
+| 速率限制 | `429` | 重试时序和被限流时的稳定客户端行为。 |
+| 暂时不可用 | `503` | 依赖或维护中断，后续可能成功。 |
+| 意外失败 | `500` | 通用消息加上服务端日志/请求 ID（如可用）。 |
 
-## Response Shape
+## 响应形态
 
-Prefer the repository's existing error envelope. For new-project HTTP APIs, use a compact problem-details-compatible shape:
+优先使用仓库已有的错误封装。对于新项目的 HTTP API，使用与 problem-details 兼容的紧凑形态：
 
 ```json
 {
@@ -32,11 +32,11 @@ Prefer the repository's existing error envelope. For new-project HTTP APIs, use 
 }
 ```
 
-The `type` can be a stable string or URI according to project convention. Do not require full RFC 7807 URI infrastructure when the product is an internal app and no API documentation surface exists yet.
+`type` 可以是稳定字符串或 URI，按项目约定。当产品是内部应用且尚无 API 文档界面时，不要求完整的 RFC 7807 URI 基础设施。
 
-## Validation Details
+## 校验详情
 
-For write APIs, error contracts should distinguish field-level and cross-field validation when those rules exist.
+对于写 API，错误契约应在存在相应规则时区分字段级和跨字段校验。
 
 ```json
 {
@@ -50,27 +50,27 @@ For write APIs, error contracts should distinguish field-level and cross-field v
 }
 ```
 
-Keep stable machine-readable `code` values even when visible messages are localized or translated by the client.
+即使可见消息被客户端本地化或翻译，也要保持稳定的机器可读 `code` 值。
 
-## Error Code Ownership
+## 错误代码所有权
 
-- Define stable error codes for validation, business blocking, conflicts, not-found behavior, and auth failures that clients handle programmatically.
-- Keep one code catalog or source of truth when multiple endpoints share the same error. Do not create different codes for the same business condition in controller, documentation, and frontend code.
-- Document the error categories and codes applicable to each interface when a separate contract file is selected. Do not claim every global error on every endpoint.
-- Keep user-visible messages actionable and safe. Clients should branch on stable codes, not parse translated prose.
+- 为客户端以编程方式处理的校验、业务阻断、冲突、未找到行为和认证失败定义稳定的错误代码。
+- 当多个端点共享同一错误时，保持一个代码目录或事实来源。不要在控制器、文档和前端代码中为同一业务条件创建不同代码。
+- 当选择了独立契约文件时，记录适用于每个接口的错误类别和代码。不要在每个端点上声明所有全局错误。
+- 保持用户可见消息可操作且安全。客户端应基于稳定代码分支，而非解析翻译后的描述。
 
-## Operational Policy Link
+## 运维策略关联
 
-This reference owns error categories, codes, fields, and safe messages. When `tech/api/operations.md` is selected, use its request-id, retry, rate-limit, and availability policy without restating or inventing a second operational contract here.
-Application-side correlation, redaction, log levels, and diagnostic retention belong to `tech/code/observability.md` when the task owns that boundary.
+本引用拥有错误类别、代码、字段和安全消息。当 `tech/api/operations.md` 被选择时，使用其 request-id、重试、速率限制和可用性策略，而非在此重复声明或编造第二份运维契约。
+应用侧的关联、脱敏、日志级别和诊断保留属于 `tech/code/observability.md`（当任务拥有该边界时）。
 
-## Must Not
+## 禁止事项
 
-- Do not return stack traces, SQL errors, ORM exception names, class names, file paths, or dependency internals.
-- Do not collapse business blocking into generic `500`.
-- Do not make frontend code infer business errors by parsing English prose only.
-- Do not return success with an error message body for a failed business operation.
+- 不要返回堆栈跟踪、SQL 错误、ORM 异常名称、类名、文件路径或依赖内部信息。
+- 不要将业务阻断折叠为通用 `500`。
+- 不要让前端代码仅通过解析英文描述来推断业务错误。
+- 不要对失败的业务操作返回带有错误消息体的成功响应。
 
-## Implementation Evidence
+## 实现证据
 
-For API tasks, implementation evidence should mention the important error categories and stable codes covered by code or tests. When an operations policy is selected, cite its evidence separately rather than duplicating it in the error summary.
+对于 API 任务，实现证据应提及由代码或测试覆盖的重要错误类别和稳定代码。当选择了运维策略时，单独引用其证据，而非在错误摘要中重复。

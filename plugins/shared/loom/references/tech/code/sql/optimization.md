@@ -1,61 +1,61 @@
-# SQL Optimization Quality
+# SQL 优化质量
 
-This file applies to query and schema changes made for performance.
+本文件适用于为性能而进行的查询和 schema 变更。
 
 ## When To Use
 
-- The task changes a slow query, index strategy, query plan, aggregation, search/filter path, pagination performance, materialized view, partitioning, statistics, or database performance regression.
-- Use this when the task claims or requires improved runtime behavior, reduced scans, lower latency, or safer behavior at expected data volume.
-- If the change is purely functional and no performance path is touched, do not add speculative optimization work.
+- 任务变更了慢查询、索引策略、查询计划、聚合、搜索/过滤路径、分页性能、物化视图、分区、统计信息或数据库性能回归。
+- 当任务声称或要求改善运行时行为、减少扫描、降低延迟或在预期数据量下更安全的行为时使用此参考。
+- 如果变更纯粹是功能性的且未触及性能路径，不要添加推测性优化工作。
 
 ## Implementation Focus
 
-- Start with the query owner, cardinality, filter/sort pattern, and expected data volume. Do not add indexes before identifying the query they serve.
-- Prefer set-based rewrites over row-by-row loops, cursors, or repeated scalar subqueries. Replace repeated correlated work with joins, grouped subqueries, CTEs, or window functions when it preserves semantics.
-- Use `EXISTS` for existence checks and avoid `COUNT(*)` when only presence matters.
-- Design indexes around equality predicates, range predicates, join keys, and sort order. Include covering columns only when they remove meaningful table lookups for a frequent path.
-- Use partial/filtered indexes for common active-state predicates such as non-deleted, active, pending, or tenant-scoped records when the dialect supports them.
-- Do not add broad indexes for every column in a filter form. Each index has write cost, migration cost, storage cost, and plan side effects.
-- Treat materialized views, partitioning, query hints, denormalization, and cache tables as higher-cost choices. Use them only when normal query/index changes are insufficient or the architecture already has the pattern.
-- Keep statistics and plan stability in mind. A plan with large estimated-vs-actual row gaps may need statistics refresh or a more selective predicate, not just another index.
-- Preserve correctness while optimizing: null semantics, duplicate rows, tie ordering, authorization/tenant filters, and pagination stability cannot change silently.
+- 从查询所有者、基数、过滤/排序模式和预期数据量开始。在标识它们服务的查询之前不要添加索引。
+- 优先使用基于集合的重写而非逐行循环、游标或重复标量子查询。当保留语义时用连接、分组子查询、CTE 或窗口函数替换重复的关联工作。
+- 对存在检查使用 `EXISTS`，当仅关注存在性时避免 `COUNT(*)`。
+- 围绕等值谓词、范围谓词、连接键和排序设计索引。仅当覆盖列移除频繁路径的有意义的表查找时才包含它们。
+- 当方言支持时对常见的活动状态谓词（如未删除、活动、待处理或租户范围记录）使用部分/过滤索引。
+- 不要为过滤表单中的每列添加宽泛索引。每个索引都有写入成本、迁移成本、存储成本和计划副作用。
+- 将物化视图、分区、查询提示、反规范化和缓存表视为更高成本选择。仅当正常查询/索引变更不足或架构已有该模式时才使用它们。
+- 记住统计信息和计划稳定性。估计与实际行差距大的计划可能需要统计信息刷新或更具选择性的谓词，而非仅另一个索引。
+- 优化时保留正确性：null 语义、重复行、决胜排序、授权/租户过滤和分页稳定性不能静默改变。
 
 ### Plan Reading
 
-Read the plan as evidence about the changed query, not as a list of universally good operators:
+将计划读取为关于变更查询的证据，而非普遍良好操作符的列表：
 
-| Signal | Question to answer |
+| 信号 | 需要回答的问题 |
 |---|---|
-| Sequential/table scan | Is the relation small, or is a selective access path missing for the actual predicates? |
-| Index scan/seek | Does the index match equality, range, join, and ordering predicates, or is residual filtering still large? |
-| Join strategy | Do estimated and actual cardinalities support the join choice and expected concurrency? |
-| Sort/hash/materialization | Is the work required by the result contract, or did query shape/index order create avoidable memory or spill cost? |
-| Estimated versus actual rows | Is a statistics, cast, predicate, or data-distribution mismatch driving the plan? |
+| 顺序/表扫描 | 关系小，还是实际谓词缺少选择性访问路径？ |
+| 索引扫描/查找 | 索引是否匹配等值、范围、连接和排序谓词，还是残余过滤仍然大？ |
+| 连接策略 | 估计和实际基数是否支持连接选择和预期并发？ |
+| 排序/哈希/物化 | 工作是结果契约要求的，还是查询形态/索引顺序创建了可避免的内存或溢出成本？ |
+| 估计与实际行 | 统计信息、转换、谓词或数据分布不匹配是否驱动了计划？ |
 
-Do not reject a sequential scan without checking relation size and selectivity. Do not add an index solely because a plan contains a scan, and do not force an index until the provider-specific overlay and measured evidence justify it.
+不要在不检查关系大小和选择性的情况下拒绝顺序扫描。不要仅因为计划包含扫描就添加索引，在提供者特定覆盖和测量证据证明之前不要强制索引。
 
 ### Before And After Proof
 
-Capture the query shape, representative data assumptions, result equivalence, plan observations, and timing or resource metric before and after an optimization. There is no universal latency or scan target: the accepted NFR, data volume, provider, and workload define the threshold. If production-scale data is unavailable, record the remaining volume risk instead of claiming a completed performance improvement.
+在优化前后捕获查询形态、代表性数据假设、结果等价性、计划观察和时间或资源指标。没有通用延迟或扫描目标：已接受的 NFR、数据量、提供者和工作负载定义阈值。如果生产规模数据不可用，记录剩余量风险而非声称完成的性能改善。
 
 ### High-Cost Choices
 
-Partitioning, materialized views, denormalization, cache tables, and optimizer hints require an explicit ownership and lifecycle decision. Define refresh or invalidation, write cost, migration impact, and fallback behavior before adding them. Keep database administration, statistics maintenance jobs, replication, backup, and storage tuning outside this application implementation reference.
+分区、物化视图、反规范化、缓存表和优化器提示需要显式的所有权和生命周期决策。在添加它们之前定义刷新或失效、写入成本、迁移影响和回退行为。将数据库管理、统计信息维护作业、复制、备份和存储调优排除在此应用实现参考之外。
 
 ## Verification Focus
 
-- Capture plan evidence for optimization claims when the database supports it: `EXPLAIN`, `EXPLAIN ANALYZE`, buffers, estimated vs actual rows, or the repository's equivalent.
-- Verify result equivalence with representative fixtures, especially after rewriting joins, aggregations, windows, or pagination.
-- Record before/after timing or plan shape when feasible. If production-scale data is unavailable, say what was verified and what remains a volume risk.
-- Run affected integration/repository/API tests to ensure the optimized path still returns the expected user-facing data.
-- For a plan change, verify both the chosen access path and the no-regression result shape on a representative provider path.
+- 当数据库支持时为优化声明捕获计划证据：`EXPLAIN`、`EXPLAIN ANALYZE`、缓冲区、估计 vs 实际行或仓库的等效方案。
+- 用代表性夹具验证结果等价性，特别是在重写连接、聚合、窗口或分页之后。
+- 在可行时记录前后时间或计划形态。如果生产规模数据不可用，说明验证了什么以及什么仍是量风险。
+- 运行受影响的集成/repository/API 测试以确保优化路径仍返回预期的面向用户数据。
+- 对于计划变更，在代表性提供者路径上验证选中的访问路径和无回归结果形态。
 
 ## Evidence Focus
 
-- In the evidence summary, name the optimization decision: query rewrite, index design, plan finding, set-based replacement, partial index, materialized view, partitioning, statistics, or measured proof.
+- 在证据总结中，说明优化决策：查询重写、索引设计、计划发现、基于集合的替换、部分索引、物化视图、分区、统计信息或测量证明。
 
 ## Risks To Avoid
 
-- Treating one plan operator or an arbitrary latency target as a universal quality rule.
-- Adding a covering, partial, or filtered index without measuring write, storage, and migration cost.
-- Introducing partitioning, materialized views, or hints without an ownership, refresh, invalidation, and rollback boundary.
+- 将一个计划操作符或任意延迟目标视为通用质量规则。
+- 在不测量写入、存储和迁移成本的情况下添加覆盖、部分或过滤索引。
+- 在没有所有权、刷新、失效和回滚边界的情况下引入分区、物化视图或提示。

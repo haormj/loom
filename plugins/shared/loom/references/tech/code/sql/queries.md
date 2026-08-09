@@ -1,56 +1,56 @@
-# SQL Query Quality
+# SQL 查询质量
 
-This file applies to portable hand-written SQL and query-builder logic. Load the selected provider query overlay when syntax, plan behavior, JSON operators, or index semantics are provider-specific.
+本文件适用于可移植的手写 SQL 和查询构建器逻辑。当语法、计划行为、JSON 操作符或索引语义是提供者特定的时加载选中的提供者查询覆盖。
 
 ## When To Use
 
-- The task changes SELECT/INSERT/UPDATE/DELETE statements, joins, CTEs, recursive queries, aggregations, subqueries, set operations, pagination, reporting queries, or ORM query-builder code.
-- Use this when query semantics, result shape, row count, ordering, or database-side filtering affects business behavior.
-- If the task only changes schema without changing query behavior, use `sql.schema` instead when selected.
-- Do not load this file for an entity-only or migration-only task that does not change query behavior.
+- 任务变更了 SELECT/INSERT/UPDATE/DELETE 语句、连接、CTE、递归查询、聚合、子查询、集合操作、分页、报表查询或 ORM 查询构建器代码。
+- 当查询语义、结果形态、行数、排序或数据库端过滤影响业务行为时使用此参考。
+- 如果任务仅变更 schema 而不变更查询行为，在选中时改用 `sql.schema`。
+- 不要为不变更查询行为的仅实体或仅迁移任务加载此文件。
 
 ## Implementation Focus
 
-- State the intended result shape before writing the query: one row, many rows, grouped rows, paginated rows, existence check, aggregate, or mutation.
-- Use explicit column lists for production paths. Avoid `SELECT *` because schema changes can silently change payloads and plan cost.
-- Keep joins intentional: join type, cardinality, tenant/security filters, and duplicate behavior must be obvious from the query.
-- Use CTEs to clarify multi-step logic or reuse intermediate results. Do not turn every simple query into nested CTEs if a direct query is clearer.
-- Use recursive CTEs only for real hierarchy/graph traversal and include a cycle/depth guard where bad data could loop.
-- Prefer `EXISTS`/`NOT EXISTS` for presence/absence checks. Use `IN` for small static sets or when the optimizer and dialect make it appropriate.
-- Handle NULL explicitly in predicates, sorting, aggregates, and equality checks. Avoid assuming `NULL = NULL` or that aggregate results are never null.
-- Pagination must be deterministic. Include stable ordering and avoid unbounded result sets for user-facing list APIs.
-- Keep mutation queries idempotent where retries are possible and return/read back the state downstream code needs.
-- Parameterize user input through the framework/driver. Do not concatenate values into SQL strings.
-- Keep provider-specific operators, casts, conflict syntax, and index hints in the selected dialect overlay. Do not hide a provider dependency inside a supposedly portable query rule.
+- 在编写查询之前说明预期结果形态：一行、多行、分组行、分页行、存在检查、聚合或变更。
+- 对生产路径使用显式列列表。避免 `SELECT *`，因为 schema 变更可能静默改变载荷和计划成本。
+- 保持连接有意：连接类型、基数、租户/安全过滤和重复行为必须从查询中明显。
+- 使用 CTE 澄清多步逻辑或复用中间结果。如果直接查询更清晰，不要将每个简单查询变成嵌套 CTE。
+- 仅对真实的层次/图遍历使用递归 CTE，并在不良数据可能循环的地方包含循环/深度守卫。
+- 对存在/缺失检查优先使用 `EXISTS`/`NOT EXISTS`。对小静态集合或当优化器和方言使其合适时使用 `IN`。
+- 在谓词、排序、聚合和相等检查中显式处理 NULL。避免假设 `NULL = NULL` 或聚合结果永不为 null。
+- 分页必须确定性。包含稳定排序并避免面向用户列表 API 的无界结果集。
+- 在可能重试的地方保持变更查询幂等并返回/回读下游代码所需的状态。
+- 通过框架/驱动程序参数化用户输入。不要将值拼接为 SQL 字符串。
+- 将提供者特定的操作符、转换、冲突语法和索引提示保留在选中的方言覆盖中。不要在据称可移植的查询规则中隐藏提供者依赖。
 
 ### Subqueries And Set Operations
 
-- A scalar or correlated subquery in a row-producing path can repeat work for every outer row. Compare it with a grouped join or a window calculation when the result semantics allow that rewrite, and verify duplicate behavior before changing it.
-- Use `UNION` only when duplicate elimination is part of the result contract. Use `UNION ALL` when duplicates are valid and the extra sort/distinct work is unnecessary. Align column count, compatible types, nullability, and ordering at the set boundary.
-- Portable pivot behavior should use explicit conditional aggregation when the output columns are known. Provider pivot operators, extensions, and dynamic-column generation belong in the selected dialect overlay.
+- 产生行的路径中的标量或关联子查询可能为每个外层行重复工作。当结果语义允许该重写时与分组连接或窗口计算比较，并在更改之前验证重复行为。
+- 仅当去重是结果契约的一部分时才使用 `UNION`。当重复有效且额外排序/去重工作不必要时使用 `UNION ALL`。在集合边界对齐列数、兼容类型、可空性和排序。
+- 可移植透视行为应在输出列已知时使用显式条件聚合。提供者透视操作符、扩展和动态列生成属于选中的方言覆盖。
 
 ### Mutation Result Boundary
 
-For `INSERT`, `UPDATE`, and `DELETE`, define affected-row semantics, no-op behavior, generated values, and the state that downstream code must read back. Do not infer success from the absence of a driver exception when a zero-row update can mean a missing, stale, unauthorized, or already-completed record.
+对于 `INSERT`、`UPDATE` 和 `DELETE`，定义受影响行语义、无操作行为、生成值和下游代码必须回读的状态。当零行更新可能意味着缺失、过期、未授权或已完成记录时，不要从驱动程序异常缺失推断成功。
 
 ## Verification Focus
 
-- Test the query against representative fixtures that include empty results, duplicate-prone joins, null values, boundary dates/numbers, and authorization/tenant filters when relevant.
-- For mutations, prove affected row count or write/read state, including no-op and invalid-input cases when the task owns them.
-- For pagination and sorting, test stable order across multiple rows with same primary sort value.
-- For recursive, aggregate, or reporting queries, include fixtures that prove the edge case the query was introduced to handle.
-- For query-plan changes, record the provider, query shape, relevant indexes, and plan evidence. Do not claim performance improvement from a query that was never executed against representative data.
-- For subquery rewrites and set operations, compare row counts, duplicates, null behavior, and ordering against the prior query on representative fixtures.
+- 用包含空结果、易重复连接、null 值、边界日期/数字和授权/租户过滤的代表性夹具测试查询（当相关时）。
+- 对于变更，证明受影响行数或写入/读取状态，包括任务拥有的无操作和无效输入情况。
+- 对于分页和排序，测试具有相同主排序值的多行的稳定顺序。
+- 对于递归、聚合或报表查询，包含证明查询引入以处理的边界情况的夹具。
+- 对于查询计划变更，记录提供者、查询形态、相关索引和计划证据。不要从从未针对代表性数据执行的查询声称性能改善。
+- 对于子查询重写和集合操作，在代表性夹具上与先前查询比较行数、重复、null 行为和排序。
 
 ## Evidence Focus
 
-- In the evidence summary, name the query decision: result shape, join cardinality, CTE, recursive guard, aggregation, EXISTS, NULL handling, pagination, parameterization, or mutation readback.
+- 在证据总结中，说明查询决策：结果形态、连接基数、CTE、递归守卫、聚合、EXISTS、NULL 处理、分页、参数化或变更回读。
 
 ## Risks To Avoid
 
-- Selecting SQL references for every backend or API task.
-- Replacing a provider-specific query with a different dialect and calling it compatible.
-- Using `EXPLAIN ANALYZE` on a mutating statement without a controlled verification boundary.
-- Treating a passing mock repository test as proof of provider-specific query behavior.
-- Replacing a correlated subquery with a join without checking one-to-many multiplication.
-- Using a provider pivot feature when a portable result shape is sufficient and the provider capability is not accepted.
+- 为每个后端或 API 任务选择 SQL 参考。
+- 用不同方言替换提供者特定查询并称之为兼容。
+- 在没有受控验证边界的情况下对变更语句使用 `EXPLAIN ANALYZE`。
+- 将通过的 mock repository 测试视为提供者特定查询行为的证明。
+- 在不检查一对多乘法的情况下用连接替换关联子查询。
+- 当可移植结果形态足够且提供者能力未被接受时使用提供者透视特性。

@@ -43,7 +43,7 @@ pub fn deploy_up(input: DeployToolInput) -> LoomMcpActionResult {
         Err(error) => {
             return LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
-                summary: "Deployment up could not acquire operation.".to_string(),
+                summary: "Deployment up 无法获取操作锁。".to_string(),
                 details: Some(json!({ "error": error.to_string() })),
                 warnings: vec![error.to_string()],
             })
@@ -312,7 +312,7 @@ pub fn deploy_up_inner(project_root: &Path, input: DeployToolInput) -> LoomMcpAc
     };
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root.to_string_lossy().into_owned(),
-        summary: "Deployment is running and validation passed.".to_string(),
+        summary: "部署正在运行且验证通过。".to_string(),
         details: Some(json!({
             "primaryUrl": primary_url(&spec.runtime),
             "ports": spec.runtime.ports,

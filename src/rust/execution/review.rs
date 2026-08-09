@@ -84,7 +84,7 @@ fn materialize_review_request_inner(
         return Ok(failed(
             project_root,
             "TASKPLAN_RUN_NOT_TERMINAL",
-            "ReviewRequest requires a terminal TaskPlanRun.".to_string(),
+            "ReviewRequest 需要处于终止状态的 TaskPlanRun。".to_string(),
             "review",
         ));
     }
@@ -98,7 +98,7 @@ fn materialize_review_request_inner(
         .find(|phase| phase.phase_id == phase_id)
         .ok_or_else(|| {
             state::store::StateError::InvalidArgument(format!(
-                "phase {phase_id} does not exist in delivery {delivery_id}"
+                "交付 {delivery_id} 中不存在阶段 {phase_id}"
             ))
         })?;
     let task_results = load_task_results(root, &locator, &task_plan, &run)?;
@@ -393,19 +393,19 @@ fn build_review_request(
         },
         "reviewRules": {
             "commonRules": [
-                "Read reviewPacket compact groupSummaries, taskSummaries, taskResultSummaries, changeContext, review matrices, outputContract.reviewSignals, and outputContract before writing ReviewResult.",
-                "Review spec fidelity and project standards as separate axes; a clean implementation can still be wrong for the confirmed contract.",
-                "When reviewMatrixSummary.codeQuality or a code_quality signal needs investigation, read the optional review_code_quality_context group. Use its task-scoped referenceLoadPlan and referenceGroups only; do not scan the full tech tree or substitute a different database provider reference.",
-                "Every finding must include non-empty readRefs.",
-                "Write finding observations and evidence only. Loom derives findingId, pendingActions.findingRefs, nextAction.findingRefs, nextAction.targetTaskIds, and approved phase linkage from the current review signals.",
-                "Every blocking finding must describe the smallest repair that satisfies the current Loom contract.",
-                "Do not modify project files during review.",
-                "Use compact browser check status, attempts, command, and observed outcome first. Read a referenced Playwright trace, report, or screenshot only when a failed, blocked, retried, or ambiguous check cannot be judged from the compact evidence.",
-                "Do not convert environment blockers into execution_repair unless another product defect finding justifies execution repair.",
-                "Do not approve when outputContract.reviewSignals contains unsatisfied implementation obligations, requirement detail evidence, engineering quality, architecture quality, API contract, code quality, frontend workflow closure, or frontend UI quality.",
-                "If outputContract.reviewSignals contains frontend_workflow_closure with missingTaskAssignment=true, route taskplan_repair unless a higher-priority blocking finding applies.",
-                "If outputContract.reviewSignals contains architecture_quality with missingTaskAssignment=true, route taskplan_repair unless a higher-priority blocking finding applies.",
-                "Blocking findings must cite a task, group, artifact, or file location unless the route is manual_review or needs_user_decision."
+                "编写 ReviewResult 前，先阅读 reviewPacket 的紧凑 groupSummaries、taskSummaries、taskResultSummaries、changeContext、评审矩阵、outputContract.reviewSignals 以及 outputContract。",
+                "将规范保真度与项目标准作为独立维度评审；实现整洁不代表符合已确认的契约。",
+                "当 reviewMatrixSummary.codeQuality 或某个 code_quality 信号需要调查时，阅读可选的 review_code_quality_context 组。仅使用其任务级 referenceLoadPlan 和 referenceGroups；不要扫描完整技术树或替换为不同的数据库提供方引用。",
+                "每个 finding 必须包含非空的 readRefs。",
+                "仅编写 finding 观察结果与证据。Loom 从当前评审信号中派生 findingId、pendingActions.findingRefs、nextAction.findingRefs、nextAction.targetTaskIds 以及已批准阶段链接。",
+                "每个阻塞型 finding 必须描述满足当前 Loom 契约的最小修复方案。",
+                "评审期间不得修改项目文件。",
+                "优先使用紧凑的浏览器检查状态、尝试次数、命令与观察结果。仅当失败、阻塞、重试或结果模糊的检查无法从紧凑证据判断时，才阅读引用的 Playwright trace、报告或截图。",
+                "除非存在另一个产品缺陷 finding 支持执行修复，否则不要将环境阻塞转为 execution_repair。",
+                "当 outputContract.reviewSignals 包含未满足的实现义务、需求详情证据、工程质量、架构质量、API 契约、代码质量、前端工作流闭环或前端 UI 质量时，不得批准。",
+                "如果 outputContract.reviewSignals 包含 frontend_workflow_closure 且 missingTaskAssignment=true，则路由至 taskplan_repair，除非存在更高优先级的阻塞型 finding。",
+                "如果 outputContract.reviewSignals 包含 architecture_quality 且 missingTaskAssignment=true，则路由至 taskplan_repair，除非存在更高优先级的阻塞型 finding。",
+                "阻塞型 finding 必须引用任务、分组、产物或文件位置，除非路由为 manual_review 或 needs_user_decision。"
             ],
             "changeSetRules": change_set_rules(&change_context_mode),
             "routingRules": {
@@ -429,7 +429,7 @@ fn build_review_request(
                 "targetId": "result",
                 "path": result_file,
                 "required": true,
-                "description": "Write the ReviewResult JSON for this phase run."
+                "description": "为本阶段运行编写 ReviewResult JSON。"
             }],
             "schemaShape": schema_shape,
             "resultTemplate": review_result_template(task_plan, run, next_phase_handoff),
@@ -450,7 +450,7 @@ fn build_review_request(
                     "continue_to_next_phase",
                     "done"
                 ],
-                "manualReviewPriorityRule": "manual_review outranks automatic repair only for blocking review limitations or environment blockers that prevent reliable review."
+                "manualReviewPriorityRule": "manual_review 仅在存在阻碍可靠评审的阻塞性评审限制或环境阻塞时，优先级高于自动修复。"
             },
             "validatorRules": review_validator_rules(&change_context_mode)
         },
@@ -459,8 +459,8 @@ fn build_review_request(
                 {
                     "groupId": "review_scope",
                     "required": true,
-                    "purpose": "Read review source identity and phase run scope.",
-                    "whenToRead": "Read first.",
+                    "purpose": "阅读评审来源标识与阶段运行范围。",
+                    "whenToRead": "首先阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "source.phaseId",
                         "source.taskPlanId",
@@ -484,8 +484,8 @@ fn build_review_request(
                 {
                     "groupId": "review_packets",
                     "required": true,
-                    "purpose": "Read task plan and task results.",
-                    "whenToRead": "Read before judging implementation quality.",
+                    "purpose": "阅读任务计划与任务结果。",
+                    "whenToRead": "在判断实现质量前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "reviewPacket.taskPlanId",
                         "reviewPacket.taskPlanRunId",
@@ -500,8 +500,8 @@ fn build_review_request(
                 {
                     "groupId": "change_context",
                     "required": true,
-                    "purpose": "Read changed file context.",
-                    "whenToRead": "Read before judging implementation quality.",
+                    "purpose": "阅读已变更文件的上下文。",
+                    "whenToRead": "在判断实现质量前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "changeContext.mode",
                         "changeContext.changedFiles",
@@ -511,8 +511,8 @@ fn build_review_request(
                 {
                     "groupId": "review_matrices",
                     "required": true,
-                    "purpose": "Read compact implementation-obligation, concept, requirement detail, engineering quality, architecture quality, API contract, code quality, frontend quality, and runtime review signals.",
-                    "whenToRead": "Read before deciding approval or repair route.",
+                    "purpose": "阅读紧凑的实现义务、概念、需求详情、工程质量、架构质量、API 契约、代码质量、前端质量与运行时评审信号。",
+                    "whenToRead": "在决定批准或修复路由前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "reviewMatrixSummary.concept",
                         "reviewMatrixSummary.detail",
@@ -528,8 +528,8 @@ fn build_review_request(
                 {
                     "groupId": "review_code_quality_context",
                     "required": false,
-                    "purpose": "Read task-scoped language, framework, and database reference evidence only when code quality requires investigation.",
-                    "whenToRead": "Read when reviewMatrixSummary.codeQuality or a code_quality review signal is unsatisfied or ambiguous.",
+                    "purpose": "仅在代码质量需要调查时，阅读任务级语言、框架与数据库引用证据。",
+                    "whenToRead": "当 reviewMatrixSummary.codeQuality 或某个 code_quality 评审信号未满足或模糊时阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "codeQualityReviewMatrix"
                     ])
@@ -538,8 +538,8 @@ fn build_review_request(
                 {
                     "groupId": "review_rules",
                     "required": true,
-                    "purpose": "Read review enums and routing rules.",
-                    "whenToRead": "Read before writing findings and nextAction.",
+                    "purpose": "阅读评审枚举与路由规则。",
+                    "whenToRead": "在编写 findings 与 nextAction 前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "enumRefs.decision",
                         "enumRefs.findingSeverity",
@@ -561,8 +561,8 @@ fn build_review_request(
                 {
                     "groupId": "review_write_contract",
                     "required": true,
-                    "purpose": "Read ReviewResult output path and precise schema fields.",
-                    "whenToRead": "Read before writing ReviewResult.",
+                    "purpose": "阅读 ReviewResult 输出路径与精确的 schema 字段。",
+                    "whenToRead": "在编写 ReviewResult 前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.resultFile",
                         "outputContract.writeTargets",
@@ -595,8 +595,8 @@ fn review_quality_read_group() -> Value {
     json!({
         "groupId": "review_quality_profile",
         "required": true,
-        "purpose": "Read the review quality method and selected review references.",
-        "whenToRead": "Read after review matrices and before writing findings.",
+        "purpose": "阅读评审质量方法与所选评审引用。",
+        "whenToRead": "在评审矩阵之后、编写 findings 之前阅读。",
         "selectors": read_selectors_value_from_paths([
             "reviewQualityProfile.loadMode",
             "reviewQualityProfile.reviewMode",
@@ -620,27 +620,27 @@ fn review_quality_profile() -> Value {
             {
                 "refId": "rv.core",
                 "path": "tech/review/core.md",
-                "reason": "Risk-based review posture, scope reconstruction, inspection order, and repository-fit method."
+                "reason": "基于风险的评审姿态、范围重建、检查顺序与仓库适配方法。"
             },
             {
                 "refId": "rv.spec",
                 "path": "tech/review/spec-compliance.md",
-                "reason": "Current-phase requirement compliance before implementation quality review."
+                "reason": "在实现质量评审前进行当前阶段需求合规检查。"
             },
             {
                 "refId": "rv.defects",
                 "path": "tech/review/defect-patterns.md",
-                "reason": "Common correctness, security, persistence, reliability, performance, and maintainability defects."
+                "reason": "常见的正确性、安全性、持久性、可靠性、性能与可维护性缺陷。"
             },
             {
                 "refId": "rv.evidence",
                 "path": "tech/review/test-evidence.md",
-                "reason": "Verification and evidence sufficiency review."
+                "reason": "验证与证据充分性评审。"
             },
             {
                 "refId": "rv.findings",
                 "path": "tech/review/finding-quality.md",
-                "reason": "Actionable finding impact, evidence, root-cause, repair ownership, and consistency guidance."
+                "reason": "可操作的 finding 影响、证据、根因、修复归属与一致性指南。"
             }
         ]
     })
@@ -670,17 +670,17 @@ fn review_result_schema_shape() -> Value {
                 "evidence": "string",
                 "readRefs": [{
                     "type": "enumRefs.readRefType item",
-                    "ref": "allowed review read ref",
+                    "ref": "允许的评审读取引用",
                     "reason": "string"
                 }],
                 "evidenceRefs": [{
                     "type": "enumRefs.evidenceRefType item",
-                    "ref": "allowed task result, verification, diff, changed file, or manual ref",
+                    "ref": "允许的任务结果、验证、diff、已变更文件或手动引用",
                     "reason": "string"
                 }],
-                "groupRefs": ["allowed group id"],
-                "taskRefs": ["allowed task id"],
-                "acceptanceRefs": ["allowed acceptance ref"],
+                "groupRefs": ["允许的 group id"],
+                "taskRefs": ["允许的 task id"],
+                "acceptanceRefs": ["允许的 acceptance ref"],
                 "artifactRefs": {},
                 "location": {},
                 "taskRelevance": "direct | indirect | not_applicable",
@@ -710,13 +710,13 @@ fn review_result_schema_shape() -> Value {
                 "impact": "string"
             }],
             "pendingActions": [{
-                "type": "enumRefs.nextAction item other than top-level nextAction.type",
+                "type": "除顶层 nextAction.type 之外的 enumRefs.nextAction 项",
                 "reason": "string"
             }],
             "nextAction": {
                 "type": "enumRefs.nextAction item",
                 "reason": "string",
-                "userVisibleState": "string or null"
+                "userVisibleState": "字符串或 null"
             }
         },
         "additionalProperties": false
@@ -1022,27 +1022,27 @@ fn git_numstat(project_root: &Path, file: &str, tracked: bool) -> Option<(u32, u
 fn change_set_rules(mode: &str) -> Vec<&'static str> {
     if mode == "git_diff_ref" {
         vec![
-            "Diff content is not inlined.",
-            "Read changeContext first and read only per-file diffRefs needed for findings.",
-            "Use fullDiffRef only when a cross-file finding cannot be supported by per-file diffRefs.",
-            "Line-level findings must be based on a read diffRef or fullDiffRef.",
+            "Diff 内容不内联。",
+            "先阅读 changeContext，仅阅读 findings 所需的逐文件 diffRefs。",
+            "仅当跨文件 finding 无法由逐文件 diffRefs 支撑时，才使用 fullDiffRef。",
+            "行级 finding 必须基于已阅读的 diffRef 或 fullDiffRef。",
         ]
     } else {
         vec![
-            "Only changed file paths are provided.",
-            "Read changed files only when needed.",
-            "Critical or major findings must be direct and within task changed files.",
-            "Use notes for issues outside the current task change set.",
+            "仅提供已变更文件路径。",
+            "仅在需要时阅读已变更文件。",
+            "critical 或 major finding 必须直接且位于任务已变更文件内。",
+            "对当前任务变更集之外的问题使用 notes。",
         ]
     }
 }
 
 fn review_severity_policy() -> Value {
     json!({
-        "critical": "Blocks accepted behavior, data integrity, security, or runtime viability.",
-        "major": "Breaks a must acceptance item, integration contract, or required workflow.",
-        "minor": "Important but non-blocking correctness, maintainability, or evidence gap.",
-        "note": "Observation that should not change routing."
+        "critical": "阻碍已接受的行为、数据完整性、安全性或运行时可用性。",
+        "major": "破坏 must 验收项、集成契约或必需工作流。",
+        "minor": "重要但非阻塞的正确性、可维护性或证据缺失。",
+        "note": "不应改变路由的观察记录。"
     })
 }
 
@@ -1053,7 +1053,7 @@ fn review_validator_rules(mode: &str) -> Value {
         "pendingActionFindingRefsMustMatchRecommendedNextAction": true,
         "warningOnlyFindingsCannotRouteRepair": true,
         "changeContextMode": mode,
-        "currentFileContentMajorFindingRule": "When changeContextMode is current_file_content, critical/major findings must have taskRelevance=direct and scopeRelation=within_task_changed_files."
+        "currentFileContentMajorFindingRule": "当 changeContextMode 为 current_file_content 时，critical/major finding 必须满足 taskRelevance=direct 且 scopeRelation=within_task_changed_files。"
     })
 }
 
@@ -1130,13 +1130,13 @@ where
     D: DomainDispatcher,
 {
     let target = authorized.targets.first().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("ReviewResult target is missing".to_string())
+        state::store::StateError::InvalidArgument("ReviewResult 目标缺失".to_string())
     })?;
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Review request missing deliveryId".to_string())
+        state::store::StateError::InvalidArgument("Review 请求缺少 deliveryId".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Review request missing phaseId".to_string())
+        state::store::StateError::InvalidArgument("Review 请求缺少 phaseId".to_string())
     })?;
     if let Some(stale) = ensure_latest_request(
         &input.project_root,
@@ -1176,7 +1176,7 @@ where
                 vec![issue(
                     "REVIEW_RESULT_SCHEMA_INVALID",
                     "$",
-                    &format!("ReviewResult JSON has an invalid schema: {error}"),
+                    &format!("ReviewResult JSON 的 schema 无效：{error}"),
                 )],
             )
         }
@@ -1340,7 +1340,7 @@ fn normalize_review_pending_actions(object: &mut serde_json::Map<String, Value>)
             {
                 action.insert(
                     "reason".to_string(),
-                    json!("Pending action was normalized from ReviewResult draft."),
+                    json!("待办操作已从 ReviewResult 草稿规范化。"),
                 );
             }
             Some(Value::Object(action))
@@ -1456,7 +1456,7 @@ fn normalize_browser_environment_review_route(
                 .map(|result_id| contracts::ReviewEvidenceRef {
                     r#type: "task_result".to_string(),
                     r#ref: result_id.to_string(),
-                    reason: "MCP-generated browser environment closure result.".to_string(),
+                    reason: "MCP 生成的浏览器环境闭环结果。".to_string(),
                 })
         })
         .collect::<Vec<_>>();
@@ -1473,14 +1473,13 @@ fn normalize_browser_environment_review_route(
         evidence_kind: Some("runtime".to_string()),
         failure_class: Some("environment_blocker".to_string()),
         category: "environment_or_dependency".to_string(),
-        summary: "Required browser evidence is unavailable in supported execution environments."
-            .to_string(),
-        evidence: "Host launch doctor and managed Playwright container smoke both failed; project code was not classified as defective."
+        summary: "所需浏览器证据在受支持的执行环境中不可用。".to_string(),
+        evidence: "宿主机启动诊断与托管 Playwright 容器冒烟测试均失败；项目代码未被判定为缺陷。"
             .to_string(),
         read_refs: vec![contracts::ReviewReadRef {
             r#type: "review_packet".to_string(),
             r#ref: "reviewPacket".to_string(),
-            reason: "Compact browser closure status and environment diagnostics.".to_string(),
+            reason: "紧凑的浏览器闭环状态与环境诊断。".to_string(),
         }],
         evidence_refs,
         group_refs: Vec::new(),
@@ -1495,9 +1494,7 @@ fn normalize_browser_environment_review_route(
     });
     result.decision = "blocked".to_string();
     result.next_action.r#type = "manual_review".to_string();
-    result.next_action.reason =
-        "Required browser evidence needs an environment retry, external evidence, or explicit waiver."
-            .to_string();
+    result.next_action.reason = "所需浏览器证据需要环境重试、外部证据或明确豁免。".to_string();
     result.next_action.target_task_ids = result
         .findings
         .iter()
@@ -1563,14 +1560,14 @@ fn validate_review_enums(result: &ReviewResult, issues: &mut Vec<delivery_core::
         issues.push(issue(
             "REVIEW_RESULT_ENUM_INVALID",
             "decision",
-            "ReviewResult decision is not allowed.",
+            "ReviewResult decision 不在允许范围内。",
         ));
     }
     if !REVIEW_ACTIONS.contains(&result.next_action.r#type.as_str()) {
         issues.push(issue(
             "REVIEW_RESULT_ENUM_INVALID",
             "nextAction.type",
-            "ReviewResult nextAction.type is not allowed.",
+            "ReviewResult nextAction.type 不在允许范围内。",
         ));
     }
     for finding in &result.findings {
@@ -1578,14 +1575,14 @@ fn validate_review_enums(result: &ReviewResult, issues: &mut Vec<delivery_core::
             issues.push(issue(
                 "REVIEW_RESULT_ENUM_INVALID",
                 "findings[].severity",
-                "Review finding severity is not allowed.",
+                "Review finding severity 不在允许范围内。",
             ));
         }
         if !REVIEW_ACTIONS.contains(&finding.recommended_next_action.as_str()) {
             issues.push(issue(
                 "REVIEW_RESULT_ENUM_INVALID",
                 "findings[].recommendedNextAction",
-                "Review finding recommendedNextAction is not allowed.",
+                "Review finding recommendedNextAction 不在允许范围内。",
             ));
         }
     }
@@ -1620,7 +1617,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_REF_INVALID",
                 "findings[].readRefs",
-                "Every finding must include readRefs.",
+                "每个 finding 必须包含 readRefs。",
             ));
         }
         if is_blocking_finding(finding)
@@ -1631,7 +1628,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_REF_INVALID",
                 "findings[].refs",
-                "Blocking review findings must cite a task, group, artifact, or file location unless routed to manual/user decision.",
+                "阻塞型 review finding 必须引用任务、分组、产物或文件位置，除非路由至 manual/user decision。",
             ));
         }
         for task_ref in &finding.task_refs {
@@ -1639,7 +1636,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].taskRefs",
-                    "Review finding taskRefs must use allowed task ids.",
+                    "Review finding taskRefs 必须使用允许的 task id。",
                 ));
             }
         }
@@ -1648,7 +1645,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].groupRefs",
-                    "Review finding groupRefs must use allowed group ids.",
+                    "Review finding groupRefs 必须使用允许的 group id。",
                 ));
             }
         }
@@ -1657,7 +1654,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].acceptanceRefs",
-                    "Review finding acceptanceRefs must use current phase acceptance refs.",
+                    "Review finding acceptanceRefs 必须使用当前阶段的 acceptance refs。",
                 ));
             }
         }
@@ -1666,7 +1663,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].readRefs",
-                    "Review finding readRefs must use allowed readRef types.",
+                    "Review finding readRefs 必须使用允许的 readRef 类型。",
                 ));
             } else if !is_allowed_review_read_ref(
                 &read_ref.r#type,
@@ -1679,7 +1676,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].readRefs",
-                    "Review finding readRefs must use allowed request refs, task result ids, changed file refs, or verification refs.",
+                    "Review finding readRefs 必须使用允许的请求引用、任务结果 id、已变更文件引用或验证引用。",
                 ));
             }
         }
@@ -1688,7 +1685,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].evidenceRefs",
-                    "Review finding evidenceRefs must use allowed evidenceRef types.",
+                    "Review finding evidenceRefs 必须使用允许的 evidenceRef 类型。",
                 ));
             } else if !is_allowed_review_evidence_ref(
                 &evidence_ref.r#type,
@@ -1701,7 +1698,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "findings[].evidenceRefs",
-                    "Review finding evidenceRefs must use allowed task result, verification, diff, changed file, or manual refs.",
+                    "Review finding evidenceRefs 必须使用允许的任务结果、验证、diff、已变更文件或手动引用。",
                 ));
             }
         }
@@ -1713,7 +1710,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "findings[].severity",
-                "In current_file_content mode, critical or major findings must be direct and within task changed files.",
+                "在 current_file_content 模式下，critical 或 major finding 必须为 direct 且位于任务已变更文件内。",
             ));
         }
         if finding.failure_class.as_deref() == Some("environment_blocker")
@@ -1726,7 +1723,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "findings[].failureClass",
-                "Environment blockers cannot route to execution_repair without a separate product defect finding.",
+                "环境阻塞不能路由至 execution_repair，除非存在独立的产品缺陷 finding。",
             ));
         }
     }
@@ -1736,7 +1733,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "pendingActions[].findingRefs",
-                    "pendingActions findingRefs must reference current findings.",
+                    "pendingActions findingRefs 必须引用当前 findings。",
                 ));
             } else if result
                 .findings
@@ -1748,7 +1745,7 @@ fn validate_review_refs(
                 issues.push(issue(
                     "REVIEW_RESULT_STATUS_INCONSISTENT",
                     "pendingActions[].findingRefs",
-                    "pendingActions findingRefs must match each finding recommendedNextAction.",
+                    "pendingActions findingRefs 必须与每个 finding 的 recommendedNextAction 匹配。",
                 ));
             }
         }
@@ -1756,7 +1753,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "pendingActions[].type",
-                "pendingActions must not duplicate top-level nextAction.",
+                "pendingActions 不得与顶层 nextAction 重复。",
             ));
         }
     }
@@ -1765,7 +1762,7 @@ fn validate_review_refs(
             issues.push(issue(
                 "REVIEW_RESULT_REF_INVALID",
                 "nextAction.findingRefs",
-                "nextAction findingRefs must reference current findings.",
+                "nextAction findingRefs 必须引用当前 findings。",
             ));
         }
     }
@@ -1789,7 +1786,7 @@ fn validate_review_coverage(
             issues.push(issue(
                 "REVIEW_RESULT_REF_INVALID",
                 "coverageAssessment.mustAcceptance[].acceptanceRef",
-                "Review coverageAssessment must use current phase acceptance refs.",
+                "Review coverageAssessment 必须使用当前阶段的 acceptance refs。",
             ));
         }
         for task_result_ref in &assessment.supporting_task_results {
@@ -1797,7 +1794,7 @@ fn validate_review_coverage(
                 issues.push(issue(
                     "REVIEW_RESULT_REF_INVALID",
                     "coverageAssessment.mustAcceptance[].supportingTaskResults",
-                    "Review coverage supportingTaskResults must use allowed task result ids.",
+                    "Review coverage supportingTaskResults 必须使用允许的任务结果 id。",
                 ));
             }
         }
@@ -1810,7 +1807,7 @@ fn validate_review_coverage(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "coverageAssessment.mustAcceptance[]",
-                "Unsatisfied acceptance coverage requires a finding that cites that acceptanceRef.",
+                "未满足的验收覆盖需要一个引用该 acceptanceRef 的 finding。",
             ));
         }
     }
@@ -1819,7 +1816,7 @@ fn validate_review_coverage(
             issues.push(issue(
                 "REVIEW_RESULT_REF_INVALID",
                 "coverageAssessment.mustAcceptance",
-                "Review coverageAssessment.mustAcceptance must include every current phase acceptanceRef.",
+                "Review coverageAssessment.mustAcceptance 必须包含当前阶段的每个 acceptanceRef。",
             ));
         }
     }
@@ -1853,23 +1850,23 @@ fn validate_review_decision(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "decision",
-                "Approved ReviewResult cannot contain blocking findings or pending actions.",
+                "已批准的 ReviewResult 不能包含阻塞型 findings 或待办操作。",
             ));
         }
         "changes_requested" if !has_execution => issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "decision",
-            "changes_requested requires a blocking execution_repair finding.",
+            "changes_requested 需要一个阻塞型 execution_repair finding。",
         )),
         "blocked" if !has_blocked_route => issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "decision",
-            "blocked requires a blocking architecture, taskplan, or manual_review finding.",
+            "blocked 需要一个阻塞型 architecture、taskplan 或 manual_review finding。",
         )),
         "needs_user_decision" if !has_user_decision => issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "decision",
-            "needs_user_decision requires a blocking user decision finding.",
+            "needs_user_decision 需要一个阻塞型用户决策 finding。",
         )),
         _ => {}
     }
@@ -1878,7 +1875,7 @@ fn validate_review_decision(
         issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "nextAction.type",
-            "ReviewResult nextAction.type does not match routing priority.",
+            "ReviewResult nextAction.type 与路由优先级不匹配。",
         ));
     }
     if result.next_action.r#type == "continue_to_next_phase"
@@ -1892,7 +1889,7 @@ fn validate_review_decision(
         issues.push(issue(
             "REVIEW_RESULT_REF_INVALID",
             "nextAction.targetPhaseId",
-            "continue_to_next_phase requires nextAction.targetPhaseId.",
+            "continue_to_next_phase 需要 nextAction.targetPhaseId。",
         ));
     }
     if !result.findings.is_empty()
@@ -1912,7 +1909,7 @@ fn validate_review_decision(
         issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "nextAction.type",
-            "Warning-only review findings cannot route repair, manual review, or user decision.",
+            "仅含 warning 的 review findings 不能路由修复、人工评审或用户决策。",
         ));
     }
 }
@@ -1933,7 +1930,7 @@ fn validate_review_signals(
         issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "decision",
-            "ReviewResult cannot approve while any MCP review signal declares a non-terminal recommendedNextAction.",
+            "当任何 MCP 评审信号声明了非终止的 recommendedNextAction 时，ReviewResult 不得批准。",
         ));
     }
     validate_execution_repair_signal_targets(result, &signals, issues);
@@ -1959,14 +1956,14 @@ fn validate_review_signals(
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "nextAction.type",
-                "Missing workflow closure or architecture quality task assignment must route taskplan_repair unless a higher-priority blocking finding applies.",
+                "缺失的工作流闭环或架构质量任务分配必须路由至 taskplan_repair，除非存在更高优先级的阻塞型 finding。",
             ));
         }
         if !has_higher_priority_blocker && !has_taskplan_repair_finding {
             issues.push(issue(
                 "REVIEW_RESULT_STATUS_INCONSISTENT",
                 "findings",
-                "A review signal routed to taskplan_repair requires a blocking taskplan_repair finding.",
+                "路由至 taskplan_repair 的评审信号需要一个阻塞型 taskplan_repair finding。",
             ));
         }
     }
@@ -2014,7 +2011,7 @@ fn validate_execution_repair_signal_targets(
         issues.push(issue(
             "REVIEW_RESULT_STATUS_INCONSISTENT",
             "nextAction.targetTaskIds",
-            "ReviewResult execution_repair must target every task referenced by outputContract.reviewSignals execution_repair items.",
+            "ReviewResult execution_repair 必须覆盖 outputContract.reviewSignals 中 execution_repair 项引用的每个任务。",
         ));
     }
 }
@@ -2141,10 +2138,10 @@ fn materialize_manual_review_request(
     result_ref: String,
 ) -> Result<LoomMcpActionResult, state::store::StateError> {
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Review request missing deliveryId".to_string())
+        state::store::StateError::InvalidArgument("Review 请求缺少 deliveryId".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Review request missing phaseId".to_string())
+        state::store::StateError::InvalidArgument("Review 请求缺少 phaseId".to_string())
     })?;
     let root = Path::new(&input.project_root);
     let locator = DeliveryPhaseLocator {
@@ -2225,9 +2222,9 @@ fn materialize_manual_review_request(
     Ok(LoomMcpActionResult::UserGate(LoomMcpUserGateResult::new(
         input.project_root.clone(),
         if browser_environment_gate {
-            "Required browser evidence is unavailable. Retry the browser environment, submit external browser evidence, or approve a quality waiver."
+            "所需浏览器证据不可用。请重试浏览器环境、提交外部浏览器证据或批准质量豁免。"
         } else {
-            "Review requires user decision. Reply approve_override to continue with notes, or request_changes with the repair route and change summary."
+            "评审需要用户决策。回复 approve_override 以附注继续，或回复 request_changes 并提供修复路由与变更摘要。"
         },
         if browser_environment_gate {
             vec![
@@ -2323,9 +2320,9 @@ fn build_manual_review_request(
                     "submit_external_browser_evidence",
                     "approve_quality_waiver"
                 ],
-                "retryRule": "Re-run MCP browser preparation after the environment or dependencies have changed; do not route through execution repair.",
-                "externalEvidenceRule": "Provide one concrete evidence item for every required check id in source.browserQualityGate.browserVerification.requiredCheckIds order. Loom binds each item to its check id; evidence may cite project-relative artifacts or HTTPS CI/report URLs.",
-                "waiverRule": "A quality waiver requires an explicit user reason and records the missing browser evidence as an accepted limitation."
+                "retryRule": "在环境或依赖变更后重新运行 MCP 浏览器准备；不要通过执行修复路由。",
+                "externalEvidenceRule": "为 source.browserQualityGate.browserVerification.requiredCheckIds 顺序中的每个必需检查 id 提供一个具体证据项。Loom 将每个证据项绑定到其检查 id；证据可引用项目相对路径产物或 HTTPS CI/报告 URL。",
+                "waiverRule": "质量豁免需要明确的用户理由，并将缺失的浏览器证据记录为已接受的限制。"
             },
             "enumRefs": {
                 "decision": ["retry_browser_environment", "submit_external_browser_evidence", "approve_quality_waiver"],
@@ -2340,7 +2337,7 @@ fn build_manual_review_request(
                     "targetId": "resolution",
                     "path": result_file,
                     "required": true,
-                    "description": "Write the selected browser quality resolution."
+                    "description": "编写所选的浏览器质量解决方案。"
                 }],
                 "requiredFields": [
                     "userAnswer", "decision", "nextAction"
@@ -2370,8 +2367,8 @@ fn build_manual_review_request(
                 {
                     "groupId": "browser_quality_resolution_context",
                     "required": true,
-                    "purpose": "Read the blocked browser checks and selected resolution protocol.",
-                    "whenToRead": "Read after the user selects a browser quality resolution.",
+                    "purpose": "阅读被阻塞的浏览器检查与所选解决方案协议。",
+                    "whenToRead": "在用户选择浏览器质量解决方案后阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "source.reviewId",
                         "source.reviewResultRef",
@@ -2388,8 +2385,8 @@ fn build_manual_review_request(
                 {
                     "groupId": "browser_quality_resolution_write_contract",
                     "required": true,
-                    "purpose": "Read the exact output path and template for the selected decision.",
-                    "whenToRead": "Read before writing the resolution.",
+                    "purpose": "阅读所选决策的精确输出路径与模板。",
+                    "whenToRead": "在编写解决方案前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.resultFile",
                         "outputContract.writeTargets",
@@ -2423,13 +2420,13 @@ fn build_manual_review_request(
         },
         "manualReviewProtocol": {
             "acceptedDecisions": ["approve_override", "request_changes"],
-            "approveOverrideRule": "Use approve_override only when the user explicitly accepts the review issue as non-blocking; nextAction.type must be done or continue_to_next_phase.",
-            "requestChangesRule": "Use request_changes when the user asks for changes; changeRequest.route must be execution_repair, taskplan_repair, architecture_artifact_repair, or needs_user_decision.",
+            "approveOverrideRule": "仅在用户明确接受评审问题为非阻塞时使用 approve_override；nextAction.type 必须为 done 或 continue_to_next_phase。",
+            "requestChangesRule": "当用户要求变更时使用 request_changes；changeRequest.route 必须为 execution_repair、taskplan_repair、architecture_artifact_repair 或 needs_user_decision。",
             "routeRules": {
-                "execution_repair": "Use for code, test, local verification, or project configuration changes.",
-                "taskplan_repair": "Use for task structure, task order, task coverage, or task reference problems.",
-                "architecture_artifact_repair": "Use for AAC design facts, interfaces, data model, state, runtime, or coverage problems.",
-                "needs_user_decision": "Use for scope, acceptance, external environment, credential, network, policy, or product decision blockers."
+                "execution_repair": "用于代码、测试、本地验证或项目配置变更。",
+                "taskplan_repair": "用于任务结构、任务顺序、任务覆盖或任务引用问题。",
+                "architecture_artifact_repair": "用于 AAC 设计事实、接口、数据模型、状态、运行时或覆盖问题。",
+                "needs_user_decision": "用于范围、验收、外部环境、凭据、网络、策略或产品决策阻塞。"
             }
         },
         "enumRefs": {
@@ -2446,7 +2443,7 @@ fn build_manual_review_request(
                 "targetId": "resolution",
                 "path": result_file,
                 "required": true,
-                "description": "Write the ManualReviewResolution JSON after the user answers the review gate."
+                    "description": "在用户回答评审门控后编写 ManualReviewResolution JSON。"
             }],
             "requiredFields": [
                 "userAnswer", "decision", "changeRequest", "nextAction"
@@ -2461,8 +2458,8 @@ fn build_manual_review_request(
                 {
                     "groupId": "manual_review_context",
                     "required": true,
-                    "purpose": "Read the review issue and allowed user decision protocol.",
-                    "whenToRead": "Read after the user answers the manual review gate.",
+                    "purpose": "阅读评审问题与允许的用户决策协议。",
+                    "whenToRead": "在用户回答人工评审门控后阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "source.reviewId",
                         "source.reviewResultRef",
@@ -2481,8 +2478,8 @@ fn build_manual_review_request(
                 {
                     "groupId": "manual_review_write_contract",
                     "required": true,
-                    "purpose": "Read the authorized resolution output path and schema fields.",
-                    "whenToRead": "Read before writing ManualReviewResolution.",
+                    "purpose": "阅读授权的解决方案输出路径与 schema 字段。",
+                    "whenToRead": "在编写 ManualReviewResolution 前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.resultFile",
                         "outputContract.writeTargets",
@@ -2507,18 +2504,16 @@ where
     D: DomainDispatcher,
 {
     let target = authorized.targets.first().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "ManualReviewResolution target is missing".to_string(),
-        )
+        state::store::StateError::InvalidArgument("ManualReviewResolution 目标缺失".to_string())
     })?;
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
         state::store::StateError::InvalidArgument(
-            "ManualReviewResolution request missing deliveryId".to_string(),
+            "ManualReviewResolution 请求缺少 deliveryId".to_string(),
         )
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
         state::store::StateError::InvalidArgument(
-            "ManualReviewResolution request missing phaseId".to_string(),
+            "ManualReviewResolution 请求缺少 phaseId".to_string(),
         )
     })?;
     if let Some(stale) = ensure_latest_request(
@@ -2549,7 +2544,7 @@ where
                 vec![issue(
                     "MANUAL_REVIEW_RESOLUTION_SCHEMA_INVALID",
                     "$",
-                    &format!("ManualReviewResolution JSON has an invalid schema: {error}"),
+                    &format!("ManualReviewResolution JSON 的 schema 无效：{error}"),
                 )],
                 "loom.reviewResolveFile",
                 "manual_review_resolution_candidate_only",
@@ -2614,7 +2609,7 @@ where
             vec![issue(
                 "MANUAL_REVIEW_NEXT_PHASE_UNAVAILABLE",
                 "nextAction.type",
-                "continue_to_next_phase requires an accepted nextPhasePreview candidate. Use done when no next phase is available.",
+                "continue_to_next_phase 需要已接受的 nextPhasePreview 候选。当无下一阶段时使用 done。",
             )],
             "loom.reviewResolveFile",
             "manual_review_resolution_candidate_only",
@@ -2740,7 +2735,7 @@ fn validate_manual_review_resolution(
         issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_REF_INVALID",
             "source",
-            "ManualReview request source must include the reviewId.",
+            "ManualReview 请求 source 必须包含 reviewId。",
         ));
     }
     let browser_quality_gate = fields
@@ -2755,7 +2750,7 @@ fn validate_manual_review_resolution(
         issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
             "browserQualityResolution",
-            "Generic manual review cannot include a browser quality resolution.",
+            "通用人工评审不能包含浏览器质量解决方案。",
         ));
     }
     match resolution.decision.as_str() {
@@ -2764,7 +2759,7 @@ fn validate_manual_review_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "changeRequest",
-                    "approve_override requires changeRequest to be omitted or null.",
+                    "approve_override 要求 changeRequest 省略或为 null。",
                 ));
             }
             if !matches!(
@@ -2774,7 +2769,7 @@ fn validate_manual_review_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "nextAction.type",
-                    "approve_override can only route to done or continue_to_next_phase.",
+                    "approve_override 只能路由至 done 或 continue_to_next_phase。",
                 ));
             }
         }
@@ -2783,7 +2778,7 @@ fn validate_manual_review_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "changeRequest",
-                    "request_changes requires changeRequest.",
+                    "request_changes 需要 changeRequest。",
                 ));
                 return issues;
             };
@@ -2798,21 +2793,21 @@ fn validate_manual_review_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_ENUM_INVALID",
                     "changeRequest.route",
-                    "changeRequest.route is not allowed.",
+                    "changeRequest.route 不在允许范围内。",
                 ));
             }
             if resolution.next_action.r#type != change.route {
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "nextAction.type",
-                    "request_changes nextAction.type must match changeRequest.route.",
+                    "request_changes 的 nextAction.type 必须与 changeRequest.route 匹配。",
                 ));
             }
         }
         _ => issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_ENUM_INVALID",
             "decision",
-            "ManualReviewResolution decision is not allowed.",
+            "ManualReviewResolution decision 不在允许范围内。",
         )),
     }
     issues
@@ -2828,14 +2823,14 @@ fn validate_browser_quality_manual_resolution(
         issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
             "userAnswer.selectedShortReply",
-            "Browser quality selectedShortReply must match decision.",
+            "浏览器质量 selectedShortReply 必须与 decision 匹配。",
         ));
     }
     if resolution.change_request.is_some() {
         issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
             "changeRequest",
-            "Browser quality resolution does not use generic changeRequest routing.",
+            "浏览器质量解决方案不使用通用 changeRequest 路由。",
         ));
     }
     match resolution.decision.as_str() {
@@ -2851,7 +2846,7 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "nextAction.type",
-                    "retry_browser_environment must use the dedicated environment retry route.",
+                    "retry_browser_environment 必须使用专用的环境重试路由。",
                 ));
             }
         }
@@ -2860,7 +2855,7 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "nextAction.type",
-                    "External browser evidence must return to Review.",
+                    "外部浏览器证据必须返回至 Review。",
                 ));
             }
             let expected = gate
@@ -2875,7 +2870,7 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "browserQualityResolution",
-                    "External browser evidence requires browserQualityResolution.",
+                    "外部浏览器证据需要 browserQualityResolution。",
                 ));
                 return;
             };
@@ -2888,7 +2883,7 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_REF_INVALID",
                     "browserQualityResolution.externalEvidence[].checkId",
-                    "External evidence must cover every required browser check exactly once.",
+                    "外部证据必须精确覆盖每个必需浏览器检查一次。",
                 ));
             }
             for evidence in &browser_resolution.external_evidence {
@@ -2903,7 +2898,7 @@ fn validate_browser_quality_manual_resolution(
                     issues.push(issue(
                         "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                         "browserQualityResolution.externalEvidence",
-                        "Each external browser evidence item requires valid evidenceRefs, observedOutcome, and source.",
+                        "每个外部浏览器证据项需要有效的 evidenceRefs、observedOutcome 和 source。",
                     ));
                 }
             }
@@ -2916,7 +2911,7 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "nextAction.type",
-                    "Quality waiver can only complete the delivery or continue to the next phase.",
+                    "质量豁免只能完成交付或继续至下一阶段。",
                 ));
             }
             if resolution
@@ -2928,14 +2923,14 @@ fn validate_browser_quality_manual_resolution(
                 issues.push(issue(
                     "MANUAL_REVIEW_RESOLUTION_STATUS_INVALID",
                     "browserQualityResolution.waiverReason",
-                    "Quality waiver requires an explicit non-empty reason.",
+                    "质量豁免需要明确的非空理由。",
                 ));
             }
         }
         _ => issues.push(issue(
             "MANUAL_REVIEW_RESOLUTION_ENUM_INVALID",
             "decision",
-            "Browser quality manual review decision is not allowed.",
+            "浏览器质量人工评审 decision 不在允许范围内。",
         )),
     }
 }
@@ -2973,16 +2968,14 @@ fn apply_browser_quality_resolution(
         .filter(|value| value.is_object())
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "browser quality resolution is missing source.browserQualityGate".to_string(),
+                "浏览器质量解决方案缺少 source.browserQualityGate".to_string(),
             )
         })?;
     let closure_task_id = gate
         .pointer("/browserVerification/closureTaskId")
         .and_then(Value::as_str)
         .ok_or_else(|| {
-            state::store::StateError::StateCorrupted(
-                "browser quality gate is missing closureTaskId".to_string(),
-            )
+            state::store::StateError::StateCorrupted("浏览器质量门控缺少 closureTaskId".to_string())
         })?;
     let root = Path::new(project_root);
     let (task_plan, mut run) = load_current_plan_and_run(root, locator)?;
@@ -2992,7 +2985,7 @@ fn apply_browser_quality_resolution(
         .find(|task| task.task_id == closure_task_id)
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "browser quality gate references a missing closure task".to_string(),
+                "浏览器质量门控引用了不存在的闭环任务".to_string(),
             )
         })?;
 
@@ -3035,9 +3028,7 @@ fn apply_browser_quality_resolution(
         .find(|state| state.task_id == closure_task_id)
         .and_then(|state| state.result_id.clone())
         .ok_or_else(|| {
-            state::store::StateError::StateCorrupted(
-                "browser closure result is missing for external evidence".to_string(),
-            )
+            state::store::StateError::StateCorrupted("外部证据缺少浏览器闭环结果".to_string())
         })?;
     let result_path = task_result_file(root, locator, &run.run_id, closure_task_id, &result_id);
     let mut result: TaskResult = state::store::read_json(&result_path)?;
@@ -3073,9 +3064,7 @@ fn apply_browser_quality_resolution(
         .iter()
         .find(|profile| profile.task_id == closure_task_id)
         .ok_or_else(|| {
-            state::store::StateError::StateCorrupted(
-                "browser closure profile is missing for external evidence".to_string(),
-            )
+            state::store::StateError::StateCorrupted("外部证据缺少浏览器闭环 profile".to_string())
         })?;
     for verification in &mut result.verification_results {
         let required_passed = profile
@@ -3093,9 +3082,7 @@ fn apply_browser_quality_resolution(
             });
         if required_passed {
             verification.status = "passed".to_string();
-            verification.summary =
-                "Required browser evidence was supplied through the external evidence gate."
-                    .to_string();
+            verification.summary = "必需的浏览器证据已通过外部证据门控提供。".to_string();
             let evidence_refs = verification
                 .browser_checks
                 .iter()
@@ -3122,10 +3109,9 @@ fn apply_browser_quality_resolution(
         contracts::TaskResultStatus::Completed
     };
     result.notes = if has_non_passed {
-        vec!["Required checks use external evidence; supplemental browser checks remain unavailable."
-            .to_string()]
+        vec!["必需检查使用外部证据；补充浏览器检查仍不可用。".to_string()]
     } else {
-        vec!["Browser checks were closed with user-submitted external evidence.".to_string()]
+        vec!["浏览器检查已通过用户提交的外部证据闭环。".to_string()]
     };
     result.updated_at = state::store::now_string();
     state::store::write_json_atomic(&result_path, &result)?;
@@ -3175,11 +3161,11 @@ fn effective_manual_review_action(resolution: &ManualReviewResolution) -> RouteA
         ),
         "retry_browser_environment" => (
             RouteActionKind::ContinueExecution,
-            "Retry MCP browser environment preparation.".to_string(),
+            "重试 MCP 浏览器环境准备。".to_string(),
         ),
         "submit_external_browser_evidence" => (
             RouteActionKind::Review,
-            "Re-run Review with accepted external browser evidence.".to_string(),
+            "使用已接受的外部浏览器证据重新运行评审。".to_string(),
         ),
         _ => {
             let change = resolution
@@ -3339,7 +3325,7 @@ fn update_delivery_after_manual_review_request(
             kind: RouteActionKind::ManualReview,
             source: "review_result".to_string(),
             reason: result.next_action.reason.clone(),
-            prompt: Some("Review requires user decision before delivery can continue.".to_string()),
+            prompt: Some("评审需要用户决策后交付才能继续。".to_string()),
             accepted_responses: vec![
                 "approve_override".to_string(),
                 "request_changes".to_string(),
@@ -3433,7 +3419,7 @@ fn write_review_result(
         request_ref: request_ref.to_string(),
     })?;
     let submit_tool = inspected.submit_tool.ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Review request missing submitTool".to_string())
+        state::store::StateError::InvalidArgument("Review 请求缺少 submitTool".to_string())
     })?;
     let write_targets = inspected
         .write_targets
@@ -3466,34 +3452,39 @@ fn load_task_results(
         .filter_map(|state| {
             let task_id = &state.task_id;
             let Some(result_id) = state.result_id.as_ref() else {
-                if matches!(state.status, TaskRunStatus::Pending | TaskRunStatus::Running) {
+                if matches!(
+                    state.status,
+                    TaskRunStatus::Pending | TaskRunStatus::Running
+                ) {
                     return None;
                 }
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "TaskPlanRun {} has terminal task {} with no canonical TaskResult reference",
+                    "TaskPlanRun {} 的终止任务 {} 没有规范 TaskResult 引用",
                     run.run_id, task_id
                 ))));
             };
             let Some(task) = task_plan.tasks.iter().find(|task| task.task_id == *task_id) else {
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "TaskPlanRun {} references task {} that is absent from the canonical TaskPlan",
+                    "TaskPlanRun {} 引用的任务 {} 不在规范 TaskPlan 中",
                     run.run_id, task_id
                 ))));
             };
             let path = task_result_file(root, locator, &run.run_id, &task.task_id, result_id);
             let result: TaskResult = match state::store::read_json(&path) {
                 Ok(result) => result,
-                Err(error) => return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "canonical TaskResult {} for task {} cannot be loaded from {}: {}",
-                    result_id,
-                    task_id,
-                    path.display(),
-                    error
-                )))),
+                Err(error) => {
+                    return Some(Err(state::store::StateError::StateCorrupted(format!(
+                        "任务 {} 的规范 TaskResult {} 无法从 {} 加载：{}",
+                        result_id,
+                        task_id,
+                        path.display(),
+                        error
+                    ))))
+                }
             };
             if result.task_result_id != *result_id {
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "TaskResult file {} contains taskResultId {}, but TaskPlanRun points to {}",
+                    "TaskResult 文件 {} 包含 taskResultId {}，但 TaskPlanRun 指向 {}",
                     path.display(),
                     result.task_result_id,
                     result_id
@@ -3501,19 +3492,19 @@ fn load_task_results(
             }
             if result.task_id != *task_id {
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "canonical TaskResult {} belongs to task {}, but TaskPlanRun expects {}",
+                    "规范 TaskResult {} 属于任务 {}，但 TaskPlanRun 期望 {}",
                     result.task_result_id, result.task_id, task_id
                 ))));
             }
             if result.task_plan_id != task_plan.task_plan_id {
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "canonical TaskResult {} belongs to TaskPlan {}, but Review loaded {}",
+                    "规范 TaskResult {} 属于 TaskPlan {}，但 Review 加载的是 {}",
                     result.task_result_id, result.task_plan_id, task_plan.task_plan_id
                 ))));
             }
             if !task_result_status_matches_run_state(result.status, state.status) {
                 return Some(Err(state::store::StateError::StateCorrupted(format!(
-                    "canonical TaskResult {} status {:?} conflicts with TaskPlanRun task {} status {:?}",
+                    "规范 TaskResult {} 的状态 {:?} 与 TaskPlanRun 任务 {} 的状态 {:?} 冲突",
                     result.task_result_id, result.status, task_id, state.status
                 ))));
             }
@@ -4747,9 +4738,9 @@ fn build_review_signals(
             "verificationSupported": obligation.get("verificationSupported").cloned().unwrap_or(Value::Bool(false)),
             "recommendedNextAction": if satisfied { "none" } else { "execution_repair" },
             "reason": if satisfied {
-                "The task implementation obligation has persisted evidence and supported verification."
+                "任务实现义务已持久化证据并通过验证。"
             } else {
-                "The task implementation obligation is incomplete or its evidence cannot prove the declared outcome."
+                "任务实现义务不完整，或其证据无法证明声明的结果。"
             }
         }));
     }
@@ -4771,9 +4762,9 @@ fn build_review_signals(
             "actualStatus": if detail_satisfied { "satisfied" } else { "missing" },
             "recommendedNextAction": if detail_satisfied { "none" } else { "execution_repair" },
             "reason": if detail_satisfied {
-                "Assigned TaskResult evidence reports this requirement detail as satisfied."
+                "已分配的 TaskResult 证据将该需求详情报告为已满足。"
             } else {
-                "Assigned TaskResult evidence is missing or does not report this requirement detail as satisfied."
+                "已分配的 TaskResult 证据缺失，或未将该需求详情报告为已满足。"
             }
         }));
     }
@@ -4810,11 +4801,11 @@ fn build_review_signals(
                 "execution_repair"
             },
             "reason": if quality_satisfied {
-                "TaskResult frontend quality self-check satisfies the task UI surface contract."
+                "TaskResult 前端质量自检满足任务 UI 界面契约。"
             } else if browser_environment_blocked {
-                "Required browser evidence is unavailable on both host and managed container; this is an environment quality gate, not a product-code repair."
+                "所需浏览器证据在宿主机与托管容器均不可用；这是环境质量门控，不是产品代码修复。"
             } else {
-                "TaskResult frontend quality self-check does not satisfy the task UI surface contract."
+                "TaskResult 前端质量自检不满足任务 UI 界面契约。"
             }
         }));
     }
@@ -4861,9 +4852,9 @@ fn build_review_signals(
                 .unwrap_or_else(|| json!(0)),
             "recommendedNextAction": if quality_satisfied { "none" } else { "execution_repair" },
             "reason": if quality_satisfied {
-                "TaskResult contains passed verification evidence for the referenced engineering quality requirement."
+                "TaskResult 包含引用工程质量需求的已通过验证证据。"
             } else {
-                "TaskResult is missing passed verification evidence for the referenced engineering quality requirement."
+                "TaskResult 缺少引用工程质量需求的已通过验证证据。"
             }
         }));
     }
@@ -4907,11 +4898,11 @@ fn build_review_signals(
                 "execution_repair"
             },
             "reason": if missing_task_assignment {
-                "TaskPlan does not assign this architecture quality item to an implementation task."
+                "TaskPlan 未将此架构质量项分配给实现任务。"
             } else if quality_satisfied {
-                "TaskResult contains supported architecture quality evidence for the referenced requirement."
+                "TaskResult 包含引用需求的已支持架构质量证据。"
             } else {
-                "TaskResult is missing supported architecture quality evidence for the referenced requirement."
+                "TaskResult 缺少引用需求的已支持架构质量证据。"
             }
         }));
     }
@@ -4941,9 +4932,9 @@ fn build_review_signals(
             "knownGapCount": item.get("knownGapCount").cloned().unwrap_or_else(|| json!(0)),
             "recommendedNextAction": if contract_satisfied { "none" } else { "execution_repair" },
             "reason": if contract_satisfied {
-                "TaskResult contains supported API contract evidence for the referenced requirement."
+                "TaskResult 包含引用需求的已支持 API 契约证据。"
             } else {
-                "TaskResult is missing supported API contract evidence for the referenced requirement."
+                "TaskResult 缺少引用需求的已支持 API 契约证据。"
             }
         }));
     }
@@ -4988,9 +4979,9 @@ fn build_review_signals(
             "knownGapCount": item.get("knownGapCount").cloned().unwrap_or_else(|| json!(0)),
             "recommendedNextAction": if quality_satisfied { "none" } else { "execution_repair" },
             "reason": if quality_satisfied {
-                "TaskResult contains supported code quality evidence for selected language/framework references."
+                "TaskResult 包含已选语言/框架引用的已支持代码质量证据。"
             } else {
-                "TaskResult is missing supported code quality evidence for selected language/framework references."
+                "TaskResult 缺少已选语言/框架引用的已支持代码质量证据。"
             }
         }));
     }
@@ -5018,7 +5009,7 @@ fn build_review_signals(
                 "closureSatisfied": false,
                 "missingTaskAssignment": true,
                 "recommendedNextAction": "taskplan_repair",
-                "reason": "No TaskPlan task structurally covers this workflow closure requirement."
+                "reason": "没有 TaskPlan 任务在结构上覆盖此工作流闭环需求。"
             }));
         }
     }
@@ -5076,9 +5067,9 @@ fn build_review_signals(
                 "requiredDataBindingMode": "wired",
                 "recommendedNextAction": if closure_satisfied { "none" } else { "execution_repair" },
                 "reason": if closure_satisfied {
-                    "TaskResult self-check reports wired closure evidence with no known gaps."
+                    "TaskResult 自检报告已接线的闭环证据，无已知缺失。"
                 } else {
-                    "Required workflow closure is not satisfied by TaskResult frontend self-check evidence."
+                    "TaskResult 前端自检证据未满足所需的工作流闭环。"
                 }
             }));
         }
@@ -5728,7 +5719,7 @@ fn ensure_latest_request(
         return Ok(Some(failed(
             project_root,
             "STALE_REVIEW_REQUEST",
-            "Review submit must use the active phase latest Review requestRef.".to_string(),
+            "Review 提交必须使用当前阶段最新的 Review requestRef。".to_string(),
             route_action,
         )));
     }
@@ -5824,16 +5815,14 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
             .get("targetId")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument(
-                    "write target missing targetId".to_string(),
-                )
+                state::store::StateError::InvalidArgument("write target 缺少 targetId".to_string())
             })?
             .to_string(),
         path: value
             .get("path")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument("write target missing path".to_string())
+                state::store::StateError::InvalidArgument("write target 缺少 path".to_string())
             })?
             .to_string(),
         required: value
@@ -5843,7 +5832,7 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
         description: value
             .get("description")
             .and_then(Value::as_str)
-            .unwrap_or("Write the requested artifact.")
+            .unwrap_or("编写请求的产物。")
             .to_string(),
     })
 }

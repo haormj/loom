@@ -17,3 +17,4 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 state = { path = "../state" }
+reference-catalog = { path = "../reference-catalog" }

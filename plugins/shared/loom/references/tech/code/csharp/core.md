@@ -1,92 +1,92 @@
-# C# Application And Library Delivery
+# C# 应用与库交付
 
 ## When To Use
 
-Use this reference for task-owned C# application, domain, service, worker, CLI, library, or shared-contract code. Preserve target framework/language version, nullable/analyzer policy, async/error conventions, DI, serialization, and public API compatibility.
+此参考用于任务拥有的 C# 应用、领域、服务、worker、CLI、库或共享契约代码。保留目标框架/语言版本、可空/分析器策略、异步/错误约定、DI、序列化和公共 API 兼容性。
 
-Version-specific language features, ASP.NET Core, EF Core, Blazor, performance, and testing are selected separately.
+版本特定的语言特性、ASP.NET Core、EF Core、Blazor、性能和测试单独选择。
 
 ## Implementation Focus
 
 ### Nullability And Invariants
 
-Treat nullable reference annotations as a public correctness contract. Validate external input, narrow nullable values with control flow, and model optional/required states explicitly.
+将可空引用注解视为公共正确性契约。验证外部输入，用控制流收窄可空值，并显式建模可选/必需状态。
 
-Do not use `!`, `#nullable disable`, broad warning suppression, or default-initialized required members to silence a real initialization/validation gap. A justified interop/framework assertion stays local and documented by the invariant.
+不要使用 `!`、`#nullable disable`、宽泛警告抑制或默认初始化的必需成员来静默真实的初始化/验证缺口。合理的互操作/框架断言保持局部并由不变式记录。
 
-Keep DTO, domain, persistence, configuration, and UI models separate when required/nullability/serialization/lifetime differ.
+当必需/可空/序列化/生命周期不同时将 DTO、领域、持久化、配置和 UI 模型分开。
 
 ### Async And Cancellation
 
-Keep I/O paths asynchronous end to end. Avoid `.Result`, `.Wait()`, `GetAwaiter().GetResult()`, sync wrappers, and unobserved fire-and-forget work.
+保持 I/O 路径端到端异步。避免 `.Result`、`.Wait()`、`GetAwaiter().GetResult()`、同步包装器和未观察的发后即忘工作。
 
-Accept/forward `CancellationToken` when the owner or framework can cancel. Cancellation is not failure: preserve `OperationCanceledException`, stop starting new work, and clean up/rollback owned resources.
+当所有者或框架可以取消时接受/转发 `CancellationToken`。取消不是失败：保留 `OperationCanceledException`、停止启动新工作并清理/回滚拥有的资源。
 
-Every background task needs a host/lifetime owner, error observation, stop policy, and shutdown deadline. `async void` is limited to required event-handler signatures with local error handling.
+每个后台任务需要宿主/生命周期所有者、错误观察、停止策略和关闭截止时间。`async void` 仅限于具有局部错误处理的所需事件处理器签名。
 
-Use `Task.WhenAll` only when operations are independent and concurrency/resource limits permit it. Preserve all failures and cancellation semantics rather than awaiting tasks repeatedly in a way that hides exceptions.
+仅当操作独立且并发/资源限制允许时才使用 `Task.WhenAll`。保留所有失败和取消语义而非以隐藏异常的方式重复等待任务。
 
 ### Resource And Disposal Ownership
 
-Use `using`/`await using`, `IDisposable`/`IAsyncDisposable`, and DI ownership consistently for streams, responses, DB contexts, timers, subscriptions, locks, native handles, channels, and scopes.
+对流、响应、DB 上下文、定时器、订阅、锁、本地句柄、通道和作用域一致使用 `using`/`await using`、`IDisposable`/`IAsyncDisposable` 和 DI 所有权。
 
-Do not dispose container-owned services manually or capture scoped/disposable services in singletons/static state. A factory-created scope/service is disposed by its explicit owner.
+不要手动销毁容器拥有的服务或在单例/静态状态中捕获作用域/可销毁服务。工厂创建的作用域/服务由其显式所有者销毁。
 
-Return streams/enumerables only when the caller knows who owns the underlying resource and how long enumeration remains valid.
+仅当调用者知道谁拥有底层资源以及枚举保持有效多久时才返回流/可枚举。
 
 ### Dependency Injection And Lifetimes
 
-Constructor injection makes required dependencies explicit. Keep service lifetimes compatible: singleton cannot capture scoped/transient-disposable state; workers create scopes per unit of work when required.
+构造函数注入使必需依赖显式。保持服务生命周期兼容：单例不能捕获作用域/瞬态可销毁状态；worker 在需要时按工作单元创建作用域。
 
-Avoid service locator calls and broad `IServiceProvider` injection except in composition/factory boundaries. Resolve keyed/named strategies through established typed factories when dynamic selection is product behavior.
+避免服务定位器调用和宽泛的 `IServiceProvider` 注入，组合/工厂边界除外。当动态选择是产品行为时通过已建立的类型化工厂解析键控/命名策略。
 
-Keep pure domain logic free of framework container/config/logging dependencies where repository architecture separates it.
+在仓库架构分离的地方保持纯领域逻辑不受框架容器/配置/日志依赖。
 
 ### Errors And Results
 
-Follow the repository's expected-failure model: result/discriminated union, validation result, typed exception, or boundary-specific error. Do not add a homegrown `Result<T>` when a standard exists.
+遵循仓库的预期失败模型：result/可辨识联合、验证结果、类型化异常或边界特定错误。当标准存在时不要添加自制的 `Result<T>`。
 
-Exceptions represent exceptional failures and preserve inner exception/stack; expected business rejection remains typed/actionable. Catch only when translating, adding safe context, compensating, or retrying with policy.
+异常代表异常失败并保留内部异常/堆栈；预期业务拒绝保持类型化/可操作。仅在转换、添加安全上下文、补偿或按策略重试时捕获。
 
-Do not log and rethrow the same exception at every layer or expose raw provider messages, stack traces, secrets, or sensitive payloads.
+不要在每层记录并重新抛出同一异常或暴露原始提供者消息、堆栈跟踪、密钥或敏感载荷。
 
 ### Values, Collections, And Enumeration
 
-Use records/read-only/init types when value semantics and lifecycle fit; do not choose records for mutable identity-rich entities merely for brevity.
+当值语义和生命周期适合时使用 record/只读/init 类型；不要仅为简洁而为可变的标识丰富实体选择 record。
 
-Be explicit about `IEnumerable<T>` laziness, multiple enumeration, disposal, mutation during enumeration, and materialization bounds. Return `IReadOnlyList<T>`/immutable collections only when the contract truly prevents or isolates mutation.
+对 `IEnumerable<T>` 延迟、多次枚举、销毁、枚举期间变更和物化边界保持显式。仅当契约真正阻止或隔离变更时才返回 `IReadOnlyList<T>`/不可变集合。
 
-Use `DateTimeOffset`/UTC, decimal, culture-aware parsing/formatting, and checked numeric conversion according to domain/wire/storage requirements.
+根据领域/线上/存储要求使用 `DateTimeOffset`/UTC、decimal、文化感知解析/格式化和检查的数值转换。
 
 ### Configuration And Logging
 
-Bind strongly typed options at composition boundaries and validate required values before work starts. Avoid scattered string keys and insecure/local production fallbacks.
+在组合边界绑定强类型选项并在工作开始之前验证必需值。避免分散的字符串键和不安全/本地生产回退。
 
-Use structured logs with stable event context and no credentials/tokens/personal/sensitive payloads. Avoid logging the same error repeatedly across layers.
+使用具有稳定事件上下文且无凭据/令牌/个人/敏感载荷的结构化日志。避免跨层重复记录同一错误。
 
 ### Serialization And Public API
 
-Keep wire/storage serializers explicit about names, null/default/unknown fields, enums, dates, decimals, polymorphism, and backward compatibility. Static types do not validate untrusted payloads automatically.
+保持线上/存储序列化器对名称、null/默认/未知字段、枚举、日期、decimal、多态和向后兼容性显式。静态类型不自动验证不可信载荷。
 
-For public assemblies, preserve accessibility, signatures, generic constraints, nullability, exceptions, attributes, serialization, and binary/source compatibility within accepted versioning policy. Document public behavior where repository policy requires it.
+对于公共程序集，在已接受的版本策略内保留可访问性、签名、泛型约束、可空性、异常、属性、序列化和二进制/源码兼容性。在仓库策略要求时记录公共行为。
 
 ## Verification Focus
 
-- Run focused build/analyzers and tests for changed projects under the actual target framework/language version.
-- Treat new nullable/analyzer warnings in changed code as defects unless locally justified.
-- Exercise invalid/null/boundary input, expected and unexpected errors, cancellation, disposal, and DI lifetime behavior.
-- Test serialization/configuration/public API compatibility when those boundaries change.
-- Verify no blocking async calls, unowned background work, or sensitive logging was introduced.
+- 在实际目标框架/语言版本下为变更项目运行聚焦的构建/分析器和测试。
+- 将变更代码中新的可空/分析器警告视为缺陷，除非局部合理。
+- 演练无效/null/边界输入、预期和意外错误、取消、销毁和 DI 生命周期行为。
+- 当这些边界变更时测试序列化/配置/公共 API 兼容性。
+- 验证没有引入阻塞异步调用、无主后台工作或敏感日志。
 
 ## Evidence Focus
 
-Name the nullability/async/cancellation owner, DI/resource lifetime, error model, serialization/config/public API decision, and assertion proving behavior. A warning-free build alone does not prove cancellation, disposal, or runtime contract safety.
+说明可空/异步/取消所有者、DI/资源生命周期、错误模型、序列化/配置/公共 API 决策和证明行为的断言。仅无警告构建不证明取消、销毁或运行时契约安全。
 
 ## Unsafe Defaults
 
-- Null-forgiving/suppression used instead of initialization or validation.
-- Sync-over-async or unobserved fire-and-forget work.
-- Scoped/disposable dependency captured by singleton/static state.
-- New generic Result/error abstraction duplicating repository conventions.
-- Lazy enumerable escaping disposed resources or enumerated repeatedly unknowingly.
-- Raw exceptions or sensitive values logged/serialized publicly.
+- 使用 null 宽恕/抑制替代初始化或验证。
+- 同步 over 异步或未观察的发后即忘工作。
+- 作用域/可销毁依赖被单例/静态状态捕获。
+- 新的泛型 Result/错误抽象重复仓库约定。
+- 延迟可枚举逃逸已销毁资源或不知情地重复枚举。
+- 原始异常或敏感值被公开记录/序列化。

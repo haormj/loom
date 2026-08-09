@@ -1,45 +1,43 @@
-# UIX Token: Typography
+# UIX 令牌：排版
 
-Load this file when creating or changing headings, tables, forms, dashboards, marketing copy, docs, code views, or mobile text.
+在创建或修改标题、表格、表单、仪表板、营销文案、文档、代码视图或移动文本时加载此文件。
 
-## Font Stack
+## 字体栈
 
-- Use the existing project font system when present.
-- For Chinese business software, prefer reliable CJK stacks such as `Noto Sans SC`, `PingFang SC`, `Microsoft YaHei`, and system fallbacks.
-- For code, numeric tables, logs, or developer tools, include a monospace stack with tabular figures when supported.
-- Avoid making Inter, Roboto, Arial, or `system-ui` the only design decision in a new product unless the existing repo already standardizes on it.
-- Do not load remote fonts when the environment or product constraints make that risky; local/system fallbacks are acceptable when chosen intentionally.
+- 存在时使用现有项目字体系统。
+- 对于中文业务软件，优先使用可靠的 CJK 字体栈如 `Noto Sans SC`、`PingFang SC`、`Microsoft YaHei` 和系统回退。
+- 对于代码、数字表格、日志或开发者工具，支持时包含带表格数字的等宽字体栈。
+- 除非现有仓库已标准化，否则避免将 Inter、Roboto、Arial 或 `system-ui` 作为新产品中唯一的设计决策。
+- 当环境或产品约束使加载远程字体有风险时不要加载；有意选择时本地/系统回退可接受。
 
-## Font Selection Decision
+## 字体选择决策
 
-Choose a font direction from the surface's reading job:
+从界面的阅读任务中选择字体方向：
 
-| Surface | Primary concern | Typical direction |
+| 界面 | 主要关注 | 典型方向 |
 | --- | --- | --- |
-| Workbench/data | scan speed, compact labels, numeric alignment | sans with tabular figures |
-| Docs/prose | long-form reading and code contrast | readable sans or serif plus mono |
-| Marketing/corporate | brand voice and display hierarchy | brand-approved display plus readable body |
-| Developer tool | dense code, identifiers, logs | sans UI plus mono data layer |
-| Native mobile | platform familiarity and dynamic type | platform font and platform scale |
+| 工作台/数据 | 扫描速度、紧凑标签、数字对齐 | 带表格数字的无衬线 |
+| 文档/散文 | 长文阅读和代码对比 | 可读无衬线或衬线加等宽 |
+| 营销/企业 | 品牌声音和展示层次 | 品牌批准的展示字体加可读正文 |
+| 开发者工具 | 密集代码、标识符、日志 | 无衬线 UI 加等宽数据层 |
+| 原生移动 | 平台熟悉度和动态排版 | 平台字体和平台比例 |
 
-Do not select a display font solely because it looks distinctive in a screenshot.
-The decision must survive long labels, localized text, numeric values, and the
-required viewport widths.
+不要仅因为字体在截图中看起来独特而选择展示字体。决策必须经受长标签、本地化文本、数值和必需视口宽度的考验。
 
-## Scale
+## 比例
 
-Use a small, stable type scale. Suggested web baseline:
+使用小型、稳定的字号比例。建议 Web 基线：
 
-- `xs`: 12px for metadata, table hints, compact labels.
-- `sm`: 13-14px for dense table cells, secondary controls.
-- `base`: 15-16px for body, form inputs, standard controls.
-- `lg`: 18px for section intros or important row titles.
-- `xl`: 20px for panel titles.
-- `2xl`: 24px for page titles inside workbench UI.
-- Larger sizes are reserved for true landing/editorial/immersive hero contexts.
-- In internal tools, page titles usually stay at 20-24px. Hero-scale type inside tables, forms, drawers, or operational panels is a defect.
+- `xs`：12px，用于元数据、表格提示、紧凑标签。
+- `sm`：13-14px，用于密集表格单元格、次要控件。
+- `base`：15-16px，用于正文、表单输入、标准控件。
+- `lg`：18px，用于部分介绍或重要行标题。
+- `xl`：20px，用于面板标题。
+- `2xl`：24px，用于工作台 UI 内的页面标题。
+- 更大尺寸保留给真正的着陆/编辑/沉浸式主视觉上下文。
+- 在内部工具中，页面标题通常保持 20-24px。表格、表单、抽屉或操作面板内的主视觉级排版是缺陷。
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
 ```css
 :root {
@@ -57,42 +55,36 @@ Use a small, stable type scale. Suggested web baseline:
 }
 ```
 
-Use tabular numeric variants for finance, tables, metrics, and logs when the stack supports it.
+当技术栈支持时，为金融、表格、指标和日志使用表格数字变体。
 
-## Surface Rules
+## 界面规则
 
-- Workbench/admin/table UI: compact headings, dense but readable rows, tabular numbers, stable line height.
-- Forms: labels and helper text must remain readable; error text should not shift unrelated layout.
-- Docs: readable prose width, clear heading hierarchy, code block typography.
-- Marketing: expressive headline scale is allowed, but supporting copy must stay readable and responsive.
-- Mobile: text must not depend on desktop line length; controls and labels must wrap cleanly.
-- Data/status labels should be short and consistent. Use helper text or detail panels for explanations rather than stuffing paragraphs into table rows.
-- Keep one role per type scale: page title, section title, field label, body,
-  metadata, status, and code/data. Do not use font size as the only status signal.
-- For mixed CJK/Latin content, check fallback glyph height and baseline alignment;
-  nominally equal `font-size` values do not guarantee equal visual height.
+- 工作台/管理/表格 UI：紧凑标题、密集但可读的行、表格数字、稳定行高。
+- 表单：标签和帮助文本必须保持可读；错误文本不应偏移无关布局。
+- 文档：可读散文宽度、清晰标题层次、代码块排版。
+- 营销：允许富有表现力的标题比例，但支持文案必须保持可读和响应式。
+- 移动：文本不得依赖桌面行长；控件和标签必须干净换行。
+- 数据/状态标签应简短且一致。使用帮助文本或详情面板进行解释，而非将段落塞入表格行。
+- 每个字号比例保持一个角色：页面标题、部分标题、字段标签、正文、元数据、状态和代码/数据。不要使用字号作为唯一的状态信号。
+- 对于混合 CJK/拉丁内容，检查回退字形高度和基线对齐；名义上相等的 `font-size` 值不保证相等的视觉高度。
 
-## Loading And Rendering
+## 加载和渲染
 
-- Prefer existing local fonts or system fallbacks when network loading can delay
-  the first visible surface. If a web font is required, define the loading and
-  fallback behavior in the existing asset pipeline.
-- Use stable font metrics and avoid layout shifts when a font swaps. Check headings,
-  buttons, table columns, and error messages after the final font is active.
+- 当网络加载可能延迟首个可见界面时，优先使用现有本地字体或系统回退。如果需要 Web 字体，在现有资产管道中定义加载和回退行为。
+- 使用稳定字体度量并避免字体交换时的布局偏移。在最终字体激活后检查标题、按钮、表格列和错误消息。
 
-## Implementation
+## 实现
 
-- Keep letter spacing at `0` for normal text. Use uppercase tracking only for small section labels when the style already supports it.
-- Use line-height around 1.45-1.65 for body/prose, tighter for headings, and comfortable for table rows.
-- Use font weight before color when emphasizing text in dense UI.
-- Keep heading levels semantic; do not skip levels to force visual size.
+- 正常文本的字间距保持为 `0`。仅当样式已支持时对小部分标签使用大写字距。
+- 正文/散文使用约 1.45-1.65 的行高，标题更紧凑，表格行舒适。
+- 在密集 UI 中强调文本时优先使用字重而非颜色。
+- 保持标题级别语义化；不要为强制视觉大小而跳过级别。
 
-## Self-Check
+## 自检
 
-- Long Chinese labels, long English words, account ids, and numeric values fit without overlap.
-- Page titles do not look like marketing heroes inside internal tools.
-- Tables align numbers and statuses.
-- Error/help text is readable at the smallest supported viewport.
-- Font families are declared in one token/theme location or follow the existing project system.
-- Font choice evidence names the surface reading job, fallback stack, and checked
-  long-content or localization case when typography changed materially.
+- 长中文标签、长英文单词、账户 ID 和数值适合而不重叠。
+- 内部工具中的页面标题不像营销主视觉。
+- 表格对齐数字和状态。
+- 错误/帮助文本在最小支持视口中可读。
+- 字体族在一个令牌/主题位置声明或遵循现有项目系统。
+- 当排版有实质性变化时，字体选择证据指名界面阅读任务、回退栈和检查的长内容或本地化案例。

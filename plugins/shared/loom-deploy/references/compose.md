@@ -1,130 +1,130 @@
-# Docker Compose Deployment Reference
+# Docker Compose 部署参考
 
-Use this reference when implementing or repairing generated Compose files or wrappers around existing Dockerfiles.
+当实现或修复生成的 Compose 文件或围绕现有 Dockerfile 的包装时，使用本参考文档。
 
-## Generation Rules
+## 生成规则
 
-- Generate services from the DeploymentSpec source model, not from a hard-coded one-service assumption.
-- Use the source model service ids for app services. For a single service, `app` is acceptable. For frontend/backend shapes, keep separate frontend and backend service ids and make the public entry service own the preview URL.
-- Set each service `build.context` to the DeploymentSpec build context for that service/provider and `build.dockerfile` to the Dockerfile path relative to that context. Do not point a Dockerfile at a context that omits its package/build files.
-- Publish only public runtime ports from `DeploymentSpec.runtime.ports` where `internalOnly=false`.
-- Dependency services should use Compose internal networking and `expose`, not host `ports`, to avoid local conflicts.
-- Use named volumes for stateful dependencies such as Postgres, MySQL, MongoDB, Redis, MinIO, RabbitMQ, and Elasticsearch.
-- Generate environment variables only for local development defaults. Do not generate real secrets.
-- Real local `.env` values must not be copied into generated Compose. Use environment diagnostics to record variable names only.
-- Safe local placeholders are acceptable for common framework boot secrets such as Laravel `APP_KEY`, Rails `SECRET_KEY_BASE`, Django `SECRET_KEY`, or NextAuth `NEXTAUTH_SECRET`; they are not production credentials.
-- Prefer map-style `environment` values so repairs are easy to read and patch.
-- Use `depends_on` for dependency ordering. Add health conditions only for services that define a healthcheck and where the local Docker Compose version supports them.
-- Use `restart: unless-stopped` for generated long-running services.
+- 根据 DeploymentSpec 源模型生成服务，而非硬编码的单服务假设。
+- 为应用服务使用源模型服务 id。对于单服务，`app` 是可接受的。对于前端/后端形态，保持独立的前端和后端服务 id，并让公共入口服务拥有预览 URL。
+- 将每个服务的 `build.context` 设为该服务/提供者的 DeploymentSpec 构建上下文，将 `build.dockerfile` 设为相对于该上下文的 Dockerfile 路径。不要将 Dockerfile 指向遗漏其 package/构建文件的上下文。
+- 只发布 `DeploymentSpec.runtime.ports` 中 `internalOnly=false` 的公共运行时端口。
+- 依赖服务应使用 Compose 内部网络和 `expose`，而非主机 `ports`，以避免本地冲突。
+- 为有状态依赖（如 Postgres、MySQL、MongoDB、Redis、MinIO、RabbitMQ 和 Elasticsearch）使用命名卷。
+- 仅为本地开发默认值生成环境变量。不要生成真实密钥。
+- 真实的本地 `.env` 值不得复制到生成的 Compose 中。使用环境诊断仅记录变量名。
+- 对于常见框架启动密钥（如 Laravel `APP_KEY`、Rails `SECRET_KEY_BASE`、Django `SECRET_KEY` 或 NextAuth `NEXTAUTH_SECRET`），安全的本地占位符是可接受的；它们不是生产凭证。
+- 优先使用 map 风格的 `environment` 值，以便修复时易于阅读和修补。
+- 使用 `depends_on` 控制依赖顺序。仅为定义了 healthcheck 且本地 Docker Compose 版本支持的服务添加健康条件。
+- 为生成的长期运行服务使用 `restart: unless-stopped`。
 
-## Topology-Aware Compose Contract
+## 拓扑感知 Compose 契约
 
-Compose must implement the topology already prepared by Loom. Do not infer a different shape from file names or from the last Docker error.
+Compose 必须实现 Loom 已准备的拓扑。不要从文件名或最近的 Docker 错误推断不同的形态。
 
-Public entry:
+公共入口：
 
-- The service named by `topology.publicEntryServiceId` owns host port publication and the preview URL.
-- A static/frontend gateway publishes the browser-facing port and routes API paths internally.
-- A backend-served app publishes the backend port directly and does not need a proxy route.
-- An API-only service may publish an API/health port without pretending to serve a SPA.
+- 由 `topology.publicEntryServiceId` 指定的服务拥有主机端口发布和预览 URL。
+- 静态/前端网关发布面向浏览器的端口并在内部路由 API 路径。
+- 后端服务应用直接发布后端端口，不需要代理路由。
+- API-only 服务可以发布 API/健康端口，无需假装提供 SPA。
 
-Internal backend:
+内部后端：
 
-- Backend/API services behind a frontend gateway use `expose`, not host `ports`, unless the runtime port is explicitly public.
-- Browser-facing frontend config points to a public proxy path such as `/api`.
-- Container-to-container config points to Compose service DNS such as `http://backend:8080`.
-- API proxy locations must be represented by generated gateway config, not only by environment variables.
+- 前端网关后方的后端/API 服务使用 `expose`，而非主机 `ports`，除非运行时端口明确为公共。
+- 面向浏览器的前端配置指向公共代理路径，如 `/api`。
+- 容器到容器的配置指向 Compose 服务 DNS，如 `http://backend:8080`。
+- API 代理位置必须由生成的网关配置表示，而不仅是环境变量。
 
-Dependencies:
+依赖：
 
-- Dependency services use stable Compose service names, named volumes when stateful, `expose`, and generated local credentials.
-- App connection URLs use dependency service DNS names. `localhost` inside a container points to the same container and is almost always wrong for dependencies.
-- `depends_on` expresses startup ordering. Health conditions are added only when the dependency service declares a healthcheck.
+- 依赖服务使用稳定的 Compose 服务名、有状态时使用命名卷、`expose` 和生成本地凭证。
+- 应用连接 URL 使用依赖服务 DNS 名。容器内的 `localhost` 指向同一容器，对于依赖几乎总是错误的。
+- `depends_on` 表示启动顺序。仅在依赖服务声明了 healthcheck 时添加健康条件。
 
-Multi-port:
+多端口：
 
-- Multiple app ports are valid when `DeploymentSpec.runtime.ports` declares them.
-- Publish each public app port once with the allocated `hostPort`.
-- Keep dependency ports internal even when the dependency has a well-known host port.
-- Healthcheck, preview URL, API routes, and final deploy result must reference the same allocated public port plan.
+- 当 `DeploymentSpec.runtime.ports` 声明了多个应用端口时，多端口是有效的。
+- 每个公共应用端口使用分配的 `hostPort` 发布一次。
+- 即使依赖有知名主机端口，也保持依赖端口为内部。
+- Healthcheck、预览 URL、API 路由和最终部署结果必须引用相同的已分配公共端口方案。
 
-## Source Model Shapes
+## 源模型形态
 
-Single-service projects:
+单服务项目：
 
-- One app service owns build/start/runtime config.
-- Publish the resolved host port from `runtime.ports`.
-- If the project has no HTTP server, omit preview URL expectations instead of faking one.
+- 一个应用服务拥有 build/start/runtime 配置。
+- 发布 `runtime.ports` 中解析出的主机端口。
+- 如果项目没有 HTTP 服务器，省略预览 URL 期望，而不是伪造一个。
 
-Frontend plus backend projects:
+前端加后端项目：
 
-- Prefer a public frontend/static service and an internal backend API service.
-- Route API paths through the public entry service only when the generated stack includes a proxy configuration that is proven before the SPA fallback.
-- Backend ports stay internal unless the runtime contract explicitly marks them public.
-- Frontend runtime env should point to the proxy path when a proxy exists, not to a host-only backend URL that will fail inside the browser after deployment.
+- 优先使用公共前端/静态服务和内部后端 API 服务。
+- 仅当生成的栈包含已验证的代理配置时，才通过公共入口服务路由 API 路径（该代理配置需在 SPA fallback 之前得到证明）。
+- 后端端口保持内部，除非运行时契约明确标记为公共。
+- 当存在代理时，前端运行时环境应指向代理路径，而非部署后在浏览器内会失败的主机后端 URL。
 
-Backend-served frontend plus API projects:
+后端服务前端加 API 项目：
 
-- One backend service owns public preview and API paths.
-- The frontend build output must be copied into the backend artifact/static directory before packaging or runtime startup.
-- Do not generate a frontend gateway proxy unless the source model has a separate frontend service.
+- 一个后端服务拥有公共预览和 API 路径。
+- 前端构建输出必须在打包或运行时启动前复制到后端 artifact/static 目录中。
+- 除非源模型有独立的前端服务，否则不要生成前端网关代理。
 
-Existing Dockerfile wrapper:
+现有 Dockerfile 包装：
 
-- Wrap the existing Dockerfile with Compose, but keep the Dockerfile protected.
-- Match `build.context` to the directory assumptions of the Dockerfile. App-local Dockerfiles usually expect their own directory; generated workspace Dockerfiles may need the workspace root.
-- Do not add services into a user Compose file just because the wrapper would be easier.
+- 用 Compose 包装现有 Dockerfile，但保持 Dockerfile 受保护。
+- 将 `build.context` 与 Dockerfile 的目录假设匹配。应用本地 Dockerfile 通常期望自己的目录；生成的 workspace Dockerfile 可能需要 workspace 根目录。
+- 不要仅因为包装更容易就向用户 Compose 文件中添加服务。
 
-## Generated Asset Expectations
+## 生成的资产预期
 
-For generated providers, a valid Compose file should make these relationships visible:
+对于生成的提供者，有效的 Compose 文件应使以下关系可见：
 
-- Every `sourceModel.services[].serviceId` has a Compose service.
-- Each app service has a `build.context`, `build.dockerfile`, environment block, and the expected container port wiring.
-- The public entry service is the only service with preview host port publication unless another public runtime port is explicit.
-- Internal services use service DNS names in app env and `expose` for internal ports.
-- Dependency services have generated local credentials, volumes when stateful, and no accidental host port publication.
-- Gateway/proxy services mount or copy the generated proxy config and route API paths before SPA fallback.
+- 每个 `sourceModel.services[].serviceId` 都有一个 Compose 服务。
+- 每个应用服务有 `build.context`、`build.dockerfile`、环境块和预期的容器端口接线。
+- 公共入口服务是唯一拥有预览主机端口发布的服务，除非另一个公共运行时端口是明确的。
+- 内部服务在应用环境变量中使用服务 DNS 名，内部端口使用 `expose`。
+- 依赖服务有生成本地凭证、有状态时的卷，且没有意外的主机端口发布。
+- 网关/代理服务挂载或复制生成的代理配置，并在 SPA fallback 之前路由 API 路径。
 
-## Port Plan
+## 端口方案
 
-Treat `DeploymentSpec.runtime.ports` as the source of truth for host/container port publication:
+将 `DeploymentSpec.runtime.ports` 视为主机/容器端口发布的唯一真实来源：
 
-- `hostPort` is the real available local port chosen by Loom. Use it in Compose `ports` and final preview details.
-- `preferredHostPort` is only the starting preference. Do not hard-code it when `hostPort` differs.
-- `containerPort` must match the app process inside the container and the Dockerfile `EXPOSE`.
-- `purpose` tells whether the port is preview, api, service, or dependency.
-- `internalOnly=true` means no host publication. Use service DNS names and `expose` for internal communication.
+- `hostPort` 是 Loom 选择的实际可用本地端口。在 Compose `ports` 和最终预览详情中使用它。
+- `preferredHostPort` 仅是起始偏好。当 `hostPort` 不同时不要硬编码它。
+- `containerPort` 必须与容器内的应用进程和 Dockerfile `EXPOSE` 匹配。
+- `purpose` 表示端口是预览、api、service 还是 dependency。
+- `internalOnly=true` 表示不发布到主机。使用服务 DNS 名和 `expose` 进行内部通信。
 
-When multiple public app ports exist, publish each explicit public runtime port once. Do not publish dependency ports to solve application connectivity; fix the internal service URL instead.
+当存在多个公共应用端口时，每个显式公共运行时端口发布一次。不要通过发布依赖端口来解决应用连接问题；改为修复内部服务 URL。
 
-## Existing Assets
+## 现有资产
 
-- Root-level `compose.yaml`, `compose.yml`, `docker-compose.yaml`, and `docker-compose.yml` are protected.
-- Root-level `Dockerfile` is protected; generated Compose may wrap it, but must not edit it without approval.
-- If a user-owned Compose file exists, validate and report it. Do not merge generated services into it automatically.
-- Analyze existing Compose services before reporting status, logs, or health. Prefer app-like services named `app`, `web`, `api`, `server`, `backend`, `frontend`, `www`, `site`, or `gateway`, especially when they have `build`, published HTTP ports, and `depends_on`.
-- Avoid selecting dependency-like services such as Postgres, MySQL, Redis, MongoDB, RabbitMQ, Elasticsearch, MinIO, Kafka, localstack, or mail services as the primary app even if they publish a host port.
-- When a selected service has a published port, use that host/container port pair for the preview URL and healthcheck. If no published port exists, keep diagnostics explicit rather than guessing a reachable URL.
+- 根级 `compose.yaml`、`compose.yml`、`docker-compose.yaml` 和 `docker-compose.yml` 受保护。
+- 根级 `Dockerfile` 受保护；生成的 Compose 可以包装它，但未经批准不得编辑。
+- 如果存在用户拥有的 Compose 文件，验证并报告它。不要自动将生成的服务合并到其中。
+- 在报告状态、日志或健康之前分析现有 Compose 服务。优先选择名为 `app`、`web`、`api`、`server`、`backend`、`frontend`、`www`、`site` 或 `gateway` 的类应用服务，特别是当它们有 `build`、已发布的 HTTP 端口和 `depends_on` 时。
+- 避免将类依赖服务（如 Postgres、MySQL、Redis、MongoDB、RabbitMQ、Elasticsearch、MinIO、Kafka、localstack 或邮件服务）选为主应用，即使它们发布了主机端口。
+- 当选定的服务有已发布端口时，使用该主机/容器端口对作为预览 URL 和 healthcheck。如果不存在已发布端口，保持诊断明确，而不是猜测可达 URL。
 
-## Health And Logs
+## 健康与日志
 
-- App health probing belongs to Loom validation unless the accepted runtime facts contain an explicit safe health path.
-- Do not guess `/` or probe business endpoints as healthchecks. Only use `DeploymentSpec.runtimeContract.healthPath`, a scanner-confirmed safe probe, or an accepted framework health endpoint.
-- Respect healthcheck paths already recorded in `DeploymentSpec`, `sourceModel.services[].healthcheckPath`, and topology validation. Do not invent unrelated probes during Compose repair.
-- When no safe health path exists, omit the Compose healthcheck and let preview/API validation provide the evidence.
-- Log parsing should target the selected app service for existing Compose and identify fatal startup failures before reporting a preview URL.
-- If the app has no HTTP server, Compose can still build/start it, but the deploy result should not invent an HTTP preview URL.
+- 应用健康探测属于 Loom 验证，除非已接受的运行时事实包含明确的安全健康路径。
+- 不要猜测 `/` 或探测业务端点作为 healthcheck。只使用 `DeploymentSpec.runtimeContract.healthPath`、扫描器确认的安全探测或已接受的框架健康端点。
+- 尊重已记录在 `DeploymentSpec`、`sourceModel.services[].healthcheckPath` 和拓扑验证中的 healthcheck 路径。不要在 Compose 修复期间发明无关的探测。
+- 当不存在安全健康路径时，省略 Compose healthcheck，让预览/API 验证提供证据。
+- 日志解析应针对现有 Compose 的选定应用服务，并在报告预览 URL 之前识别致命启动失败。
+- 如果应用没有 HTTP 服务器，Compose 仍然可以 build/start 它，但部署结果不应发明 HTTP 预览 URL。
 
-## Storage Facts
+## 存储事实
 
-- File databases and stateful dependencies must be mounted from `DeploymentSpec.storageFacts`.
-- A storage fact names the provider, owning service, volume, container path, and environment key when applicable.
-- Do not use `/app/data` as a universal convention and do not decide persistence by searching generated environment values.
+- 文件数据库和有状态依赖必须从 `DeploymentSpec.storageFacts` 挂载。
+- 存储事实命名提供者、拥有服务、卷、容器路径和适用的环境键。
+- 不要将 `/app/data` 作为通用约定，也不要通过搜索生成的环境值来决定持久性。
 
-## Repair Clues
+## 修复线索
 
-- `docker compose config` failures usually involve invalid YAML, wrong env shape, missing files, unsupported health condition syntax, or wrong build paths.
-- Startup failures often involve wrong container command, missing dependency env, a dependency service that needs more startup time, or port mismatch.
-- Port publish failures usually mean the selected host port is already in use; repair generated Compose, not app source.
-- Build context failures usually show `file not found`, missing lockfile, missing wrapper script, missing build file, or missing source directory. Compare Compose `build.context`, `build.dockerfile`, `DeploymentSpec.files`, and `sourceModel.services[].root` before changing Dockerfile commands.
+- `docker compose config` 失败通常涉及无效 YAML、错误的 env 形态、缺失文件、不支持的健康条件语法或错误的构建路径。
+- 启动失败通常涉及错误的容器命令、缺失依赖 env、需要更多启动时间的依赖服务或端口不匹配。
+- 端口发布失败通常意味着选定的主机端口已被占用；修复生成的 Compose，而非应用源。
+- 构建上下文失败通常显示 `file not found`、缺失 lockfile、缺失包装脚本、缺失构建文件或缺失源目录。在更改 Dockerfile 命令之前，比较 Compose `build.context`、`build.dockerfile`、`DeploymentSpec.files` 和 `sourceModel.services[].root`。

@@ -1,40 +1,40 @@
-# Rust Error Handling Quality
+# Rust 错误处理质量
 
 ## When To Use
 
-- The task changes `Result`, `Option`, custom error enums, `thiserror`, `anyhow`, error conversions, user-facing error mapping, logging, recovery, or panic behavior.
-- Use this when failures cross function, crate, CLI, API, async task, or user boundary.
-- If no error behavior changes, preserve the existing error style.
+- 任务变更了 `Result`、`Option`、自定义错误枚举、`thiserror`、`anyhow`、错误转换、面向用户的错误映射、日志、恢复或 panic 行为。
+- 当失败跨越函数、crate、CLI、API、异步任务或用户边界时使用此参考。
+- 如果没有错误行为变更，保持现有的错误风格。
 
 ## Implementation Focus
 
-- Use `Result` for recoverable failures and `Option` for absence. Convert `Option` to `Result` with a meaningful error when callers need to know why absence matters.
-- Use typed errors (`thiserror` or manual `Error`) for libraries and domain boundaries where callers need to match variants. Use `anyhow` primarily for application/CLI orchestration where context matters more than matching.
-- Add context as errors move upward across I/O, parsing, config, network, database, and task boundaries. Do not lose the source error unless intentionally hiding it from users.
-- Avoid `String` or `&str` as public error types for non-trivial APIs. They are hard to match, convert, and test.
-- Use `#[from]` conversions only when conversion is semantically correct. Do not collapse distinct business failures into one generic variant.
-- Map internal errors to user-facing/API/CLI errors at the boundary. Do not leak secrets, paths, SQL, tokens, or stack-like internals into normal user output.
-- Preserve cancellation or shutdown semantics in async errors; do not convert cancellation into an ordinary business failure without intent.
-- Use `expect` only for internal invariants that indicate a bug, with a message naming the invariant. Avoid `unwrap` on input, I/O, parsing, config, or external data.
-- Log errors at process/service boundaries, not at every propagation layer; avoid duplicate noisy logs.
-- Document expected error conditions for public functions when callers need to handle them.
+- 对可恢复的失败使用 `Result`，对缺失使用 `Option`。当调用者需要知道缺失的原因时，用有意义的错误将 `Option` 转换为 `Result`。
+- 在调用者需要匹配变体的库和领域边界使用类型化错误（`thiserror` 或手动 `Error`）。主要在上下文比匹配更重要的应用/CLI 编排中使用 `anyhow`。
+- 当错误跨越 I/O、解析、配置、网络、数据库和任务边界向上传播时添加上下文。不要丢失源错误，除非有意向用户隐藏它。
+- 避免在非平凡 API 中将 `String` 或 `&str` 作为公共错误类型。它们难以匹配、转换和测试。
+- 仅当转换在语义上正确时使用 `#[from]` 转换。不要将不同的业务失败折叠为一个通用变体。
+- 在边界处将内部错误映射为面向用户/API/CLI 的错误。不要将密钥、路径、SQL、令牌或类似堆栈的内部信息泄露到正常用户输出中。
+- 在异步错误中保留取消或关闭语义；不要无意中将取消转换为普通业务失败。
+- 仅对表示 bug 的内部不变式使用 `expect`，消息中命名该不变式。避免对输入、I/O、解析、配置或外部数据使用 `unwrap`。
+- 在进程/服务边界记录错误，而非在每个传播层；避免重复的嘈杂日志。
+- 当调用者需要处理预期错误条件时，为公共函数记录文档。
 
 ## Boundary Decisions
 
-- Use `thiserror` or an equivalent typed error for library/domain boundaries where callers match variants. Use `anyhow` or contextual application errors at orchestration boundaries where preserving operation context matters more than variant matching.
-- Add context when crossing I/O, parsing, configuration, network, database, and task boundaries, but do not expose paths, SQL, tokens, secrets, or internal stack details in normal user responses.
-- Map internal errors to API/CLI/user-facing errors once at the boundary. Avoid logging the same failure at every propagation layer; log with operation context at the service/process boundary.
-- Keep cancellation and shutdown errors distinct from ordinary business failures in async code. Cleanup may run before re-propagation, but cancellation must not be silently converted to success.
-- Use `#[from]` only for semantically lossless conversions. Preserve distinct business failures and include the source error when diagnostics remain useful.
-- Use `expect` only for an invariant whose violation means a programming bug, with a message that names the invariant. Do not use `unwrap` for external or recoverable data.
+- 在调用者匹配变体的库/领域边界使用 `thiserror` 或等效的类型化错误。在保留操作上下文比变体匹配更重要的编排边界使用 `anyhow` 或带上下文的应用错误。
+- 在跨越 I/O、解析、配置、网络、数据库和任务边界时添加上下文，但不要在正常用户响应中暴露路径、SQL、令牌、密钥或内部堆栈详情。
+- 在边界处一次性将内部错误映射为 API/CLI/面向用户的错误。避免在每个传播层记录同一个失败；在服务/进程边界使用操作上下文记录。
+- 在异步代码中将取消和关闭错误与普通业务失败区分开。清理可能在重新传播之前运行，但取消不得被静默转换为成功。
+- 仅对语义上无损的转换使用 `#[from]`。保留不同的业务失败，并在诊断仍然有用时包含源错误。
+- 仅对违反意味着编程 bug 的不变式使用 `expect`，消息中命名该不变式。不要对外部或可恢复数据使用 `unwrap`。
 
 ## Verification Focus
 
-- Add tests for each changed error branch, including invalid input, missing data, external failure, and conversion/mapping behavior.
-- Test that context is preserved where diagnostics matter and sanitized where user-facing output matters.
-- Confirm no new production `unwrap` handles recoverable errors.
-- For typed errors, assert variants with pattern matching instead of brittle full display strings unless display text is the public contract.
+- 为每个变更的错误分支添加测试，包括无效输入、缺失数据、外部失败和转换/映射行为。
+- 测试上下文在诊断重要的地方被保留，在面向用户输出重要的地方被净化。
+- 确认没有新的生产 `unwrap` 处理可恢复错误。
+- 对于类型化错误，使用模式匹配断言变体，而非脆弱的完整显示字符串，除非显示文本是公共契约。
 
 ## Evidence Focus
 
-- In the evidence summary, name the error decision: Result/Option split, typed error, anyhow context, conversion, boundary mapping, cancellation semantics, panic policy, or logging boundary.
+- 在证据总结中，说明错误决策：Result/Option 划分、类型化错误、anyhow 上下文、转换、边界映射、取消语义、panic 策略或日志边界。

@@ -44,7 +44,7 @@ jobs:
                 name: "adapter",
                 color: "c5def5",
                 description: "Agent adapters, plugins, or command surfaces.",
-                patterns: [/\badapter\b/, /\bplugin\b/, /\bcodex\b/, /\bclaude\b/, /\bopencode\b/, /\bslash command\b/],
+                patterns: [/\badapter\b/, /\bplugin\b/, /\bopencode\b/, /\bslash command\b/],
               },
               {
                 name: "deployment",

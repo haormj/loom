@@ -1,40 +1,40 @@
-# TypeScript Core Quality
+# TypeScript 核心质量
 
 ## When To Use
 
-- Load for every task that changes TypeScript application, library, API client, UI state, domain model, or shared contract code.
-- Use it for baseline static correctness and for keeping TypeScript types aligned with runtime behavior.
-- Do not expand a generated-file-only or non-TypeScript task just because this reference exists.
+- 为每个变更 TypeScript 应用、库、API 客户端、UI 状态、领域模型或共享契约代码的任务加载。
+- 用于基线静态正确性以及保持 TypeScript 类型与运行时行为对齐。
+- 不要仅因为此参考存在就扩大仅生成文件或非 TypeScript 任务的范围。
 
 ## Boundary Decisions
 
-- Treat HTTP responses, storage records, environment variables, `JSON.parse`, user input, and third-party callbacks as `unknown` until the boundary validates or maps them.
-- Keep DTOs, domain objects, form drafts, and view models separate when nullability, formatting, mutability, or lifecycle differs.
-- Use a discriminated union for workflow or request states when multiple states can occur; make the transition rules explicit and exhaustive.
-- Use branded or opaque IDs only when two identifiers share a primitive but must not be mixed. Construct them through a checked factory.
-- Prefer `import type` for type-only dependencies and keep shared contract modules independent of framework runtime imports.
+- 将 HTTP 响应、存储记录、环境变量、`JSON.parse`、用户输入和第三方回调视为 `unknown`，直到边界验证或映射它们。
+- 当可空性、格式化、可变性或生命周期不同时，将 DTO、领域对象、表单草稿和视图模型分开。
+- 当工作流或请求状态可能发生多种状态时使用可辨识联合；使转换规则显式且穷尽。
+- 仅当两个标识符共享原始类型但不得混合时才使用品牌或不透明 ID。通过检查过的工厂构造它们。
+- 对仅类型依赖优先使用 `import type`，并保持共享契约模块独立于框架运行时导入。
 
 ## Implementation Focus
 
-- Preserve the repository's strictness level. Do not add `any`, broad `unknown as T`, or a compiler downgrade to make a local error disappear.
-- Give exported functions, hooks, services, non-trivial component props, and public package APIs explicit parameter and return types; let obvious locals infer.
-- Match optional and nullable fields to actual serialization behavior. An omitted field and an explicit `null` are different protocol states when the API says so.
-- Avoid `as` in business logic. If an assertion is unavoidable at a framework boundary, keep it local and show the runtime proof beside it.
-- Prefer literal unions or `as const` objects for new state and protocol discriminants unless the repository already uses enums.
+- 保留仓库的严格性级别。不要添加 `any`、宽泛的 `unknown as T` 或编译器降级来使本地错误消失。
+- 为导出函数、hook、服务、非平凡组件 prop 和公共包 API 提供显式参数和返回类型；让明显的局部变量推断。
+- 将可选和可空字段与实际序列化行为匹配。当 API 声明时，省略字段和显式 `null` 是不同的协议状态。
+- 在业务逻辑中避免 `as`。如果断言在框架边界不可避免，保持局部并在旁边显示运行时证明。
+- 除非仓库已使用枚举，否则优先为新状态和协议判别式使用字面量联合或 `as const` 对象。
 
 ## Failure Modes
 
-- Do not silence a mismatch with a cast when the value came from a network, storage, or user boundary.
-- Do not reuse a response type for an editable form when incomplete or invalid drafts are valid during interaction.
-- Do not move framework types into a shared domain contract merely to avoid defining a small adapter.
-- Keep compatibility adapters at the edge when an upstream payload cannot yet match the domain model.
+- 当值来自网络、存储或用户边界时，不要用 cast 静默不匹配。
+- 当不完整或无效草稿在交互期间有效时，不要为可编辑表单复用响应类型。
+- 不要仅为避免定义小型适配器而将框架类型移入共享领域契约。
+- 当上游载荷尚不能匹配领域模型时，在边缘保持兼容性适配器。
 
 ## Verification Focus
 
-- Run the configured typecheck or build command after source changes, and run runtime tests for changed serializers, mappers, reducers, clients, and domain functions.
-- Exercise invalid or partial boundary data when static types are backed by runtime validation.
-- Confirm that changed imports do not introduce a type-only/runtime cycle and that no new unchecked assertions were added.
+- 在源码变更后运行配置的类型检查或构建命令，并为变更的序列化器、映射器、reducer、客户端和领域函数运行运行时测试。
+- 当静态类型由运行时验证支持时，演练无效或部分边界数据。
+- 确认变更的导入不会引入仅类型/运行时循环，且没有添加新的未检查断言。
 
 ## Evidence Focus
 
-- Record the decision actually made: boundary validation, exported API typing, discriminated state, DTO/domain separation, branded ID, or assertion containment.
+- 记录实际做出的决策：边界验证、导出 API 类型标注、可辨识状态、DTO/领域分离、品牌 ID 或断言限制。

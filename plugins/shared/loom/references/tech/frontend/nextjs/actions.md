@@ -1,12 +1,12 @@
-# Next.js Server Mutations And Actions
+# Next.js 服务端变更与 Actions
 
-Apply Server Action guidance only to an App Router task that explicitly owns a server-side form/action mutation. Preserve a selected backend/route-handler architecture unless the accepted design assigns the mutation to a Server Action.
+仅对显式拥有服务端表单/action 变更的 App Router 任务应用 Server Action 指导。除非已接受的设计将变更分配给 Server Action，否则保留已选择的后端/route-handler 架构。
 
-## Action Boundary
+## Action 边界
 
-Place actions with their feature or focused server action module. Every action is a remotely invokable server entry point: authenticate, authorize, validate, scope tenant/ownership, and enforce business eligibility inside the action/application path.
+将 action 与其功能或聚焦的 server action 模块放在一起。每个 action 是可远程调用的服务端入口点：在 action/应用路径内认证、授权、验证、限定租户/所有权并执行业务资格。
 
-Treat `FormData` and programmatic arguments as untrusted. Parse with a typed schema/command and preserve field/global error shape.
+将 `FormData` 和编程参数视为不可信。用类型化的 schema/command 解析并保留字段/全局错误形状。
 
 ```tsx
 'use server'
@@ -27,70 +27,70 @@ export async function approveOrder(
 }
 ```
 
-Use module-level `'use server'` or inline actions according to repository conventions. Do not create catch-all action files or expose generic database operations.
+按仓库约定使用模块级 `'use server'` 或内联 action。不要创建 catch-all action 文件或暴露通用数据库操作。
 
-## Form And Client State
+## 表单与客户端状态
 
-Use `useActionState`, `useFormStatus`, or the selected form library to render pending, field validation, business conflict, forbidden, unavailable, and success state at the submitted form/control.
+使用 `useActionState`、`useFormStatus` 或所选表单库在提交的表单/控件处渲染 pending、字段验证、业务冲突、禁止、不可用和成功状态。
 
-`useFormStatus` must be rendered beneath the owning form. Prevent duplicate submits and preserve draft values after expected failures. Multiple row/forms need stable target identity; never rely on a mutable selected record.
+`useFormStatus` 必须在所属表单下方渲染。阻止重复提交并在预期失败后保留草稿值。多行/表单需要稳定的目标标识；永远不要依赖可变的选定记录。
 
-Progressive enhancement should work where accepted, and redirect/navigation should occur only after successful durable mutation.
+渐进增强应在已接受处工作，重定向/导航应仅在成功持久化变更后发生。
 
-## Authorization, CSRF, And Origin
+## 授权、CSRF 与 Origin
 
-Session/cookie mutations require the framework/deployment's origin and CSRF protections plus explicit authorization. Do not assume hidden action IDs or same component placement secure an action.
+会话/cookie 变更需要框架/部署的 origin 和 CSRF 保护加显式授权。不要假设隐藏的 action ID 或同组件放置能保护 action。
 
-Validate resource ownership/tenant/state after loading current data and enforce database constraints for concurrent integrity. Never trust actor/tenant/initial state from form fields.
+在加载当前数据后验证资源所有权/租户/状态，并为并发完整性执行数据库约束。永远不要从表单字段信任 actor/租户/初始状态。
 
-Rate limiting/idempotency/audit belongs to the accepted security/API/application design, especially for sensitive or repeatable programmatic calls.
+速率限制/幂等性/审计属于已接受的安全/API/应用设计，特别是对于敏感或可重复的编程调用。
 
-## Transaction And Side Effects
+## 事务与副作用
 
-One application operation owns transaction and external-effect ordering. Do not perform unrelated database writes directly across action modules or hold transactions open during file/email/provider calls.
+一个应用操作拥有事务和外部效果排序。不要跨 action 模块直接执行不相关的数据库写入或在文件/邮件/provider 调用期间保持事务打开。
 
-For file upload, enforce size/count/type/content/name, stream to accepted durable storage, scan where required, and never write to ephemeral/public app paths as permanent storage.
+对于文件上传，强制执行大小/数量/类型/内容/名称，流式传输到已接受的持久存储，在需要时扫描，永远不要写入临时/公共应用路径作为永久存储。
 
-Cookies must use accepted secure/httpOnly/sameSite/path/domain/expiry behavior and should not contain sensitive payloads.
+Cookie 必须使用已接受的 secure/httpOnly/sameSite/path/domain/expiry 行为，不应包含敏感载荷。
 
-## Revalidation And Readback
+## 重新验证与回读
 
-After success, invalidate every affected path/tag/cache/read model, but no broader. Stable domain-owned tags are preferable to ad hoc strings.
+成功后，失效每个受影响的路径/tag/缓存/读取模型，但不更广。稳定的领域拥有标签优于临时字符串。
 
-Revalidation is not UI state reconciliation by itself. Ensure current form/list/detail receives returned or refetched identity/version/status/count and does not stay stale.
+重新验证本身不是 UI 状态协调。确保当前表单/列表/详情接收返回或重新获取的标识/版本/状态/计数且不保持过期。
 
-Use `redirect` after mutation only when navigation is the accepted outcome. Remember redirect throws control flow; do not catch it in a broad action catch.
+仅当导航是已接受结果时在变更后使用 `redirect`。记住 redirect 抛出控制流；不要在宽泛的 action catch 中捕获它。
 
-## Optimistic Updates
+## 乐观更新
 
-Use optimistic UI only for predictable operations with stable temporary/target identity, duplicate prevention, rollback/conflict handling, stale-response ordering, and accessible pending/failure feedback.
+仅对可预测操作使用乐观 UI，配以稳定的临时/目标标识、重复预防、回滚/冲突处理、过期响应排序和可访问的 pending/失败反馈。
 
-Do not optimistically confirm destructive, high-conflict, authorization-sensitive, or irreversible work without an accepted design.
+不要在没有已接受设计的情况下乐观确认破坏性、高冲突、授权敏感或不可逆工作。
 
-## Failure Mapping
+## 失败映射
 
-Return serializable typed expected failures. Throw unexpected failures to the route error boundary/logging path. Never return raw database/provider/token/stack messages.
+返回可序列化的类型化预期失败。将意外失败抛出到路由错误边界/记录路径。永远不要返回原始数据库/provider/令牌/堆栈消息。
 
-Broad catch blocks must not swallow redirects/notFound or convert programming failures into user validation messages.
+宽泛的 catch 块不得吞没 redirect/notFound 或将编程失败转换为用户验证消息。
 
 ## Verification
 
-- Test successful mutation plus validation, auth, ownership, conflict, duplicate, unavailable, and unexpected paths owned by the action.
-- Verify exact target identity and server-owned fields cannot be spoofed.
-- Prove transaction/readback and affected tag/path revalidation without unrelated invalidation.
-- Exercise pending/disabled/draft/error/success state for multiple forms/rows.
-- Verify redirect/cookie/file behavior and limits where changed.
-- Run production build for action serialization/server-client boundaries.
+- 测试成功变更加 action 拥有的验证、auth、所有权、冲突、重复、不可用和意外路径。
+- 验证精确的目标标识和服务端拥有字段不能被伪造。
+- 证明事务/回读和受影响 tag/path 重新验证无无关失效。
+- 练习多表单/行的 pending/禁用/草稿/错误/成功状态。
+- 在变更处验证重定向/cookie/文件行为和限制。
+- 为 action 序列化/服务端-客户端边界运行生产构建。
 
-## Delivery Evidence
+## 交付证据
 
-Name the action/application operation and the mutation, auth, state, and revalidation/readback assertions proving it. A form invoking an action or `revalidatePath` call alone cannot prove validation, authorization, durable write, cache coherence, or duplicate handling.
+命名 action/应用操作以及证明它的变更、auth、状态和重新验证/回读断言。仅表单调用 action 或 `revalidatePath` 调用不能证明验证、授权、持久写入、缓存一致性或重复处理。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Server Action introduced when a separate backend/handler owns mutations.
-- Raw FormData/object spread passed into persistence.
-- Actor/tenant/resource state trusted from hidden fields.
-- Generic catch swallowing redirect/notFound/programming errors.
-- Revalidation treated as sufficient visible readback.
-- File writes to ephemeral/public paths and optimistic destructive operations without rollback.
+- 当独立后端/handler 拥有变更时引入 Server Action。
+- 原始 FormData/对象展开传递到持久化。
+- 从隐藏字段信任 actor/租户/资源状态。
+- 通用 catch 吞没 redirect/notFound/编程错误。
+- 将重新验证视为足够的可见回读。
+- 文件写入临时/公共路径和无回滚的乐观破坏性操作。

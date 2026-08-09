@@ -1,40 +1,40 @@
-# Python Typing Quality
+# Python 类型质量
 
 ## When To Use
 
-- The task changes Python public APIs, dataclasses, protocols, typed dictionaries, validation boundaries, generics, callbacks, decorators, or type checker configuration.
-- Use this when type annotations affect maintainability, integration contracts, or runtime validation.
-- If the repository is intentionally untyped and the task only touches a small internal script, add focused annotations without forcing project-wide typing policy.
+- 任务变更了 Python 公共 API、dataclass、Protocol、TypedDict、验证边界、泛型、回调、装饰器或类型检查器配置。
+- 当类型注解影响可维护性、集成契约或运行时验证时使用此参考。
+- 如果仓库有意不使用类型且任务仅涉及小型内部脚本，添加聚焦注解而不强制项目级类型策略。
 
 ## Implementation Focus
 
-- Annotate public functions, methods, class attributes, callbacks, and fixture factories touched by the task. Let obvious local variables infer unless annotation improves readability.
-- Use `X | None` only when the supported Python version allows it. Otherwise follow the repository's existing `Optional[X]` style.
-- Prefer `collections.abc` abstractions for inputs: `Sequence`, `Mapping`, `Iterable`, `Callable`, and `Iterator` where mutation is not required. Use concrete `list`/`dict` when callers may rely on mutation or concrete return shape.
-- Use `Protocol` for structural seams such as storage, clock, HTTP client, repository, or notifier dependencies. Do not create inheritance-heavy abstract classes when a small protocol expresses the needed methods.
-- Use `TypedDict` for dictionary-shaped external payloads only when the shape is stable and remains a dictionary at runtime. Use dataclasses, Pydantic models, or domain classes when validation and behavior are needed.
-- Use `Literal` or enums for finite modes, statuses, and discriminants. Keep runtime validation aligned with the static finite set.
-- Keep `Any` contained at external or legacy boundaries. Convert it to validated domain types before passing into business logic.
-- Avoid broad `cast`, `type: ignore`, and untyped decorators. If a suppression is unavoidable, keep it local and include the narrow reason or error code expected by the repository style.
-- Preserve callable signatures with `ParamSpec` only for decorators or wrappers where call-site type safety matters. Do not add advanced generics for one-off helpers.
-- Type checking does not replace runtime validation for network, file, env, CLI, or user input boundaries.
+- 为任务涉及的公共函数、方法、类属性、回调和夹具工厂添加注解。让明显的局部变量推断，除非注解提高可读性。
+- 仅在支持的 Python 版本允许时使用 `X | None`。否则遵循仓库现有的 `Optional[X]` 风格。
+- 对输入优先使用 `collections.abc` 抽象：当不需要变更时使用 `Sequence`、`Mapping`、`Iterable`、`Callable` 和 `Iterator`。当调用者可能依赖变更或具体返回形态时使用具体的 `list`/`dict`。
+- 对存储、时钟、HTTP 客户端、repository 或通知器依赖等结构化接缝使用 `Protocol`。当小型 protocol 能表达所需方法时不要创建继承密集的抽象类。
+- 仅当形态稳定且在运行时仍为字典时，对外部字典形态载荷使用 `TypedDict`。当需要验证和行为时使用 dataclass、Pydantic 模型或领域类。
+- 对有限的模式、状态和判别式使用 `Literal` 或枚举。保持运行时验证与静态有限集对齐。
+- 将 `Any` 限制在外部或遗留边界。在传递到业务逻辑之前将其转换为已验证的领域类型。
+- 避免宽泛的 `cast`、`type: ignore` 和无类型装饰器。如果抑制不可避免，保持局部并包含仓库风格预期的窄原因或错误代码。
+- 仅在调用点类型安全重要的装饰器或包装器中使用 `ParamSpec` 保留可调用签名。不要为一次性辅助函数添加高级泛型。
+- 类型检查不替代网络、文件、环境、CLI 或用户输入边界的运行时验证。
 
 ## Decision Rules
 
-- Type public functions, methods, class attributes, callbacks, and fixture factories that cross a module or framework boundary. Let obvious local variables infer unless an annotation clarifies a non-obvious contract.
-- Use `Protocol` for a small structural seam such as a repository, clock, HTTP client, or notifier. Keep the protocol owned by the consumer and avoid creating an inheritance hierarchy for one implementation.
-- Use `TypedDict` for a stable dictionary that remains a dictionary at runtime; use a dataclass, Pydantic model, or domain class when validation, normalization, or behavior belongs with the data.
-- Keep `Any`, `cast`, and `type: ignore` at external or legacy boundaries. Convert untrusted values before they reach business logic, and include the narrow reason or error code for an unavoidable suppression.
-- Use `Literal` or enums for finite modes and statuses, and keep static exhaustiveness aligned with runtime validation. `X | None` is appropriate only when the supported Python version permits it.
-- Use `ParamSpec` and advanced generic bounds for decorators/wrappers where call-site safety matters; do not add type machinery that obscures a one-off helper.
+- 为跨越模块或框架边界的公共函数、方法、类属性、回调和夹具工厂添加类型。让明显的局部变量推断，除非注解澄清了不明显的契约。
+- 对小型结构化接缝（如 repository、时钟、HTTP 客户端或通知器）使用 `Protocol`。保持 protocol 由消费者拥有，避免为一个实现创建继承层次。
+- 对运行时仍为字典的稳定字典使用 `TypedDict`；当验证、规范化或行为属于数据时使用 dataclass、Pydantic 模型或领域类。
+- 将 `Any`、`cast` 和 `type: ignore` 限制在外部或遗留边界。在不可信值到达业务逻辑之前转换它们，并为不可避免的抑制包含窄原因或错误代码。
+- 对有限的模式和状态使用 `Literal` 或枚举，并保持静态穷尽性与运行时验证对齐。`X | None` 仅在支持的 Python 版本允许时才合适。
+- 为调用点安全重要的装饰器/包装器使用 `ParamSpec` 和高级泛型约束；不要添加使一次性辅助函数模糊的类型机制。
 
 ## Verification Focus
 
-- Run the configured type checker such as `mypy`, `pyright`, or the repository's validation script when available.
-- Run tests for runtime validation, deserialization, and external payload mapping touched by typed changes.
-- Confirm new annotations do not hide errors through `Any`, broad casts, or global ignore rules.
-- For protocols and decorators, include usage through the typed seam so the checker exercises the intended call shape.
+- 运行配置的类型检查器如 `mypy`、`pyright` 或仓库的验证脚本（当可用时）。
+- 为类型化变更涉及的运行时验证、反序列化和外部载荷映射运行测试。
+- 确认新注解不会通过 `Any`、宽泛 cast 或全局 ignore 规则隐藏错误。
+- 对于 protocol 和装饰器，包含通过类型化接缝的使用，使检查器演练预期的调用形态。
 
 ## Evidence Focus
 
-- In the evidence summary, name the typing decision: public API annotations, collections abstraction, protocol seam, TypedDict/dataclass choice, finite status, Any containment, or checker command.
+- 在证据总结中，说明类型决策：公共 API 注解、collections 抽象、protocol 接缝、TypedDict/dataclass 选择、有限状态、Any 限制或检查器命令。

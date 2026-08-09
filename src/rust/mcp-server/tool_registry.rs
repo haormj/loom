@@ -427,7 +427,7 @@ impl ToolRegistry {
     ) -> Result<CallToolResult, rmcp::ErrorData> {
         let tool = self
             .get(name)
-            .ok_or_else(|| rmcp::ErrorData::invalid_params("tool not found", None))?;
+            .ok_or_else(|| rmcp::ErrorData::invalid_params("未找到工具", None))?;
         let project_root = match project_root_from_arguments(arguments, tool.input_kind) {
             Ok(project_root) => match normalize_project_root(&project_root) {
                 Ok(project_root) => project_root.display,
@@ -617,13 +617,13 @@ fn project_root_from_arguments(
     _kind: ToolInputKind,
 ) -> Result<String, String> {
     let Some(arguments) = arguments else {
-        return Err("projectRoot is required.".to_string());
+        return Err("projectRoot 为必填项。".to_string());
     };
     arguments
         .get("projectRoot")
         .and_then(Value::as_str)
         .map(str::to_string)
-        .ok_or_else(|| "projectRoot is required.".to_string())
+        .ok_or_else(|| "projectRoot 为必填项。".to_string())
 }
 
 fn to_value(result: LoomMcpActionResult) -> Result<Value, rmcp::ErrorData> {

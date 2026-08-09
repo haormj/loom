@@ -1,29 +1,29 @@
-# Java Unit And Component Testing
+# Java 单元与组件测试
 
-This reference owns JUnit 5, AssertJ, Mockito, parameterized tests, deterministic fixtures, and framework-independent component tests. Spring context tests, slices, MockMvc/WebTestClient, Spring Security tests, and Boot Testcontainers integration belong to Spring Boot testing.
+此参考拥有 JUnit 5、AssertJ、Mockito、参数化测试、确定性夹具和框架无关组件测试。Spring 上下文测试、切片、MockMvc/WebTestClient、Spring Security 测试和 Boot Testcontainers 集成属于 Spring Boot 测试。
 
 ## When To Use
 
-Use this reference only when the accepted task owns Java test creation or modification with JUnit, AssertJ, Mockito, parameterized tests, deterministic fixtures, or framework-independent component tests. Production implementation work does not receive testing guidance solely because the selected language is Java.
+仅当已接受的任务拥有使用 JUnit、AssertJ、Mockito、参数化测试、确定性夹具或框架无关组件测试的 Java 测试创建或修改时才使用此参考。生产实现工作不会仅因为选中的语言是 Java 就获得测试指导。
 
-Use the Spring Boot testing reference for context loading, test slices, framework security, HTTP adapters, or provider-backed Boot integration. This file remains focused on Java test design and tools.
+对上下文加载、测试切片、框架安全、HTTP 适配器或提供者支持的 Boot 集成使用 Spring Boot 测试参考。本文件仍聚焦于 Java 测试设计和工具。
 
 ## Implementation Focus
 
 ### Test Shape
 
-Structure tests around observable behavior:
+围绕可观察行为构建测试：
 
-- arrange only the inputs and collaborators needed by the scenario
-- invoke one behavior boundary
-- assert returned state, thrown error, durable effect, or collaborator contract
-- name the business condition and outcome
+- 仅安排场景所需的输入和协作者
+- 调用一个行为边界
+- 断言返回状态、抛出的错误、持久效果或协作者契约
+- 命名业务条件和结果
 
-Avoid tests that only mirror implementation lines or assert private methods.
+避免仅镜像实现行或断言私有方法的测试。
 
 ### JUnit 5
 
-Use lifecycle hooks sparingly and keep fixtures isolated. Parameterized tests are useful for validation tables, state transitions, parsers, and value boundaries.
+谨慎使用生命周期钩子并保持夹具隔离。参数化测试适用于验证表、状态转换、解析器和值边界。
 
 ```java
 @ParameterizedTest
@@ -33,62 +33,62 @@ void quantityEligibility(int quantity, boolean accepted) {
 }
 ```
 
-Use `assertThrows`/AssertJ exception assertions for expected failures and verify stable domain fields, not only message prose.
+对预期失败使用 `assertThrows`/AssertJ 异常断言并验证稳定的领域字段，而非仅消息文本。
 
 ### Mockito
 
-Mock owned ports and external collaborators, not values, entities, collections, or the class under test. Prefer real small collaborators when setup is simpler than mocking.
+Mock 拥有的端口和外部协作者，而非值、实体、集合或被测类。当设置比 mock 更简单时优先使用真实的小型协作者。
 
-Use strict stubbing where supported. Verify important side effects and absence of unsafe calls, but avoid asserting every internal interaction. Captors are useful when the command sent to a dependency is part of the contract.
+在支持的地方使用严格 stub。验证重要的副作用和不安全调用的缺失，但避免断言每个内部交互。当发送给依赖的命令是契约的一部分时，捕获器有用。
 
-Do not mock static/global state as a default design. Inject `Clock`, ID generators, and external ports.
+不要将 mock 静态/全局状态作为默认设计。注入 `Clock`、ID 生成器和外部端口。
 
 ### Assertions
 
-Assert complete meaningful outcomes:
+断言完整有意义的结果：
 
-- state transition and retained invariants
-- stable error code/type
-- collection ordering and contents
-- monetary/time values with correct comparison semantics
-- no duplicate side effect on retry
+- 状态转换和保留的不变式
+- 稳定的错误代码/类型
+- 集合排序和内容
+- 具有正确比较语义的货币/时间值
+- 重试时无重复副作用
 
-Avoid assertions that only check non-null, collection size without content, or that no exception was thrown.
+避免仅检查非空、无内容的集合大小或未抛出异常的断言。
 
 ### Fixtures
 
-Use builders/factories that expose scenario-relevant values and safe defaults. Keep mutable fixtures per test. Avoid giant shared JSON and hidden random data.
+使用暴露场景相关值和安全默认值的构建器/工厂。每个测试保持可变夹具。避免巨大的共享 JSON 和隐藏的随机数据。
 
-Fix time through an injected `Clock`. Seed randomness when randomness is part of the behavior. Generate unique data deterministically enough to diagnose failures.
+通过注入的 `Clock` 固定时间。当随机性是行为的一部分时播种随机性。足够确定地生成唯一数据以诊断失败。
 
 ### Test Levels
 
-Plain unit tests suit domain and application logic without framework wiring. Component/integration tests suit real serializers, persistence providers, HTTP clients, messaging, and framework configuration. Select the narrowest boundary that proves the risk.
+普通单元测试适合没有框架接线的领域和应用逻辑。组件/集成测试适合真实序列化器、持久化提供者、HTTP 客户端、消息和框架配置。选择证明风险的最窄边界。
 
-No universal coverage percentage is imposed. Use coverage to locate untested branches, then prioritize business blockers, failures, concurrency, and contracts.
+不强加通用覆盖率百分比。使用覆盖率定位未测试分支，然后优先处理业务阻止、失败、并发和契约。
 
 ## Verification Focus
 
-Useful Java test evidence includes:
+有用的 Java 测试证据包括：
 
-- regression scenario for the old defect
-- important success and failure/business-blocking branches
-- deterministic clock/ID/external collaborators
-- meaningful state and side-effect assertions
-- parameterized boundary cases where appropriate
-- targeted and module-level test commands
+- 旧缺陷的回归场景
+- 重要的成功和失败/业务阻止分支
+- 确定性时钟/ID/外部协作者
+- 有意义的状态和副作用断言
+- 适用时的参数化边界用例
+- 有针对性的和模块级测试命令
 
 ## Evidence Focus
 
-Record the test class or case that proves each owned behavior and the command that executed it. A passing module command is useful only when the relevant test is included and its assertions prove a business outcome, contract failure, state transition, or side effect.
+记录证明每个拥有行为的测试类或用例以及执行它的命令。通过的模块命令仅在包含相关测试且其断言证明业务结果、契约失败、状态转换或副作用时有用。
 
-For defect fixes, preserve a regression case that fails for the old behavior. For parameterized tests, name or display the input boundary so failures remain diagnosable. Do not treat coverage percentage, test count, or context startup alone as proof of behavior.
+对于缺陷修复，保留对旧行为失败的回归用例。对于参数化测试，命名或显示输入边界使失败保持可诊断。不要将覆盖率百分比、测试计数或仅上下文启动视为行为证明。
 
 ## Unsafe Defaults
 
-- Booting a framework for pure Java behavior.
-- Mocking the class under test or value objects.
-- Shared mutable fixtures and order-dependent tests.
-- Arbitrary sleeps.
-- Weak non-null/no-exception assertions.
-- Disabling tests or lowering assertions to pass.
+- 为纯 Java 行为启动框架。
+- Mock 被测类或值对象。
+- 共享可变夹具和依赖顺序的测试。
+- 任意 sleep。
+- 弱非空/无异常断言。
+- 禁用测试或降低断言以通过。

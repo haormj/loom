@@ -1,44 +1,40 @@
-# UIX Token: Spacing
+# UIX 令牌：间距
 
-Load this file when creating layout primitives, components, forms, tables, dashboards, mobile screens, or responsive behavior.
+在创建布局原语、组件、表单、表格、仪表板、移动屏幕或响应式行为时加载此文件。
 
-## Scale
+## 比例
 
-Use a consistent spacing scale. Suggested baseline:
+使用一致的间距比例。建议基线：
 
-| Token | px | Use |
+| 令牌 | px | 用途 |
 | --- | ---: | --- |
-| `space-1` | 4 | Icon/text micro gaps, compact separators. |
-| `space-2` | 8 | Button internal gap, table cell minor gap. |
-| `space-3` | 12 | Form row gap, nav item gap. |
-| `space-4` | 16 | Component padding, mobile page padding. |
-| `space-5` | 20 | Dense section gap. |
-| `space-6` | 24 | Standard section padding, card/table block gap. |
-| `space-8` | 32 | Page section separation. |
-| `space-10` | 40 | Large section separation. |
-| `space-12` | 48 | Editorial/marketing rhythm. |
+| `space-1` | 4 | 图标/文本微间隙、紧凑分隔符。 |
+| `space-2` | 8 | 按钮内部间隙、表格单元格次间隙。 |
+| `space-3` | 12 | 表单行间隙、导航项间隙。 |
+| `space-4` | 16 | 组件填充、移动页面填充。 |
+| `space-5` | 20 | 密集部分间隙。 |
+| `space-6` | 24 | 标准部分填充、卡片/表格块间隙。 |
+| `space-8` | 32 | 页面部分分隔。 |
+| `space-10` | 40 | 大部分分隔。 |
+| `space-12` | 48 | 编辑/营销节奏。 |
 
-Extend the scale only when the project already has a larger rhythm or the selected
-surface needs it. Keep the base increments divisible by 4 for product UI. A new
-value needs a semantic reason such as page section, shell gutter, control height,
-or media composition; it must not exist only to nudge one element into place.
+仅当项目已有更大节奏或选定界面需要时扩展比例。产品 UI 的基础增量保持可被 4 整除。新值需要语义原因，如页面部分、外壳间距、控件高度或媒体构图；它不得仅为微调一个元素的位置而存在。
 
-## Semantic Rhythm
+## 语义节奏
 
-Use separate semantic aliases for repeated relationships:
+为重复关系使用单独的语义别名：
 
-| Relationship | Examples |
+| 关系 | 示例 |
 | --- | --- |
-| Inline | icon/label, badge/text, input prefix/suffix |
-| Control | button padding, field padding, table cell padding |
-| Component | form fields, toolbar items, card content |
-| Region | panel sections, list/detail gap, page heading to content |
-| Shell | page gutter, sidebar/content gap, mobile safe-area padding |
+| 内联 | 图标/标签、徽章/文本、输入前缀/后缀 |
+| 控件 | 按钮填充、字段填充、表格单元格填充 |
+| 组件 | 表单字段、工具栏项、卡片内容 |
+| 区域 | 面板部分、列表/详情间隙、页面标题到内容 |
+| 外壳 | 页面间距、侧边栏/内容间隙、移动安全区域填充 |
 
-The same numeric value may serve multiple aliases, but components should consume
-the semantic alias so a density change can be made without editing every component.
+相同数值可服务多个别名，但组件应消费语义别名以便可以在不编辑每个组件的情况下更改密度。
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
 ```css
 :root {
@@ -61,42 +57,38 @@ the semantic alias so a density change can be made without editing every compone
 }
 ```
 
-Use these tokens in layout primitives and component padding before introducing one-off values.
+在引入一次性值之前在布局原语和组件填充中使用这些令牌。
 
-## Density Rules
+## 密度规则
 
-- `workbench_dense`: 8-16px component gaps, 36-44px row/control height, compact page padding.
-- `balanced`: 12-24px component gaps, 40-48px controls, comfortable form/table spacing.
-- `comfortable`: 16-32px gaps, larger touch targets, mobile-friendly spacing.
-- `immersive`: spacing follows scene/media composition and must not crowd controls.
+- `workbench_dense`：8-16px 组件间隙、36-44px 行/控件高度、紧凑页面填充。
+- `balanced`：12-24px 组件间隙、40-48px 控件、舒适的表单/表格间距。
+- `comfortable`：16-32px 间隙、更大触摸目标、移动友好间距。
+- `immersive`：间距遵循场景/媒体构图且不得拥挤控件。
 
-## Component Rules
+## 组件规则
 
-- Tables: consistent cell padding, stable row height, visible overflow behavior.
-- Forms: group related fields; do not create one long unstructured column unless the form is short.
-- Toolbars: align icon buttons, filters, and primary actions on a predictable rhythm.
-- Panels/drawers: keep internal padding consistent and preserve scroll boundaries.
-- Empty/error/loading states: occupy the same layout region as the data they replace.
-- Brand or page identity regions in workbench UI should be compact. Do not spend vertical space on non-functional intro copy when users need the working surface.
+- 表格：一致的单元格填充、稳定行高、可见溢出行为。
+- 表单：分组相关字段；除非表单简短，否则不要创建一个长的无结构列。
+- 工具栏：在可预测的节奏上对齐图标按钮、筛选器和主要操作。
+- 面板/抽屉：保持内部填充一致并保留滚动边界。
+- 空/错误/加载状态：占据与它们替换的数据相同的布局区域。
+- 工作台 UI 中的品牌或页面标识区域应紧凑。当用户需要工作表面时不要在非功能性介绍文案上花费垂直空间。
 
-## Responsive Rules
+## 响应式规则
 
-- Reduce page padding before reducing readable content quality.
-- Collapse multi-column forms to one column on narrow screens.
-- Keep sticky bars and bottom actions away from safe-area edges on mobile.
-- Avoid horizontal scroll for the page; allow it only inside data tables or code blocks when needed.
-- Mobile page padding usually starts at `space-4`; dense desktop workbenches can also use `space-4` when information volume is high.
-- For wide screens, increase outer region separation before increasing every control
-  gap. For narrow screens, reduce page padding before shrinking readable text or
-  touch targets.
-- Keep action groups visually closer to the object they affect than to unrelated
-  page chrome. Spacing is part of workflow hierarchy, not decoration.
+- 在降低可读内容质量之前减少页面填充。
+- 在窄屏幕上将多列表单折叠为一列。
+- 保持粘性栏和底部操作远离移动安全区域边缘。
+- 避免页面水平滚动；仅在需要时在数据表格或代码块内允许。
+- 移动页面填充通常从 `space-4` 开始；当信息量大时密集桌面工作台也可使用 `space-4`。
+- 对于宽屏幕，在增加每个控件间隙之前增加外部区域分隔。对于窄屏幕，在缩小可读文本或触摸目标之前减少页面填充。
+- 保持操作组在视觉上比无关页面 chrome 更靠近它们影响的对象。间距是工作流层次的一部分，而非装饰。
 
-## Self-Check
+## 自检
 
-- No arbitrary one-off margins used to "nudge" many components.
-- Layout remains stable across loading/error/success state changes.
-- Dense surfaces still have enough breathing room to scan repeated actions.
-- Repeated components use the same gap/padding tokens instead of per-component raw values.
-- A spacing audit can explain every off-scale value as an asset dimension, browser
-  constraint, platform metric, or an explicitly accepted exception.
+- 无用于"微调"许多组件的任意一次性边距。
+- 布局在加载/错误/成功状态变化间保持稳定。
+- 密集表面仍有足够的呼吸空间来扫描重复操作。
+- 重复组件使用相同的间隙/填充令牌而非每组件原始值。
+- 间距审计可以将每个超出比例的值解释为资产尺寸、浏览器约束、平台度量或明确接受的例外。

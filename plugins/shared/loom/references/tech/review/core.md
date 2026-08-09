@@ -1,86 +1,86 @@
-# Code Review Method
+# 代码评审方法
 
-Use this reference to inspect a completed change with professional skepticism, repository context, and risk-proportionate depth. Exact output fields, decision values, and workflow routing are supplied separately; this file owns the technical review method.
+使用本引用以专业怀疑态度、仓库上下文和风险相称的深度检查已完成的变更。确切的输出字段、决策值和工作流路由另行提供；本文件拥有技术评审方法。
 
-## Review Posture
+## 评审姿态
 
-Treat implementation summaries, test reports, and author comments as claims to verify. Assume good intent without assuming correctness.
+将实现摘要、测试报告和作者评论视为待验证的声明。假设善意但不假设正确。
 
-Understand the requested outcome and affected user/system behavior before reading details. If the purpose is unclear, identify the missing decision rather than reviewing style in a vacuum.
+在阅读细节之前理解请求的结果和受影响的用户/系统行为。如果目的不清晰，识别缺失的决策而非在真空中评审风格。
 
-Review the change that exists, not an imagined redesign. Prefer the smallest correction that restores the accepted behavior and repository architecture.
+评审存在的变更，而非想象中的重新设计。优先使用恢复已接受行为和仓库架构的最小修正。
 
-Separate correctness and risk from personal preference. Existing formatter, linter, framework convention, and local patterns decide style unless the style creates a concrete defect.
+将正确性和风险与个人偏好分开。已有的 formatter、linter、框架约定和本地模式决定风格，除非风格造成具体缺陷。
 
-Do not edit source while acting as reviewer. A review must preserve independent observation and leave implementation to the repair owner.
+作为评审者时不要编辑源代码。评审必须保持独立观察并将实现留给修复方。
 
-## Scope Reconstruction
+## 范围重建
 
-Identify changed files, generated versus source-owned files, public interfaces, data/schema changes, runtime/config changes, tests, migrations, dependencies, and deployment impact.
+识别变更文件、生成文件 vs 源码拥有文件、公共接口、数据/schema 变更、运行时/配置变更、测试、迁移、依赖和部署影响。
 
-Trace how changed entry points call into domain, data, integration, and UI boundaries. A small diff in a shared helper, migration, policy, or configuration file can have a wider blast radius than a large isolated feature.
+追踪变更入口点如何调用领域、数据、集成和 UI 边界。共享 helper、迁移、策略或配置文件中的小 diff 可能比大型隔离功能有更大的影响范围。
 
-Check repository status and surrounding code so unchanged assumptions, user changes, and generated output are not misattributed to the current work.
+检查仓库状态和周围代码，使未变更的假设、用户变更和生成输出不被错误归因于当前工作。
 
-Read enough context around each change to understand invariants and callers; avoid judging an isolated line without its ownership boundary.
+在每个变更周围读取足够的上下文以理解不变量和调用方；避免在未了解其所有权边界的情况下判断孤立行。
 
-## Review Order
+## 评审顺序
 
-1. Confirm the accepted behavior and scope.
-2. Inspect architecture and public contract changes.
-3. Trace primary and important negative paths through changed code.
-4. Apply language/framework/data references selected for the changed tasks.
-5. Assess security, concurrency, reliability, performance, and operational effects according to risk.
-6. Evaluate test and runtime evidence against the behavior changed.
-7. Write only concrete findings whose impact and repair are supportable.
+1. 确认已接受的行为和范围。
+2. 检查架构和公共契约变更。
+3. 通过变更代码追踪主要和重要的否定路径。
+4. 为变更任务应用所选的语言/框架/数据引用。
+5. 按风险评估安全、并发、可靠性、性能和运维效果。
+6. 根据变更行为评估测试和运行时证据。
+7. 仅编写影响和修复可支持的具体验证发现。
 
-Finish spec compliance before spending time on polish. Code quality matters only for code that belongs in the change.
+在花时间打磨之前完成规范合规。代码质量仅对属于变更中的代码有意义。
 
-## Risk-Based Depth
+## 基于风险的深度
 
-Increase depth for authorization, tenant isolation, money, destructive actions, personal/sensitive data, migrations, concurrency, async jobs, caches, public APIs, shared libraries, deployment/configuration, and irreversible external effects.
+对授权、租户隔离、资金、破坏性操作、个人/敏感数据、迁移、并发、异步作业、缓存、公共 API、共享库、部署/配置和不可逆外部效果增加深度。
 
-For high-risk paths, inspect both allow and deny behavior, transaction/rollback boundaries, idempotency/retry, stale version handling, audit/log exposure, and recovery after partial failure.
+对于高风险路径，同时检查允许和拒绝行为、事务/回滚边界、幂等/重试、陈旧版本处理、审计/日志暴露和部分失败后的恢复。
 
-For narrow low-risk changes, focused source inspection and targeted tests may be sufficient. Do not demand broad integration work unrelated to the changed contract.
+对于狭窄的低风险变更，聚焦的源码检查和针对性测试可能足够。不要要求与变更契约无关的宽泛集成工作。
 
-## Repository Fit
+## 仓库适配
 
-Check whether the change follows existing module ownership, dependency direction, error model, naming, API shape, state management, and test approach.
+检查变更是否遵循已有的模块所有权、依赖方向、错误模型、命名、API 形态、状态管理和测试方法。
 
-A new abstraction should isolate real complexity or serve real consumers. Flag speculative layers only when they add maintenance/risk or obscure behavior, not because all one-use helpers are inherently wrong.
+新抽象应隔离真实复杂性或服务真实消费者。仅在投机层增加维护/风险或模糊行为时标记它们，而非因为所有一次性 helper 本质上是错的。
 
-Preserve accepted stack and dependency policy. New packages require a concrete capability, compatibility, security/license, runtime, and maintenance rationale.
+保留已接受的技术栈和依赖策略。新包需要具体的能力、兼容性、安全/许可证、运行时和维护理由。
 
-## Change Interaction
+## 变更交互
 
-Look across files for contracts that must move together: API server/client, schema/model/migration, route/link, config/env/deploy, serializer/type, UI state/action, cache/invalidation, and implementation/test fixture.
+跨文件查看必须一起移动的契约：API 服务端/客户端、schema/模型/迁移、路由/链接、配置/环境变量/部署、序列化器/类型、UI 状态/action、缓存/失效以及实现/测试 fixture。
 
-Check deletion and rename fallout: stale imports, routes, migrations, feature flags, docs/config, generated clients, deployment assets, and compatibility boundaries.
+检查删除和重命名影响：陈旧导入、路由、迁移、feature flag、文档/配置、生成客户端、部署资产和兼容性边界。
 
-Trace repeated execution, process restart, concurrent requests, account/tenant switch, and old persisted data where those are plausible lifecycle events.
+在重复执行、进程重启、并发请求、账户/租户切换和旧持久化数据是合理生命周期事件时追踪它们。
 
-## Review Restraint
+## 评审克制
 
-Do not block on hypothetical scale, future extensibility, broad refactors, or unmeasured optimization. State an assumption only when it materially affects current correctness.
+不要以假设的规模、未来可扩展性、宽泛重构或未衡量的优化来阻塞。仅在假设实质性影响当前正确性时才声明假设。
 
-Do not repeat automated diagnostics as findings without explaining the underlying impact and changed location.
+不要在不解释底层影响和变更位置的情况下将自动诊断重复为发现。
 
-Avoid praise, questions, and suggestions that bury blocking issues. Positive observations are useful only when they clarify why a pattern should be preserved.
+避免赞美、问题和建议淹没阻断性问题。正面观察仅在阐明为何应保持某模式时有用。
 
-## Completion Check
+## 完成检查
 
-- Every blocking observation is grounded in current changed behavior or required evidence.
-- File/location and impact are specific enough for another engineer to reproduce the issue.
-- Similar symptoms sharing one root cause are not duplicated.
-- Minor notes are genuinely non-blocking and do not conflict with the overall decision.
-- The proposed repair stays within the smallest responsible boundary.
+- 每个阻断性观察都基于当前变更行为或必需证据。
+- 文件/位置和影响足够具体，使另一工程师能复现问题。
+- 共享同一根因的相似症状不被重复。
+- 次要注释确实非阻断且不与整体决策冲突。
+- 建议的修复保持在最小负责任边界内。
 
-## Unsafe Review Defaults
+## 不安全的评审默认
 
-- Trusting summaries or green checks without mapping them to changed behavior.
-- Reviewing only the diff while ignoring callers and contract counterparts.
-- Treating formatter/linter preferences as defects.
-- Demanding future architecture unrelated to current requirements.
-- Sending a source defect to human judgment when code repair is clear.
-- Writing many vague findings instead of one evidenced root cause.
+- 信任摘要或绿色勾选而不将其映射到变更行为。
+- 仅评审 diff 而忽略调用方和契约对应方。
+- 将 formatter/linter 偏好视为缺陷。
+- 要求与当前需求无关的未来架构。
+- 当代码修复清晰时将源码缺陷发送到人工判断。
+- 编写许多模糊发现而非一个有证据的根因。

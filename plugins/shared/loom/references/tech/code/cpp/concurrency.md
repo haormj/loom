@@ -1,90 +1,90 @@
-# C++ Concurrency And Async Ownership
+# C++ 并发与异步所有权
 
 ## When To Use
 
-Use this reference only when the task explicitly owns threads, executors/pools, synchronization, atomics, concurrent queues, futures, parallel algorithms, coroutines, cancellation, or shared mutable state.
+仅当任务显式拥有线程、执行器/池、同步、atomic、并发队列、future、并行算法、协程、取消或共享可变状态时才使用此参考。
 
 ## Implementation Focus
 
 ### Ownership And Shutdown
 
-Every thread/task/pool/coroutine has an owner, start condition, cancellation/stop signal, error channel, join/drain policy, and shutdown deadline.
+每个线程/任务/池/协程都有所有者、启动条件、取消/停止信号、错误通道、join/drain 策略和关闭截止时间。
 
-Prefer `std::jthread`/stop tokens when the accepted standard and repository support them. Do not detach threads unless work/resources intentionally have process lifetime and failure is observable.
+当已接受的标准和仓库支持时优先使用 `std::jthread`/stop token。不要分离线程，除非工作/资源有意具有进程生命周期且失败可观察。
 
-Define whether shutdown drains queued work, cancels pending work, rejects new work, or persists/requeues it. Destructors must not deadlock or silently abandon required effects.
+定义关闭是排空排队工作、取消待处理工作、拒绝新工作还是持久化/重新排队。析构函数不得死锁或静默放弃必需的效果。
 
 ### Mutexes And Invariants
 
-Protect invariants, not individual fields. Use RAII guards and the narrowest lock duration that preserves atomic state transitions.
+保护不变式，而非单个字段。使用 RAII 守卫和保持原子状态转换的最窄锁定持续时间。
 
-Do not hold locks across user callbacks, blocking I/O, future waits, coroutine suspension, logging that can reenter, or long computation unless explicitly safe.
+不要在用户回调、阻塞 I/O、future 等待、协程挂起、可能重入的日志或长时间计算期间持有锁，除非显式安全。
 
-Use consistent lock ordering or `std::scoped_lock` for multiple mutexes. Avoid recursive mutexes as a fix for unclear ownership.
+对多个 mutex 使用一致的锁定顺序或 `std::scoped_lock`。避免将递归 mutex 作为不清晰所有权的修复。
 
-Reader-writer locks help only with measured read-heavy contention and can starve; benchmark against a normal mutex.
+读写锁仅在测量的读密集争用时有用且可能饥饿；与普通 mutex 基准比较。
 
 ### Condition Variables And Queues
 
-Wait in a predicate loop under the associated mutex because wakeups are spurious and state can change before reacquisition. Update shared state before notification according to the invariant.
+在关联 mutex 下的谓词循环中等待，因为唤醒是虚假的且状态可能在重新获取之前变化。根据不变式在通知之前更新共享状态。
 
-Bound queues/pools where producers can outrun consumers. Define full behavior (block, timeout, reject, drop/coalesce), priority/fairness, exception propagation, and shutdown wakeup.
+在生产者可能超过消费者时绑定队列/池。定义满行为（阻塞、超时、拒绝、丢弃/合并）、优先级/公平性、异常传播和关闭唤醒。
 
-Tests and production waits need deadlines/cancellation where indefinite blocking is unsafe.
+在无限阻塞不安全的地方，测试和生产等待需要截止时间/取消。
 
 ### Atomics And Memory Ordering
 
-Use atomics for independent state or a proven lock-free protocol. Start with sequential consistency unless a documented happens-before proof justifies weaker ordering.
+对独立状态或已验证的无锁协议使用 atomic。从顺序一致性开始，除非有文档记录的 happens-before 证明证明更弱的排序。
 
-Relaxed order provides atomicity only. Release/acquire synchronizes only through matching operations; fences and mixed atomic/non-atomic access require precise reasoning.
+Relaxed 顺序仅提供原子性。Release/acquire 仅通过匹配操作同步；fence 和混合 atomic/非 atomic 访问需要精确推理。
 
-Compare-exchange updates the expected value on failure and may spuriously fail for weak variants. Account for ABA, reclamation, wraparound, and lifetime before using lock-free structures.
+compare-exchange 在失败时更新期望值，weak 变体可能虚假失败。在使用无锁结构之前考虑 ABA、回收、环绕和生命周期。
 
-Do not use `volatile` for thread synchronization.
+不要使用 `volatile` 进行线程同步。
 
 ### Futures, Exceptions, And Cancellation
 
-Specify `std::async` launch policy; default policy may defer work. Retrieve futures or otherwise handle exceptions/results so failures are not silently discarded.
+指定 `std::async` 启动策略；默认策略可能延迟工作。获取 future 或以其他方式处理异常/结果，使失败不被静默丢弃。
 
-Promises must complete with value/error exactly once on every path. Packaged tasks and callbacks need ownership after enqueue rejection/shutdown.
+Promise 必须在每条路径上恰好完成一次值/错误。打包任务和回调在入队拒绝/关闭后需要所有权。
 
-Cancellation is cooperative: define interruption points and cleanup/rollback. A stop request does not prove work stopped.
+取消是协作式的：定义中断点和清理/回滚。停止请求不证明工作已停止。
 
 ### Parallel Algorithms
 
-Operations under `par`/`par_unseq` must obey required purity/thread/vector safety. Do not mutate shared state, call unsafe APIs, throw where policy terminates, or depend on deterministic order without proof.
+`par`/`par_unseq` 下的操作必须遵守所需的纯度/线程/向量安全。不要变更共享状态、调用不安全 API、在策略终止处抛出或在无证明的情况下依赖确定性顺序。
 
-Reduction operations must be associative enough for reordered grouping and preserve numeric/error semantics.
+归约操作必须足够关联以支持重排序分组并保留数值/错误语义。
 
 ### Coroutines
 
-Use an established coroutine runtime abstraction. Define frame/handle ownership, executor affinity, cancellation, exception propagation, continuation scheduling, and destruction of abandoned operations.
+使用已建立的协程运行时抽象。定义帧/句柄所有权、执行器亲和性、取消、异常传播、续体调度和被放弃操作的销毁。
 
-Never resume a handle concurrently or after destruction; do not retain references across suspension without owner lifetime guarantees.
+永远不要并发或在销毁后恢复句柄；在没有所有者生命周期保证的情况下不要跨挂起保留引用。
 
 ### Shared Data And Reclamation
 
-Prefer immutable messages/ownership transfer to shared mutation. For lock-free nodes, choose a proven reclamation scheme (hazard pointers, epochs, reference counting) rather than deleting a node another thread may read.
+优先使用不可变消息/所有权转移而非共享变更。对于无锁节点，选择已验证的回收方案（hazard pointer、epoch、引用计数），而非删除另一个线程可能读取的节点。
 
-Avoid false sharing in measured hot counters/queues while preserving portable layout and memory use.
+在测量的热计数器/队列中避免 false sharing，同时保持可移植布局和内存使用。
 
 ## Verification Focus
 
-- Test start, success, failure, cancellation, queue full/empty, shutdown with pending work, repeated stop, and no enqueue after close.
-- Run TSan or platform race tooling on representative shared-state paths when supported.
-- Use barriers/latches/hooks to make race schedules deterministic; avoid sleep-only tests.
-- Stress repeated execution with deadlines and preserve diagnostics for deadlock/livelock.
-- Verify exception/result propagation and resource release after cancellation/shutdown.
+- 测试启动、成功、失败、取消、队列满/空、有待处理工作的关闭、重复停止和关闭后无入队。
+- 在支持时在代表性的共享状态路径上运行 TSan 或平台竞争工具。
+- 使用屏障/闩锁/hook 使竞争调度确定性；避免仅 sleep 测试。
+- 用截止时间压力重复执行并保留死锁/活锁诊断。
+- 验证取消/关闭后的异常/结果传播和资源释放。
 
 ## Evidence Focus
 
-Name the owner, invariant/synchronization or memory-order proof, backpressure/shutdown policy, and deterministic/TSan evidence. “Thread-safe” or one passing stress run is not enough.
+说明所有者、不变式/同步或内存顺序证明、背压/关闭策略和确定性/TSan 证据。"线程安全"或一次通过的压力运行不够。
 
 ## Unsafe Defaults
 
-- Detached thread or abandoned future with unclear lifetime/failure.
-- Atomic chosen because mutexes seem slow without profiling/proof.
-- Relaxed ordering without a happens-before argument.
-- Condition-variable wait without predicate/shutdown wakeup.
-- Unbounded queue/pool and undefined overload behavior.
-- Sleep-based tests as the only concurrency evidence.
+- 分离的线程或放弃的 future，生命周期/失败不清晰。
+- 因 mutex 似乎慢而选择 atomic，没有 profiling/证明。
+- 没有 happens-before 论证的 relaxed 排序。
+- 没有谓词/关闭唤醒的条件变量等待。
+- 无界队列/池和未定义的过载行为。
+- 仅基于 sleep 的测试作为唯一并发证据。

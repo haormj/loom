@@ -151,7 +151,7 @@ pub fn dispatch_repair_route(
                 failed(
                     project_root,
                     "ACTIVE_TASK_RESULT_REPAIR_NOT_FOUND",
-                    "The active TaskResult correction action is missing or stale. Run loom.continue after the original TaskResult validation failure recreates the active repair state.".to_string(),
+                    "活跃的 TaskResult 纠正操作缺失或已过期。请在原始 TaskResult 验证失败重新创建活跃修复状态后运行 loom.continue。".to_string(),
                     "task_result_repair",
                 )
             })
@@ -159,7 +159,7 @@ pub fn dispatch_repair_route(
         _ => failed(
             project_root,
             "REPAIR_ROUTE_UNSUPPORTED",
-            format!("Unsupported repair route {:?}", action.kind),
+            format!("不支持的修复路由 {:?}", action.kind),
             "repair",
         ),
     }
@@ -198,14 +198,15 @@ fn accept_repair_file_inner<D>(
 where
     D: DomainDispatcher,
 {
-    let target = authorized.targets.first().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Repair target is missing".to_string())
-    })?;
+    let target = authorized
+        .targets
+        .first()
+        .ok_or_else(|| state::store::StateError::InvalidArgument("修复目标缺失".to_string()))?;
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Repair action missing deliveryId".to_string())
+        state::store::StateError::InvalidArgument("修复操作缺少 deliveryId".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("Repair action missing phaseId".to_string())
+        state::store::StateError::InvalidArgument("修复操作缺少 phaseId".to_string())
     })?;
     if let Some(stale) = ensure_latest_repair_action(
         &input.project_root,
@@ -330,10 +331,10 @@ fn materialize_delivery_execution_repair_inner(
     let selection =
         repair_source_task_selection(&task_plan, &run, &target_task_ids).ok_or_else(|| {
             let message = if target_task_ids.is_empty() {
-                "No task is available for delivery execution repair.".to_string()
+                "没有可用于交付执行修复的任务。".to_string()
             } else {
                 format!(
-                    "Execution repair target task is not in the current task run: {}.",
+                    "执行修复目标任务不在当前任务运行中：{}。",
                     target_task_ids.join(", ")
                 )
             };
@@ -706,10 +707,10 @@ fn build_repair_execution_request(
         object.insert(
             "boundaryRules".to_string(),
             json!([
-                "Use repairContext as the failure boundary; do not repair unrelated issues.",
-                "Do not edit Brainstorm, TechnicalBaseline, PGC, AAC, TaskPlan, ReviewResult, ManualReviewResolution, or .loom state.",
-                "Do not expand scope.",
-                "Write TaskResult JSON only to outputContract.resultFile."
+                "将 repairContext 作为失败边界；不得修复无关问题。",
+                "不得编辑 Brainstorm、TechnicalBaseline、PGC、AAC、TaskPlan、ReviewResult、ManualReviewResolution 或 .loom 状态。",
+                "不得扩大范围。",
+                "仅将 TaskResult JSON 写入 outputContract.resultFile。"
             ]),
         );
         if let Some(barrier) = object
@@ -718,18 +719,16 @@ fn build_repair_execution_request(
         {
             barrier.insert(
                 "rule".to_string(),
-                json!("The repair is not complete until TaskResult exists at outputContract.resultFile and loom.recordTaskResultFile succeeds."),
+                json!("修复在 TaskResult 存在于 outputContract.resultFile 且 loom.recordTaskResultFile 成功后才算完成。"),
             );
         }
         if let Some(rules) = object
             .get_mut("verificationCommandSchedulingRules")
             .and_then(Value::as_array_mut)
         {
+            rules.push(json!("在 TaskResult 提交前运行修复任务所需的验证。"));
             rules.push(json!(
-                "Run the verification needed for the repaired task before TaskResult submission."
-            ));
-            rules.push(json!(
-                "When a failing signal is available in repairContext, rerun that signal or the closest stable equivalent after the fix."
+                "当 repairContext 中有失败信号时，在修复后重跑该信号或最接近的稳定等价物。"
             ));
         }
     }
@@ -914,7 +913,7 @@ fn build_repair_execution_request(
                 "targetId": "result",
                 "path": result_file,
                 "required": true,
-                "description": "Write the TaskResult JSON for this delivery execution repair."
+                "description": "为此交付执行修复写入 TaskResult JSON。"
             }],
             "requiredTopLevelFields": result_contract["requiredTopLevelFields"].clone(),
             "blockedReasonOptions": [
@@ -925,8 +924,8 @@ fn build_repair_execution_request(
             "schemaShape": result_contract["schemaShape"].clone(),
             "resultTemplate": result_template,
             "resultRules": [
-                "TaskResult must include every requiredTopLevelFields entry.",
-                "If status is completed, evidence must show the repair was verified."
+                "TaskResult 必须包含每个 requiredTopLevelFields 条目。",
+                "如果 status 为 completed，证据必须展示修复已验证。"
             ]
         },
         "requestReadPlan": {
@@ -934,15 +933,15 @@ fn build_repair_execution_request(
                 {
                     "groupId": "repair_execution_core",
                     "required": true,
-                    "purpose": "Read task, repair context, and execution rules before editing.",
-                    "whenToRead": "Read before source edits.",
+                    "purpose": "在编辑前读取任务、修复上下文和执行规则。",
+                    "whenToRead": "在源码编辑前读取。",
                     "selectors": read_selectors_value_from_paths(repair_core_fields)
                 },
                 {
                     "groupId": "repair_result_contract",
                     "required": true,
-                    "purpose": "Read TaskResult write contract before submitting repair result.",
-                    "whenToRead": "Read before writing TaskResult.",
+                    "purpose": "在提交修复结果前读取 TaskResult 写入契约。",
+                    "whenToRead": "在写入 TaskResult 前读取。",
                     "selectors": read_selectors_value_from_paths(repair_result_fields)
                 }
             ]
@@ -1012,7 +1011,7 @@ fn browser_verification_repair_context(
         reference_plan.push(json!({
             "refId": "test.pw.reliability",
             "path": "tech/test/playwright/reliability.md",
-            "reason": "Repair flaky, retried, failed, or blocked browser verification without hiding the original signal."
+            "reason": "修复不稳定、重试、失败或被阻止的浏览器验证，不得隐藏原始信号。"
         }));
     }
     context
@@ -1346,19 +1345,19 @@ fn materialize_taskplan_repair_action(
                     "targetId": "outline",
                     "path": outline_file,
                     "required": true,
-                    "description": "Write the replacement TaskPlan outline JSON."
+                    "description": "写入替换的 TaskPlan outline JSON。"
                 },
                 {
                     "targetId": "groups",
                     "path": group_file_pattern,
                     "required": false,
-                    "description": "Write one replacement TaskPlan group JSON for each outline.groups[].groupId."
+                    "description": "为每个 outline.groups[].groupId 写入一个替换的 TaskPlan group JSON。"
                 }
             ],
             "pathAuthority": {
                 "currentRequestOnly": true,
                 "currentRequestId": request_id,
-                "rule": "Only this replacement contract's outlineFile and groupFilePattern are authorized TaskPlan targets."
+                "rule": "仅此替换契约的 outlineFile 和 groupFilePattern 是授权的 TaskPlan 目标。"
             },
             "outlineSchemaShape": schema_shape,
             "groupSchemaShape": group_schema,
@@ -1370,15 +1369,15 @@ fn materialize_taskplan_repair_action(
                 {
                     "groupId": "taskplan_core_context",
                     "required": true,
-                    "purpose": "Read current phase source refs, requirement transfer, and allowed refs before writing the replacement TaskPlan outline.",
-                    "whenToRead": "Read first.",
+                    "purpose": "在写入替换 TaskPlan outline 前读取当前 phase 源引用、需求传递和允许引用。",
+                    "whenToRead": "首先读取。",
                     "selectors": read_selectors_value_from_paths(taskplan_core_fields)
                 },
                 {
                     "groupId": "taskplan_generation_rules",
                     "required": true,
-                    "purpose": "Read grouping, reference, verification, frontend, workflow, and runtime rules.",
-                    "whenToRead": "Read after core context and before writing group files.",
+                    "purpose": "读取分组、引用、验证、前端、工作流和运行时规则。",
+                    "whenToRead": "在核心上下文之后、写入 group 文件之前读取。",
                     "selectors": read_selectors_value_from_paths([
                         "generationRules.groupedOutputRules",
                         "generationRules.scopeAndReferenceRules",
@@ -1397,8 +1396,8 @@ fn materialize_taskplan_repair_action(
                 {
                     "groupId": "taskplan_repair_write_contract",
                     "required": true,
-                    "purpose": "Read output paths, schema shapes, and enum refs before writing replacement candidates.",
-                    "whenToRead": "Read before writing output files.",
+                    "purpose": "在写入替换候选前读取输出路径、schema 形状和 enum 引用。",
+                    "whenToRead": "在写入输出文件前读取。",
                     "selectors": read_selectors_value_from_paths(taskplan_repair_write_contract_fields)
                 }
             ]
@@ -1695,9 +1694,9 @@ fn materialize_architecture_repair_action(
         .and_then(Value::as_str)
         .is_some()
     {
-        json!("A previous runtime delivery exists in sourceRefs.previousRuntimeDeliveryRef. Use runtimeDelivery.status=unchanged only when copying that ref exactly; otherwise use modified or not_applicable.")
+        json!("sourceRefs.previousRuntimeDeliveryRef 中存在先前的运行时交付。仅当精确复制该引用时才使用 runtimeDelivery.status=unchanged；否则使用 modified 或 not_applicable。")
     } else {
-        json!("No previous runtime delivery exists for this phase. runtimeDelivery.status must be modified or not_applicable; do not use unchanged and do not write basis.previousRuntimeDeliveryRef.")
+        json!("此 phase 不存在先前的运行时交付。runtimeDelivery.status 必须为 modified 或 not_applicable；不得使用 unchanged 且不得写入 basis.previousRuntimeDeliveryRef。")
     };
     let section_outputs = build_architecture_repair_section_outputs(
         root,
@@ -1705,7 +1704,7 @@ fn materialize_architecture_repair_action(
         &frontend_experience_source,
         planning_contract.as_ref().ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "architecture repair source is missing its planning contract".to_string(),
+                "架构修复源缺少其 planning contract".to_string(),
             )
         })?,
         source_refs
@@ -1724,9 +1723,7 @@ fn materialize_architecture_repair_action(
         })
         .collect::<Vec<_>>();
     let current_output = section_outputs.first().cloned().ok_or_else(|| {
-        state::store::StateError::StateCorrupted(
-            "architecture repair section outputs are empty".to_string(),
-        )
+        state::store::StateError::StateCorrupted("架构修复 section 输出为空".to_string())
     })?;
     let mut repair_context = json!({
         "sourceArchitectureRequestRef": original_request_ref
@@ -1770,8 +1767,8 @@ fn materialize_architecture_repair_action(
             "followTechnicalBaseline": true,
             "doNotImplementDeferredScope": true,
             "doNotWriteFinalAacJson": true,
-            "requirementDetailTransfer": "Use contextProjection.requirementDetailTransfer as the current phase detail authority.",
-            "frontendExperienceAuthority": "When confirmed/current frontend refs exist, frontend_experience must consume them and must not downgrade the confirmed target.",
+            "requirementDetailTransfer": "将 contextProjection.requirementDetailTransfer 作为当前 phase 详情权威。",
+            "frontendExperienceAuthority": "当 confirmed/current 前端引用存在时，frontend_experience 必须消费它们且不得降级已确认的目标。",
             "runtimeDeliveryAuthority": runtime_authority
         },
         "outputContract": {
@@ -1782,7 +1779,7 @@ fn materialize_architecture_repair_action(
                 "targetId": section_name(ArchitectureSectionGroup::Foundation),
                 "path": current_output["candidateFile"].clone(),
                 "required": true,
-                "description": "Write the replacement foundation Architecture section candidate JSON."
+                "description": "写入替换的 foundation Architecture section 候选 JSON。"
             }],
             "schemaShape": current_output["schemaShape"].clone(),
             "schemaProjection": {
@@ -1881,7 +1878,7 @@ fn latest_phase_ref(
         .cloned()
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(format!(
-                "phase {phase_id} is missing latestRefs.{key}"
+                "phase {phase_id} 缺少 latestRefs.{key}"
             ))
         })
 }
@@ -1893,11 +1890,7 @@ fn field_value(
     fields
         .get(field)
         .map(|result| result.value.clone())
-        .ok_or_else(|| {
-            state::store::StateError::StateCorrupted(format!(
-                "replacement source field {field} is missing"
-            ))
-        })
+        .ok_or_else(|| state::store::StateError::StateCorrupted(format!("替换源字段 {field} 缺失")))
 }
 
 fn source_task_execution_request_ref_for_task(
@@ -1987,7 +1980,7 @@ fn projected_field_value(
     }
     if projected.is_empty() {
         return Err(state::store::StateError::StateCorrupted(format!(
-            "replacement source field {field} is missing"
+            "替换源字段 {field} 缺失"
         )));
     }
     Ok(Value::Object(projected))
@@ -2076,7 +2069,7 @@ fn frontend_experience_source_from_source_refs(source_refs: &Value) -> Value {
     }
     object.insert(
         "authorityRule".to_string(),
-        json!("Use confirmed/current frontend refs as the frontend_experience authority. RepositoryContext and TechnicalBaseline are implementation facts only."),
+        json!("将已确认/当前的前端引用作为 frontend_experience 权威。RepositoryContext 和 TechnicalBaseline 仅作为实现事实。"),
     );
     Value::Object(object)
 }
@@ -2235,18 +2228,18 @@ fn architecture_repair_read_groups(
             "groupId": "architecture_core_context",
             "required": true,
             "purpose": if architecture_section_uses_detail_refs(section) {
-                "Read the current-phase planning authority, repair context, and allowed refs before generating the replacement Architecture section."
+                "在生成替换 Architecture section 前读取当前 phase 的 planning 权威、修复上下文和允许引用。"
             } else {
-                "Read the current-phase planning authority and repair context before generating the replacement Architecture section."
+                "在生成替换 Architecture section 前读取当前 phase 的 planning 权威和修复上下文。"
             },
-            "whenToRead": "Read before drafting any replacement Architecture section candidate.",
+            "whenToRead": "在起草任何替换 Architecture section 候选前读取。",
             "selectors": read_selectors_value_from_paths(core_fields)
         }),
         json!({
             "groupId": "architecture_section_contract",
             "required": true,
-            "purpose": "Read the current section contract, schema projection, and write target before writing the replacement section candidate.",
-            "whenToRead": "Read immediately before writing the current replacement Architecture section candidate.",
+            "purpose": "在写入替换 section 候选前读取当前 section 契约、schema 投影和写入目标。",
+            "whenToRead": "在写入当前替换 Architecture section 候选前立即读取。",
             "selectors": read_selectors_value_from_paths(contract_fields)
         }),
     ];
@@ -2254,8 +2247,8 @@ fn architecture_repair_read_groups(
         groups.push(json!({
             "groupId": "architecture_api_quality_context",
             "required": matches!(section, ArchitectureSectionGroup::DomainContract),
-            "purpose": "Read the MCP-derived API quality seed only when generating or repairing the current HTTP interface section.",
-            "whenToRead": "Read when sectionState.currentSection is domain_contract, or when Loom is rebuilding a repair request that must preserve API applicability.",
+            "purpose": "仅在生成或修复当前 HTTP 接口 section 时读取 MCP 派生的 API 质量种子。",
+            "whenToRead": "当 sectionState.currentSection 为 domain_contract 时读取，或当 Loom 正在重建必须保持 API 适用性的修复请求时读取。",
             "selectors": read_selectors_value_from_paths(api_quality_seed_read_fields())
         }));
     }
@@ -2301,8 +2294,8 @@ fn architecture_repair_read_groups(
         groups.push(json!({
             "groupId": "architecture_frontend_context",
             "required": true,
-            "purpose": "Read the frontend authority refs for frontend_experience.",
-            "whenToRead": "Read when sectionState.currentSection is frontend_experience.",
+            "purpose": "为 frontend_experience 读取前端权威引用。",
+            "whenToRead": "当 sectionState.currentSection 为 frontend_experience 时读取。",
             "selectors": read_selectors_value_from_paths(frontend_fields)
         }));
     }
@@ -2315,8 +2308,8 @@ fn architecture_repair_read_groups(
         groups.push(json!({
             "groupId": "architecture_domain_model_context",
             "required": true,
-            "purpose": "Read compact actors and capability groups for structural, domain, and behavior architecture repair sections.",
-            "whenToRead": "Read when sectionState.currentSection is foundation, domain_contract, or behavior.",
+            "purpose": "为结构、领域和行为架构修复 section 读取紧凑的 actor 和能力组。",
+            "whenToRead": "当 sectionState.currentSection 为 foundation、domain_contract 或 behavior 时读取。",
             "selectors": read_selectors_value_from_paths([
                 "contextProjection.requirementDetailTransfer.actors",
                 "contextProjection.requirementDetailTransfer.capabilityGroups"
@@ -2566,7 +2559,7 @@ fn existing_active_repair_action(
         return Some(failed(
             project_root,
             "REPAIR_PHASE_NOT_FOUND",
-            format!("Phase {phase_id} was not found for delivery {delivery_id}."),
+            format!("交付 {delivery_id} 中未找到 phase {phase_id}。"),
             "repair",
         ));
     };
@@ -2582,7 +2575,7 @@ fn existing_active_repair_action(
         return Some(failed(
             project_root,
             "STALE_REPAIR_ACTION",
-            "Continue found a stale repair action requestRef; rerun loom.continue after the active phase state is refreshed.".to_string(),
+            "Continue 发现过期的修复操作 requestRef；请在活跃 phase 状态刷新后重新运行 loom.continue。".to_string(),
             "repair",
         ));
     }
@@ -2703,7 +2696,7 @@ fn ensure_latest_repair_action(
         return Ok(Some(failed(
             project_root,
             "STALE_REPAIR_ACTION",
-            "Repair submit must use the active phase repair action requestRef.".to_string(),
+            "修复提交必须使用活跃 phase 的修复操作 requestRef。".to_string(),
             "repair_submit",
         )));
     }
@@ -2719,7 +2712,7 @@ fn validate_repair_artifact(
         issues.push(issue(
             "REPAIR_ARTIFACT_SCHEMA_INVALID",
             "schemaVersion",
-            "Repair artifact schemaVersion must be 1.0.",
+            "修复产物的 schemaVersion 必须为 1.0。",
         ));
     }
     if value
@@ -2731,7 +2724,7 @@ fn validate_repair_artifact(
         issues.push(issue(
             "REPAIR_ARTIFACT_SCHEMA_INVALID",
             "repairId",
-            "Repair artifact repairId is required.",
+            "修复产物需要 repairId。",
         ));
     }
     if value
@@ -2743,7 +2736,7 @@ fn validate_repair_artifact(
         issues.push(issue(
             "REPAIR_ARTIFACT_SCHEMA_INVALID",
             "summary",
-            "Repair artifact summary is required.",
+            "修复产物需要 summary。",
         ));
     }
     let status = value.get("status").and_then(Value::as_str);
@@ -2751,14 +2744,14 @@ fn validate_repair_artifact(
         issues.push(issue(
             "REPAIR_ARTIFACT_ENUM_INVALID",
             "status",
-            "Repair artifact status must be ready or blocked.",
+            "修复产物 status 必须为 ready 或 blocked。",
         ));
     }
     if status == Some("blocked") {
         issues.push(issue(
             "REPAIR_ARTIFACT_BLOCKED",
             "status",
-            "Repair artifact is blocked and cannot be submitted as a completed repair route.",
+            "修复产物处于 blocked 状态，不能作为已完成的修复路由提交。",
         ));
     }
     let expected = expected_repair_next_action(artifact_kind);
@@ -2770,7 +2763,7 @@ fn validate_repair_artifact(
         issues.push(issue(
             "REPAIR_ARTIFACT_ROUTE_INVALID",
             "nextAction.type",
-            &format!("Repair artifact nextAction.type must be {expected}."),
+            &format!("修复产物 nextAction.type 必须为 {expected}。"),
         ));
     }
     issues
@@ -2863,16 +2856,14 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
             .get("targetId")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument(
-                    "write target missing targetId".to_string(),
-                )
+                state::store::StateError::InvalidArgument("写入目标缺少 targetId".to_string())
             })?
             .to_string(),
         path: value
             .get("path")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument("write target missing path".to_string())
+                state::store::StateError::InvalidArgument("写入目标缺少 path".to_string())
             })?
             .to_string(),
         required: value
@@ -2882,7 +2873,7 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
         description: value
             .get("description")
             .and_then(Value::as_str)
-            .unwrap_or("Write repair artifact.")
+            .unwrap_or("写入修复产物。")
             .to_string(),
     })
 }

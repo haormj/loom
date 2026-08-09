@@ -657,7 +657,7 @@ fn native_request_omits_missing_read_fields_and_rejects_broad_fields() {
         },
     )
     .expect_err("broad read field is rejected");
-    assert!(broad.to_string().contains("too broad"));
+    assert!(broad.to_string().contains("过宽"));
 
     let private_workflow_state = write_native_request(
         fixture.root_str(),
@@ -681,7 +681,7 @@ fn native_request_omits_missing_read_fields_and_rejects_broad_fields() {
     .expect_err("private workflow state is rejected");
     assert!(private_workflow_state
         .to_string()
-        .contains("sectionOutputs is private workflow state"));
+        .contains("sectionOutputs 为私有工作流状态"));
 }
 
 #[test]

@@ -46,7 +46,7 @@ export const LoomPlugin = async ({ client, directory }) => {
           signature: signatureForResult(result),
         };
         remember(input.sessionID, pending);
-        output.title = "Loom MCP continuation required";
+        output.title = "Loom MCP 需要继续执行";
         output.metadata = {
           ...(output.metadata ?? {}),
           loomAutoRunnable: true,
@@ -103,7 +103,7 @@ export const LoomPlugin = async ({ client, directory }) => {
         query: { directory: pending.projectRoot || directory },
         body: {
           agent: "build",
-          system: "Continue the active Loom MCP workflow. Do not summarize, mark a local plan complete, send a final answer, or ask whether to continue while the latest result is auto-runnable or active.",
+          system: "继续执行当前的 Loom MCP 工作流。在最近一次结果为 auto_runnable 或 active 时，不要总结、标记本地计划完成、发送最终答复，或询问是否继续。",
           parts: [
             {
               type: "text",
@@ -162,29 +162,29 @@ function signatureForResult(result) {
 
 function continuationBanner(pending) {
   return [
-    "Loom MCP returned an auto-runnable next action.",
-    `Next kind: ${pending.nextKind || "unknown"}.`,
-    pending.requestRef ? `Request: ${pending.requestRef}.` : null,
-    "Continue with the returned MCP action before reporting completion.",
+    "Loom MCP 返回了一个 auto-runnable 的后续操作。",
+    `后续操作类型：${pending.nextKind || "未知"}。`,
+    pending.requestRef ? `请求：${pending.requestRef}。` : null,
+    "在报告完成之前，先执行返回的 MCP 操作。",
   ].filter(Boolean).join("\n");
 }
 
 function idlePrompt(pending) {
   if (pending.state === "active_operation") {
-    return "The latest Loom MCP result is active_operation. Call only the observation tools named by that result, then continue following the returned state.";
+    return "最近的 Loom MCP 结果为 active_operation。仅调用该结果指定的观察工具，然后继续遵循返回的状态。";
   }
   if (pending.nextKind === "run_loom_tool") {
     return [
-      "The latest Loom MCP result is auto_runnable.",
-      "Execute next.kind=run_loom_tool now.",
-      pending.requestRef ? `Use requestRef=${pending.requestRef}.` : null,
-      "Inspect the request, read only the returned readGroups, call the returned Loom MCP tool, then retry the returned retryTool before reporting progress.",
+      "最近的 Loom MCP 结果为 auto_runnable。",
+      "立即执行 next.kind=run_loom_tool。",
+      pending.requestRef ? `使用 requestRef=${pending.requestRef}。` : null,
+      "检查请求，仅读取返回的 readGroups，调用返回的 Loom MCP 工具，然后在报告进度之前重试返回的 retryTool。",
     ].filter(Boolean).join("\n");
   }
   return [
-    "The latest Loom MCP result is auto_runnable.",
-    `Execute next.kind=${pending.nextKind || "unknown"} now.`,
-    pending.requestRef ? `Use requestRef=${pending.requestRef}.` : null,
-    "Read declared request groups through Loom MCP read tools, write only returned targets, and submit through the returned MCP submit tool before reporting completion.",
+    "最近的 Loom MCP 结果为 auto_runnable。",
+    `立即执行 next.kind=${pending.nextKind || "未知"}。`,
+    pending.requestRef ? `使用 requestRef=${pending.requestRef}。` : null,
+    "通过 Loom MCP 读取工具读取已声明的请求字段组，仅写入返回的目标，并在报告完成之前通过返回的 MCP 提交工具进行提交。",
   ].filter(Boolean).join(" ");
 }

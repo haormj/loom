@@ -1,82 +1,82 @@
-# Go Generic Type Contracts
+# Go 泛型类型契约
 
 ## When To Use
 
-Use this reference only when the task explicitly owns a reusable type-parameter contract with multiple real concrete consumers. Prefer ordinary functions or behavior interfaces when type independence is not the problem.
+仅当任务显式拥有具有多个真实具体消费者的可复用类型参数契约时才使用此参考。当类型独立性不是问题时优先使用普通函数或行为接口。
 
 ## Implementation Focus
 
 ### Consumer Need
 
-Start with duplicated algorithm/data-structure behavior and at least two meaningful types. Confirm generics improve type safety/readability without erasing domain operation names or adding constraints callers struggle to understand.
+从重复的算法/数据结构行为和至少两个有意义的类型开始。确认泛型提高类型安全/可读性而不抹除领域操作名或添加调用者难以理解的约束。
 
-Do not create generic CRUD repositories, services, mappers, or containers that hide business invariants and transactions behind one shape.
+不要创建隐藏业务不变式和事务背后的通用 CRUD repository、服务、映射器或容器。
 
-Keep exported generic APIs small; internal generic helpers can remain local where they remove mechanical duplication.
+保持导出的泛型 API 小；内部泛型辅助可以在它们消除机械重复的地方保持局部。
 
 ### Constraints And Type Sets
 
-Use `any` only when no operations are required. Use `comparable` only for equality/map-key/set semantics. Define small named constraints from allowed operations/types.
+仅当不需要任何操作时使用 `any`。仅用于相等/map 键/set 语义时使用 `comparable`。从允许的操作/类型定义小型命名约束。
 
-Use `~T` when named types with that underlying representation should participate and the algorithm is valid for all included types. Union terms are type sets, not runtime sum types.
+当具有该底层表示的命名类型应参与且算法对所有包含类型有效时使用 `~T`。联合项是类型集，不是运行时求和类型。
 
-Avoid overly broad numeric/ordered constraints when overflow, NaN, signedness, duration/money, or domain semantics differ.
+当溢出、NaN、有符号性、持续时间/货币或领域语义不同时，避免过于宽泛的数值/有序约束。
 
-Behavior belongs in interfaces with methods; type terms cannot be used as ordinary value interfaces outside constraints.
+行为属于带方法的接口；类型项不能在约束之外用作普通值接口。
 
 ### Inference And API Shape
 
-Arrange parameters so common calls infer type arguments naturally. Explicit type arguments are acceptable when the type is not represented in value parameters, but frequent verbose calls can signal a poor API.
+排列参数使常见调用自然推断类型参数。当类型未在值参数中表示时显式类型参数可接受，但频繁的冗长调用可能表示 API 不佳。
 
-Methods cannot introduce their own new type parameters independently; choose a generic receiver/type or generic free function according to ownership.
+方法不能独立引入自己的新类型参数；根据所有权选择泛型接收者/类型或泛型自由函数。
 
-Avoid returning interface/any from a generic function and immediately type-asserting; that discards the type safety the abstraction should provide.
+避免从泛型函数返回 interface/any 并立即进行类型断言；那丢弃了抽象应提供的类型安全。
 
 ### Zero, Nil, And Absence
 
-Declare zero-value semantics for generic values/containers. Use `(T, bool)`, `*T`, option/result type, or error according to absence/error ownership; returning only zero `T` can conflate valid values and missing data.
+为泛型值/容器声明零值语义。根据缺失/错误所有权使用 `(T, bool)`、`*T`、option/result 类型或 error；仅返回零 `T` 可能混淆有效值和缺失数据。
 
-Not every `T` is nil-able, ordered, hashable, copy-cheap, immutable, or safe as a map key. Constraints and code must not assume those properties implicitly.
+并非每个 `T` 都可为 nil、有序、可哈希、拷贝廉价、不可变或可作为 map 键安全使用。约束和代码不得隐式假设这些属性。
 
-Avoid comparing generic values through reflection or converting to string for identity.
+避免通过反射比较泛型值或转换为字符串进行标识。
 
 ### Copying, Pointers, And Methods
 
-Generic assignment/parameter passing copies values; large/mutex/resource-containing types may have unsafe/expensive copy semantics. Define pointer constraints/constructors only when actual consumers require them.
+泛型赋值/参数传递拷贝值；大/mutex/资源包含类型可能有不安全/昂贵的拷贝语义。仅在实际消费者需要时定义指针约束/构造函数。
 
-Understand method sets for `T` and `*T`; do not assume you can instantiate or call pointer receiver methods without a suitable constraint/value.
+理解 `T` 和 `*T` 的方法集；不要假设在没有合适约束/值的情况下可以实例化或调用指针接收者方法。
 
-Do not use unsafe/reflection to work around a constraint that does not express the real contract.
+不要使用 unsafe/反射来绕过不表达真实契约的约束。
 
 ### Performance And Code Size
 
-Generics may be shape/dictionary/specialization implemented depending on compiler/types; do not promise zero-cost or monomorphization details without measurement.
+泛型可能根据编译器/类型以形状/字典/特化方式实现；不要在没有测量的情况下承诺零成本或单态化详情。
 
-Assess build time/binary size/escape/allocation only when performance ownership exists. A behavior interface may be simpler and fast enough.
+仅在存在性能所有权时评估构建时间/二进制大小/逃逸/分配。行为接口可能更简单且足够快。
 
 ### Compatibility
 
-Preserve module `go` directive/toolchain and consumer support. Adding generics can raise minimum Go version and change public source compatibility.
+保留模块 `go` 指令/toolchain 和消费者支持。添加泛型可能提高最低 Go 版本并改变公共源码兼容性。
 
-Changing exported constraints can break or broaden callers in subtle ways; test representative downstream named types.
+更改导出约束可能以微妙方式破坏或扩大调用者；测试代表性的下游命名类型。
 
 ## Verification Focus
 
-- Compile/test at least two meaningful concrete/named types plus zero/absence/boundary cases.
-- Add compile-fail/type-check tests only if repository tooling supports stable diagnostics/contracts.
-- Verify inference, named underlying types, pointer/value method sets, and rejected types.
-- Run benchmarks/escape/build-size checks only for explicit performance claims.
-- Build downstream consumers under the declared minimum Go version when public APIs change.
+- 编译/测试至少两个有意义的具体/命名类型以及零/缺失/边界情况。
+- 仅在仓库工具支持稳定诊断/契约时才添加编译失败/类型检查测试。
+- 验证推断、命名底层类型、指针/值方法集和被拒绝的类型。
+- 仅对显式性能声明运行基准/逃逸/构建大小检查。
+- 当公共 API 变更时在声明的最低 Go 版本下构建下游消费者。
 
 ## Evidence Focus
 
-Name consumers, constraint/zero/absence contract, inference/method-set decision, and supported/rejected type proofs. Generic syntax or one `int` test does not establish reuse or semantic safety.
+说明消费者、约束/零/缺失契约、推断/方法集决策和支持/被拒绝的类型证明。泛型语法或一个 `int` 测试不建立复用或语义安全。
 
 ## Unsafe Defaults
 
-- Generic abstraction introduced for one type/consumer.
-- `comparable`/`any` used as a vague business-object constraint.
-- Generic repository erasing domain operations/invariants.
-- Zero `T` returned when absence is ambiguous.
-- Reflection/unsafe/type assertions bypassing constraints.
-- Minimum Go/consumer compatibility raised implicitly.
+- 为一个类型/消费者引入泛型抽象。
+- `comparable`/`any` 用作模糊的业务对象约束。
+- 泛型 repository 抹除领域操作/不变式。
+- 缺失模糊时返回零 `T`。
+- 反射/unsafe/类型断言绕过约束。
+- 隐式提高最低 Go/消费者兼容性。

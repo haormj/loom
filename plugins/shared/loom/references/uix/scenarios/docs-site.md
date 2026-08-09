@@ -1,15 +1,15 @@
-# UIX Scenario: Docs Site
+# UIX 场景：文档站点
 
-Use for documentation, knowledge bases, API references, guides, technical manuals, and help centers. Reading, search, navigation, and examples are the product workflow.
+用于文档、知识库、API 参考、指南、技术手册和帮助中心。阅读、搜索、导航和示例是产品工作流。
 
-## Baseline
+## 基线
 
-- First viewport shows documentation structure and a direct path to useful content.
-- Density is `balanced`.
-- The UI should not look like a marketing page when the task is reference lookup.
-- Content width, code readability, navigation state, and search quality matter more than decoration.
+- 首屏显示文档结构和到达有用内容的直接路径。
+- 密度为 `balanced`。
+- 当任务是参考查找时，UI 不应看起来像营销页面。
+- 内容宽度、代码可读性、导航状态和搜索质量比装饰更重要。
 
-## Docs Shell
+## 文档外壳
 
 ```html
 <div data-region="docs-shell">
@@ -69,16 +69,16 @@ Use for documentation, knowledge bases, API references, guides, technical manual
 }
 ```
 
-## Required Patterns
+## 必需模式
 
-- Left navigation or section index, content region, and optional right table of contents.
-- Search or command palette when content volume requires it.
-- Code blocks with language label, copy control, readable contrast, and overflow behavior.
-- Callouts for note/tip/warning/danger states.
-- Current page/section state and next/previous routes.
-- Search empty/no-result states with recovery suggestions.
+- 左侧导航或部分索引、内容区域和可选的右侧目录。
+- 当内容量需要时的搜索或命令面板。
+- 带语言标签、复制控件、可读对比度和溢出行为的代码块。
+- 用于注意/提示/警告/危险状态的标注。
+- 当前页面/部分状态和上一页/下一页路由。
+- 带恢复建议的搜索空/无结果状态。
 
-## Content Anatomy
+## 内容解剖结构
 
 ```html
 <article data-region="doc-page">
@@ -101,33 +101,31 @@ Use for documentation, knowledge bases, API references, guides, technical manual
 .docs-content code { font-family: var(--font-mono); }
 ```
 
-## Documentation Interactions
+## 文档交互
 
-- Search/no-result state should suggest alternate terms or navigation.
-- Code examples need copy controls only when copy is implemented.
-- API reference pages need parameter, response, error, and example sections with stable anchors.
-- Guides need prerequisites, steps, expected result, and troubleshooting.
-- Version, platform, or language switchers should show the current selection.
+- 搜索/无结果状态应建议替代术语或导航。
+- 代码示例仅在实现复制时需要复制控件。
+- API 参考页需要带稳定锚点的参数、响应、错误和示例部分。
+- 指南需要前提条件、步骤、预期结果和故障排除。
+- 版本、平台或语言切换器应显示当前选择。
 
-## Verification Signals
+## 验证信号
 
-- Left nav active state and page heading agree.
-- Long code blocks scroll without breaking the page.
-- Mobile nav opens/closes and returns to content without losing scroll unexpectedly.
-- The page can be read without marketing content blocking reference lookup.
+- 左侧导航活动状态和页面标题一致。
+- 长代码块滚动而不破坏页面。
+- 移动导航打开/关闭并返回内容而不意外丢失滚动。
+- 页面可在无营销内容阻碍参考查找的情况下阅读。
 
-## Avoid
+## 避免
 
-- Full-width paragraphs.
-- Code blocks with poor contrast or no overflow behavior.
-- Hiding docs navigation behind multiple clicks on desktop.
-- Marketing hero sections that delay access to documentation.
+- 全宽段落。
+- 对比度差或无溢出行为的代码块。
+- 在桌面上将文档导航隐藏在多次点击之后。
+- 延迟访问文档的营销主视觉部分。
 
-## Reading And Code Interaction
+## 阅读和代码交互
 
-Documentation pages have two simultaneous jobs: let readers understand the
-concept and let them use the example. Keep the explanation, code, and result
-connected.
+文档页面有两个同时进行的任务：让读者理解概念并让他们使用示例。保持说明、代码和结果连接。
 
 ```html
 <article data-region="article">
@@ -139,16 +137,15 @@ connected.
 </article>
 ```
 
-- Use headings that describe the task or concept, not only a product feature name.
-- Keep runnable examples close to prerequisites, expected output, and the next step.
-- Code blocks need readable wrapping or horizontal scrolling, a language label, and a copy action with feedback.
-- Do not put required instructions only in hover tooltips, collapsed panels, or images.
-- Mark external links and version-specific behavior clearly, while keeping setup details out of the product's primary success message when the reader is in an interactive example.
+- 使用描述任务或概念的标题，而非仅产品功能名称。
+- 保持可运行示例靠近前提条件、预期输出和下一步。
+- 代码块需要可读的换行或水平滚动、语言标签和带反馈的复制操作。
+- 不要将必需说明仅放在悬停工具提示、折叠面板或图像中。
+- 清楚标记外部链接和版本特定行为，同时在读者处于交互式示例中时将设置细节排除在产品的主要成功消息之外。
 
-## Responsive Reading
+## 响应式阅读
 
-At narrow widths, preserve the reading order and make code inspectable without
-shrinking it below a usable size.
+在窄宽度下，保持阅读顺序并使代码可检查而不缩小到不可用的大小。
 
 ```css
 .docs-layout {
@@ -169,5 +166,4 @@ shrinking it below a usable size.
 }
 ```
 
-Keep the article title, current section, code copy control, and navigation
-reachable after the sidebar and table of contents collapse.
+在侧边栏和目录折叠后保持文章标题、当前部分、代码复制控件和导航可达。

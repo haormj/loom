@@ -1,28 +1,28 @@
-# ASP.NET Core Authentication And Authorization
+# ASP.NET Core 认证与授权
 
-Implement the accepted identity and authorization model. ASP.NET Core supports cookies, bearer tokens, Identity, external providers, certificates, and custom schemes; do not introduce JWT or Identity unless the architecture and client trust model select them.
+实现已接受的 identity 和授权模型。ASP.NET Core 支持 cookie、bearer token、Identity、外部 provider、证书和自定义 scheme；除非架构和客户端信任模型选择了 JWT 或 Identity，否则不要引入它们。
 
-The accepted JWT algorithm and claim contract lives in `tech/api/jwt.md`; this file owns ASP.NET Core scheme, policy, middleware, and options wiring.
+已接受的 JWT 算法和 claim 契约在 `tech/api/jwt.md` 中；本文件负责 ASP.NET Core 的 scheme、policy、中间件和选项配置。
 
-## Scheme Selection And Configuration
+## Scheme 选择与配置
 
-Configure explicit default authenticate/challenge/forbid schemes when more than one scheme exists. Keep cookie and bearer endpoints separated through policy schemes or endpoint metadata where needed; do not let scheme forwarding accept weaker credentials accidentally.
+当存在多个 scheme 时，配置显式的默认 authenticate/challenge/forbid scheme。通过 policy scheme 或端点元数据将 cookie 和 bearer 端点分开；不要让 scheme forwarding 意外接受较弱的凭证。
 
-Bind issuer, audience, authority, keys, lifetimes, cookie settings, and provider credentials through validated options. Never commit signing secrets or log tokens. Place `UseAuthentication` before `UseAuthorization` and map protected endpoints after both.
+通过已验证的选项绑定 issuer、audience、authority、密钥、生命周期、cookie 设置和 provider 凭证。切勿提交签名密钥或记录 token。将 `UseAuthentication` 放在 `UseAuthorization` 之前，并在两者之后映射受保护的端点。
 
-For JWT bearer validation, bind the selected `tech/api/jwt.md` profile to explicit bearer options and policies. Do not generate local self-issued tokens when the accepted system trusts an external identity provider.
+对于 JWT bearer 验证，将所选的 `tech/api/jwt.md` profile 绑定到显式的 bearer 选项和 policy。当已接受系统信任外部 identity provider 时，不要生成本地自签发的 token。
 
-## Identity And Password Workflows
+## Identity 与密码工作流
 
-Use ASP.NET Core Identity or the existing maintained credential boundary for password hashing, lockout, confirmation, reset, MFA, recovery, and security-stamp behavior. Do not implement a custom PBKDF/password format from a tutorial when Identity already owns credentials.
+使用 ASP.NET Core Identity 或现有维护的凭证边界来处理密码哈希、锁定、确认、重置、MFA、恢复和 security-stamp 行为。当 Identity 已拥有凭证时，不要按照教程实现自定义的 PBKDF/密码格式。
 
-Registration, login, verification, reset, and account recovery are separate task-owned workflows. Avoid account enumeration, use expiring single-use tokens where required, and never return password hashes, reset tokens, refresh tokens, or security stamps in ordinary DTOs.
+注册、登录、验证、重置和账户恢复是独立的任务拥有工作流。避免账户枚举，在需要时使用过期的单次 token，切勿在普通 DTO 中返回密码哈希、重置 token、refresh token 或 security stamp。
 
-Refresh/session workflows need explicit rotation, revocation, reuse detection, device/session ownership, and logout semantics. A long-lived bearer token is not a complete refresh design.
+Refresh/session 工作流需要显式的轮转、撤销、重用检测、设备/session 归属和登出语义。长期存活的 bearer token 不是完整的 refresh 设计。
 
-## Policies And Resource Authorization
+## 策略与资源授权
 
-Use named policies for reusable claim/role/requirement combinations. Prefer custom `IAuthorizationRequirement` handlers for policy that depends on application facts rather than branching across endpoint delegates.
+对可复用的 claim/role/requirement 组合使用命名策略。对于依赖应用事实而非端点 delegate 中的分支逻辑的策略，优先使用自定义 `IAuthorizationRequirement` handler。
 
 ```csharp
 builder.Services.AddAuthorization(options =>
@@ -33,49 +33,49 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-Roles and claims establish coarse capabilities; they do not prove row/tenant ownership or valid lifecycle state. Scope list queries and enforce resource/operation authorization in the application boundary. Use `IAuthorizationService.AuthorizeAsync(user, resource, policy)` when a loaded resource is required.
+Role 和 claim 确立粗粒度能力；它们不能证明行/租户归属或有效的生命周期状态。对列表查询进行范围限定，并在应用边界强制执行资源/操作授权。当需要已加载的资源时，使用 `IAuthorizationService.AuthorizeAsync(user, resource, policy)`。
 
-Keep fallback/default policy behavior explicit. Anonymous endpoints must be deliberately marked and reviewed, especially when a route group has shared authorization metadata.
+保持 fallback/default policy 行为明确。匿名端点必须被慎重标记和审查，尤其是在 route group 共享授权元数据时。
 
-## Current User Boundary
+## 当前用户边界
 
-Read identity through a narrow request-context abstraction or endpoint `ClaimsPrincipal`, then pass stable actor/tenant identifiers into application operations. Domain and infrastructure code should not depend directly on `IHttpContextAccessor` unless request context is their accepted responsibility.
+通过窄的请求上下文抽象或端点 `ClaimsPrincipal` 读取 identity，然后将稳定的 actor/tenant 标识符传入应用操作。Domain 和基础设施代码不应直接依赖 `IHttpContextAccessor`，除非请求上下文是其已接受的职责。
 
-Validate claim presence and format; never assume `sub`, tenant, role, or email claims exist because one issuer usually supplies them. Map external identity to internal account state where suspension/revocation requires current data.
+验证 claim 的存在和格式；切勿因为某个 issuer 通常提供 `sub`、tenant、role 或 email claim 就假设它们存在。当挂起/撤销需要当前数据时，将外部 identity 映射到内部账户状态。
 
-## Browser Controls
+## 浏览器控制
 
-Cookie-authenticated unsafe requests require antiforgery protection. Configure secure, HTTP-only, SameSite, domain/path, and expiration behavior for the real deployment topology.
+Cookie 认证的不安全请求需要 antiforgery 保护。为真实的部署拓扑配置 secure、HTTP-only、SameSite、domain/path 和过期行为。
 
-CORS controls browser origin access and is not authentication. Use explicit origins/methods/headers and never wildcard credentialed origins. Preserve forwarded-header/proxy trust so HTTPS and secure-cookie decisions cannot be spoofed.
+CORS 控制浏览器 origin 访问，不是认证。使用显式的 origin/method/header，切勿对带凭证的 origin 使用通配符。保留 forwarded-header/proxy 信任，以便 HTTPS 和 secure-cookie 决策不会被伪造。
 
-Do not move bearer tokens to insecure browser storage or disable antiforgery/CORS to work around frontend integration problems.
+不要将 bearer token 移至不安全的浏览器存储，也不要为绕过前端集成问题而禁用 antiforgery/CORS。
 
-## Error And Disclosure Policy
+## 错误与披露策略
 
-Preserve `401` challenge versus `403` forbid behavior and the accepted problem envelope. Wrong-owner resources may intentionally return not found; apply that policy consistently across list/detail/mutation paths.
+保留 `401` challenge 与 `403` forbid 行为以及已接受的 problem envelope。错误归属者的资源可能有意返回 not found；在 list/detail/mutation 路径中一致地应用该策略。
 
-Redact credentials, tokens, claims not needed for diagnosis, cookies, and authorization internals from logs/traces. Production errors must not expose validation keys, cryptographic details, database messages, or stack traces.
+从日志/trace 中脱敏凭证、token、诊断不需要的 claim、cookie 和授权内部信息。生产错误不得暴露验证密钥、加密细节、数据库消息或堆栈跟踪。
 
-## Verification
+## 验证
 
-- Exercise allowed, unauthenticated, invalid/expired token, forbidden policy, wrong-owner/tenant, and explicit anonymous paths through the real middleware pipeline.
-- Test list isolation separately from resource authorization and mutation policy.
-- Verify issuer/audience/key/lifetime handling and refresh/revocation only when those workflows are owned.
-- Assert password hashing and secret-field exclusion through real response serialization.
-- Test cookie/antiforgery/CORS/proxy behavior for the selected browser topology.
-- Validate startup failure for missing mandatory auth options without exposing secrets.
+- 通过真实的中间件管道执行允许、未认证、无效/过期 token、禁止策略、错误归属者/租户和显式匿名路径。
+- 将列表隔离与资源授权和变更策略分开测试。
+- 仅当拥有这些工作流时，才验证 issuer/audience/key/lifetime 处理和 refresh/撤销。
+- 通过真实响应序列化断言密码哈希和敏感字段排除。
+- 为所选的浏览器拓扑测试 cookie/antiforgery/CORS/proxy 行为。
+- 验证缺少强制 auth 选项时的启动失败，且不暴露密钥。
 
-## Delivery Evidence
+## 交付证据
 
-Name the selected scheme, policy/resource boundary, protected operation, and allowed plus denied HTTP assertions. A decoded token, mocked `ClaimsPrincipal`, or endpoint metadata inspection alone cannot prove middleware order, scheme selection, ownership isolation, revocation, or secret redaction.
+命名所选的 scheme、policy/resource 边界、受保护操作以及允许和拒绝的 HTTP 断言。仅凭解码的 token、mock 的 `ClaimsPrincipal` 或端点元数据检查不能证明中间件顺序、scheme 选择、归属隔离、撤销或密钥脱敏。
 
-## Unsafe Defaults
+## 不安全默认
 
-- JWT or Identity added because a .NET example uses it.
-- Signing keys and token options read from unvalidated literals.
-- Roles treated as object/tenant authorization.
-- `IHttpContextAccessor` injected throughout domain/application code.
-- Refresh tokens issued without storage, rotation, or revocation policy.
-- Cookie antiforgery or CORS disabled to make integration pass.
-- Anonymous endpoint exceptions hidden inside broad route groups.
+- 因为 .NET 示例使用了 JWT 或 Identity 就添加它们。
+- 签名密钥和 token 选项从未验证的字面量读取。
+- 将 role 当作对象/租户授权。
+- 在 domain/application 代码中到处注入 `IHttpContextAccessor`。
+- 发放 refresh token 而没有存储、轮转或撤销策略。
+- 为让集成通过而禁用 cookie antiforgery 或 CORS。
+- 隐藏在宽泛 route group 中的匿名端点例外。

@@ -505,8 +505,7 @@ pub fn validate_agent_write_contract(
     let Some(contract) = validation_contract_for_target(output_contract, target_id) else {
         return vec![RepairIssue {
             code: "WRITE_CONTRACT_SCHEMA_MISSING".to_string(),
-            message: "The current write contract does not expose a field contract for this target."
-                .to_string(),
+            message: "当前写入契约未暴露该目标的字段契约。".to_string(),
             target_id: Some(target_id.to_string()),
             field_path: None,
         }];
@@ -796,9 +795,7 @@ fn validate_contract_node(
     {
         issues.push(RepairIssue {
             code: "WRITE_CONTRACT_FIELD_NOT_APPLICABLE".to_string(),
-            message: format!(
-                "{path} is not applicable to the current request and must be omitted."
-            ),
+            message: format!("{path} 不适用于当前请求，必须省略。"),
             target_id: Some(target_id.to_string()),
             field_path: Some(path.to_string()),
         });
@@ -826,7 +823,7 @@ fn validate_contract_node(
         if !valid {
             issues.push(RepairIssue {
                 code: "WRITE_CONTRACT_TYPE_INVALID".to_string(),
-                message: format!("{path} must be a {expected_type}."),
+                message: format!("{path} 必须为 {expected_type}。"),
                 target_id: Some(target_id.to_string()),
                 field_path: Some(path.to_string()),
             });
@@ -837,9 +834,7 @@ fn validate_contract_node(
         if !enum_values.iter().any(|item| item == value) {
             issues.push(RepairIssue {
                 code: "WRITE_CONTRACT_ENUM_INVALID".to_string(),
-                message: format!(
-                    "{path} must use one of the values declared by the current write contract."
-                ),
+                message: format!("{path} 必须使用当前写入契约中声明的值之一。"),
                 target_id: Some(target_id.to_string()),
                 field_path: Some(path.to_string()),
             });
@@ -857,9 +852,7 @@ fn validate_contract_node(
                 if !object.contains_key(field) {
                     issues.push(RepairIssue {
                         code: "WRITE_CONTRACT_FIELD_REQUIRED".to_string(),
-                        message: format!(
-                            "{path}.{field} is required by the current write contract."
-                        ),
+                        message: format!("{path}.{field} 为当前写入契约的必填项。"),
                         target_id: Some(target_id.to_string()),
                         field_path: Some(format!("{path}.{field}")),
                     });
@@ -876,7 +869,7 @@ fn validate_contract_node(
                 }
                 issues.push(RepairIssue {
                     code: "WRITE_CONTRACT_FIELD_UNKNOWN".to_string(),
-                    message: format!("{child_path} is not declared by the current write contract."),
+                    message: format!("{child_path} 未在当前写入契约中声明。"),
                     target_id: Some(target_id.to_string()),
                     field_path: Some(child_path),
                 });

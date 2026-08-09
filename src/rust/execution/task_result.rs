@@ -98,14 +98,10 @@ where
     D: DomainDispatcher,
 {
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "TaskResult request is missing deliveryId".to_string(),
-        )
+        state::store::StateError::InvalidArgument("TaskResult 请求缺少 deliveryId".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "TaskResult request is missing phaseId".to_string(),
-        )
+        state::store::StateError::InvalidArgument("TaskResult 请求缺少 phaseId".to_string())
     })?;
     if repair_submit {
         if let Some(stale) = ensure_latest_task_result_repair_action(
@@ -127,9 +123,7 @@ where
         }
     }
     let target = authorized.targets.first().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "TaskResult submit requires a result target.".to_string(),
-        )
+        state::store::StateError::InvalidArgument("TaskResult 提交需要 result target。".to_string())
     })?;
     let root = Path::new(&input.project_root);
     let raw_result = read_project_json_value(root, &target.path)?;
@@ -170,7 +164,7 @@ where
         .cloned()
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(format!(
-                "TaskResult request references task {task_id}, but the current TaskPlan has no canonical definition for it"
+                "TaskResult 请求引用了 task {task_id}，但当前 TaskPlan 没有该任务的规范定义"
             ))
         })?;
     // TaskPlan is the canonical typed task contract. The request read groups are an
@@ -214,7 +208,7 @@ where
                 vec![issue(
                     "TASK_RESULT_SCHEMA_INVALID",
                     "$",
-                    &format!("TaskResult JSON has an invalid schema: {error}"),
+                    &format!("TaskResult JSON 的 schema 无效：{error}"),
                 )],
                 repair_submit,
                 None,
@@ -262,7 +256,7 @@ where
         return Ok(failed(
             &input.project_root,
             "TASKPLAN_RUN_MISMATCH",
-            "TaskResult request does not match current TaskPlanRun.".to_string(),
+            "TaskResult 请求与当前 TaskPlanRun 不匹配。".to_string(),
             "record_task_result",
         ));
     }
@@ -278,9 +272,7 @@ where
     state::store::write_json_atomic(&persisted, &canonical_value)?;
     let persisted_value = state::store::read_json_value(&persisted)?;
     let _: TaskResult = serde_json::from_value(persisted_value.clone()).map_err(|error| {
-        state::store::StateError::StateCorrupted(format!(
-            "canonical TaskResult JSON is invalid: {error}"
-        ))
+        state::store::StateError::StateCorrupted(format!("canonical TaskResult JSON 无效：{error}"))
     })?;
     for field in &required_top_level_fields {
         if !task_result_required_field_applies_to_status(field, &result.status) {
@@ -288,7 +280,7 @@ where
         }
         if persisted_value.get(field).is_none() {
             return Err(state::store::StateError::StateCorrupted(format!(
-                "canonical TaskResult lost required field {field}"
+                "canonical TaskResult 丢失了必填字段 {field}"
             )));
         }
     }
@@ -389,7 +381,7 @@ where
         return Ok(failed(
             &input.project_root,
             "BLOCKED_TASK_CANNOT_ROUTE_EXECUTION_REPAIR",
-            "Blocked TaskResult must route to taskplan_repair, architecture_artifact_repair, or needs_user_decision instead of execution_repair.".to_string(),
+            "Blocked TaskResult 必须路由到 taskplan_repair、architecture_artifact_repair 或 needs_user_decision，而不是 execution_repair。".to_string(),
             "blocked_task_result",
         ));
     };
@@ -447,7 +439,7 @@ fn validate_result(
             issues.push(issue(
                 "TASK_RESULT_REQUIRED_FIELD_MISSING",
                 field,
-                "TaskResult must include every outputContract.requiredTopLevelFields entry.",
+                "TaskResult 必须包含 outputContract.requiredTopLevelFields 中的每个条目。",
             ));
         }
     }
@@ -455,7 +447,7 @@ fn validate_result(
         issues.push(issue(
             "RESULT_FILE_MISMATCH",
             "outputContract.resultFile",
-            "TaskResult must be written to the request resultFile.",
+            "TaskResult 必须写入到请求的 resultFile。",
         ));
     }
     for file in &result.changed_files {
@@ -463,7 +455,7 @@ fn validate_result(
             issues.push(issue(
                 "TASK_RESULT_PATH_INVALID",
                 "changedFiles",
-                "TaskResult changedFiles must use safe project-relative source paths.",
+                "TaskResult changedFiles 必须使用安全的项目相对源码路径。",
             ));
         }
     }
@@ -476,21 +468,21 @@ fn validate_result(
         issues.push(issue(
             "TASK_RESULT_STATUS_INCONSISTENT",
             "changedFiles",
-            "Completed TaskResult must include changedFiles unless the task is verification-only or noChangeReason explicitly allows no code changes.",
+                "Completed TaskResult 必须包含 changedFiles，除非任务是仅验证任务或 noChangeReason 明确允许不做代码变更。",
         ));
     }
     if !matches!(result.status, TaskResultStatus::Failed) && result.failure.is_some() {
         issues.push(issue(
             "FAILURE_MUST_BE_NULL",
             "failure",
-            "Non-failed TaskResult must not include failure details.",
+            "非 failed 的 TaskResult 不得包含 failure 详情。",
         ));
     }
     if matches!(result.status, TaskResultStatus::Failed) && result.failure.is_none() {
         issues.push(issue(
             "FAILURE_REQUIRED",
             "failure",
-            "Failed TaskResult must include failure.",
+            "Failed TaskResult 必须包含 failure。",
         ));
     }
     validate_self_repair(result, &mut issues);
@@ -529,7 +521,7 @@ fn validate_result(
         issues.push(issue(
             "EXECUTION_CONTINUITY_REQUIRED",
             "executionContinuity.taskResultSubmittedAfterVerification",
-            "TaskResult must confirm verification returned control before submission.",
+            "TaskResult 必须确认验证在提交前已返回控制权。",
         ));
     }
     if result.execution_continuity.agent_owned_long_running_work == "unknown"
@@ -538,7 +530,7 @@ fn validate_result(
         issues.push(issue(
             "EXECUTION_CONTINUITY_REQUIRED",
             "executionContinuity.agentOwnedLongRunningWork",
-            "Completed TaskResult must not leave agent-owned long-running work as unknown.",
+            "Completed TaskResult 不得将 agent 持有的长期运行工作留为 unknown。",
         ));
     }
     if result.execution_continuity.agent_owned_long_running_work == "unknown"
@@ -548,7 +540,7 @@ fn validate_result(
         issues.push(issue(
             "EXECUTION_CONTINUITY_REQUIRED",
             "executionContinuity.notes",
-            "TaskResult must explain unknown agent-owned long-running work in notes or executionContinuity.notes.",
+            "TaskResult 必须在 notes 或 executionContinuity.notes 中解释 unknown 的 agent 持有长期运行工作。",
         ));
     }
     issues
@@ -588,7 +580,7 @@ fn validate_jvm_package_names(
             "TASK_RESULT_CODE_QUALITY_INVALID",
             "changedFiles",
             &format!(
-                "Production JVM source file {relative} declares placeholder package `{package_name}` using forbidden prefix `{forbidden_prefix}`. Use an existing package root, build group metadata, confirmed organization/project namespace, or fallback app.<project_slug>/app.generated."
+                "生产 JVM 源码文件 {relative} 使用了禁止前缀 `{forbidden_prefix}` 声明了占位包 `{package_name}`。请使用已存在的包根、构建组元数据、确认的组织/项目命名空间，或回退到 app.<project_slug>/app.generated。"
             ),
         ));
     }
@@ -1130,9 +1122,7 @@ fn normalize_browser_environment_blocked_result(
         if verification_environment_blocked {
             verification["status"] = json!("inconclusive");
             verification["evidenceType"] = json!("browser_automation");
-            verification["summary"] = json!(
-                "Required browser evidence was blocked by the supplied execution environment."
-            );
+            verification["summary"] = json!("所需的浏览器证据被所提供的执行环境阻止。");
         }
     }
     if seen_required.len() != required_check_ids.len()
@@ -1150,7 +1140,7 @@ fn normalize_browser_environment_blocked_result(
     let Some(notes) = notes.as_array_mut() else {
         return;
     };
-    let note = "Required browser evidence is environment-blocked and must be resolved in Review.";
+    let note = "所需的浏览器证据被环境阻止，必须在 Review 中解决。";
     if !notes.iter().any(|item| item.as_str() == Some(note)) {
         notes.push(json!(note));
     }
@@ -1241,7 +1231,7 @@ fn validate_non_applicable_evidence_fields(
         .map(|(_, field)| issue(
             "TASK_RESULT_EVIDENCE_NOT_APPLICABLE",
             field,
-            "TaskResult must not include evidence fields when the canonical task contract does not assign that evidence type; remove the field instead of submitting an unconsumed value.",
+            "TaskResult 不得在规范任务契约未分配该证据类型时包含证据字段；请移除该字段，而不是提交一个未被消费的值。",
         ))
         .collect()
 }
@@ -1799,9 +1789,7 @@ fn normalize_verification_result_machine_fields(
                 .and_then(|value| value.get("summary"))
                 .filter(|value| value.as_str().is_some_and(|summary| !summary.is_empty()))
                 .cloned()
-                .unwrap_or_else(|| {
-                    json!("Verification result was not reported before TaskResult submission.")
-                }),
+                .unwrap_or_else(|| json!("在 TaskResult 提交前未报告验证结果。")),
         );
         if let Some(provenance) = raw_object
             .and_then(|value| value.get("provenance"))
@@ -1967,7 +1955,7 @@ fn normalize_requirement_detail_evidence_machine_fields(
                 .iter()
                 .filter_map(|verification| verification.get("summary").and_then(Value::as_str))
                 .find(|summary| !summary.trim().is_empty())
-                .unwrap_or("Evidence is derived from the task-scoped verification results.");
+                .unwrap_or("证据派生自任务范围的验证结果。");
             json!({
                 "detailId": detail_id,
                 "status": status,
@@ -2118,7 +2106,7 @@ fn validate_self_repair(result: &TaskResult, issues: &mut Vec<delivery_core::Rep
         issues.push(issue(
             "SELF_REPAIR_SUMMARY_REQUIRED",
             "selfRepairSummary",
-            "Failed TaskResult must include selfRepairSummary.",
+            "Failed TaskResult 必须包含 selfRepairSummary。",
         ));
     }
     let Some(summary) = &result.self_repair_summary else {
@@ -2132,7 +2120,7 @@ fn validate_self_repair(result: &TaskResult, issues: &mut Vec<delivery_core::Rep
         issues.push(issue(
             "SELF_REPAIR_SUMMARY_INVALID",
             "selfRepairSummary",
-            "When selfRepairSummary.attempted is false, attemptCount must be 0, stopReason must be not_attempted, and progressObserved must be false.",
+            "当 selfRepairSummary.attempted 为 false 时，attemptCount 必须为 0，stopReason 必须为 not_attempted，且 progressObserved 必须为 false。",
         ));
     }
     if summary.attempted
@@ -2143,7 +2131,7 @@ fn validate_self_repair(result: &TaskResult, issues: &mut Vec<delivery_core::Rep
         issues.push(issue(
             "SELF_REPAIR_SUMMARY_INVALID",
             "selfRepairSummary",
-            "Attempted selfRepairSummary must include a bounded positive attemptCount and a real stopReason.",
+            "已尝试的 selfRepairSummary 必须包含一个有界的正数 attemptCount 和一个真实的 stopReason。",
         ));
     }
 }
@@ -2164,14 +2152,14 @@ fn validate_verification_results(
             issues.push(issue(
                 "TASK_RESULT_REF_INVALID",
                 "verificationResults[].verificationId",
-                "TaskResult verificationResults must contain each verification id at most once.",
+                "TaskResult verificationResults 中每个 verification id 最多出现一次。",
             ));
         }
         let Some(intent) = intents.get(verification.verification_id.as_str()) else {
             issues.push(issue(
                 "TASK_RESULT_REF_INVALID",
                 "verificationResults",
-                "TaskResult verificationResults must reference task.verificationIntents.",
+                "TaskResult verificationResults 必须引用 task.verificationIntents。",
             ));
             continue;
         };
@@ -2185,7 +2173,7 @@ fn validate_verification_results(
                 issues.push(issue(
                     "INVALID_VERIFICATION_INTENT",
                     "verificationResults[].evidenceType",
-                    "verificationResults[].evidenceType must be allowed by the matching verification intent.",
+                    "verificationResults[].evidenceType 必须被匹配的验证意图所允许。",
                 ));
             }
         }
@@ -2200,7 +2188,7 @@ fn validate_verification_results(
                 issues.push(issue(
                     "TASK_RESULT_STATUS_INCONSISTENT",
                     "verificationResults",
-                    "Completed TaskResult must include passed evidence for every verification intent.",
+                    "Completed TaskResult 必须为每个验证意图包含 passed 证据。",
                 ));
             }
         }
@@ -2214,7 +2202,7 @@ fn validate_verification_results(
         issues.push(issue(
             "TASK_RESULT_STATUS_INCONSISTENT",
             "verificationResults",
-            "Non-failed TaskResult must not contain failed verification results.",
+            "非 failed 的 TaskResult 不得包含 failed 验证结果。",
         ));
     }
     if matches!(result.status, TaskResultStatus::CompletedWithNotes)
@@ -2226,7 +2214,7 @@ fn validate_verification_results(
         issues.push(issue(
             "TASK_RESULT_STATUS_INCONSISTENT",
             "notes",
-            "completed_with_notes TaskResult must explain not_run or inconclusive verification results.",
+            "completed_with_notes TaskResult 必须解释 not_run 或 inconclusive 验证结果。",
         ));
     }
 }
@@ -2257,7 +2245,7 @@ fn validate_verification_provenance(
             issues.push(issue(
                 "TASK_RESULT_VERIFICATION_PROVENANCE_INVALID",
                 "verificationResults[].provenance",
-                "Passed verification must cite a concrete evidence ref, test case, browser artifact, or command with exit code.",
+                "Passed 验证必须引用具体的证据引用、测试用例、浏览器工件或带退出码的命令。",
             ));
         }
         if verification.evidence_type == Some(VerificationEvidence::AutomatedTest)
@@ -2269,7 +2257,7 @@ fn validate_verification_provenance(
             issues.push(issue(
                 "TASK_RESULT_VERIFICATION_PROVENANCE_INVALID",
                 "verificationResults[].provenance.testCaseRefs",
-                "Automated test evidence must identify the test file, test case, or check id that produced the result; a build command alone is not test evidence.",
+                "自动化测试证据必须标识产生该结果的测试文件、测试用例或 check id；仅构建命令不是测试证据。",
             ));
         }
         if let Some(provenance) = verification.provenance.as_ref() {
@@ -2283,7 +2271,7 @@ fn validate_verification_provenance(
                         issues.push(issue(
                             "TASK_RESULT_VERIFICATION_PROVENANCE_INVALID",
                             "verificationResults[].provenance.testCaseRefs",
-                            "Test case file references must point to existing project files.",
+                            "测试用例文件引用必须指向已存在的项目文件。",
                         ));
                     }
                 }
@@ -2318,7 +2306,7 @@ fn validate_browser_verification_results(
                 issues.push(issue(
                     "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                     "verificationResults[].browserChecks[].checkId",
-                    "Browser check ids must not be duplicated across verificationResults.",
+                    "Browser check id 不得在 verificationResults 中重复。",
                 ));
             }
             if expected.get(check.check_id.as_str()).copied()
@@ -2327,7 +2315,7 @@ fn validate_browser_verification_results(
                 issues.push(issue(
                     "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                     "verificationResults[].browserChecks[].checkId",
-                    "Each browser check must remain under the verificationId assigned by the MCP-derived browser profile.",
+                    "每个 browser check 必须保留在 MCP 派生的 browser profile 所分配的 verificationId 下。",
                 ));
             }
             for artifact_ref in &check.artifact_refs {
@@ -2335,7 +2323,7 @@ fn validate_browser_verification_results(
                     issues.push(issue(
                         "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                         "verificationResults[].browserChecks[].artifactRefs",
-                        "Browser artifact refs must use safe project-relative paths.",
+                        "Browser artifact 引用必须使用安全的项目相对路径。",
                     ));
                 }
             }
@@ -2345,21 +2333,21 @@ fn validate_browser_verification_results(
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].attempts",
-                            "Passed browser checks must report at least one attempt.",
+                            "Passed browser check 必须报告至少一次尝试。",
                         ));
                     }
                     if check.command.trim().is_empty() {
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].command",
-                            "Passed browser checks must report the exact command used.",
+                            "Passed browser check 必须报告使用的确切命令。",
                         ));
                     }
                     if check.observed_outcome.trim().is_empty() {
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].observedOutcome",
-                            "Passed browser checks must report a concise observed outcome.",
+                            "Passed browser check 必须报告简洁的观察结果。",
                         ));
                     }
                     if check
@@ -2370,7 +2358,7 @@ fn validate_browser_verification_results(
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].blockedReason",
-                            "Passed browser checks cannot retain a blocked reason.",
+                            "Passed browser check 不得保留 blocked reason。",
                         ));
                     }
                 }
@@ -2383,7 +2371,7 @@ fn validate_browser_verification_results(
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].blockedReason",
-                            "Blocked browser checks must report a concrete environment or dependency reason.",
+                            "Blocked browser check 必须报告具体的环境或依赖原因。",
                         ));
                     }
                 }
@@ -2392,7 +2380,7 @@ fn validate_browser_verification_results(
                         issues.push(issue(
                             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                             "verificationResults[].browserChecks[].observedOutcome",
-                            "Failed browser checks must report the observed failure outcome.",
+                            "Failed browser check 必须报告观察到的失败结果。",
                         ));
                     }
                 }
@@ -2416,7 +2404,7 @@ fn validate_browser_verification_results(
             issues.push(issue(
                 "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
                 "verificationResults[].status",
-                "A verification result cannot be passed while one of its required browser checks is not passed.",
+                "验证结果在其某个 required browser check 未通过时不得为 passed。",
             ));
         }
     }
@@ -2426,7 +2414,7 @@ fn validate_browser_verification_results(
         issues.push(issue(
             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
             "verificationResults[].browserChecks",
-            "Browser checks must cover exactly the check ids in the MCP-derived browser profile.",
+            "Browser check 必须恰好覆盖 MCP 派生的 browser profile 中的 check id。",
         ));
     }
     let required_non_passed = result
@@ -2452,7 +2440,7 @@ fn validate_browser_verification_results(
         issues.push(issue(
             "TASK_RESULT_BROWSER_VERIFICATION_INVALID",
             "verificationResults[].browserChecks[].status",
-            "completed must pass every required browser check. completed_with_notes may carry required checks only when they are explicitly environment-blocked; failed and not_run required checks remain incomplete product verification.",
+            "completed 必须通过每个 required browser check。completed_with_notes 仅在 required check 被明确环境阻止时才可携带；failed 和 not_run 的 required check 仍为不完整的产品验证。",
         ));
     }
 }
@@ -2468,7 +2456,7 @@ fn validate_implementation_obligation_results(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults",
-                "This task has no implementation obligations in its canonical TaskPlan.",
+                "此任务在其规范 TaskPlan 中没有实现义务。",
             ));
         }
         return;
@@ -2495,10 +2483,7 @@ fn validate_implementation_obligation_results(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults",
-                &format!(
-                    "Missing implementation result for required obligation {}.",
-                    obligation.obligation_id
-                ),
+                &format!("缺少必需义务 {} 的实现结果。", obligation.obligation_id),
             ));
             continue;
         };
@@ -2506,7 +2491,7 @@ fn validate_implementation_obligation_results(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].obligationId",
-                "Each implementation obligation must have exactly one result.",
+                "每个实现义务必须恰好有一个结果。",
             ));
         }
         if !matches!(
@@ -2516,7 +2501,7 @@ fn validate_implementation_obligation_results(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].status",
-                "Implementation obligation status must be satisfied, partial, blocked, or not_verified.",
+                "实现义务状态必须为 satisfied、partial、blocked 或 not_verified。",
             ));
         }
         for verification_id in &evidence.verification_ids {
@@ -2530,7 +2515,7 @@ fn validate_implementation_obligation_results(
                 issues.push(issue(
                     "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                     "implementationObligationResults[].verificationIds",
-                    "Implementation evidence must reference verification ids assigned to the same obligation.",
+                    "实现证据必须引用分配给同一义务的 verification id。",
                 ));
             }
         }
@@ -2539,7 +2524,7 @@ fn validate_implementation_obligation_results(
                 issues.push(issue(
                     "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                     "implementationObligationResults[].evidenceRefs",
-                    "Satisfied implementation obligations must cite concrete evidence references.",
+                    "Satisfied 实现义务必须引用具体的证据引用。",
                 ));
             }
             let requires_behavioral_proof = matches!(
@@ -2577,7 +2562,7 @@ fn validate_implementation_obligation_results(
                 issues.push(issue(
                     "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                     "implementationObligationResults[].verificationIds",
-                    "This obligation requires passed behavioral evidence; a build or reference-read result cannot satisfy it.",
+                    "此义务需要 passed 的行为证据；构建或引用读取结果不能满足它。",
                 ));
             }
             validate_obligation_evidence_refs(project_root, result, evidence, issues);
@@ -2585,7 +2570,7 @@ fn validate_implementation_obligation_results(
                 issues.push(issue(
                     "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                     "implementationObligationResults[].summary",
-                    "Satisfied implementation obligations must explain the concrete implementation evidence; a status without a summary is not a completion claim.",
+                    "Satisfied 实现义务必须解释具体的实现证据；没有 summary 的状态不是完成声明。",
                 ));
             }
         }
@@ -2600,7 +2585,7 @@ fn validate_implementation_obligation_results(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].obligationId",
-                "TaskResult must not invent implementation obligation ids.",
+                "TaskResult 不得虚构实现义务 id。",
             ));
         }
     }
@@ -2624,7 +2609,7 @@ fn validate_implementation_obligation_results(
                     "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INCOMPLETE",
                     "status",
                     &format!(
-                        "Task cannot be completed while required obligation {} is not satisfied.",
+                        "当必需义务 {} 未 satisfied 时，任务不得完成。",
                         obligation.obligation_id
                     ),
                 ));
@@ -2646,7 +2631,7 @@ fn validate_obligation_evidence_refs(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].evidenceRefs",
-                "Implementation evidence references must be safe project-relative paths.",
+                "实现证据引用必须是安全的项目相对路径。",
             ));
             continue;
         }
@@ -2654,7 +2639,7 @@ fn validate_obligation_evidence_refs(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].evidenceRefs",
-                "Implementation evidence must cite source or test files, not build output, caches, reports, or dependency directories.",
+                "实现证据必须引用源码或测试文件，不得引用构建输出、缓存、报告或依赖目录。",
             ));
         }
         if changed_files.contains(reference) {
@@ -2666,7 +2651,7 @@ fn validate_obligation_evidence_refs(
             issues.push(issue(
                 "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
                 "implementationObligationResults[].evidenceRefs",
-                "Implementation evidence references must point to existing project files or the task's changedFiles.",
+                "实现证据引用必须指向已存在的项目文件或任务的 changedFiles。",
             ));
         }
     }
@@ -2674,7 +2659,7 @@ fn validate_obligation_evidence_refs(
         issues.push(issue(
             "TASK_RESULT_IMPLEMENTATION_OBLIGATION_INVALID",
             "implementationObligationResults[].evidenceRefs",
-            "Satisfied implementation obligations must cite at least one file changed by this task; inherited files alone cannot prove ownership or completion.",
+                "Satisfied 实现义务必须引用至少一个被此任务变更的文件；仅继承的文件不能证明所有权或完成。",
         ));
     }
 }
@@ -2716,7 +2701,7 @@ fn validate_stack_conformance(
         issues.push(issue(
             "TASK_RESULT_STACK_CONFORMANCE_INVALID",
             "changedFiles",
-            "A task with an accepted durable persistence contract must not complete with an in-memory HashMap repository or equivalent transient store.",
+            "具有已接受持久化契约的任务不得以内存 HashMap 仓库或等价瞬态存储完成。",
         ));
     }
 
@@ -2771,7 +2756,7 @@ fn validate_stack_conformance(
             "TASK_RESULT_STACK_CONFORMANCE_INVALID",
             "changedFiles",
             &format!(
-                "Persistence obligation {} must show accepted provider evidence for {} in changed source or configuration files.",
+                "持久化义务 {} 必须在变更的源码或配置文件中展示已接受的 {} 提供者证据。",
                 persistence_obligation.obligation_id,
                 missing_signals.join(", ")
             ),
@@ -2830,21 +2815,21 @@ fn validate_requirement_detail_evidence(
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].detailId",
-                "Requirement detail evidence must contain each assigned detail id at most once.",
+                "需求详情证据中每个分配的 detail id 最多出现一次。",
             ));
         }
         if !required_detail_ids.contains(&evidence.detail_id) {
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].detailId",
-                "Requirement detail evidence must reference details assigned to the task.",
+                "需求详情证据必须引用分配给任务的详情。",
             ));
         }
         if evidence.verification_ids.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].verificationIds",
-                "Requirement detail evidence must link to verification results.",
+                "需求详情证据必须链接到验证结果。",
             ));
         }
         for verification_id in &evidence.verification_ids {
@@ -2852,7 +2837,7 @@ fn validate_requirement_detail_evidence(
                 issues.push(issue(
                     "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                     "requirementDetailEvidence[].verificationIds",
-                    "Requirement detail evidence verificationIds must reference task verification intents.",
+                    "需求详情证据 verificationIds 必须引用任务的验证意图。",
                 ));
             }
         }
@@ -2865,14 +2850,14 @@ fn validate_requirement_detail_evidence(
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].verificationIds",
-                "Satisfied requirement detail evidence must link only to passed verification results.",
+                "Satisfied 需求详情证据必须仅链接到 passed 验证结果。",
             ));
         }
         if evidence.status == "satisfied" && evidence.evidence_refs.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].evidenceRefs",
-                "Satisfied requirement detail evidence must cite at least one concrete evidence reference.",
+                "Satisfied 需求详情证据必须引用至少一个具体的证据引用。",
             ));
         }
     }
@@ -2891,7 +2876,7 @@ fn validate_requirement_detail_evidence(
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence",
-                "Completed TaskResult must include requirementDetailEvidence for every assigned detail.",
+                "Completed TaskResult 必须为每个分配的详情包含 requirementDetailEvidence。",
             ));
             continue;
         };
@@ -2899,7 +2884,7 @@ fn validate_requirement_detail_evidence(
             issues.push(issue(
                 "TASK_RESULT_DETAIL_EVIDENCE_INVALID",
                 "requirementDetailEvidence[].status",
-                "Completed TaskResult requirement detail evidence must be satisfied.",
+                "Completed TaskResult 的需求详情证据必须为 satisfied。",
             ));
         }
     }
@@ -2934,7 +2919,7 @@ fn validate_concept_evidence(
             issues.push(issue(
                 "TASK_RESULT_REF_INVALID",
                 "conceptEvidence",
-                "TaskResult conceptEvidence must cover every task.conceptRefs entry.",
+                "TaskResult conceptEvidence 必须覆盖每个 task.conceptRefs 条目。",
             ));
         }
     }
@@ -2943,7 +2928,7 @@ fn validate_concept_evidence(
             issues.push(issue(
                 "TASK_RESULT_REF_INVALID",
                 "conceptEvidence[].conceptRef",
-                "TaskResult conceptEvidence must not invent concept refs outside the task.",
+                "TaskResult conceptEvidence 不得虚构任务之外的 concept ref。",
             ));
         }
     }
@@ -2965,7 +2950,7 @@ fn validate_architecture_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence",
-                "TaskResult must not include architectureQualityEvidence when the task has no architectureQualityRequirementRefs.",
+                "当任务没有 architectureQualityRequirementRefs 时，TaskResult 不得包含 architectureQualityEvidence。",
             ));
         }
         return;
@@ -2992,21 +2977,21 @@ fn validate_architecture_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].requirementId",
-                "Architecture quality evidence must contain each requirement id at most once.",
+                "架构质量证据中每个 requirement id 最多出现一次。",
             ));
         }
         if !requirement_refs.contains(evidence.requirement_id.as_str()) {
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].requirementId",
-                "architectureQualityEvidence.requirementId must reference task.architectureQualityRequirementRefs.",
+                "architectureQualityEvidence.requirementId 必须引用 task.architectureQualityRequirementRefs。",
             ));
         }
         if evidence.verification_ids.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].verificationIds",
-                "architectureQualityEvidence must link to verification results.",
+                "architectureQualityEvidence 必须链接到验证结果。",
             ));
         }
         for verification_id in &evidence.verification_ids {
@@ -3014,7 +2999,7 @@ fn validate_architecture_quality_evidence(
                 issues.push(issue(
                     "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                     "architectureQualityEvidence[].verificationIds",
-                    "architectureQualityEvidence verificationIds must reference task verification intents.",
+                    "architectureQualityEvidence verificationIds 必须引用任务的验证意图。",
                 ));
             }
         }
@@ -3027,14 +3012,14 @@ fn validate_architecture_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].verificationIds",
-                "Satisfied architecture quality evidence must link only to passed verification results.",
+                "Satisfied 架构质量证据必须仅链接到 passed 验证结果。",
             ));
         }
         if evidence.summary.trim().is_empty() {
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].summary",
-                "architectureQualityEvidence summary must explain how the task respected the referenced architecture quality requirement.",
+                "architectureQualityEvidence summary 必须解释任务如何遵循了所引用的架构质量要求。",
             ));
         }
     }
@@ -3053,7 +3038,7 @@ fn validate_architecture_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence",
-                "Completed TaskResult must include architectureQualityEvidence for every assigned architecture quality requirement.",
+                "Completed TaskResult 必须为每个分配的架构质量要求包含 architectureQualityEvidence。",
             ));
             continue;
         };
@@ -3061,7 +3046,7 @@ fn validate_architecture_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID",
                 "architectureQualityEvidence[].status",
-                "Completed or completed_with_notes TaskResult architectureQualityEvidence must be satisfied.",
+                "Completed 或 completed_with_notes 的 TaskResult architectureQualityEvidence 必须为 satisfied。",
             ));
         }
     }
@@ -3083,7 +3068,7 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence",
-                "TaskResult must not include apiContractEvidence when the task has no apiContractRequirementRefs.",
+                "当任务没有 apiContractRequirementRefs 时，TaskResult 不得包含 apiContractEvidence。",
             ));
         }
         return;
@@ -3117,21 +3102,21 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].requirementId",
-                "API contract evidence must contain each requirement id at most once.",
+                "API 契约证据中每个 requirement id 最多出现一次。",
             ));
         }
         if !requirement_refs.contains(evidence.requirement_id.as_str()) {
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].requirementId",
-                "apiContractEvidence.requirementId must reference task.apiContractRequirementRefs.",
+                "apiContractEvidence.requirementId 必须引用 task.apiContractRequirementRefs。",
             ));
         }
         if evidence.verification_ids.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].verificationIds",
-                "apiContractEvidence must link to verification results.",
+                "apiContractEvidence 必须链接到验证结果。",
             ));
         }
         for verification_id in &evidence.verification_ids {
@@ -3139,7 +3124,7 @@ fn validate_api_contract_evidence(
                 issues.push(issue(
                     "TASK_RESULT_API_CONTRACT_INVALID",
                     "apiContractEvidence[].verificationIds",
-                    "apiContractEvidence verificationIds must reference task verification intents.",
+                    "apiContractEvidence verificationIds 必须引用任务的验证意图。",
                 ));
             }
         }
@@ -3152,7 +3137,7 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].verificationIds",
-                "Satisfied API contract evidence must link only to passed verification results.",
+                "Satisfied API 契约证据必须仅链接到 passed 验证结果。",
             ));
         }
         for interface_ref in &evidence.interface_refs {
@@ -3162,7 +3147,7 @@ fn validate_api_contract_evidence(
                 issues.push(issue(
                     "TASK_RESULT_API_CONTRACT_INVALID",
                     "apiContractEvidence[].interfaceRefs",
-                    "apiContractEvidence interfaceRefs must reference task writeBoundary interface refs.",
+                    "apiContractEvidence interfaceRefs 必须引用任务 writeBoundary 的 interface ref。",
                 ));
             }
         }
@@ -3170,7 +3155,7 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].summary",
-                "apiContractEvidence summary must explain how the task implemented or preserved the referenced API contract.",
+                "apiContractEvidence summary 必须解释任务如何实现或保持了所引用的 API 契约。",
             ));
         }
     }
@@ -3189,7 +3174,7 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence",
-                "Completed TaskResult must include apiContractEvidence for every assigned API contract requirement.",
+                "Completed TaskResult 必须为每个分配的 API 契约要求包含 apiContractEvidence。",
             ));
             continue;
         };
@@ -3197,14 +3182,14 @@ fn validate_api_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].status",
-                "Completed or completed_with_notes TaskResult apiContractEvidence must be satisfied.",
+                "Completed 或 completed_with_notes 的 TaskResult apiContractEvidence 必须为 satisfied。",
             ));
         }
         if !evidence.known_gaps.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_API_CONTRACT_INVALID",
                 "apiContractEvidence[].knownGaps",
-                "Completed or completed_with_notes TaskResult apiContractEvidence cannot contain known gaps.",
+                "Completed 或 completed_with_notes 的 TaskResult apiContractEvidence 不得包含已知差距。",
             ));
         }
     }
@@ -3227,7 +3212,7 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence",
-                "TaskResult must not include codeQualityEvidence when the task has no codeQualityRequirementRefs.",
+                "当任务没有 codeQualityRequirementRefs 时，TaskResult 不得包含 codeQualityEvidence。",
             ));
         }
         return;
@@ -3247,7 +3232,7 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "sourceContext.codeQualityExecutionContext",
-                "TaskResult validation requires sourceContext.codeQualityExecutionContext for every task.codeQualityRequirementRefs item.",
+                "TaskResult 验证需要为每个 task.codeQualityRequirementRefs 项提供 sourceContext.codeQualityExecutionContext。",
             ));
         }
     }
@@ -3268,21 +3253,21 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].requirementId",
-                "Code quality evidence must contain each requirement id at most once.",
+                "代码质量证据中每个 requirement id 最多出现一次。",
             ));
         }
         if !requirement_refs.contains(evidence.requirement_id.as_str()) {
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].requirementId",
-                "codeQualityEvidence.requirementId must reference task.codeQualityRequirementRefs.",
+                "codeQualityEvidence.requirementId 必须引用 task.codeQualityRequirementRefs。",
             ));
         }
         if evidence.reference_groups_checked.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceGroupsChecked",
-                "codeQualityEvidence must record the selected language/framework reference groups checked for this task.",
+                "codeQualityEvidence 必须记录为此任务检查的所选语言/框架参考组。",
             ));
         }
         if let Some(requirement) = requirements_by_id.get(evidence.requirement_id.as_str()) {
@@ -3293,7 +3278,7 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].verificationIds",
-                "codeQualityEvidence must link to verification results.",
+                "codeQualityEvidence 必须链接到验证结果。",
             ));
         }
         for verification_id in &evidence.verification_ids {
@@ -3301,7 +3286,7 @@ fn validate_code_quality_evidence(
                 issues.push(issue(
                     "TASK_RESULT_CODE_QUALITY_INVALID",
                     "codeQualityEvidence[].verificationIds",
-                    "codeQualityEvidence verificationIds must reference task verification intents.",
+                    "codeQualityEvidence verificationIds 必须引用任务的验证意图。",
                 ));
             }
         }
@@ -3314,14 +3299,14 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].verificationIds",
-                "Satisfied code quality evidence must link only to passed verification results.",
+                "Satisfied 代码质量证据必须仅链接到 passed 验证结果。",
             ));
         }
         if evidence.summary.trim().is_empty() {
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].summary",
-                "codeQualityEvidence summary must explain how changed files followed selected code references and repository style.",
+                "codeQualityEvidence summary 必须解释变更文件如何遵循了所选代码参考和仓库风格。",
             ));
         }
     }
@@ -3340,7 +3325,7 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence",
-                "Completed TaskResult must include codeQualityEvidence for every assigned code quality requirement.",
+                "Completed TaskResult 必须为每个分配的代码质量要求包含 codeQualityEvidence。",
             ));
             continue;
         };
@@ -3348,14 +3333,14 @@ fn validate_code_quality_evidence(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].status",
-                "Completed or completed_with_notes TaskResult codeQualityEvidence must be satisfied.",
+                "Completed 或 completed_with_notes 的 TaskResult codeQualityEvidence 必须为 satisfied。",
             ));
         }
         if !evidence.known_gaps.is_empty() {
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].knownGaps",
-                "Completed or completed_with_notes TaskResult codeQualityEvidence cannot contain known gaps.",
+                "Completed 或 completed_with_notes 的 TaskResult codeQualityEvidence 不得包含已知差距。",
             ));
         }
     }
@@ -3394,7 +3379,7 @@ fn validate_code_quality_reference_groups(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceGroupsChecked",
-                "codeQualityEvidence.referenceGroupsChecked must include every selected language/framework group key from the assigned code quality requirement.",
+                "codeQualityEvidence.referenceGroupsChecked 必须包含分配的代码质量要求中每个所选语言/框架组键。",
             ));
             continue;
         };
@@ -3403,7 +3388,7 @@ fn validate_code_quality_reference_groups(
                 issues.push(issue(
                     "TASK_RESULT_CODE_QUALITY_INVALID",
                     "codeQualityEvidence[].referenceGroupsChecked",
-                    "codeQualityEvidence.referenceGroupsChecked must include every selected group from the assigned code quality requirement.",
+                    "codeQualityEvidence.referenceGroupsChecked 必须包含分配的代码质量要求中每个所选的组。",
                 ));
             }
         }
@@ -3413,7 +3398,7 @@ fn validate_code_quality_reference_groups(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceGroupsChecked",
-                "codeQualityEvidence.referenceGroupsChecked must not add language/framework group keys that were not selected by the assigned code quality requirement.",
+                "codeQualityEvidence.referenceGroupsChecked 不得添加未被分配的代码质量要求所选的语言/框架组键。",
             ));
             continue;
         };
@@ -3422,7 +3407,7 @@ fn validate_code_quality_reference_groups(
                 issues.push(issue(
                     "TASK_RESULT_CODE_QUALITY_INVALID",
                     "codeQualityEvidence[].referenceGroupsChecked",
-                    "codeQualityEvidence.referenceGroupsChecked must not add groups that were not selected by the assigned code quality requirement.",
+                    "codeQualityEvidence.referenceGroupsChecked 不得添加未被分配的代码质量要求所选的组。",
                 ));
             }
         }
@@ -3444,7 +3429,7 @@ fn validate_code_quality_reference_files(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceFilesChecked",
-                "codeQualityEvidence.referenceFilesChecked must be empty when the assigned code quality requirement has no referenceLoadPlan.",
+                "当分配的代码质量要求没有 referenceLoadPlan 时，codeQualityEvidence.referenceFilesChecked 必须为空。",
             ));
         }
         return;
@@ -3453,7 +3438,7 @@ fn validate_code_quality_reference_files(
         issues.push(issue(
             "TASK_RESULT_CODE_QUALITY_INVALID",
             "codeQualityEvidence[].referenceFilesChecked",
-            "codeQualityEvidence.referenceFilesChecked must list the files from sourceContext.codeQualityExecutionContext[].referenceLoadPlan that were read for this task.",
+                "codeQualityEvidence.referenceFilesChecked 必须列出为此任务读取的 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 中的文件。",
         ));
         return;
     }
@@ -3467,7 +3452,7 @@ fn validate_code_quality_reference_files(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceFilesChecked",
-                "codeQualityEvidence.referenceFilesChecked must include every path selected by sourceContext.codeQualityExecutionContext[].referenceLoadPlan.",
+                "codeQualityEvidence.referenceFilesChecked 必须包含 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 所选的每个路径。",
             ));
         }
     }
@@ -3476,7 +3461,7 @@ fn validate_code_quality_reference_files(
             issues.push(issue(
                 "TASK_RESULT_CODE_QUALITY_INVALID",
                 "codeQualityEvidence[].referenceFilesChecked",
-                "codeQualityEvidence.referenceFilesChecked must not include files outside sourceContext.codeQualityExecutionContext[].referenceLoadPlan.",
+                "codeQualityEvidence.referenceFilesChecked 不得包含 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 之外的文件。",
             ));
         }
     }
@@ -3497,7 +3482,7 @@ fn validate_runtime_delivery_evidence(
         issues.push(issue(
             "TASK_RESULT_REF_INVALID",
             "runtimeDeliveryEvidence",
-            "TaskResult must include runtimeDeliveryEvidence when task.runtimeDeliveryRequirement applies.",
+            "当 task.runtimeDeliveryRequirement 适用时，TaskResult 必须包含 runtimeDeliveryEvidence。",
         ));
         return;
     };
@@ -3507,7 +3492,7 @@ fn validate_runtime_delivery_evidence(
             issues.push(issue(
                 "TASK_RESULT_RUNTIME_EVIDENCE_INVALID",
                 "runtimeDeliveryEvidence.runtimeProbeCleanup",
-                "runtimeDeliveryEvidence.runtimeProbeCleanup must be null or a non-empty cleanup outcome.",
+                "runtimeDeliveryEvidence.runtimeProbeCleanup 必须为 null 或非空的清理结果。",
             ));
         }
     }
@@ -3519,7 +3504,7 @@ fn validate_runtime_delivery_evidence(
         issues.push(issue(
             "TASK_RESULT_RUNTIME_EVIDENCE_INVALID",
             "runtimeDeliveryEvidence.commandsRun",
-            "runtimeDeliveryEvidence.commandsRun must be an array of non-empty command strings.",
+            "runtimeDeliveryEvidence.commandsRun 必须是非空命令字符串数组。",
         ));
     }
     for field in &requirement.affected_contract_fields {
@@ -3527,7 +3512,7 @@ fn validate_runtime_delivery_evidence(
             issues.push(issue(
                 "TASK_RESULT_REF_INVALID",
                 "runtimeDeliveryEvidence.checkedFields",
-                "runtimeDeliveryEvidence.checkedFields must include every affected runtime contract field.",
+                "runtimeDeliveryEvidence.checkedFields 必须包含每个受影响的运行时契约字段。",
             ));
         }
     }
@@ -3547,7 +3532,7 @@ fn validate_runtime_delivery_evidence(
             issues.push(issue(
                 "TASK_RESULT_RUNTIME_CHECK_ID_INVALID",
                 "runtimeDeliveryEvidence.codeLevelChecks[].checkId",
-                "runtimeDeliveryEvidence codeLevelChecks must use task runtime checkIds.",
+                "runtimeDeliveryEvidence codeLevelChecks 必须使用任务的运行时 checkId。",
             ));
         }
     }
@@ -3556,7 +3541,7 @@ fn validate_runtime_delivery_evidence(
             issues.push(issue(
                 "TASK_RESULT_RUNTIME_CHECK_ID_INVALID",
                 "runtimeDeliveryEvidence.codeLevelChecks",
-                "runtimeDeliveryEvidence must include every required runtime code-level check.",
+                "runtimeDeliveryEvidence 必须包含每个所需的运行时代码级检查。",
             ));
         }
     }
@@ -3590,7 +3575,7 @@ fn validate_frontend_experience_self_check(
             issues.push(issue(
                 "TASK_RESULT_WORKFLOW_CLOSURE_INVALID",
                 "frontendExperienceSelfCheck",
-                "TaskResult must include frontendExperienceSelfCheck for frontend workflow tasks.",
+                "TaskResult 必须为前端工作流任务包含 frontendExperienceSelfCheck。",
             ));
         }
         return;
@@ -3605,7 +3590,7 @@ fn validate_frontend_experience_self_check(
             issues.push(issue(
                 "TASK_RESULT_WORKFLOW_CLOSURE_INVALID",
                 "frontendExperienceSelfCheck.closureRequirementIds",
-                "frontendExperienceSelfCheck must cover every required workflow closure id.",
+                "frontendExperienceSelfCheck 必须覆盖每个所需的工作流闭包 id。",
             ));
         }
     }
@@ -3621,7 +3606,7 @@ fn validate_frontend_experience_self_check(
         issues.push(issue(
             "TASK_RESULT_WORKFLOW_CLOSURE_INVALID",
             "frontendExperienceSelfCheck.dataBinding",
-            "Satisfied frontendExperienceSelfCheck requires wired dataBinding, no known gaps, and at least one concrete evidence ref.",
+            "Satisfied frontendExperienceSelfCheck 需要 wired dataBinding、无已知差距，且至少一个具体的证据引用。",
         ));
     }
 }
@@ -3643,7 +3628,7 @@ fn validate_frontend_quality_self_check(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 "frontendQualitySelfCheck",
-                "TaskResult must include frontendQualitySelfCheck for frontend quality tasks.",
+                "TaskResult 必须为前端质量任务包含 frontendQualitySelfCheck。",
             ));
         }
         return;
@@ -3668,7 +3653,7 @@ fn validate_frontend_quality_self_check(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "task.frontendExperienceRequirement.executionGuidance.uiProductionBrief.surfaceDecisionContract",
-            "Frontend quality validation requires the task-scoped uiSurfaceDecisionContract in uiProductionBrief.",
+            "前端质量验证需要 uiProductionBrief 中任务范围的 uiSurfaceDecisionContract。",
         ));
     }
     let completed = matches!(
@@ -3682,7 +3667,7 @@ fn validate_frontend_quality_self_check(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.evidenceRefs",
-            "Satisfied frontendQualitySelfCheck must cite at least one concrete evidence ref so Review can trace the accepted quality result.",
+            "Satisfied frontendQualitySelfCheck 必须引用至少一个具体的证据引用，以便 Review 追踪已接受的质量结果。",
         ));
     }
     let violations = self_check
@@ -3699,7 +3684,7 @@ fn validate_frontend_quality_self_check(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.status",
-            "Completed or completed_with_notes frontend quality tasks must submit satisfied frontendQualitySelfCheck; use blocked or failed when quality evidence cannot be completed.",
+            "Completed 或 completed_with_notes 的前端质量任务必须提交 satisfied 的 frontendQualitySelfCheck；当质量证据无法完成时请使用 blocked 或 failed。",
         ));
     }
     if self_check_status == Some("satisfied") || completed {
@@ -3707,7 +3692,7 @@ fn validate_frontend_quality_self_check(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 "frontendQualitySelfCheck.status",
-                "Completed or satisfied frontendQualitySelfCheck cannot contain forbidden content violations or known gaps.",
+                "Completed 或 satisfied 的 frontendQualitySelfCheck 不得包含禁止内容违规或已知差距。",
             ));
         }
     }
@@ -3732,7 +3717,7 @@ fn validate_surface_decision_contract_evidence(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 "frontendQualitySelfCheck.surfaceDecisionContractRef",
-                "frontendQualitySelfCheck.surfaceDecisionContractRef must match the task uiSurfaceDecisionContractRef.",
+                "frontendQualitySelfCheck.surfaceDecisionContractRef 必须匹配任务的 uiSurfaceDecisionContractRef。",
             ));
         }
     }
@@ -3786,7 +3771,7 @@ fn validate_surface_contract_evidence_array(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             &format!("frontendQualitySelfCheck.{field}"),
             &format!(
-                "frontendQualitySelfCheck.{field} must prove every task-scoped UI surface {label}."
+                "frontendQualitySelfCheck.{field} 必须证明每个任务范围的 UI surface {label}。"
             ),
         ));
         return;
@@ -3795,7 +3780,7 @@ fn validate_surface_contract_evidence_array(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             &format!("frontendQualitySelfCheck.{field}"),
-            &format!("frontendQualitySelfCheck.{field} must not be empty when the surface contract declares task-scoped {label}s."),
+            &format!(                "当 surface contract 声明了任务范围的 {label} 时，frontendQualitySelfCheck.{field} 不得为空。"),
         ));
         return;
     }
@@ -3806,7 +3791,9 @@ fn validate_surface_contract_evidence_array(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].id"),
-                &format!("Each frontendQualitySelfCheck.{field} entry must include the task-scoped {label} id."),
+                &format!(
+                    "每个 frontendQualitySelfCheck.{field} 条目必须包含任务范围的 {label} id。"
+                ),
             ));
             continue;
         };
@@ -3814,16 +3801,14 @@ fn validate_surface_contract_evidence_array(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].id"),
-                &format!(
-                    "frontendQualitySelfCheck.{field} must not duplicate {label} evidence ids."
-                ),
+                &format!("frontendQualitySelfCheck.{field} 不得重复 {label} 证据 id。"),
             ));
         }
         if !expected_ids.contains(id) {
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].id"),
-                &format!("frontendQualitySelfCheck.{field} cannot invent {label} ids outside the task-scoped uiSurfaceDecisionContract."),
+                &format!(                "frontendQualitySelfCheck.{field} 不得虚构任务范围 uiSurfaceDecisionContract 之外的 {label} id。"),
             ));
         }
         let status = item
@@ -3834,7 +3819,7 @@ fn validate_surface_contract_evidence_array(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].status"),
-                &format!("frontendQualitySelfCheck.{field}.status must be one of satisfied, partial, missing, or blocked_by_environment."),
+                &format!(                "frontendQualitySelfCheck.{field}.status 必须是 satisfied、partial、missing 或 blocked_by_environment 之一。"),
             ));
         }
         let evidence_present = item
@@ -3846,14 +3831,16 @@ fn validate_surface_contract_evidence_array(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].evidence"),
-                &format!("Each frontendQualitySelfCheck.{field} entry must include concrete evidence for the {label}."),
+                &format!("每个 frontendQualitySelfCheck.{field} 条目必须为 {label} 包含具体证据。"),
             ));
         }
         if status == "satisfied" && string_array_at(item, "files").is_empty() {
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].files"),
-                &format!("Satisfied frontendQualitySelfCheck.{field} entries must cite concrete UI files."),
+                &format!(
+                    "Satisfied 的 frontendQualitySelfCheck.{field} 条目必须引用具体的 UI 文件。"
+                ),
             ));
         }
         if matches!(status, "satisfied" | "blocked_by_environment")
@@ -3862,14 +3849,14 @@ fn validate_surface_contract_evidence_array(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}]"),
-                &format!("Satisfied or environment-blocked frontendQualitySelfCheck.{field} entries must replace template placeholders with concrete evidence."),
+                &format!(                "Satisfied 或环境阻止的 frontendQualitySelfCheck.{field} 条目必须用具体证据替换模板占位符。"),
             ));
         }
         if overall_satisfied && matches!(status, "partial" | "missing" | "blocked_by_environment") {
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 &format!("frontendQualitySelfCheck.{field}[{index}].status"),
-                &format!("frontendQualitySelfCheck.status cannot be satisfied while {label} evidence is partial, missing, or environment-blocked."),
+                &format!(                "当 {label} 证据为 partial、missing 或环境阻止时，frontendQualitySelfCheck.status 不得为 satisfied。"),
             ));
         }
     }
@@ -3877,7 +3864,7 @@ fn validate_surface_contract_evidence_array(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             &format!("frontendQualitySelfCheck.{field}"),
-            &format!("frontendQualitySelfCheck.{field} must include every task-scoped uiSurfaceDecisionContract {label} id."),
+            &format!(                "frontendQualitySelfCheck.{field} 必须包含每个任务范围 uiSurfaceDecisionContract {label} id。"),
         ));
     }
 }
@@ -3890,7 +3877,7 @@ fn validate_content_boundary_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.contentBoundaryEvidence",
-            "frontendQualitySelfCheck.contentBoundaryEvidence is required when a uiSurfaceDecisionContract is present.",
+            "当存在 uiSurfaceDecisionContract 时，frontendQualitySelfCheck.contentBoundaryEvidence 是必需的。",
         ));
         return;
     };
@@ -3898,7 +3885,7 @@ fn validate_content_boundary_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.contentBoundaryEvidence.checked",
-            "frontendQualitySelfCheck.contentBoundaryEvidence.checked must be true after checking the surface content boundary.",
+            "在检查 surface 内容边界后，frontendQualitySelfCheck.contentBoundaryEvidence.checked 必须为 true。",
         ));
     }
     let evidence_present = content
@@ -3910,7 +3897,7 @@ fn validate_content_boundary_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.contentBoundaryEvidence.evidence",
-            "frontendQualitySelfCheck.contentBoundaryEvidence.evidence must explain how user-visible content respected the contract boundary.",
+            "frontendQualitySelfCheck.contentBoundaryEvidence.evidence 必须解释用户可见内容如何遵循契约边界。",
         ));
     }
     let violations = content
@@ -3922,7 +3909,7 @@ fn validate_content_boundary_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.contentBoundaryEvidence.forbiddenContentViolations",
-            "Satisfied frontendQualitySelfCheck cannot contain content boundary violations.",
+            "Satisfied 的 frontendQualitySelfCheck 不得包含内容边界违规。",
         ));
     }
 }
@@ -3941,7 +3928,7 @@ fn validate_reference_plan_files_checked(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.referencePlanFilesChecked",
-            "frontendQualitySelfCheck.referencePlanFilesChecked must include every task-scoped styleAssetPlan.referencePlan path read for the UI task.",
+            "frontendQualitySelfCheck.referencePlanFilesChecked 必须包含为 UI 任务读取的每个任务范围 styleAssetPlan.referencePlan 路径。",
         ));
     }
 }
@@ -3962,7 +3949,7 @@ fn validate_design_token_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.designTokenEvidence",
-            "frontendQualitySelfCheck must include designTokenEvidence for UI quality tasks.",
+            "frontendQualitySelfCheck 必须为 UI 质量任务包含 designTokenEvidence。",
         ));
         return;
     };
@@ -3970,7 +3957,7 @@ fn validate_design_token_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.designTokenEvidence.strategyUsed",
-            "designTokenEvidence.strategyUsed must match task.frontendExperienceRequirement.executionGuidance.styleAssetPlan.designTokenAssetPlan.strategy.",
+            "designTokenEvidence.strategyUsed 必须匹配 task.frontendExperienceRequirement.executionGuidance.styleAssetPlan.designTokenAssetPlan.strategy。",
         ));
     }
     let expected_template = plan.get("templateId").unwrap_or(&Value::Null);
@@ -3979,7 +3966,7 @@ fn validate_design_token_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.designTokenEvidence.templateIdUsed",
-            "designTokenEvidence.templateIdUsed must match task.frontendExperienceRequirement.executionGuidance.styleAssetPlan.designTokenAssetPlan.templateId.",
+            "designTokenEvidence.templateIdUsed 必须匹配 task.frontendExperienceRequirement.executionGuidance.styleAssetPlan.designTokenAssetPlan.templateId。",
         ));
     }
     let satisfied = self_check.get("status").and_then(Value::as_str) == Some("satisfied");
@@ -3992,7 +3979,7 @@ fn validate_design_token_evidence(
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",
             "frontendQualitySelfCheck.designTokenEvidence.parallelTokenSystemCreated",
-            "Satisfied frontendQualitySelfCheck cannot create a parallel token system.",
+            "Satisfied 的 frontendQualitySelfCheck 不得创建并行 token 系统。",
         ));
     }
     if satisfied && strategy != "not_applicable" {
@@ -4005,7 +3992,7 @@ fn validate_design_token_evidence(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 "frontendQualitySelfCheck.designTokenEvidence.tokenAssetFiles",
-                "Satisfied frontendQualitySelfCheck requires tokenAssetFiles for the active designTokenAssetPlan.",
+                "Satisfied 的 frontendQualitySelfCheck 需要为活跃的 designTokenAssetPlan 提供 tokenAssetFiles。",
             ));
         }
         if evidence
@@ -4018,7 +4005,7 @@ fn validate_design_token_evidence(
             issues.push(issue(
                 "TASK_RESULT_FRONTEND_QUALITY_INVALID",
                 "frontendQualitySelfCheck.designTokenEvidence.mergeSummary",
-                "Satisfied frontendQualitySelfCheck requires mergeSummary explaining how token assets were reused, extended, or created.",
+                "Satisfied 的 frontendQualitySelfCheck 需要 mergeSummary，解释 token 资产如何被复用、扩展或创建。",
             ));
         }
     }
@@ -4034,7 +4021,7 @@ fn validate_blocked_reasons(
             issues.push(issue(
                 "TASK_RESULT_BLOCKED_MAPPING_INVALID",
                 "blockedReasons",
-                "Only blocked TaskResult may include blockedReasons.",
+                "只有 blocked 的 TaskResult 才可包含 blockedReasons。",
             ));
         }
         return;
@@ -4043,7 +4030,7 @@ fn validate_blocked_reasons(
         issues.push(issue(
             "TASK_RESULT_BLOCKED_MAPPING_INVALID",
             "blockedReasons",
-            "Blocked TaskResult must include at least one blocked reason.",
+            "Blocked TaskResult 必须包含至少一个 blocked reason。",
         ));
         return;
     }
@@ -4064,7 +4051,7 @@ fn validate_blocked_reasons(
             issues.push(issue(
                 "TASK_RESULT_BLOCKED_MAPPING_INVALID",
                 "blockedReasons",
-                "Blocked reason must match the request blocked reason options.",
+                "Blocked reason 必须匹配请求的 blocked reason 选项。",
             ));
         }
     }
@@ -4417,9 +4404,7 @@ fn route_blocked_task_result(
                     .blocked_reasons
                     .first()
                     .map(|reason| reason.message.clone())
-                    .unwrap_or_else(|| {
-                        "TaskResult is blocked and requires user decision.".to_string()
-                    }),
+                    .unwrap_or_else(|| "TaskResult 被 blocked，需要用户决策。".to_string()),
             ),
             accepted_responses: vec!["confirm".to_string(), "request_changes".to_string()],
             request_ref: Some(result_ref.to_string()),
@@ -4480,14 +4465,10 @@ fn repair_task_result_or_error(
         return Ok(repairable(input, authorized, target_file, issues));
     };
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "TaskResult repair action missing deliveryId".to_string(),
-        )
+        state::store::StateError::InvalidArgument("TaskResult 修复操作缺少 deliveryId".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument(
-            "TaskResult repair action missing phaseId".to_string(),
-        )
+        state::store::StateError::InvalidArgument("TaskResult 修复操作缺少 phaseId".to_string())
     })?;
     materialize_task_result_repair(
         input,
@@ -4541,7 +4522,7 @@ pub(crate) fn refresh_stale_task_result_repair_action(
         .cloned()
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(format!(
-                "TaskResult repair source task {} is not in the current TaskPlan",
+                "TaskResult 修复源任务 {} 不在当前 TaskPlan 中",
                 source_task_id
             ))
         })?;
@@ -4577,7 +4558,7 @@ pub(crate) fn refresh_stale_task_result_repair_action(
         .and_then(|field| field.value.as_str())
         .ok_or_else(|| {
             state::store::StateError::StateCorrupted(
-                "TaskResult repair request is missing source.originalResultFile.".to_string(),
+                "TaskResult 修复请求缺少 source.originalResultFile。".to_string(),
             )
         })?
         .to_string();
@@ -4636,7 +4617,7 @@ pub(crate) fn refresh_stale_task_result_repair_action(
                 vec![issue(
                     "TASK_RESULT_SCHEMA_INVALID",
                     "$",
-                    &format!("TaskResult JSON has an invalid schema: {error}"),
+                    &format!("TaskResult JSON 的 schema 无效：{error}"),
                 )],
                 Vec::new(),
             ),
@@ -4757,7 +4738,7 @@ fn materialize_task_result_repair(
         json!([{
                 "refId": "test.pw.reliability",
                 "path": "tech/test/playwright/reliability.md",
-                "reason": "Interpret retry, failure, blocked, and artifact evidence without hiding flaky behavior."
+                "reason": "解释重试、失败、阻止和工件证据，不得隐藏不稳定行为。"
         }])
     } else {
         json!([])
@@ -4889,7 +4870,7 @@ fn materialize_task_result_repair(
                 "targetId": "result",
                 "path": context.result_file,
                 "required": true,
-                "description": "Rewrite the TaskResult JSON for the original task execution request."
+                "description": "为原始任务执行请求重写 TaskResult JSON。"
             }],
             "requiredTopLevelFields": required_top_level_fields,
             "blockedReasonOptions": context.blocked_output
@@ -4899,9 +4880,9 @@ fn materialize_task_result_repair(
             "schemaShape": schema_shape,
             "resultTemplate": result_template,
             "resultRules": [
-                "The replacement must be a TaskResult JSON, not a repair summary.",
-                "implementationObligationResults must contain exactly one entry for each canonical obligation in the supplied order; Loom derives obligationId and verificationIds.",
-                "Runtime, frontend, and concept evidence must follow the original output contract; requirement-detail evidence is derived by Loom from verification results."
+                "替换内容必须是 TaskResult JSON，而非修复摘要。",
+                "implementationObligationResults 必须按所提供顺序为每个规范义务包含恰好一个条目；Loom 派生 obligationId 和 verificationIds。",
+                "运行时、前端和概念证据必须遵循原始输出契约；需求详情证据由 Loom 从验证结果派生。"
             ]
         },
         "requestReadPlan": {
@@ -4909,15 +4890,15 @@ fn materialize_task_result_repair(
                 {
                     "groupId": "task_result_repair_context",
                     "required": true,
-                    "purpose": "Read the original TaskResult validation issues and task contract.",
-                    "whenToRead": "Read before rewriting TaskResult.",
+                    "purpose": "读取原始 TaskResult 验证问题和任务契约。",
+                    "whenToRead": "在重写 TaskResult 前读取。",
                     "selectors": read_selectors_value_from_paths(context_fields)
                 },
                 {
                     "groupId": "task_result_repair_write_contract",
                     "required": true,
-                    "purpose": "Read the TaskResult replacement output contract.",
-                    "whenToRead": "Read before writing replacement TaskResult.",
+                    "purpose": "读取 TaskResult 替换输出契约。",
+                    "whenToRead": "在写入替换 TaskResult 前读取。",
                     "selectors": read_selectors_value_from_paths(write_contract_fields)
                 }
             ]
@@ -5591,10 +5572,10 @@ fn task_result_implementation_obligation_conflict(
             .unwrap_or_default()
     });
     base["validRepairChoices"] = json!([
-        "Keep implementationObligationResults in the canonical obligation order and do not add, remove, rename, or reorder entries to change their meaning; Loom derives obligationId and verificationIds.",
-        "Fill evidenceRefs with concrete project-relative implementation or verification evidence; do not author linkage fields.",
-        "Mark an obligation satisfied only when the cited verification passed and its evidence capability proves the requiredOutcome. A build or reference read alone cannot satisfy a behavioral obligation.",
-        "Keep status completed only when every required obligation is satisfied; otherwise submit the actual incomplete status and gap.",
+        "保持 implementationObligationResults 为规范义务顺序，不得添加、移除、重命名或重排序条目以改变其含义；Loom 派生 obligationId 和 verificationIds。",
+        "用具体的项目相对实现或验证证据填充 evidenceRefs；不得自行编写关联字段。",
+        "仅当所引用的验证已通过且其证据能力证明了 requiredOutcome 时才将义务标记为 satisfied。构建或引用读取单独不能满足行为义务。",
+        "仅当每个必需义务为 satisfied 时才保持 status completed；否则提交实际的不完整状态和差距。",
     ]);
     base
 }
@@ -5659,8 +5640,8 @@ fn task_result_browser_verification_conflict(
     base["currentUnresolvedChecks"] = json!(unresolved);
     base["expectedChecks"] = json!(expected);
     base["validRepairChoices"] = json!([
-        "Preserve actual browser outcomes. Repair only check ids, parent verification mapping, command, attempts, artifact refs, observed outcome, or blocked reason fields that were recorded incorrectly.",
-        "If a required browser check did not pass, keep it failed, blocked, or not_run and change the TaskResult status accordingly; never claim a pass to satisfy the contract."
+        "保留实际的浏览器结果。仅修复被错误记录的 check id、父验证映射、command、attempts、artifact ref、observed outcome 或 blocked reason 字段。",
+        "如果 required browser check 未通过，保持其为 failed、blocked 或 not_run 并相应更改 TaskResult status；不得为满足契约而声称通过。"
     ]);
     base
 }
@@ -5724,8 +5705,8 @@ fn task_result_workflow_conflict(context: &RepairContextInput, mut base: Value) 
         "closureRequirementIds": expected_closure_ids
     });
     base["validRepairChoices"] = json!([
-        "If the implementation and evidence are actually wired, repair frontendExperienceSelfCheck.dataBinding.mode to wired, clear knownGaps, and cite evidence.",
-        "If wired evidence is missing, do not claim satisfied; report the remaining gap through frontendExperienceSelfCheck and the normal TaskResult status."
+        "如果实现和证据实际上已 wired，修复 frontendExperienceSelfCheck.dataBinding.mode 为 wired，清除 knownGaps，并引用证据。",
+        "如果 wired 证据缺失，不得声明 satisfied；通过 frontendExperienceSelfCheck 和正常的 TaskResult status 报告剩余差距。"
     ]);
     base
 }
@@ -5824,10 +5805,10 @@ fn task_result_frontend_quality_conflict(context: &RepairContextInput, mut base:
             .unwrap_or(0)
     });
     base["validRepairChoices"] = json!([
-        "When task.frontendExperienceRequirement.uiSurfaceDecisionContractRef is present, make frontendQualitySelfCheck prove surfaceRegionEvidence, surfaceActionEvidence, surfaceStateEvidence, surfaceQualityRuleEvidence, contentBoundaryEvidence, and referencePlanFilesChecked from the task-scoped uiProductionBrief.",
-        "For satisfied surface evidence, cite concrete UI files and non-empty evidence; do not leave replace_with_* placeholders.",
-        "If any task-scoped surface contract item remains partial, missing, or blocked_by_environment, keep frontendQualitySelfCheck.status below satisfied and record the specific gap.",
-        "Use frontendQualitySelfCheck.designTokenEvidence to prove the task styleAssetPlan.designTokenAssetPlan without creating a parallel token system."
+        "当 task.frontendExperienceRequirement.uiSurfaceDecisionContractRef 存在时，使 frontendQualitySelfCheck 从任务范围的 uiProductionBrief 证明 surfaceRegionEvidence、surfaceActionEvidence、surfaceStateEvidence、surfaceQualityRuleEvidence、contentBoundaryEvidence 和 referencePlanFilesChecked。",
+        "对于 satisfied 的 surface 证据，引用具体的 UI 文件和非空证据；不得保留 replace_with_* 占位符。",
+        "如果任何任务范围的 surface contract 条目仍为 partial、missing 或 blocked_by_environment，保持 frontendQualitySelfCheck.status 低于 satisfied 并记录具体差距。",
+        "使用 frontendQualitySelfCheck.designTokenEvidence 证明任务 styleAssetPlan.designTokenAssetPlan，不得创建并行 token 系统。"
     ]);
     base
 }
@@ -5930,8 +5911,8 @@ fn task_result_runtime_conflict(context: &RepairContextInput, mut base: Value) -
     });
     base["expectedRuntimeCheckIds"] = json!(required_check_ids);
     base["validRepairChoices"] = json!([
-        "Use exactly the task.runtimeDeliveryRequirement.requiredCodeLevelChecks[].checkId values.",
-        "If a code-level check does not apply, record it with status not_applicable and a non-empty reason."
+        "精确使用 task.runtimeDeliveryRequirement.requiredCodeLevelChecks[].checkId 的值。",
+        "如果某个代码级检查不适用，以 status not_applicable 和非空原因记录它。"
     ]);
     base
 }
@@ -5949,8 +5930,8 @@ fn task_result_architecture_quality_conflict(
         )
     });
     base["validRepairChoices"] = json!([
-        "If the implementation satisfies the referenced architecture quality requirements, add architectureQualityEvidence entries for every task.architectureQualityRequirementRefs item and cite task verificationIds.",
-        "If evidence is missing or the implementation has a real architecture quality gap, keep status below completed or record the gap instead of claiming satisfied evidence."
+        "如果实现满足了所引用的架构质量要求，为每个 task.architectureQualityRequirementRefs 项添加 architectureQualityEvidence 条目并引用任务 verificationIds。",
+        "如果证据缺失或实现存在真实的架构质量差距，保持 status 低于 completed 或记录差距，而非声称 satisfied 证据。"
     ]);
     base
 }
@@ -5964,8 +5945,8 @@ fn task_result_api_contract_conflict(context: &RepairContextInput, mut base: Val
         )
     });
     base["validRepairChoices"] = json!([
-        "If the implementation satisfies the referenced API contract requirements, add apiContractEvidence entries for every task.apiContractRequirementRefs item and cite task verificationIds.",
-        "If API behavior or evidence is missing, keep status below completed or record the gap instead of claiming satisfied evidence."
+        "如果实现满足了所引用的 API 契约要求，为每个 task.apiContractRequirementRefs 项添加 apiContractEvidence 条目并引用任务 verificationIds。",
+        "如果 API 行为或证据缺失，保持 status 低于 completed 或记录差距，而非声称 satisfied 证据。"
     ]);
     base
 }
@@ -5992,8 +5973,8 @@ fn task_result_code_quality_conflict(context: &RepairContextInput, mut base: Val
         )
     });
     base["validRepairChoices"] = json!([
-        "If the implementation satisfies the referenced code quality requirements, add codeQualityEvidence entries for every task.codeQualityRequirementRefs item and cite task verificationIds.",
-        "If selected language or framework reference evidence or verification is missing, keep status below completed or record the gap instead of claiming satisfied evidence."
+        "如果实现满足了所引用的代码质量要求，为每个 task.codeQualityRequirementRefs 项添加 codeQualityEvidence 条目并引用任务 verificationIds。",
+        "如果所选语言或框架参考证据或验证缺失，保持 status 低于 completed 或记录差距，而非声称 satisfied 证据。"
     ]);
     base
 }
@@ -6051,64 +6032,64 @@ fn compact_task_result_evidence_entries(value: Option<&Value>, id_key: &str) -> 
 
 fn task_result_minimal_repair_rules(issues: &[delivery_core::RepairIssue]) -> Vec<&'static str> {
     let mut rules = vec![
-        "Repair the same TaskResult JSON file only.",
-        "Do not edit project source files for TaskResult contract repair.",
-        "Submit evidence arrays in the order supplied by the TaskResult template; Loom derives verificationId and other relationship fields before validation.",
-        "Never combine selfRepairSummary.attempted=false with stopReason verification_passed.",
+        "仅修复同一个 TaskResult JSON 文件。",
+        "不得为 TaskResult 契约修复编辑项目源码文件。",
+        "按 TaskResult 模板所提供的顺序提交证据数组；Loom 在验证前派生 verificationId 和其他关系字段。",
+        "不得将 selfRepairSummary.attempted=false 与 stopReason verification_passed 组合使用。",
     ];
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_WORKFLOW_CLOSURE_INVALID")
     {
-        rules.push("frontendExperienceSelfCheck.status=satisfied is valid only when dataBinding.mode=wired and knownGaps is empty.");
-        rules.push("If wired evidence is missing, do not claim satisfied; report the remaining gap through frontendExperienceSelfCheck and TaskResult status.");
+        rules.push("frontendExperienceSelfCheck.status=satisfied 仅在 dataBinding.mode=wired 且 knownGaps 为空时有效。");
+        rules.push("如果 wired 证据缺失，不得声明 satisfied；请通过 frontendExperienceSelfCheck 和 TaskResult status 报告剩余差距。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_RUNTIME_CHECK_ID_INVALID")
     {
-        rules.push("Keep runtimeDeliveryEvidence.codeLevelChecks in the request order and repair status/evidence only; Loom derives check ids and contract fields.");
-        rules.push("Use the code-level check evidence field for a concise outcome; do not add an uncontracted reason field.");
+        rules.push("保持 runtimeDeliveryEvidence.codeLevelChecks 为请求顺序，仅修复 status/evidence；Loom 派生 check id 和契约字段。");
+        rules.push("使用代码级检查的 evidence 字段记录简洁结果；不得添加未契约化的 reason 字段。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_FRONTEND_QUALITY_INVALID")
     {
-        rules.push("When uiSurfaceDecisionContractRef is present, frontendQualitySelfCheck must prove the task-scoped surfaceRegionEvidence, surfaceActionEvidence, surfaceStateEvidence, surfaceQualityRuleEvidence, contentBoundaryEvidence, and referencePlanFilesChecked from uiProductionBrief.");
-        rules.push("A satisfied frontendQualitySelfCheck must include at least one non-empty evidenceRefs entry; this is the trace from the persisted TaskResult to concrete source, test, command, or browser evidence used by Review.");
-        rules.push("frontendQualitySelfCheck must not include removed legacy UI quality self-check fields such as scenarioKind, referenceFilesChecked, statesCovered, surfacesCovered, or gateResults.");
-        rules.push("frontendQualitySelfCheck.status=satisfied is valid only when contentBoundaryEvidence has no forbidden content violations and knownGaps is empty.");
+        rules.push("当 uiSurfaceDecisionContractRef 存在时，frontendQualitySelfCheck 必须从 uiProductionBrief 证明任务范围的 surfaceRegionEvidence、surfaceActionEvidence、surfaceStateEvidence、surfaceQualityRuleEvidence、contentBoundaryEvidence 和 referencePlanFilesChecked。");
+        rules.push("Satisfied 的 frontendQualitySelfCheck 必须包含至少一个非空的 evidenceRefs 条目；这是从持久化 TaskResult 到 Review 所用具体源码、测试、命令或浏览器证据的追踪。");
+        rules.push("frontendQualitySelfCheck 不得包含已移除的遗留 UI 质量自检字段，如 scenarioKind、referenceFilesChecked、statesCovered、surfacesCovered 或 gateResults。");
+        rules.push("frontendQualitySelfCheck.status=satisfied 仅在 contentBoundaryEvidence 无禁止内容违规且 knownGaps 为空时有效。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_BROWSER_VERIFICATION_INVALID")
     {
-        rules.push("Keep browser check entries in the request order and repair command, attempts, status, observed outcome, and blockedReason only; Loom derives check ids and verification ownership.");
-        rules.push("Do not turn failed, blocked, or not-run browser evidence into passed evidence. Passed checks require the actual command, attempts, and observed outcome; blocked checks require a concrete blockedReason.");
-        rules.push("Keep retry-only success visible by preserving attempts greater than one; do not flatten it into a first-attempt pass.");
+        rules.push("保持 browser check 条目为请求顺序，仅修复 command、attempts、status、observed outcome 和 blockedReason；Loom 派生 check id 和验证归属。");
+        rules.push("不得将 failed、blocked 或 not-run 的浏览器证据变为 passed 证据。Passed check 需要实际命令、尝试次数和观察结果；blocked check 需要具体的 blockedReason。");
+        rules.push("通过保留大于一的尝试次数来保持仅重试成功可见；不得将其扁平化为首次尝试通过。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_ARCHITECTURE_QUALITY_INVALID")
     {
-        rules.push("architectureQualityEvidence must cover every task.architectureQualityRequirementRefs item when the task is completed or completed_with_notes.");
-        rules.push("Repair architectureQualityEvidence content in task requirement order; Loom derives requirementId and verificationIds.");
+        rules.push("当任务为 completed 或 completed_with_notes 时，architectureQualityEvidence 必须覆盖每个 task.architectureQualityRequirementRefs 项。");
+        rules.push("按任务要求顺序修复 architectureQualityEvidence 内容；Loom 派生 requirementId 和 verificationIds。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_API_CONTRACT_INVALID")
     {
-        rules.push("apiContractEvidence must cover every task.apiContractRequirementRefs item when the task is completed or completed_with_notes.");
-        rules.push("Repair apiContractEvidence content in task requirement order; Loom derives requirementId, interfaceRefs, and verificationIds.");
+        rules.push("当任务为 completed 或 completed_with_notes 时，apiContractEvidence 必须覆盖每个 task.apiContractRequirementRefs 项。");
+        rules.push("按任务要求顺序修复 apiContractEvidence 内容；Loom 派生 requirementId、interfaceRefs 和 verificationIds。");
     }
     if issues
         .iter()
         .any(|issue| issue.code == "TASK_RESULT_CODE_QUALITY_INVALID")
     {
-        rules.push("codeQualityEvidence must cover every task.codeQualityRequirementRefs item when the task is completed or completed_with_notes.");
-        rules.push("codeQualityEvidence.referenceGroupsChecked must exactly match the selected language/framework groups for the assigned code quality requirement.");
-        rules.push("codeQualityEvidence.referenceFilesChecked must exactly list files from sourceContext.codeQualityExecutionContext[].referenceLoadPlan that were read for the task.");
-        rules.push("Repair codeQualityEvidence content in task requirement order; Loom derives requirementId and verificationIds.");
+        rules.push("当任务为 completed 或 completed_with_notes 时，codeQualityEvidence 必须覆盖每个 task.codeQualityRequirementRefs 项。");
+        rules.push("codeQualityEvidence.referenceGroupsChecked 必须精确匹配分配的代码质量要求中所选的语言/框架组。");
+        rules.push("codeQualityEvidence.referenceFilesChecked 必须精确列出为此任务读取的 sourceContext.codeQualityExecutionContext[].referenceLoadPlan 中的文件。");
+        rules.push("按任务要求顺序修复 codeQualityEvidence 内容；Loom 派生 requirementId 和 verificationIds。");
     }
     rules
 }
@@ -6473,7 +6454,7 @@ fn ensure_latest_request(
         return Ok(Some(failed(
             project_root,
             "STALE_TASK_EXECUTION_REQUEST",
-            "TaskExecution submit phase does not exist.".to_string(),
+            "TaskExecution 提交的 phase 不存在。".to_string(),
             "record_task_result",
         )));
     };
@@ -6486,8 +6467,7 @@ fn ensure_latest_request(
         return Ok(Some(failed(
             project_root,
             "STALE_TASK_EXECUTION_REQUEST",
-            "TaskResult submit must use the active phase latest TaskExecution requestRef."
-                .to_string(),
+            "TaskResult 提交必须使用活跃 phase 最新的 TaskExecution requestRef。".to_string(),
             "record_task_result",
         )));
     }
@@ -6514,7 +6494,7 @@ fn ensure_latest_task_result_repair_action(
         return Ok(Some(failed(
             project_root,
             "STALE_TASK_RESULT_REPAIR_ACTION",
-            "TaskResult repair submit must use the active phase task result repair action requestRef."
+            "TaskResult 修复提交必须使用活跃 phase 的 task result repair action requestRef。"
                 .to_string(),
             "task_result_repair_submit",
         )));
@@ -6597,16 +6577,14 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
             .get("targetId")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument(
-                    "write target missing targetId".to_string(),
-                )
+                state::store::StateError::InvalidArgument("写入目标缺少 targetId".to_string())
             })?
             .to_string(),
         path: value
             .get("path")
             .and_then(Value::as_str)
             .ok_or_else(|| {
-                state::store::StateError::InvalidArgument("write target missing path".to_string())
+                state::store::StateError::InvalidArgument("写入目标缺少 path".to_string())
             })?
             .to_string(),
         required: value
@@ -6616,7 +6594,7 @@ fn value_to_write_target(value: &Value) -> Result<WriteTarget, state::store::Sta
         description: value
             .get("description")
             .and_then(Value::as_str)
-            .unwrap_or("Write TaskResult.")
+            .unwrap_or("写入 TaskResult。")
             .to_string(),
     })
 }
@@ -6660,7 +6638,7 @@ fn request_id_from_ref(request_ref: &str) -> Result<String, state::store::StateE
         .filter(|value| !value.is_empty() && !value.contains('/'))
         .map(str::to_string)
         .ok_or_else(|| {
-            state::store::StateError::InvalidArgument(format!("invalid requestRef: {request_ref}"))
+            state::store::StateError::InvalidArgument(format!("无效的 requestRef：{request_ref}"))
         })
 }
 
@@ -6672,9 +6650,7 @@ fn string_field(
         .get(name)
         .and_then(|field| field.value.as_str())
         .map(str::to_string)
-        .ok_or_else(|| {
-            state::store::StateError::StateCorrupted(format!("missing request field {name}"))
-        })
+        .ok_or_else(|| state::store::StateError::StateCorrupted(format!("缺少请求字段 {name}")))
 }
 
 fn value_field(

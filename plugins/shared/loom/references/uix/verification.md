@@ -1,100 +1,95 @@
-# UIX Verification
+# UIX 验证
 
-Load this file before frontend review, visual inspection, accessibility checks, or screenshot-based evidence gathering.
+在前端审查、视觉检查、可访问性检查或基于截图的证据收集之前加载此文件。
 
-This file owns product-quality targets: required states, interaction outcomes, responsive usability, visual hierarchy, and acceptable evidence. When browser verification references are selected, those files own runner configuration, locators, fixtures, network control, artifact capture, and flaky-test repair; do not duplicate those mechanics here.
+此文件拥有产品质量目标：必需状态、交互结果、响应式可用性、视觉层次和可接受的证据。当浏览器验证参考被选中时，那些文件拥有运行器配置、定位器、夹具、网络控制、产物捕获和不稳定测试修复；不要在此重复这些机制。
 
-## Rendered Inspection
+## 渲染检查
 
-- Inspect the rendered application when a local preview is available. Prefer Browser or Playwright screenshots over source-only claims.
-- Exercise the required workflow from entry to completion. Component-level inspection is not enough when the task is a business flow.
-- Verify the first viewport: it must show the actual product surface for the selected scenario.
-- Check at least desktop and mobile-responsive widths for web surfaces when the current product requirements include responsive behavior.
-- For 3D/canvas/media surfaces, verify the scene or media is nonblank, correctly framed, and still interactive after initial render.
-- Source-only review can catch missing files and obvious copy leaks, but it cannot prove production UI quality. If render verification is skipped, record the blocker and keep the risk visible.
+- 当本地预览可用时检查渲染的应用。优先使用 Browser 或 Playwright 截图而非仅源码声明。
+- 从入口到完成执行必需的工作流。当任务是业务流程时，仅组件级检查不够。
+- 验证首个视口：它必须显示选定场景的实际产品界面。
+- 当当前产品需求包含响应式行为时，至少检查 web 界面的桌面和移动响应式宽度。
+- 对于 3D/画布/媒体界面，验证场景或媒体非空白、正确构图且在初始渲染后仍可交互。
+- 仅源码审查能发现缺失文件和明显的文案泄漏，但不能证明生产 UI 质量。如果跳过渲染验证，记录阻塞原因并保持风险可见。
 
-## State Coverage
+## 状态覆盖
 
-Check every state that is in scope for the screen:
+检查屏幕范围内每个状态：
 
-- Loading: stable layout, skeleton or scoped progress, no page jump.
-- Empty: business explanation and next action, not a developer placeholder.
-- Success: confirmation near the changed object, updated data, and clear continuation.
-- Validation: field-level errors, disabled/submitting state, and preserved input.
-- Error: recoverable message, retry or correction path, no stack traces.
-- Business-blocking: separated from technical errors and tied to the blocking rule.
-- Long content: names, labels, table cells, cards, and buttons remain usable.
-- Permission/disabled: reason is visible when the user can act later or needs another route.
+- 加载：稳定布局、骨架或作用域进度，无页面跳动。
+- 空：业务说明和下一步操作，而非开发者占位符。
+- 成功：变更对象附近的确认、更新数据和清晰的继续路径。
+- 验证：字段级错误、禁用/提交状态和保留的输入。
+- 错误：可恢复的消息、重试或修正路径，无堆栈跟踪。
+- 业务阻塞：与技术错误分离并与阻塞规则关联。
+- 长内容：名称、标签、表格单元格、卡片和按钮保持可用。
+- 权限/禁用：当用户可以稍后操作或需要其他路由时原因可见。
 
-## Visual Checks
+## 视觉检查
 
-- Visual hierarchy matches the selected scenario and density.
-- Spacing follows a repeatable scale; components do not float with arbitrary gaps.
-- Typography scale fits the surface: compact inside workbench panels, expressive only in true hero/editorial contexts.
-- Color roles are semantic and consistent across normal, hover, active, focus, disabled, success, warning, error, and info states.
-- Radius/elevation communicate interaction depth instead of decoration.
-- Layout uses stable dimensions for fixed-format elements such as boards, tables, icon buttons, counters, tiles, and toolbars.
-- No text overlaps, clips, or overflows its container at checked breakpoints.
+- 视觉层次匹配选定的场景和密度。
+- 间距遵循可重复的比例；组件不会以任意间隙浮动。
+- 排版比例适合界面：工作台面板内紧凑，仅在真正的英雄/编辑上下文中富有表现力。
+- 颜色角色是语义化的，在正常、悬停、激活、焦点、禁用、成功、警告、错误和信息状态间一致。
+- 圆角/阴影传达交互深度而非装饰。
+- 布局对固定格式元素使用稳定尺寸，如面板、表格、图标按钮、计数器、磁贴和工具栏。
+- 在检查的断点处没有文本重叠、裁剪或溢出容器。
 
-## Interaction Checks
+## 交互检查
 
-- Keyboard focus order follows reading/task order.
-- Icon-only controls have accessible labels and tooltips when meaning is not universal.
-- Form submission cannot double-submit and does not lose user input on failure.
-- Destructive actions require confirmation, undo, or a clear recovery path based on severity.
-- Filters, search, pagination, tabs, and drawers preserve context and make current state visible.
-- Mobile interactions do not depend on hover and have adequate touch targets.
+- 键盘焦点顺序遵循阅读/任务顺序。
+- 仅图标控件在含义非通用时有可访问的标签和工具提示。
+- 表单提交不能重复提交且在失败时不丢失用户输入。
+- 破坏性操作根据严重程度需要确认、撤销或明确的恢复路径。
+- 筛选器、搜索、分页、标签页和抽屉保留上下文并使当前状态可见。
+- 移动交互不依赖悬停且有足够的触摸目标。
 
-## Evidence Requirements
+## 证据要求
 
-UI quality evidence should include:
+UI 质量证据应包括：
 
-- Changed screens/components and the user workflow checked.
-- States covered and states not applicable.
-- Viewports or devices checked.
-- Screenshot, Playwright, browser, or manual inspection evidence when available.
-- Accessibility checks performed or explicit environment blockers.
-- Known gaps with business impact, not vague polish notes.
+- 变更的屏幕/组件和检查的用户工作流。
+- 覆盖的状态和不适用的状态。
+- 检查的视口或设备。
+- 可用时的截图、Playwright、浏览器或人工检查证据。
+- 执行的可访问性检查或明确的环境阻塞。
+- 带有业务影响的已知缺口，而非模糊的润色说明。
 
-Use this evidence shape in prose or structured fields:
+在散文或结构化字段中使用此证据形态：
 
 ```text
 screen/component -> state checked -> viewport/device -> evidence command or screenshot -> remaining gap
 ```
 
-For UI quality, "build passed" is supporting evidence only. It does not replace rendered layout, state, and interaction checks.
+对于 UI 质量，"build passed"仅为支持证据。它不替代渲染布局、状态和交互检查。
 
 ## Review Coverage
 
-Review evidence across four independent dimensions:
+跨四个独立维度审查证据：
 
-| Dimension | Evidence target |
+| 维度 | 证据目标 |
 | --- | --- |
-| Product surface | The first visible surface and the primary user workflow are present. |
-| State and interaction | In-scope loading, empty, validation, error, success, disabled, and business-blocking states are reachable and scoped. |
-| Visual system | Token roles, density, typography, layout, contrast, stable dimensions, and responsive fallback are consistent. |
-| Runtime/browser | Rendered desktop/mobile checks, accessibility behavior, navigation state, hydration, and performance-sensitive behavior are covered when applicable. |
+| 产品界面 | 首个可见界面和主要用户工作流存在。 |
+| 状态和交互 | 范围内的加载、空、验证、错误、成功、禁用和业务阻塞状态可到达且作用域明确。 |
+| 视觉系统 | 令牌角色、密度、排版、布局、对比度、稳定尺寸和响应式回退一致。 |
+| 运行时/浏览器 | 渲染的桌面/移动检查、可访问性行为、导航状态、水合和性能敏感行为在适用时覆盖。 |
 
-Do not collapse these dimensions into a single visual score. A polished screenshot
-does not prove mutation feedback or keyboard behavior; a passing interaction test
-does not prove responsive layout or typography.
+不要将这些维度折叠成单一视觉分数。精美的截图不能证明变更反馈或键盘行为；通过的交互测试不能证明响应式布局或排版。
 
-## Environment-Blocked Inspection
+## 环境阻塞的检查
 
-When the local preview or browser cannot run:
+当本地预览或浏览器无法运行时：
 
-- State the exact missing capability, attempted command or check, and affected viewport/device.
-- Record source-level fallback checks for semantics, token consumption, state branches,
-  and responsive rules that can be verified without rendering.
-- Keep the UI result below a complete visual pass until the required rendered check
-  is available, unless the task explicitly excludes that check.
-- Do not turn an unavailable browser, missing dependency, missing credentials, or
-  unavailable preview into a source defect without evidence that the product caused it.
+- 陈述确切缺失的能力、尝试的命令或检查以及受影响的视口/设备。
+- 记录源码级回退检查，用于无需渲染即可验证的语义、令牌消费、状态分支和响应式规则。
+- 在必需的渲染检查可用之前，保持 UI 结果低于完整的视觉通过，除非任务明确排除该检查。
+- 不要在无证据表明产品导致失败的情况下，将不可用的浏览器、缺失依赖、缺失凭证或不可用预览转变为源码缺陷。
 
-If a rendered check cannot run because of missing dependencies, network, auth, credentials, or environment limits, record that as verification blocked. Do not mark it as a product defect unless the UI itself caused the failure.
+如果渲染检查因缺失依赖、网络、认证、凭证或环境限制而无法运行，将其记录为验证阻塞。除非 UI 本身导致失败，否则不要将其标记为产品缺陷。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `verify.rendered_viewports` | Desktop and mobile rendered checks are recorded when preview is available, with changed files and evidence. | Render check is skipped without blocker, only build/source evidence is supplied, desktop or mobile viewport is missing, or environment-blocked evidence lacks blocker, attempted checks, and fallback evidence. |
+| `verify.rendered_viewports` | 预览可用时记录桌面和移动渲染检查，附带变更文件和证据。 | 渲染检查无阻塞原因被跳过，仅提供构建/源码证据，缺失桌面或移动视口，或环境阻塞证据缺少阻塞原因、尝试的检查和回退证据。 |

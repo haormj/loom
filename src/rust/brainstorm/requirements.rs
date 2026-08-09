@@ -160,7 +160,7 @@ pub fn build_requirement_artifacts(
         normalized_text_reason: if normalized_text_ref.is_some() {
             None
         } else {
-            Some("No requirement text was available after extraction.".to_string())
+            Some("提取后无需求文本可用。".to_string())
         },
         keyword_hints_ref: keyword_hints_ref.clone(),
         keyword_hints_status: keyword_hints
@@ -169,7 +169,7 @@ pub fn build_requirement_artifacts(
             .unwrap_or("completed")
             .to_string(),
         keyword_hints_reason: if keyword_hints["status"] == "empty" {
-            Some("No stable keyword hints were extracted.".to_string())
+            Some("未提取到稳定的 keyword hints。".to_string())
         } else {
             None
         },
@@ -196,20 +196,20 @@ fn infer_user_facing_language(text: &str) -> UserFacingLanguageConstraint {
             contracts::UserFacingLanguageSource::RequirementPrimaryLanguage
         },
         applies_to: vec![
-            "navigation labels".to_string(),
-            "page titles and headings".to_string(),
-            "form labels and placeholders".to_string(),
-            "button and action labels".to_string(),
-            "table/list/search labels".to_string(),
-            "success, validation, error, and business-blocking messages".to_string(),
-            "visible status/result text".to_string(),
+            "导航标签".to_string(),
+            "页面标题和标题".to_string(),
+            "表单标签和占位符".to_string(),
+            "按钮和操作标签".to_string(),
+            "表格/列表/搜索标签".to_string(),
+            "成功、校验、错误和业务阻断消息".to_string(),
+            "可见状态/结果文本".to_string(),
         ],
         does_not_apply_to: vec![
-            "source code identifiers".to_string(),
-            "API paths and payload field names".to_string(),
-            "database tables, columns, and enum values".to_string(),
-            "package names and framework conventions".to_string(),
-            "internal artifact names or technical ids".to_string(),
+            "源代码标识符".to_string(),
+            "API 路径和负载字段名".to_string(),
+            "数据库表、列和枚举值".to_string(),
+            "包名和框架约定".to_string(),
+            "内部 artifact 名称或技术 ids".to_string(),
         ],
         rule: user_facing_language_rule(locale),
     }
@@ -235,9 +235,9 @@ fn infer_locale(text: &str) -> UserFacingLocale {
 
 fn user_facing_language_rule(locale: UserFacingLocale) -> String {
     match locale {
-        UserFacingLocale::ZhCn => "User-visible UI copy must default to Chinese. Apply this to labels, navigation, form text, buttons, search/list labels, visible status text, success messages, validation errors, and business-blocking feedback. Do not translate code identifiers, API paths, database fields, enum values, package names, framework names, or internal artifact ids.".to_string(),
-        UserFacingLocale::En => "User-visible UI copy must default to English. Apply this to labels, navigation, form text, buttons, search/list labels, visible status text, success messages, validation errors, and business-blocking feedback. Do not translate code identifiers, API paths, database fields, enum values, package names, framework names, or internal artifact ids.".to_string(),
-        UserFacingLocale::Und => "No explicit user-facing language was inferred. Keep user-visible copy aligned with the confirmed requirement wording or product baseline; do not translate technical identifiers.".to_string(),
+        UserFacingLocale::ZhCn => "用户可见的 UI 文案默认使用中文。适用于标签、导航、表单文本、按钮、搜索/列表标签、可见状态文本、成功消息、校验错误和业务阻断反馈。不要翻译代码标识符、API 路径、数据库字段、枚举值、包名、框架名或内部 artifact ids。".to_string(),
+        UserFacingLocale::En => "用户可见的 UI 文案默认使用英文。适用于标签、导航、表单文本、按钮、搜索/列表标签、可见状态文本、成功消息、校验错误和业务阻断反馈。不要翻译代码标识符、API 路径、数据库字段、枚举值、包名、框架名或内部 artifact ids。".to_string(),
+        UserFacingLocale::Und => "未推断出明确的用户面向语言。保持用户可见文案与已确认的需求措辞或产品基线一致；不要翻译技术标识符。".to_string(),
     }
 }
 
@@ -276,14 +276,11 @@ fn parse_requirement_file(path: &Path) -> StateResult<String> {
     match extension.as_str() {
         "md" | "markdown" | "txt" | "json" | "yaml" | "yml" => Ok(std::fs::read_to_string(path)?),
         "pdf" => pdf_extract::extract_text(path).map_err(|error| {
-            StateError::InvalidArgument(format!(
-                "failed to extract requirement PDF {}: {error}",
-                path.display()
-            ))
+            StateError::InvalidArgument(format!("提取需求 PDF {} 失败：{error}", path.display()))
         }),
         "docx" => extract_docx_text(path),
         other => Err(StateError::InvalidArgument(format!(
-            "unsupported requirementFile extension: {}",
+            "不支持的 requirementFile 扩展名：{}",
             if other.is_empty() {
                 path.display().to_string()
             } else {
@@ -517,9 +514,9 @@ fn extension_for_path(path: &Path) -> Option<String> {
 fn extract_docx_text(path: &Path) -> StateResult<String> {
     let file = File::open(path)?;
     let mut archive = ZipArchive::new(file)
-        .map_err(|error| StateError::InvalidArgument(format!("invalid docx archive: {error}")))?;
+        .map_err(|error| StateError::InvalidArgument(format!("无效的 docx 归档：{error}")))?;
     let mut document = archive.by_name("word/document.xml").map_err(|error| {
-        StateError::InvalidArgument(format!("missing word/document.xml in docx: {error}"))
+        StateError::InvalidArgument(format!("docx 中缺少 word/document.xml：{error}"))
     })?;
     let mut xml = String::new();
     document.read_to_string(&mut xml)?;
@@ -535,7 +532,7 @@ fn extract_docx_text(path: &Path) -> StateResult<String> {
             Ok(Event::Eof) => break,
             Err(error) => {
                 return Err(StateError::InvalidArgument(format!(
-                    "failed to parse docx text: {error}"
+                    "解析 docx 文本失败：{error}"
                 )))
             }
             _ => {}

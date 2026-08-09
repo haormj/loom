@@ -1,18 +1,18 @@
-# Entity Framework Core Persistence
+# Entity Framework Core 持久化
 
-Apply this reference only when Entity Framework Core is selected and the task owns persistence. The accepted data architecture and database provider determine mapping and migration behavior; ASP.NET Core does not imply EF Core or SQL Server.
+仅当已选择 Entity Framework Core 且任务拥有持久化时才应用此参考。已接受的数据架构和数据库 provider 决定映射和迁移行为；ASP.NET Core 并不意味着必须使用 EF Core 或 SQL Server。
 
-## DbContext Boundary
+## DbContext 边界
 
-Register `DbContext` with the provider and lifetime already selected by the application. A scoped context usually represents one unit of work; it is not thread-safe and must not be stored in singletons or used concurrently across tasks.
+使用应用已选择的 provider 和生命周期注册 `DbContext`。Scoped context 通常表示一个工作单元；它不是线程安全的，不得存储在 singleton 中或跨任务并发使用。
 
-Keep provider setup and connection configuration in the composition root. Validate required connection/options at startup without logging credentials. Use `IDbContextFactory<T>` for accepted background/concurrent scopes that need independent contexts, not to bypass normal request scope.
+将 provider 设置和连接配置保持在组合根中。在启动时验证必需的连接/选项，不记录凭证。对已接受的背景/并发 scope 使用 `IDbContextFactory<T>` 来获取独立的 context，而非绕过正常的请求 scope。
 
-Do not call `EnsureCreated` in a migration-owned production database. Keep design-time factory/setup aligned with runtime provider and migrations.
+不要在迁移拥有的生产数据库中调用 `EnsureCreated`。保持 design-time factory/setup 与运行时 provider 和迁移一致。
 
-## Model Configuration
+## 模型配置
 
-Use `IEntityTypeConfiguration<T>` or the repository's established configuration style. Make keys, generated values, required/optional fields, lengths, precision/scale, Unicode/collation, indexes, alternate keys, concurrency tokens, and delete behavior explicit where correctness depends on them.
+使用 `IEntityTypeConfiguration<T>` 或仓库已有的配置风格。在正确性依赖的方面显式指定键、生成值、必需/可选字段、长度、精度/标度、Unicode/collation、索引、备用键、并发 token 和删除行为。
 
 ```csharp
 public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
@@ -28,64 +28,64 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 }
 ```
 
-Choose owned/complex types, value converters, backing fields, and join entities based on domain lifecycle and provider support. A converter changes persisted representation but may not preserve query translation or comparison semantics.
+根据领域生命周期和 provider 支持选择 owned/complex type、value converter、backing field 和 join entity。Converter 会更改持久化表示，但可能不保留查询翻译或比较语义。
 
-Set `DeleteBehavior` from ownership. Cascades are not a convenience default. Handle required relationships, orphan behavior, cycles, and soft-delete filters deliberately.
+根据归属关系设置 `DeleteBehavior`。级联不是方便的默认值。慎重处理必需关系、孤儿行为、循环和软删除过滤器。
 
-## Query Shape
+## 查询形态
 
-Use `AsNoTracking` for read-only queries unless identity resolution or updates are required. Project directly to response/read models and select only required columns.
+对于只读查询使用 `AsNoTracking`，除非需要 identity 解析或更新。直接投影到响应/读模型并仅选择必需的列。
 
-Use `Include` for aggregate loading only when the entity graph is actually needed. Prefer projections for lists; use split queries when multiple collections would create cartesian explosion and verify their consistency/performance tradeoff.
+仅在确实需要实体图时使用 `Include` 进行聚合加载。列表优先使用投影；当多个集合会造成笛卡尔积爆炸时使用 split query，并验证其一致性/性能权衡。
 
-Bound filters, sorting, and pagination with deterministic order. Avoid client evaluation, `ToList` before filtering, lazy-loading N+1 behavior, and unbounded collection materialization. Inspect generated SQL for complex or performance-sensitive queries.
+对过滤、排序和分页使用有界和确定性顺序。避免客户端求值、过滤前的 `ToList`、懒加载 N+1 行为和无界集合物化。对复杂或性能敏感的查询检查生成的 SQL。
 
-Use compiled queries only after measurement shows repeated translation cost matters. Provider indexes and query plans remain the primary performance boundary.
+仅在测量表明重复翻译成本有影响时才使用编译查询。Provider 索引和查询计划仍然是主要的性能边界。
 
-## Writes, Concurrency, And Transactions
+## 写入、并发与事务
 
-Use async EF APIs and propagate `CancellationToken`. Attach/update graphs deliberately; broad `Update(entity)` can mark every field modified and overwrite concurrent changes.
+使用异步 EF API 并传播 `CancellationToken`。慎重地 attach/update 图；宽泛的 `Update(entity)` 可能将每个字段标记为已修改并覆盖并发更改。
 
-Database constraints are the final uniqueness/integrity boundary. Translate known `DbUpdateException` cases through provider-aware adapters and do not parse message text throughout services.
+数据库约束是最终的唯一性/完整性边界。通过 provider 感知的适配器翻译已知的 `DbUpdateException` 场景，不要在各 service 中解析消息文本。
 
-Use row-version/concurrency tokens or explicit state/version predicates when stale writes matter. Catch `DbUpdateConcurrencyException`, decide reload/merge/reject behavior, and map the accepted conflict response.
+当陈旧写入有影响时，使用 row-version/并发 token 或显式的状态/版本谓词。捕获 `DbUpdateConcurrencyException`，决定 reload/merge/reject 行为，并映射已接受的冲突响应。
 
-`SaveChanges` is transactional for its batch. Use an explicit transaction for multiple saves/contexts or coordinated operations that require one database atomic boundary. Keep network/message/email work outside the transaction; use an accepted outbox for durable publication.
+`SaveChanges` 对其批次是事务性的。当多次保存/context 或协调操作需要一个数据库原子边界时，使用显式事务。将网络/消息/email 工作保持在事务之外；使用已接受的 outbox 进行持久发布。
 
-## Migrations And Data Evolution
+## 迁移与数据演进
 
-Generate migrations from the intended model, inspect every operation, and keep migration history in source control. Use expand/backfill/switch/contract steps for compatibility-sensitive changes rather than one destructive migration.
+从预期模型生成迁移，检查每个操作，并将迁移历史保持在源代码管理中。对兼容性敏感的变更使用展开/回填/切换/收缩步骤，而非一次性破坏性迁移。
 
-Large backfills, non-null additions, index creation, and provider-specific online behavior need bounded operational strategy. Data migrations must be deterministic and restart-safe when the deployment process can retry.
+大批量回填、非空添加、索引创建和 provider 特定的在线行为需要有界的运维策略。当部署流程可能重试时，数据迁移必须是确定性的和重启安全的。
 
-Do not auto-apply migrations from every application replica unless the runtime contract explicitly coordinates it. Verify both clean creation and upgrade from a representative prior schema when upgrade behavior is claimed.
+除非运行时契约明确协调，否则不要从每个应用副本自动应用迁移。当声明了升级行为时，验证从干净的已选 provider 数据库创建以及从代表性先前 schema 升级两种路径。
 
-## Provider Fidelity
+## Provider 保真度
 
-SQL Server, PostgreSQL, MySQL, and SQLite differ in generated values, decimals, date/time, JSON, collations, indexes, computed columns, migrations, locking, and concurrency. Use the selected provider for provider-specific claims.
+SQL Server、PostgreSQL、MySQL 和 SQLite 在生成值、小数、日期/时间、JSON、collation、索引、计算列、迁移、锁和并发方面存在差异。对 provider 特定的声明使用所选的 provider。
 
-SQLite is suitable only when it is the accepted production provider or the tested behavior is provider-neutral. An EF InMemory provider does not prove relational constraints, transactions, query translation, or migration behavior.
+SQLite 仅当它是已接受的生产 provider 或被测试的行为与 provider 无关时才适用。EF InMemory provider 不能证明关系约束、事务、查询翻译或迁移行为。
 
-## Verification
+## 验证
 
-- Prove create/update/readback for mappings, defaults, generated values, enums/value objects, relationships, and decimals/timestamps.
-- Assert uniqueness/check/delete and optimistic-concurrency outcomes.
-- Verify projection, filtering, deterministic ordering, pagination, and relevant generated SQL/query count.
-- Exercise transaction rollback and absence of partial side effects.
-- Apply migrations to a clean selected-provider database and test representative upgrade paths when changed.
-- Confirm cancellation and context lifetime behavior for background/concurrent use when owned.
+- 证明映射、默认值、生成值、enum/value object、关系和小数/时间戳的创建/更新/回读。
+- 断言唯一性/check/delete 和乐观并发结果。
+- 验证投影、过滤、确定性排序、分页和相关的生成 SQL/查询计数。
+- 执行事务回滚和不存在部分副作用。
+- 当发生变更时，将迁移应用到干净的已选 provider 数据库并测试代表性的升级路径。
+- 当拥有背景/并发使用时，确认取消和 context 生命周期行为。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the EF configuration/query/migration and the selected-provider assertion proving it. A passing mock, InMemory test, generated migration file, or successful startup alone cannot prove relational integrity, query translation, concurrency, or upgrade safety.
+标识 EF 配置/查询/迁移以及证明它的已选 provider 断言。仅凭通过的 mock、InMemory 测试、生成的迁移文件或成功启动不能证明关系完整性、查询翻译、并发或升级安全。
 
-## Unsafe Defaults
+## 不安全默认
 
-- EF Core selected because ASP.NET Core is present.
-- `EnsureCreated` used alongside migrations in production.
-- `DbContext` shared across threads or singleton services.
-- Entities returned from HTTP responses.
-- `Include` used to load full graphs for list endpoints.
-- `Update` applied to detached client-shaped objects.
-- SQLite/InMemory evidence claimed for provider-specific behavior.
-- Destructive migrations without compatibility/backfill planning.
+- 因为存在 ASP.NET Core 就选择 EF Core。
+- 在生产中同时使用 `EnsureCreated` 和迁移。
+- `DbContext` 跨线程或 singleton service 共享。
+- 从 HTTP 响应返回实体。
+- 为列表端点使用 `Include` 加载完整图。
+- 对 detached 的客户端形态对象应用 `Update`。
+- 对 provider 特定行为声称 SQLite/InMemory 证据。
+- 没有兼容性/回填规划的破坏性迁移。

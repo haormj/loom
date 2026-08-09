@@ -1,40 +1,40 @@
-# TypeScript Runtime Guard Quality
+# TypeScript 运行时守卫质量
 
 ## When To Use
 
-- Load when a task consumes API responses, form input, URL parameters, storage, files, environment values, web messages, or third-party data.
-- Load when the task adds predicates, assertion functions, schema validators, discriminant narrowing, or branded-value factories.
-- Do not add guards to values created and kept inside already-typed code unless the task is explicitly proving an internal invariant.
+- 当任务消费 API 响应、表单输入、URL 参数、存储、文件、环境值、web 消息或第三方数据时加载。
+- 当任务添加谓词、断言函数、schema 验证器、判别式收窄或品牌值工厂时加载。
+- 不要对在已类型化代码中创建并保持的值添加守卫，除非任务显式证明一个内部不变式。
 
 ## Boundary Decisions
 
-- Keep external input typed as `unknown` until required fields, primitive types, enum values, ranges, and nullability are checked.
-- Reuse the repository's validation library when one exists. A small local predicate is preferable to a new dependency for one boundary.
-- Use pure type predicates for recoverable checks. Predicates must not mutate input, normalize fields, perform I/O, or silently invent business values.
-- Use assertion functions for fail-fast internal invariants; use predicates or parser functions when the caller must handle invalid input.
-- Validate a version or discriminant before narrowing a union, then map legacy payloads to the current domain shape explicitly.
-- Construct branded IDs, money values, dates, and other constrained primitives through a guard or factory; never cast raw values directly in business code.
+- 在检查必需字段、原始类型、枚举值、范围和可空性之前，将外部输入类型保持为 `unknown`。
+- 当仓库已有验证库时复用它。对于单个边界，小型本地谓词比新依赖更可取。
+- 对可恢复检查使用纯类型谓词。谓词不得变更输入、规范化字段、执行 I/O 或静默编造业务值。
+- 对快速失败内部不变式使用断言函数；当调用者必须处理无效输入时使用谓词或解析器函数。
+- 在收窄联合之前验证版本或判别式，然后显式地将遗留载荷映射到当前领域形态。
+- 通过守卫或工厂构造品牌 ID、货币值、日期和其他受约束原始类型；永远不要在业务代码中直接 cast 原始值。
 
 ## Implementation Focus
 
-- Name transforming functions as parsers, for example `parseAccountResponse`, and keep their output type distinct from the input shape.
-- Keep user-facing validation messages separate from developer diagnostics and do not leak schema internals or stack details through an API response.
-- Do not trust generated OpenAPI or client types as runtime proof; generated types describe an expectation, not the received bytes.
-- Keep negative cases visible in the guard rather than accepting an object and relying on later property access to fail.
+- 将转换函数命名为解析器，例如 `parseAccountResponse`，并将其输出类型与输入形态区分。
+- 将面向用户的验证消息与开发者诊断分开，不要通过 API 响应泄露 schema 内部或堆栈详情。
+- 不要将生成的 OpenAPI 或客户端类型信任为运行时证明；生成的类型描述期望，而非接收到的字节。
+- 在守卫中保持否定情况可见，而不是接受一个对象并依赖后续属性访问来失败。
 
 ## Failure Modes
 
-- Do not use truthiness as a substitute for a required-field check when valid values include `0`, `false`, or an empty string.
-- Do not let a parser silently discard unknown fields when forward compatibility or auditability requires preserving them.
-- Do not return a successful domain object before validating the fields that downstream authorization or persistence depends on.
+- 当有效值包含 `0`、`false` 或空字符串时，不要用真值检查替代必需字段检查。
+- 当向前兼容性或可审计性要求保留未知字段时，不要让解析器静默丢弃它们。
+- 不要在验证下游授权或持久化依赖的字段之前返回成功的领域对象。
 
 ## Verification Focus
 
-- Add a positive case that proves downstream code can use the narrowed value without another assertion.
-- Add relevant negative cases for missing fields, wrong primitives, invalid discriminants, unsupported enum values, malformed dates, out-of-range values, and unexpected `null`.
-- For API or storage boundaries, test malformed remote or persisted data instead of only fixtures produced by the same serializer.
-- Run typecheck and confirm the narrowed branches do not require `as` assertions.
+- 添加一个正面用例证明下游代码可以使用收窄的值而无需另一个断言。
+- 为缺失字段、错误原始类型、无效判别式、不支持的枚举值、格式错误日期、超出范围值和意外 `null` 添加相关反面用例。
+- 对于 API 或存储边界，测试格式错误的远程或持久化数据，而非仅测试由同一序列化器产生的夹具。
+- 运行类型检查并确认收窄分支不需要 `as` 断言。
 
 ## Evidence Focus
 
-- Record the protected boundary, the parser or guard used, and the invalid input classes covered by tests.
+- 记录受保护的边界、使用的解析器或守卫，以及测试覆盖的无效输入类别。

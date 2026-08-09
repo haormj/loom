@@ -1,62 +1,62 @@
-# Go Deployment Reference
+# Go 部署参考
 
-Use this reference when implementing or repairing loom deploy support for Go projects.
+当实现或修复 Go 项目的 loom deploy 支持时，使用本参考文档。
 
-## Scanner Signals
+## 扫描器信号
 
-- `go.mod` identifies a Go project.
-- `go.sum` means dependency checksums are present.
-- Framework hints:
-  - `github.com/gin-gonic/gin` -> Gin.
-  - `github.com/labstack/echo` -> Echo.
-  - `github.com/gofiber/fiber` -> Fiber.
-- Port detection reads simple `PORT=9090` or `port: 9090` signals from project metadata and env examples; otherwise default to 8080.
+- `go.mod` 标识 Go 项目。
+- `go.sum` 表示依赖校验和已存在。
+- 框架提示：
+  - `github.com/gin-gonic/gin` -> Gin。
+  - `github.com/labstack/echo` -> Echo。
+  - `github.com/gofiber/fiber` -> Fiber。
+- 端口检测从项目元数据和 env 示例中读取简单的 `PORT=9090` 或 `port: 9090` 信号；否则默认为 8080。
 
-## Template Rules
+## 模板规则
 
-- Use a multi-stage Dockerfile.
-- Build with `golang:1.23-alpine`.
-- Run from `alpine:3.20`.
-- Build command: `CGO_ENABLED=0 GOOS=linux go build -o /out/server .`.
-- Runtime command: `/app/server`.
+- 使用多阶段 Dockerfile。
+- 使用 `golang:1.23-alpine` 构建。
+- 从 `alpine:3.20` 运行。
+- 构建命令：`CGO_ENABLED=0 GOOS=linux go build -o /out/server .`。
+- 运行时命令：`/app/server`。
 
-## Repair Notes
+## 修复说明
 
-- Common failures are module download errors, packages that require CGO/system libraries, multi-command repos where the entrypoint is under `./cmd/<name>`, or applications that do not bind to `0.0.0.0`.
-- Keep repairs in generated deployment files unless the user approves app source or module changes.
+- 常见失败包括模块下载错误、需要 CGO/系统库的包、入口点在 `./cmd/<name>` 下的多命令仓库，或未绑定到 `0.0.0.0` 的应用。
+- 除非用户批准应用源或模块更改，否则将修复保持在生成的部署文件中。
 
-## Scanner Signals To Deploy Facts
+## 扫描器信号到部署事实
 
-Translate Go scanner evidence into deploy facts before generating files:
+在生成文件之前，将 Go 扫描器证据转换为部署事实：
 
-- `go.mod` path becomes the module root, service root, and manifest ref.
-- `go.sum` becomes the lock/checksum ref used before source copy.
-- `main` packages under root or `cmd/*` become entrypoint candidates.
-- Framework/import signals such as Gin, Echo, Fiber, Chi, net/http, or gRPC decide whether the service is HTTP/API.
-- Port/env examples, `os.Getenv("PORT")`, router listen calls, and docs become runtime port facts.
-- SQL/Redis/Mongo/RabbitMQ/cloud SDK imports and env names become dependency service facts.
-- Non-HTTP command packages become command-style deploy facts without invented preview routes.
+- `go.mod` 路径成为模块根、服务根和 manifest ref。
+- `go.sum` 成为源复制前使用的 lock/checksum ref。
+- 根目录或 `cmd/*` 下的 `main` 包成为入口点候选。
+- 框架/导入信号（如 Gin、Echo、Fiber、Chi、net/http 或 gRPC）决定服务是否为 HTTP/API。
+- Port/env 示例、`os.Getenv("PORT")`、router listen 调用和文档成为运行时端口事实。
+- SQL/Redis/Mongo/RabbitMQ/cloud SDK 导入和 env 名成为依赖服务事实。
+- 非 HTTP 命令包成为命令式部署事实，不带发明的预览路由。
 
-## Generated Asset Expectations
+## 生成的资产预期
 
-Generated Go assets should show:
+生成的 Go 资产应显示：
 
-- Multi-stage build with module download before source copy.
-- Build command targeting the selected `main` package, for example `.` or `./cmd/server`.
-- Static binary output copied into a slim runtime image.
-- `CGO_ENABLED=0` only when dependency facts do not require CGO. If CGO is required, use a runtime/build image with matching system libraries.
-- Runtime command executes the generated binary and exposes the selected container port.
-- Compose env includes `PORT` only when the app reads it or framework defaults need it.
-- Dependency URLs use Compose service DNS names.
+- 在源复制前进行模块下载的多阶段构建。
+- 构建命令针对选定的 `main` 包，例如 `.` 或 `./cmd/server`。
+- 静态二进制输出复制到 slim runtime 镜像中。
+- 仅当依赖事实不需要 CGO 时使用 `CGO_ENABLED=0`。如果需要 CGO，使用具有匹配系统库的 runtime/build 镜像。
+- 运行时命令执行生成的二进制并暴露选定的容器端口。
+- Compose env 仅在应用读取它或框架默认需要时包含 `PORT`。
+- 依赖 URL 使用 Compose 服务 DNS 名。
 
-## Repair Boundary
+## 修复边界
 
-Repair generated Go deploy assets when:
+在以下情况下修复生成的 Go 部署资产：
 
-- Build target points at the wrong `main` package.
-- `CGO_ENABLED=0` conflicts with required CGO/native dependencies.
-- Dockerfile context omits `go.mod`, `go.sum`, or internal packages.
-- Runtime image misses required certificates, timezone data, or native libraries.
-- App listens on localhost or wrong port through generated command/env.
+- 构建目标指向错误的 `main` 包。
+- `CGO_ENABLED=0` 与所需的 CGO/原生依赖冲突。
+- Dockerfile 上下文遗漏了 `go.mod`、`go.sum` 或内部包。
+- Runtime 镜像缺少所需的证书、时区数据或原生库。
+- 应用通过生成的 command/env 在 localhost 或错误端口上监听。
 
-Do not change Go source, module paths, or generated code during deploy asset repair unless the MCP action routes to execution repair.
+在部署资产修复期间不要更改 Go 源代码、模块路径或生成代码，除非 MCP 操作路由到执行修复。

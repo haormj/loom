@@ -1,17 +1,17 @@
-# Playwright Locators And Assertions
+# Playwright 定位器与断言
 
-Locators are part of the UI contract. They should describe what a user or assistive technology can identify, survive visual refactors, and fail clearly when the product becomes ambiguous.
+定位器是 UI 契约的一部分。它们应描述用户或辅助技术可以识别的内容，经受视觉重构，并在产品变得模糊时清晰失败。
 
-## Locator Priority
+## 定位器优先级
 
-Use this order unless the existing project has a stricter convention:
+除非现有项目有更严格的约定，否则使用此顺序：
 
-1. `getByRole()` with an accessible name.
-2. `getByLabel()` for form controls.
-3. `getByPlaceholder()` only when placeholder text is a real stable cue.
-4. `getByText()` for stable business copy or status text.
-5. `getByTestId()` for non-semantic visualization, virtualized content, or a stable integration anchor.
-6. CSS or XPath only at a third-party or legacy boundary that cannot expose a better contract.
+1. 带可访问名称的 `getByRole()`。
+2. 用于表单控件的 `getByLabel()`。
+3. 仅当占位文本是真正稳定线索时的 `getByPlaceholder()`。
+4. 用于稳定业务文案或状态文本的 `getByText()`。
+5. 用于非语义可视化、虚拟化内容或稳定集成锚点的 `getByTestId()`。
+6. 仅在无法暴露更好契约的第三方或遗留边界处的 CSS 或 XPath。
 
 ```typescript
 const save = page.getByRole('button', { name: 'Save changes' });
@@ -19,11 +19,11 @@ const amount = page.getByLabel('Approved amount');
 const status = page.getByRole('status');
 ```
 
-If a semantic locator cannot find an ordinary button, field, link, heading, dialog, table, or alert, first inspect the product semantics. Adding a test id must not hide an accessibility defect.
+如果语义定位器无法找到普通按钮、字段、链接、标题、对话框、表格或警报，首先检查产品语义。添加 test id 不得隐藏可访问性缺陷。
 
-## Scope Before Position
+## 先限定范围再定位
 
-Resolve ambiguity by narrowing to a meaningful region or record:
+通过缩小到有意义的区域或记录来解决歧义：
 
 ```typescript
 const members = page.getByRole('region', { name: 'Workspace members' });
@@ -35,27 +35,27 @@ await dialog.getByLabel('Role').selectOption('editor');
 await dialog.getByRole('button', { name: 'Save role' }).click();
 ```
 
-Use `filter({ hasText })` or `filter({ has })` for repeated records. A row id, stable business key, or named region is stronger than `.first()` or `.nth()`.
+对重复记录使用 `filter({ hasText })` 或 `filter({ has })`。行 ID、稳定业务键或命名区域比 `.first()` 或 `.nth()` 更强。
 
-## Exactness Rules
+## 精确性规则
 
-- Use `{ exact: true }` when nearby labels intentionally share words and the exact product label is stable.
-- Use a narrow regular expression for generated identifiers or localized suffixes, not a broad case-insensitive expression that can match unrelated content.
-- Do not bind to timestamps, random ids, translated copy, or generated class names unless that value is the behavior under test.
-- Prefer a stable business identifier over sample person's name when records can collide.
+- 当附近标签有意共享词汇且精确产品标签稳定时使用 `{ exact: true }`。
+- 对生成标识符或本地化后缀使用窄正则表达式，而非可能匹配不相关内容的宽泛不区分大小写表达式。
+- 不要绑定到时间戳、随机 ID、翻译文案或生成的类名，除非该值是被测行为。
+- 当记录可能碰撞时优先使用稳定业务标识符而非示例人名。
 
 ```typescript
 await expect(page.getByText('Approved', { exact: true })).toBeVisible();
 await expect(page.getByRole('heading', { name: /^Order ORD-\d+$/ })).toBeVisible();
 ```
 
-## Forms
+## 表单
 
-- A visible label should resolve the associated control.
-- Scope repeated field labels to their form, fieldset, row, or dialog.
-- Assert validation near the field or through its alert/status relationship.
-- Use realistic input methods: `fill`, `press`, `selectOption`, `check`, and `setInputFiles`.
-- Do not mutate DOM values with `evaluate()` to bypass the real control contract.
+- 可见标签应解析关联控件。
+- 将重复字段标签限定到其表单、fieldset、行或对话框。
+- 在字段附近或通过其 alert/status 关系断言验证。
+- 使用真实输入方法：`fill`、`press`、`selectOption`、`check` 和 `setInputFiles`。
+- 不要用 `evaluate()` 修改 DOM 值来绕过真实控件契约。
 
 ```typescript
 const form = page.getByRole('form', { name: 'Create workspace' });
@@ -65,16 +65,16 @@ await form.getByRole('button', { name: 'Create workspace' }).click();
 await expect(form.getByRole('alert')).toContainText('Plan is required');
 ```
 
-## Tables, Lists, And Virtualized Data
+## 表格、列表与虚拟化数据
 
-- For semantic tables, locate the row by its accessible row name, then locate cells/actions inside it.
-- For card/list layouts, locate a list item by the business key and scope actions to that item.
-- For virtualized data, scroll through the component's public behavior. A test id on the virtualized viewport is acceptable when rows are not represented semantically.
-- Never click an unscoped `Edit`, `Delete`, or overflow button in repeated content.
+- 对于语义表格，按其可访问行名定位行，然后定位其中的单元格/操作。
+- 对于卡片/列表布局，按业务键定位列表项并将操作限定到该项。
+- 对于虚拟化数据，通过组件的公共行为滚动。当行不以语义表示时，虚拟化视口上的 test id 是可接受的。
+- 永远不要在重复内容中点击未限定的 `Edit`、`Delete` 或溢出按钮。
 
-## Menus, Dialogs, Drawers, And Portals
+## 菜单、对话框、抽屉与 Portal
 
-Portaled content may not be a DOM descendant of its trigger. Scope by semantic overlay role and accessible name, not by parent CSS:
+Portal 内容可能不是其触发器的 DOM 后代。按语义覆盖角色和可访问名称限定，而非父 CSS：
 
 ```typescript
 await page.getByRole('button', { name: 'More actions' }).click();
@@ -82,11 +82,11 @@ await page.getByRole('menu').getByRole('menuitem', { name: 'Archive' }).click();
 await expect(page.getByRole('dialog', { name: 'Archive workspace' })).toBeVisible();
 ```
 
-Verify focus enters modal content and returns to the trigger when that behavior is task-owned.
+当焦点进入模态内容并返回触发器行为为任务所属时验证它。
 
-## Web-First Assertions
+## Web-First 断言
 
-Use locator assertions instead of one-time value reads:
+使用定位器断言而非一次性值读取：
 
 ```typescript
 await expect(locator).toBeVisible();
@@ -96,23 +96,23 @@ await expect(locator).toHaveAttribute('aria-current', 'page');
 await expect(page).toHaveURL(/status=approved/);
 ```
 
-`textContent()`, `isVisible()`, and raw element handles return snapshots and can race with rendering. Use them only when the raw value itself must be transformed or compared.
+`textContent()`、`isVisible()` 和原始元素句柄返回快照，可能与渲染竞争。仅当原始值本身必须被转换或比较时使用它们。
 
-## Test ID Policy
+## Test ID 策略
 
-A test id is appropriate for:
+test id 适用于：
 
-- canvas/WebGL roots and chart series with no native semantic node;
-- virtualized containers or drag handles;
-- stable cross-team integration anchors;
-- controls whose visible label is dynamic but whose semantics cannot be made unique.
+- 无原生语义节点的 canvas/WebGL 根和图表系列；
+- 虚拟化容器或拖拽句柄；
+- 稳定的跨团队集成锚点；
+- 可见标签动态但语义无法唯一化的控件。
 
-Name ids by product role, not styling or component implementation: `account-activity-timeline`, not `blue-panel-2`; `chart-revenue-series`, not `recharts-layer`.
+按产品角色命名 ID，而非样式或组件实现：`account-activity-timeline`，不是 `blue-panel-2`；`chart-revenue-series`，不是 `recharts-layer`。
 
-## Disallowed Shortcuts
+## 不允许的快捷方式
 
-- No arbitrary sleeps before locating an element.
-- No `.first()`, `.last()`, or `.nth()` to silence strict-mode ambiguity without proving order is the contract.
-- No generated CSS classes, deeply nested selectors, or XPath through layout wrappers.
-- No `force: true` to bypass covered, disabled, or unstable controls unless the test explicitly proves that low-level condition.
-- No broad text locator that can pass against hidden, duplicated, or stale content.
+- 定位元素前无任意休眠。
+- 在未证明顺序是契约的情况下使用 `.first()`、`.last()` 或 `.nth()` 来消除 strict-mode 歧义。
+- 无生成的 CSS 类、深度嵌套选择器或通过布局包装器的 XPath。
+- 无 `force: true` 绕过覆盖、禁用或不稳定控件，除非测试显式证明该低级条件。
+- 无可能通过隐藏、重复或过期内容的宽泛文本定位器。

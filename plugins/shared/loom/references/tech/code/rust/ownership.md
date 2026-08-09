@@ -1,40 +1,40 @@
-# Rust Ownership Quality
+# Rust 所有权质量
 
 ## When To Use
 
-- The task changes lifetime relationships, borrowed/owned APIs, smart pointer choice, interior mutability, RAII/drop cleanup, `Cow`, `Pin`, shared state, or ownership-sensitive data structures.
-- Use this when borrow checking, lifetime design, or resource ownership affects correctness or maintainability.
-- If ownership is unaffected by the task, do not redesign APIs just because this reference is available.
+- 任务变更了生命周期关系、借用/拥有 API、智能指针选择、内部可变性、RAII/drop 清理、`Cow`、`Pin`、共享状态或所有权敏感的数据结构。
+- 当借用检查、生命周期设计或资源所有权影响正确性或可维护性时使用此参考。
+- 如果所有权不受任务影响，不要仅因为此参考可用就重新设计 API。
 
 ## Implementation Focus
 
-- Make ownership transfer explicit in function signatures. Use owned values when the callee must store or consume them; use references/slices when it only reads.
-- Keep lifetime annotations minimal and meaningful. Do not add named lifetimes where elision is clear; do document relationships when returned references depend on inputs.
-- Choose pointer types by ownership model: `Box` for heap-owned single values, `Rc` for single-thread shared ownership, `Arc` for cross-thread shared ownership, and references for non-owning access.
-- Use `RefCell`, `Cell`, `Mutex`, or `RwLock` only when mutation through shared ownership is truly needed. Interior mutability is a design decision, not a borrow-checker escape hatch.
-- Prefer `Cow` for APIs that usually borrow but sometimes normalize/own. Do not use `Cow` if the function always allocates or always borrows.
-- Use RAII and `Drop` for cleanup that must always occur, but keep `Drop` implementations simple and non-panicking.
-- Be careful with `Arc<Mutex<T>>`: keep lock scope short, avoid calling user code while locked, and do not hold async-incompatible locks across await points.
-- Use `Pin` only for self-referential or async/future requirements. Do not introduce manual pinning unless the type's move invariants require it.
-- Do not leak memory intentionally (`Box::leak`, `mem::forget`) unless process-lifetime ownership is explicitly part of the design and documented.
-- Keep builders and state machines ownership-aware: consuming builders are good for required fields; mutable builders are fine when repository convention prefers them.
+- 在函数签名中使所有权转移显式。当被调用者必须存储或消费值时使用拥有值；当仅读取时使用引用/切片。
+- 保持生命周期注解最小且有意义。在省略清晰的地方不要添加命名生命周期；当返回引用依赖于输入时要记录关系。
+- 按所有权模型选择指针类型：`Box` 用于堆拥有的单个值，`Rc` 用于单线程共享所有权，`Arc` 用于跨线程共享所有权，引用用于非拥有访问。
+- 仅当通过共享所有权进行变更确实需要时才使用 `RefCell`、`Cell`、`Mutex` 或 `RwLock`。内部可变性是设计决策，不是借用检查器的逃生舱。
+- 对通常借用但有时规范化/拥有的 API 优先使用 `Cow`。如果函数总是分配或总是借用，不要使用 `Cow`。
+- 对必须始终发生的清理使用 RAII 和 `Drop`，但保持 `Drop` 实现简单且不 panic。
+- 小心 `Arc<Mutex<T>>`：保持锁范围短，避免在锁定时调用用户代码，不要在 await 点之间持有异步不兼容的锁。
+- 仅在自引用或异步/future 需求时使用 `Pin`。除非类型的移动不变式要求，否则不要引入手动固定。
+- 除非进程生命周期所有权明确是设计的一部分且有文档记录，否则不要有意泄漏内存（`Box::leak`、`mem::forget`）。
+- 保持构建器和状态机所有权感知：消费型构建器适用于必填字段；当仓库约定偏好时可变构建器也可以。
 
 ## Decision Rules
 
-- Choose `&T`/`&mut T` when the callee borrows, owned `T` when it stores or consumes, and `Cow` when the common path borrows but normalization sometimes requires ownership. State the lifetime relationship only when it changes the API contract.
-- Use `Box`, `Rc`, and `Arc` for different ownership models, not as generic escape hatches. Select thread-safe sharing only when cross-thread ownership is actually required.
-- Keep `Arc<Mutex<T>>` lock scopes short, never call user code while holding a lock, and use an async-aware lock only when the runtime and await boundary require it.
-- Use `Pin` only for self-referential or future-movement invariants. Do not hand-write pin projections when a repository-supported abstraction can express the same boundary.
-- Let RAII/drop cleanup cover early returns and error paths. `Drop` implementations should be small, deterministic, and non-panicking.
-- For consuming builders, encode required fields in the type/state transition when that prevents invalid construction; use a mutable builder when the repository values simpler call sites and validates at `build`.
+- 当被调用者借用时选择 `&T`/`&mut T`，当它存储或消费时选择拥有的 `T`，当常见路径借用但规范化有时需要所有权时选择 `Cow`。仅在生命周期关系改变 API 契约时说明它。
+- 为不同的所有权模型使用 `Box`、`Rc` 和 `Arc`，而非作为通用逃生舱。仅在跨线程所有权确实需要时选择线程安全共享。
+- 保持 `Arc<Mutex<T>>` 锁范围短，永远不要在持有锁时调用用户代码，仅当运行时和 await 边界需要时才使用异步感知锁。
+- 仅对自引用或 future 移动不变式使用 `Pin`。当仓库支持的抽象能表达相同的边界时，不要手写固定投影。
+- 让 RAII/drop 清理覆盖提前返回和错误路径。`Drop` 实现应该小、确定性强且不 panic。
+- 对于消费型构建器，当防止无效构造时将必填字段编码在类型/状态转换中；当仓库偏好更简单的调用点并在 `build` 时验证时使用可变构建器。
 
 ## Verification Focus
 
-- Let compilation prove basic borrow/lifetime correctness, then add runtime tests for ownership-sensitive behavior such as cleanup, shared mutation, builder consumption, or dropped resources.
-- Run tests that exercise error paths and early returns to prove RAII cleanup occurs.
-- Use clippy to catch needless clones, deref issues, and lock/ownership smells when available.
-- If unsafe, pinning, or custom drop behavior changed, add focused tests and record any Miri/sanitizer check that was run.
+- 让编译证明基本的借用/生命周期正确性，然后为所有权敏感行为（如清理、共享变更、构建器消费或丢弃的资源）添加运行时测试。
+- 运行测试演练错误路径和提前返回以证明 RAII 清理发生。
+- 在可用时使用 clippy 捕获不必要的 clone、解引用问题和锁/所有权异味。
+- 如果 unsafe、固定或自定义 drop 行为发生变更，添加聚焦测试并记录运行的任何 Miri/sanitizer 检查。
 
 ## Evidence Focus
 
-- In the evidence summary, name the ownership decision: borrowed API, lifetime relationship, pointer type, interior mutability, Cow, RAII/Drop, lock scope, Pin, leak avoidance, or builder ownership.
+- 在证据总结中，说明所有权决策：借用 API、生命周期关系、指针类型、内部可变性、Cow、RAII/Drop、锁范围、Pin、泄漏避免或构建器所有权。

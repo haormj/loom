@@ -1,61 +1,61 @@
-# MySQL Transaction Behavior
+# MySQL 事务行为
 
-Use this file with `tech/code/sql/schema.md` or `tech/code/sql/queries.md` when a task owns MySQL transaction boundaries, locking, retry behavior, or multi-row persistence changes.
+当任务拥有 MySQL 事务边界、锁定、重试行为或多行持久化变更时，将此文件与 `tech/code/sql/schema.md` 或 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Apply these rules to transactional application code and persistence tests.
-- Confirm that the affected tables use a transactional engine and that the ORM/driver transaction boundary is the one used by the application.
+- 将这些规则应用于事务性应用代码和持久化测试。
+- 确认受影响的表使用事务性引擎，且 ORM/驱动程序事务边界是应用使用的那个。
 
 ## Implementation Focus
 
-- Keep each transaction limited to the state changes that must commit or roll back together.
-- Define the isolation level only when the business invariant requires behavior beyond the repository default. Record the reason and verify the provider behavior.
-- Make lock order stable across competing workflows. Avoid holding a transaction open while waiting on unrelated network or user interaction.
-- Handle deadlock and transient lock errors at the application boundary with bounded retry and idempotency. Do not blindly retry non-idempotent mutations.
-- Preserve unique, foreign-key, and state-transition invariants in the database and domain service. UI checks are not transaction protection.
+- 将每个事务限制在必须一起提交或回滚的状态变更内。
+- 仅当业务不变式需要超出仓库默认值的行为时才定义隔离级别。记录原因并验证提供者行为。
+- 使锁顺序在竞争工作流间稳定。避免在等待不相关的网络或用户交互时保持事务打开。
+- 在应用边界处理死锁和瞬态锁错误，使用有界重试和幂等性。不要盲目重试非幂等变更。
+- 在数据库和领域服务中保留唯一、外键和状态转换不变式。UI 检查不是事务保护。
 
 ## Verification Focus
 
-- Test commit, rollback, duplicate submission, invalid transition, and relevant lock/deadlock branches.
-- Run transaction-sensitive tests against MySQL or the repository's provider-compatible test path.
-- Record the transaction boundary, isolation decision, retry behavior, and provider evidence in the result.
+- 测试提交、回滚、重复提交、无效转换和相关的锁/死锁分支。
+- 针对 MySQL 或仓库的提供者兼容测试路径运行事务敏感测试。
+- 在结果中记录事务边界、隔离决策、重试行为和提供者证据。
 
 ## Evidence Focus
 
-- In the evidence summary, name the transaction boundary, invariant, retry classification, rollback behavior, or provider lock result that was verified.
+- 在证据总结中，说明已验证的事务边界、不变式、重试分类、回滚行为或提供者锁结果。
 
 ## Failure Matrix
 
-- Constraint violation: return the repository's validation or conflict error and do not retry blindly.
-- Deadlock or transient lock failure: retry only when the operation is idempotent and the owning application layer has a bounded policy.
-- Duplicate request: preserve the declared uniqueness or idempotency result and avoid a second durable effect.
-- Partial downstream failure: keep the transaction boundary limited to database state and record compensation outside it when required.
-- Request cancellation: release the transaction and database resources through the existing framework boundary.
+- 约束违反：返回 repository 的验证或冲突错误，不要盲目重试。
+- 死锁或瞬态锁失败：仅当操作幂等且拥有的应用层有有界策略时才重试。
+- 重复请求：保留声明的唯一性或幂等性结果并避免第二次持久效果。
+- 部分下游失败：将事务边界限制在数据库状态，并在需要时在其外部记录补偿。
+- 请求取消：通过现有框架边界释放事务和数据库资源。
 
 ## ORM And Driver Boundary
 
-- Confirm that the transaction annotation, session, unit-of-work, or connection scope actually includes every write that must be atomic.
-- Do not open a second unmanaged connection inside a transaction-owned service method.
-- Keep lazy loads, callbacks, and event publication from silently extending the transaction beyond its intended work.
-- Verify rollback behavior through the repository's actual data-access path, not only a mocked service.
+- 确认事务注解、会话、工作单元或连接范围实际包含每个必须原子的写入。
+- 不要在事务拥有的服务方法内打开第二个未管理的连接。
+- 防止延迟加载、回调和事件发布静默扩展事务超出其预期工作。
+- 通过仓库的实际数据访问路径验证回滚行为，而非仅通过 mock 服务。
 
 ## Review Questions
 
-- Which writes must commit together, and which are intentionally outside the boundary?
-- What error classes are permanent, transient, or retryable?
-- What makes a retry safe for this mutation?
-- Which MySQL behavior was verified rather than assumed?
+- 哪些写入必须一起提交，哪些有意在边界之外？
+- 哪些错误类是永久的、瞬态的或可重试的？
+- 什么使此变更的重试安全？
+- 哪个 MySQL 行为是已验证而非假设的？
 
 ## Boundary Checklist
 
-- Identify the service method or repository operation that owns the transaction.
-- Identify the durable constraints that protect the same invariant if the application retries.
-- Keep external calls and user interaction outside the database transaction.
-- State the expected behavior after rollback and after a retry.
+- 标识拥有事务的服务方法或 repository 操作。
+- 标识在应用重试时保护同一不变式的持久约束。
+- 将外部调用和用户交互保持在数据库事务之外。
+- 说明回滚后和重试后的预期行为。
 
 ## Risks To Avoid
 
-- Using a mock transaction as the only proof of MySQL locking or constraint behavior.
-- Retrying every database exception without classifying transient and permanent failures.
-- Leaving transactions open across HTTP calls, browser actions, or unbounded loops.
+- 使用 mock 事务作为 MySQL 锁定或约束行为的唯一证明。
+- 在不分类瞬态和永久失败的情况下重试每个数据库异常。
+- 在 HTTP 调用、浏览器操作或无界循环间保持事务打开。

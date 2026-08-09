@@ -1,40 +1,40 @@
-# JavaScript Node Runtime Quality
+# JavaScript Node 运行时质量
 
 ## When To Use
 
-- The task changes Node.js services, CLIs, scripts, filesystem work, streams, environment configuration, HTTP servers, worker threads, child processes, or package runtime behavior.
-- Use this when Node runtime behavior, portability, process lifecycle, or resource cleanup affects delivery quality.
-- If JavaScript only runs in the browser, use browser-specific references instead.
+- 任务变更了 Node.js 服务、CLI、脚本、文件系统工作、流、环境配置、HTTP 服务器、worker 线程、子进程或包运行时行为。
+- 当 Node 运行时行为、可移植性、进程生命周期或资源清理影响交付质量时使用此参考。
+- 如果 JavaScript 仅在浏览器中运行，改用浏览器特定参考。
 
 ## Implementation Focus
 
-- Validate required environment variables and runtime configuration at startup. Fail with a clear message before serving traffic or mutating files when configuration is invalid.
-- Prefer `fs/promises` and async filesystem APIs for runtime paths. Synchronous filesystem reads are acceptable for small startup configuration only when they do not sit on a request or job hot path.
-- Use `path` and URL helpers for portability. Do not hard-code path separators or rely on the current working directory unless the command contract defines it.
-- For ESM modules, derive file paths with `import.meta.url` and `fileURLToPath` rather than assuming `__dirname` exists.
-- Use `stream/promises.pipeline` or equivalent error-aware stream composition for file/network streams. Avoid buffering large files into memory unless the size is bounded by the task contract.
-- Attach error listeners for `EventEmitter` workflows where unhandled `error` events can crash the process, and remove listeners for long-lived emitters when the owner stops.
-- For HTTP servers, queues, watchers, and background workers, implement shutdown behavior that closes sockets, timers, handles, temporary files, and child processes.
-- Spawn child processes with argument arrays and explicit stdio handling. Avoid shell execution unless shell features are required, and bound stdout/stderr size when collecting output.
-- Use worker threads only for CPU-bound work or isolation that justifies the overhead. Terminate workers and propagate worker errors to the owner.
-- Do not log secrets, tokens, full environment dumps, or sensitive filesystem paths in normal runtime output.
+- 在启动时验证必需的环境变量和运行时配置。当配置无效时，在服务流量或变更文件之前以清晰消息失败。
+- 对运行时路径优先使用 `fs/promises` 和异步文件系统 API。同步文件系统读取仅在不位于请求或作业热路径上的小型启动配置中可接受。
+- 使用 `path` 和 URL 辅助函数实现可移植性。不要硬编码路径分隔符或依赖当前工作目录，除非命令契约定义了它。
+- 对 ESM 模块，使用 `import.meta.url` 和 `fileURLToPath` 派生文件路径，而非假设 `__dirname` 存在。
+- 对文件/网络流使用 `stream/promises.pipeline` 或等效的错误感知流组合。避免将大型文件缓冲到内存中，除非大小由任务契约限定。
+- 为 `EventEmitter` 工作流附加错误监听器（未处理的 `error` 事件可能崩溃进程），并在所有者停止时为长生命发射器移除监听器。
+- 对 HTTP 服务器、队列、观察器和后台 worker，实现关闭行为以关闭 socket、定时器、句柄、临时文件和子进程。
+- 使用参数数组和显式 stdio 处理 spawn 子进程。除非需要 shell 特性否则避免 shell 执行，并在收集输出时限制 stdout/stderr 大小。
+- 仅在 CPU 密集工作或证明开销合理的隔离时使用 worker 线程。终止 worker 并将 worker 错误传播给所有者。
+- 不要在正常运行时输出中记录密钥、令牌、完整环境转储或敏感文件系统路径。
 
 ### Process And Child Boundaries
 
-Validate environment and CLI input before opening files, binding ports, spawning children, or mutating state. Use argument arrays and explicit working directories for child processes; set timeout/abort behavior, bound collected output, and terminate the child and descendants when the owner stops. Do not turn a shell command into a string interpolation boundary.
+在打开文件、绑定端口、spawn 子进程或变更状态之前验证环境和 CLI 输入。为子进程使用参数数组和显式工作目录；设置超时/中止行为，限制收集的输出，并在所有者停止时终止子进程及其后代。不要将 shell 命令变成字符串插值边界。
 
 ### HTTP And Stream Boundaries
 
-Define request body, header, response, and connection limits for a Node HTTP server. Return a stable error response after parsing or routing failures and avoid writing headers twice. Use backpressure-aware stream composition and propagate request aborts to downstream work. Graceful shutdown must stop admission, drain bounded work, close servers/watchers/workers, and report failures without forcing an unsafe process loop.
+为 Node HTTP 服务器定义请求体、头、响应和连接限制。在解析或路由失败后返回稳定的错误响应，避免重复写入头。使用背压感知流组合并将请求中止传播到下游工作。优雅关闭必须停止接纳、排空有界工作、关闭服务器/观察器/worker，并在不强制不安全进程循环的情况下报告失败。
 
 ## Verification Focus
 
-- Run Node tests or runtime smoke commands for changed entry points.
-- Verify startup fails clearly for missing required configuration and succeeds with valid overrides.
-- For servers or long-running processes, test or manually smoke shutdown behavior if lifecycle code changed.
-- For filesystem, stream, child-process, or worker changes, cover error paths and cleanup of temporary resources.
-- For HTTP or process lifecycle changes, verify malformed input, abort/timeout, bounded output, shutdown, and repeated-signal behavior where owned.
+- 为变更的入口点运行 Node 测试或运行时冒烟命令。
+- 验证启动在缺少必需配置时清晰失败，在有效覆盖时成功。
+- 对于服务器或长时间运行的进程，如果生命周期代码变更则测试或手动冒烟关闭行为。
+- 对于文件系统、流、子进程或 worker 变更，覆盖错误路径和临时资源清理。
+- 对于 HTTP 或进程生命周期变更，在拥有的地方验证格式错误输入、中止/超时、有界输出、关闭和重复信号行为。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Node decision: config validation, async filesystem, path portability, stream pipeline, server shutdown, child process boundary, worker use, or secret-safe logging.
+- 在证据总结中，说明 Node 决策：配置验证、异步文件系统、路径可移植性、流 pipeline、服务器关闭、子进程边界、worker 使用或密钥安全日志。

@@ -1,22 +1,22 @@
-# Flutter Application Implementation
+# Flutter 应用实现
 
-Implement the accepted frontend experience within the repository's Flutter/Dart version, target platforms, theme/design system, state/navigation choices, API contract, and platform configuration. Do not replace established libraries because an external example prefers another stack.
+在仓库的 Flutter/Dart 版本、目标平台、主题/设计系统、状态/导航选择、API 契约和平台配置内实现已接受的前端体验。不要因为外部示例偏好另一个技术栈就替换已建立的库。
 
-## Application Boundary
+## 应用边界
 
-Keep `main()` focused on required binding/config initialization and root app/provider scope. Put product workflows in feature screens/state/use cases and infrastructure behind repositories/services/adapters.
+保持 `main()` 聚焦于所需的 binding/配置初始化和根 app/provider scope。将产品工作流放在功能屏幕/状态/用例中，将基础设施放在 repository/service/adapter 之后。
 
-Widgets render state and emit intent. They should not construct API clients, persistence stores, permission adapters, or repositories inside `build`. Keep domain/business mutation out of reusable visual widgets.
+Widget 渲染状态并发出意图。它们不应在 `build` 内构造 API client、持久化 store、权限 adapter 或 repository。将领域/业务修改排除在可复用视觉 widget 之外。
 
-Choose local `StatefulWidget` state for genuinely local ephemeral behavior; use the selected shared-state library only for cross-widget/route/business lifecycle. Riverpod and Bloc are alternatives unless the accepted architecture intentionally mixes bounded uses.
+对真正的本地临时行为选择本地 `StatefulWidget` 状态；仅对跨 widget/路由/业务生命周期使用所选的共享状态库。Riverpod 和 Bloc 是备选方案，除非已接受架构有意混用有界用途。
 
-## Async Workflow State
+## 异步工作流状态
 
-Represent loading, empty, ready, validation, business-blocking, submitting, success, disabled, offline, stale, and unexpected failure states at the owning surface/control. Do not collapse all errors into one `Text('Error')` or treat failures as empty data.
+在所属界面/控件处表示加载、空、就绪、验证、业务阻止、提交中、成功、禁用、离线、过期和意外失败状态。不要将所有错误折叠为一个 `Text('Error')` 或将失败视为空数据。
 
-Maintain a separate editable draft from persisted/server state. On save, preserve valid input, map field/global errors, block duplicates, reconcile returned identity/version/state, and make retry/recovery explicit.
+维护与持久化/服务端状态分开的可编辑草稿。保存时，保留有效输入，映射字段/全局错误，阻止重复，协调返回的标识/版本/状态，并使重试/恢复显式。
 
-Use mounted/context safety after awaits:
+在 await 之后使用 mounted/context 安全：
 
 ```dart
 Future<void> submit() async {
@@ -28,58 +28,58 @@ Future<void> submit() async {
 }
 ```
 
-In shared-state code, prefer state/listener-driven side effects over direct `BuildContext` retention across async boundaries.
+在共享状态代码中，优先使用状态/监听器驱动的副作用而非跨异步边界直接保留 `BuildContext`。
 
-## Identity, Immutability, And Rebuilds
+## 标识、不可变性与重建
 
-Use immutable state/models according to the repository pattern. Replace lists/maps/models rather than mutating watched state in place.
+按仓库模式使用不可变状态/模型。替换列表/map/model 而非原地修改被监听的状态。
 
-Use stable domain keys for filtered, sorted, pageable, animated, reorderable, or editable collections. Keys preserve element identity; they do not fix a state model keyed by array index.
+对筛选、排序、可分页、动画、可重排或可编辑的集合使用稳定的领域键。键保留元素标识；它们不能修复以数组索引为键的状态模型。
 
-Use `const` constructors/children where values are static and keep `build()` pure. Do not create controllers, futures, streams, focus nodes, providers, or clients during each build.
+在值为静态处使用 `const` 构造函数/子项并保持 `build()` 纯净。不要在每次构建期间创建 controller、future、stream、focus node、provider 或 client。
 
-## Platform And Responsive Behavior
+## 平台与响应式行为
 
-Follow the selected Material/Cupertino/custom design system consistently. Adapt navigation, safe areas, keyboard/insets, pointer/hover, text scaling, orientation, desktop window widths, and web URL behavior for task-owned target platforms.
+一致地遵循所选的 Material/Cupertino/自定义设计系统。为任务所属的目标平台适配导航、安全区域、键盘/inset、指针/hover、文本缩放、方向、桌面窗口宽度和 Web URL 行为。
 
-Platform branches should be capability-driven and testable; do not scatter `Platform.is...` throughout widgets or import `dart:io` into web-compatible paths. Keep permissions and native plugins behind adapters with denied/permanently-denied/unavailable states.
+平台分支应能力驱动且可测试；不要在 widget 中散布 `Platform.is...` 或将 `dart:io` 导入 Web 兼容路径。将权限和原生 plugin 放在 adapter 之后，配以 denied/permanently-denied/unavailable 状态。
 
-Use responsive constraints/breakpoints based on content and repository rules. Dense business UI needs a usable narrow-screen composition, not a desktop table scaled down.
+基于内容和仓库规则使用响应式约束/断点。密集业务 UI 需要可用的窄屏组合，而非缩小的桌面表格。
 
-## API, Storage, And Security
+## API、存储与安全
 
-Use typed repositories/services for accepted API paths, payloads, statuses, auth, pagination, and errors. Keep browser/mobile base URL and runtime binding consistent with deployment/platform networking; do not hardcode emulator/localhost addresses into product code.
+为已接受的 API 路径、载荷、状态、auth、分页和错误使用类型化 repository/service。保持浏览器/移动端 base URL 和运行时绑定与部署/平台网络一致；不要将 emulator/localhost 地址硬编码到产品代码中。
 
-Choose secure storage, preferences, database, or cache by data sensitivity/lifetime. Client storage is not secret against a compromised device/browser. Never embed service credentials or treat hidden UI/routes as authorization.
+按数据敏感性/生命周期选择安全存储、偏好设置、数据库或缓存。客户端存储在受损设备/浏览器面前不是秘密。永远不要嵌入服务凭据或将隐藏 UI/路由视为授权。
 
-Handle connectivity as a signal, not proof a request will work. Preserve offline/stale policy and pending-write behavior only when accepted.
+将连接性作为信号处理，而非请求会工作的证明。仅在已接受时保留离线/过期策略和待写入行为。
 
-## Localization, Theme, And Content
+## 本地化、主题与内容
 
-Use the repository's localization generation and locale-aware dates/numbers/currency. Do not concatenate sentence fragments that cannot be translated or hardcode one locale's formatting.
+使用仓库的本地化生成和区域感知的日期/数字/货币。不要拼接无法翻译的句子片段或硬编码一个区域设置的格式。
 
-Use theme extensions/tokens/components instead of one-off colors, spacing, text styles, and rounded cards. Respect text scaling, contrast, reduced motion, and long content.
+使用 theme extension/令牌/组件而非一次性颜色、间距、文本样式和圆角卡片。尊重文本缩放、对比度、减少动画和长内容。
 
-Product UI must not expose runtime commands, framework notes, delivery progress, verification instructions, stack explanations, or debug errors.
+产品 UI 不得暴露运行时命令、框架备注、交付进度、验证指令、堆栈说明或调试错误。
 
 ## Verification
 
-- Run focused analysis/tests for changed Dart and generated code.
-- Exercise task-owned async states, draft/save/readback, duplicate blocking, and recovery.
-- Verify stable row/action identity after filter/sort/page/refresh/navigation.
-- Test target-platform keyboard/safe-area/permission/storage behavior when changed.
-- Verify responsive, text-scale, localization, long-content, and semantics behavior for changed surfaces.
-- Build/run the relevant target when plugin/platform configuration changed.
+- 为变更的 Dart 和生成代码运行聚焦的分析/测试。
+- 练习任务所属的异步状态、草稿/保存/回读、重复阻止和恢复。
+- 在筛选/排序/分页/刷新/导航后验证稳定的行/操作标识。
+- 在变更时测试目标平台键盘/安全区域/权限/存储行为。
+- 为变更界面验证响应式、文本缩放、本地化、长内容和语义行为。
+- 当 plugin/平台配置变更时构建/运行相关目标。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the Flutter app/state/platform/API decision and the widget/provider/bloc/platform assertion proving it. Analysis success or one screenshot cannot prove lifecycle, state reconciliation, platform configuration, accessibility, or runtime API binding.
+标识 Flutter app/状态/平台/API 决策和证明它的 widget/provider/bloc/平台断言。分析成功或一张截图不能证明生命周期、状态协调、平台配置、可访问性或运行时 API 绑定。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Riverpod or Bloc introduced without selected stack and state ownership.
-- Services/controllers/futures constructed in `build()`.
-- Watched state mutated in place or rows keyed by index.
-- `BuildContext` retained across async operations without lifecycle safety.
-- Device/emulator URLs and secrets hardcoded in source.
-- Platform behavior reduced to visual differences without input/permission/lifecycle handling.
+- 在无已选择技术栈和状态所有权的情况下引入 Riverpod 或 Bloc。
+- 在 `build()` 中构造 service/controller/future。
+- 原地修改被监听状态或以索引为键的行。
+- 跨异步操作保留 `BuildContext` 而无生命周期安全。
+- 源代码中硬编码设备/emulator URL 和密钥。
+- 将平台行为简化为视觉差异而无输入/权限/生命周期处理。

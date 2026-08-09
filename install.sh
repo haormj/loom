@@ -13,8 +13,8 @@ REPO_ROOT=""
 usage() {
   cat >&2 <<'EOF'
 Usage:
-  install.sh --agent codex|claude-code|opencode|all
-  install.sh --agent codex|claude-code|opencode|all --local-build [--repo-root <path>]
+  install.sh --agent opencode|all
+  install.sh --agent opencode|all --local-build [--repo-root <path>]
 
 Options:
   --agent        Target agent to install or upgrade.
@@ -128,13 +128,13 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$AGENT" in
-  codex|claude-code|opencode|all) ;;
+  opencode|all) ;;
   "")
-    echo "--agent is required: codex, claude-code, opencode, or all" >&2
+    echo "--agent is required: opencode or all" >&2
     usage
     exit 1
     ;;
-  *) fail "unsupported agent '$AGENT', expected codex, claude-code, opencode, or all" ;;
+  *) fail "unsupported agent '$AGENT', expected opencode or all" ;;
 esac
 
 OS="${LOOM_INSTALL_TEST_OS:-$(uname -s)}"

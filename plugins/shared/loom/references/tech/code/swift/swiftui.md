@@ -1,41 +1,41 @@
-# Swift SwiftUI Quality
+# Swift SwiftUI 质量
 
-This file applies SwiftUI implementation guidance to task-owned UI changes.
+本文件将 SwiftUI 实现指导应用于任务拥有的 UI 变更。
 
 ## When To Use
 
-- The task changes SwiftUI views, view models, navigation, state management, environment values, modifiers, custom layouts, async loading, refresh behavior, accessibility, or UI tests.
-- Use this when SwiftUI state ownership, rendering performance, task lifecycle, or platform UI behavior affects correctness.
-- If the project is UIKit/AppKit-only and no SwiftUI surface is touched, do not introduce SwiftUI.
+- 任务变更了 SwiftUI 视图、view model、导航、状态管理、环境值、修饰符、自定义布局、异步加载、刷新行为、可访问性或 UI 测试。
+- 当 SwiftUI 状态所有权、渲染性能、任务生命周期或平台 UI 行为影响正确性时使用此参考。
+- 如果项目仅是 UIKit/AppKit 且未触及 SwiftUI 表面，不要引入 SwiftUI。
 
 ## Implementation Focus
 
-- Choose the right state owner: `@State` for local value state, `@Binding` for parent-owned values, `@StateObject`/`@Observable` for view-owned reference models, `@ObservedObject` for injected models, and environment only for broadly shared dependencies.
-- Keep business logic out of `body`. Views should compose UI and call view-model/service actions; domain decisions belong outside rendering code.
-- Break large views into meaningful subviews or modifiers when that clarifies state and layout. Do not split every small fragment into a type that obscures the screen flow.
-- Use `task(id:)`, `refreshable`, and lifecycle modifiers so async work starts, cancels, and restarts with the right identity.
-- Mark UI state mutation with `@MainActor` through the view model or action boundary. Avoid updating observable state from arbitrary background tasks.
-- Use environment values for cross-cutting context such as theme, locale, or dependencies; avoid prop-drilling across many layers when environment is the local convention.
-- Use preference keys and custom layouts only when regular layout containers cannot express the requirement. Keep geometry readers scoped so they do not dominate layout.
-- For lists/grids, provide stable identities, avoid expensive work in row `body`, and page/lazy-load data when the expected collection is large.
-- Treat previews as design aids, not verification. A preview that compiles is not proof that state, async, navigation, or accessibility works.
+- 选择正确的状态所有者：`@State` 用于局部值状态，`@Binding` 用于父级拥有的值，`@StateObject`/`@Observable` 用于视图拥有的引用模型，`@ObservedObject` 用于注入的模型，环境仅用于广泛共享的依赖。
+- 将业务逻辑排除在 `body` 之外。视图应组合 UI 并调用 view-model/服务动作；领域决策属于渲染代码之外。
+- 当能澄清状态和布局时将大视图拆分为有意义的子视图或修饰符。不要将每个小片段拆分为遮蔽屏幕流的类型。
+- 使用 `task(id:)`、`refreshable` 和生命周期修饰符使异步工作以正确的标识启动、取消和重启。
+- 通过 view model 或动作边界用 `@MainActor` 标记 UI 状态变更。避免从任意后台任务更新可观察状态。
+- 对横切上下文（如主题、locale 或依赖）使用环境值；当环境是本地约定时避免跨多层 prop-drilling。
+- 仅当常规布局容器无法表达需求时才使用偏好键和自定义布局。保持几何读取器有界使其不主导布局。
+- 对于列表/网格，提供稳定标识，避免行 `body` 中的昂贵工作，并在预期集合大时分页/延迟加载数据。
+- 将预览视为设计辅助，而非验证。编译通过的预览不证明状态、异步、导航或可访问性有效。
 
 ## Decision Rules
 
-- Choose one state owner per value: local `@State`, parent-owned `@Binding`, injected observable model, or environment dependency. Do not maintain competing copies of the same screen state.
-- Keep business decisions outside `body`. Use `task(id:)`, `refreshable`, and view-model/service actions to own asynchronous work, and make identity changes cancel/restart the right operation.
-- Mark UI mutation `@MainActor` and keep expensive parsing/network work outside the main actor. State updates should be deliberate crossing points, not incidental background mutations.
-- Use stable identities for lists/grids and avoid expensive work in row rendering. Use preference keys/custom layouts only when standard containers cannot express the accepted layout.
-- Treat environment values as local dependency/theme/locale boundaries, not a global mutable store. Keep accessibility labels, roles, and enabled/disabled state part of the interaction contract.
-- Verify loading, empty, error, success, disabled, navigation, and cancellation states that the task owns; a preview of one state is not a workflow proof.
+- 每个值选择一个状态所有者：局部 `@State`、父级拥有的 `@Binding`、注入的可观察模型或环境依赖。不要维护同一屏幕状态的竞争副本。
+- 将业务决策保持在 `body` 之外。使用 `task(id:)`、`refreshable` 和 view-model/服务动作拥有异步工作，并使标识变更取消/重启正确的操作。
+- 将 UI 变更标记 `@MainActor` 并将昂贵的解析/网络工作保持在 main actor 之外。状态更新应是刻意的跨越点，而非偶然的后台变更。
+- 为列表/网格使用稳定标识并避免行渲染中的昂贵工作。仅当标准容器无法表达已接受的布局时才使用偏好键/自定义布局。
+- 将环境值视为本地依赖/主题/locale 边界，而非全局可变存储。将可访问性标签、角色和启用/禁用状态作为交互契约的一部分。
+- 验证任务拥有的加载、空、错误、成功、禁用、导航和取消状态；一个状态的预览不是工作流证明。
 
 ## Verification Focus
 
-- Build the target platform and run available SwiftUI/UI tests or snapshot tests when the changed surface is user-facing.
-- Verify loading, empty, error, success, disabled, and navigation states touched by the task.
-- For async UI work, test or manually verify cancellation/reload behavior and that UI state updates stay on the main actor.
-- Check accessibility labels/roles for new controls when the repository has UI accessibility standards.
+- 构建目标平台并在变更表面对用户可见时运行可用的 SwiftUI/UI 测试或快照测试。
+- 验证任务涉及的加载、空、错误、成功、禁用和导航状态。
+- 对于异步 UI 工作，测试或手动验证取消/重载行为并确保 UI 状态更新保持在 main actor 上。
+- 当仓库有 UI 可访问性标准时检查新控件的可访问性标签/角色。
 
 ## Evidence Focus
 
-- In the evidence summary, name the SwiftUI decision: state owner, view-model split, composition, async task lifecycle, MainActor boundary, environment value, list performance, state coverage, or UI proof.
+- 在证据总结中，说明 SwiftUI 决策：状态所有者、view-model 分离、组合、异步任务生命周期、MainActor 边界、环境值、列表性能、状态覆盖或 UI 证明。

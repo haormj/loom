@@ -48,9 +48,7 @@ pub fn validate_candidate_paths(
     for raw in paths {
         let path = expand_tilde(raw);
         if !path.exists() {
-            return Err(KnowledgeError::invalid(format!(
-                "knowledge path does not exist: {raw}"
-            )));
+            return Err(KnowledgeError::invalid(format!("知识路径不存在：{raw}")));
         }
         if path.is_file() {
             validate_explicit_file(&path, explicit_files_must_be_supported)?;
@@ -59,7 +57,7 @@ pub fn validate_candidate_paths(
             warnings.extend(scanned.skipped);
             if explicit_files_must_be_supported && scanned.files.is_empty() {
                 return Err(KnowledgeError::invalid(format!(
-                    "knowledge directory contains no supported files: {}",
+                    "知识目录不包含任何受支持的文件：{}",
                     path.display()
                 )));
             }
@@ -69,13 +67,19 @@ pub fn validate_candidate_paths(
 }
 
 pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpActionResult> {
-    info!("knowledgeBuild: source='{}', project_root='{}'", name, project_root);
+    info!(
+        "knowledgeBuild: source='{}', project_root='{}'",
+        name, project_root
+    );
     let mut registry = load_registry()?;
     let source = registry_source(&registry, name)?.clone();
     if !is_local_provider(&source) {
-        warn!("knowledgeBuild: source '{}' is not a local provider, refusing", source.name);
+        warn!(
+            "knowledgeBuild: source '{}' is not a local provider, refusing",
+            source.name
+        );
         return Err(KnowledgeError::invalid(format!(
-            "knowledge source '{}' uses an external provider and cannot be built locally",
+            "知识源 '{}' 使用外部 provider，无法在本地构建",
             source.name
         )));
     }
@@ -83,11 +87,12 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
     let pending = load_pending(&source.source_id, &source.name)?;
     let document_paths = apply_pending_paths(&source.document_paths, &pending.operations)?;
     if document_paths.is_empty() {
-        return Err(KnowledgeError::invalid(
-            "knowledge source has no document paths to build",
-        ));
+        return Err(KnowledgeError::invalid("知识源没有可构建的文档路径"));
     }
-    debug!("knowledgeBuild: {} document paths to process", document_paths.len());
+    debug!(
+        "knowledgeBuild: {} document paths to process",
+        document_paths.len()
+    );
 
     let discovered = discover_documents(&document_paths)?;
     debug!(
@@ -97,7 +102,7 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
     );
     if discovered.files.is_empty() {
         return Err(KnowledgeError::invalid(
-            "knowledge build found no supported readable documents",
+            "知识构建未找到任何受支持的可读文档",
         ));
     }
 
@@ -180,10 +185,7 @@ pub fn build_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpAc
         .iter_mut()
         .find(|candidate| candidate.source_id == source.source_id)
         .ok_or_else(|| {
-            KnowledgeError::invalid(format!(
-                "knowledge source disappeared during build: {}",
-                source.source_id
-            ))
+            KnowledgeError::invalid(format!("知识源在构建过程中消失：{}", source.source_id))
         })?;
     registry_source.document_paths = document_paths;
     registry_source.updated_at = now_string();
@@ -200,7 +202,7 @@ pub fn resume_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpA
     let source = registry_source(&registry, name)?.clone();
     if !is_local_provider(&source) {
         return Err(KnowledgeError::invalid(format!(
-            "knowledge source '{}' uses an external provider and cannot be built locally",
+            "知识源 '{}' 使用外部 provider，无法在本地构建",
             source.name
         )));
     }
@@ -209,7 +211,7 @@ pub fn resume_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpA
         if source.current_build_id.is_some() {
             return Ok(LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: project_root.to_string(),
-                summary: "Knowledge source is already published.".to_string(),
+                summary: "知识源已发布。".to_string(),
                 details: Some(json!(summary(source, None, vec![]))),
                 warnings: vec![],
             }));
@@ -217,8 +219,8 @@ pub fn resume_source(project_root: &str, name: &str) -> KnowledgeResult<LoomMcpA
         return Ok(LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
             project_root: project_root.to_string(),
             blockers: vec![
-                "Knowledge source has no pending semantic build.".to_string(),
-                "Run loom.knowledgeBuild before loom.knowledgeResume.".to_string(),
+                "知识源没有待处理的语义构建。".to_string(),
+                "请先运行 loom.knowledgeBuild，再运行 loom.knowledgeResume。".to_string(),
             ],
             recommended_tool: Some("loom.knowledgeBuild".to_string()),
             details: Some(json!({
@@ -372,7 +374,7 @@ fn write_semantic_request(
                         "targetId": "semantic_result",
                         "path": result_file,
                         "required": true,
-                        "description": "Knowledge semantic pack result JSON."
+                        "description": "知识语义包结果 JSON。"
                     }]
                 },
                 "generationRules": generation_rules,
@@ -380,8 +382,8 @@ fn write_semantic_request(
                     "groups": [{
                         "groupId": "semantic_pack_contract",
                         "required": true,
-                        "purpose": "Read the semantic pack contract and chunk inspect plan.",
-                        "whenToRead": "Before reading chunks and writing the semantic result.",
+                        "purpose": "阅读语义包契约和分块检视计划。",
+                        "whenToRead": "在阅读分块并写入语义结果之前。",
                         "selectors": read_selectors_value_from_paths([
                             "chunkReadPlan",
                             "outputContract.resultTemplate",
@@ -433,13 +435,13 @@ fn validate_explicit_file(
     let meta = fs::metadata(path)?;
     if meta.len() > MAX_FILE_BYTES {
         return Err(KnowledgeError::invalid(format!(
-            "knowledge file exceeds 20MB: {}",
+            "知识文件超过 20MB：{}",
             path.display()
         )));
     }
     if !is_supported_file(path) {
         return Err(KnowledgeError::invalid(format!(
-            "unsupported knowledge file type: {}",
+            "不支持的知识文件类型：{}",
             path.display()
         )));
     }
@@ -501,7 +503,7 @@ fn scan_directory_inner(
         if fs::metadata(&entry_path)?.len() > MAX_FILE_BYTES {
             skipped.push(SkippedFile {
                 path: entry_path.to_string_lossy().to_string(),
-                reason: "file exceeds 20MB".to_string(),
+                reason: "文件超过 20MB".to_string(),
             });
             continue;
         }
@@ -510,7 +512,7 @@ fn scan_directory_inner(
         } else {
             skipped.push(SkippedFile {
                 path: entry_path.to_string_lossy().to_string(),
-                reason: "unsupported file type".to_string(),
+                reason: "不支持的文件类型".to_string(),
             });
         }
     }
@@ -568,7 +570,7 @@ fn parse_document(path: &Path) -> KnowledgeResult<ParsedDocument> {
             serde_yaml::to_string(&value)?
         }
         "pdf" => pdf_extract::extract_text(path).map_err(|error| {
-            KnowledgeError::invalid(format!("failed to parse PDF {}: {error}", path.display()))
+            KnowledgeError::invalid(format!("解析 PDF 失败 {}：{error}", path.display()))
         })?,
         "docx" => extract_docx_text(path)?,
         _ => {
@@ -603,7 +605,7 @@ fn extract_docx_text(path: &Path) -> KnowledgeResult<String> {
             Ok(_) => {}
             Err(error) => {
                 return Err(KnowledgeError::invalid(format!(
-                    "failed to parse DOCX XML: {error}"
+                    "解析 DOCX XML 失败：{error}"
                 )))
             }
         }

@@ -1,88 +1,83 @@
-# Frontend UIX Core
+# 前端 UIX 核心
 
-Use this file for any user-visible frontend work: pages, screens, panels, navigation, forms, tables, charts, shared components, visible states, or responsive behavior. These references turn a selected product surface into concrete implementation decisions.
+当涉及任何用户可见的前端工作时使用此文件：页面、屏幕、面板、导航、表单、表格、图表、共享组件、可见状态或响应式行为。这些参考文档将选定的产品界面转化为具体的实现决策。
 
-This reference set is a project-owned rewrite. It absorbs proven UI craft categories such as scenario fit, token systems, state coverage, stack execution, anti-pattern detection, and rendered verification without copying another skill's text or requiring a second skill to be loaded.
+本参考集是项目自有的重写版本。它吸收了经过验证的 UI 工艺类别，例如场景适配、令牌系统、状态覆盖、技术栈执行、反模式检测和渲染验证，而无需复制其他技能的文本或要求加载第二个技能。
 
-## Reference Compression Rule
+## 参考压缩规则
 
-UIX references are not meant to be tiny summaries, and they are not meant to become a full copied design-code library. Keep the parts that change implementation behavior:
+UIX 参考文档既不应是简短摘要，也不应成为完整复制的设计代码库。保留会改变实现行为的部分：
 
-- Keep scenario-specific layout skeletons, component anatomy, responsive breakpoints, state patterns, accessibility requirements, and verification expectations.
-- Keep compact code-like examples when they explain structure that agents commonly get wrong: app shell grids, sidebar/topbar behavior, table/detail composition, mobile collapse, sticky action regions, and scoped loading/error/empty states.
-- Keep examples semantic. Use token names such as `--surface`, `--border`, `--space-4`, and `--radius-md` instead of brand-specific final values.
-- Drop exhaustive component CSS, full template libraries, repeated variants, large brand palettes, decorative examples, and framework-specific boilerplate that belongs in stack references.
-- Drop examples that only demonstrate syntax and do not improve product quality.
-- When a cross-cutting UI idea appears in multiple files, keep it once at the right layer: token asset rules in templates/tokens, scenario anatomy in scenarios, rendered proof in verification, and stack-specific file organization in stacks.
+- 保留场景特定的布局骨架、组件解剖结构、响应式断点、状态模式、可访问性要求和验证期望。
+- 当紧凑的类代码示例能解释代理常犯的结构错误时，保留这些示例：应用外壳网格、侧边栏/顶栏行为、表格/详情组合、移动端折叠、粘性操作区域以及作用域内的加载/错误/空状态。
+- 保持示例语义化。使用令牌名称如 `--surface`、`--border`、`--space-4` 和 `--radius-md`，而不是品牌特定的最终值。
+- 删除详尽的组件 CSS、完整模板库、重复变体、大型品牌调色板、装饰性示例以及属于技术栈参考的框架特定样板代码。
+- 删除仅演示语法而不提升产品质量的示例。
+- 当跨切面的 UI 概念出现在多个文件中时，在正确的层级保留一次：令牌资产规则放在 templates/tokens 中，场景解剖放在 scenarios 中，渲染证据放在 verification 中，技术栈特定的文件组织放在 stacks 中。
 
-The target size is "operational reference": enough concrete structure for an agent to build a production surface, still small enough to be loaded only when the work actually changes that UI concern.
+目标规模是"可操作参考"：足够具体的结构让代理构建生产级界面，又足够精简使其仅在实际涉及该 UI 关注点的工作时加载。
 
-## Required UI Baseline
+## 必需的 UI 基线
 
-Every production UI surface must establish these decisions before implementation:
+每个生产级 UI 界面在实现前必须确立以下决策：
 
-- Product role: who uses the screen, what job it completes, and which business object is being inspected or changed.
-- Scenario: the selected product scenario and the implementation stack already present in the project.
-- Density: workbench, balanced, comfortable, or immersive. Density must match repeat-use behavior, not taste.
-- Layout shell: navigation, content region, detail/side panel, action region, and responsive collapse behavior.
-- Semantic tokens: color roles, type scale, spacing rhythm, radius/elevation policy, focus ring, error/success/warning/info states, and motion policy.
-- State model: loading, success, error, empty, validation, disabled, business-blocking, long-content, and responsive states that are in scope.
-- Evidence plan: rendered inspection, workflow path, viewport coverage, accessibility signals, and remaining manual gaps.
+- 产品角色：谁使用此屏幕、完成什么工作以及正在查看或修改哪个业务对象。
+- 场景：选定的产品场景和项目中已有的实现技术栈。
+- 密度：工作台、均衡、舒适或沉浸式。密度必须匹配重复使用行为，而非个人偏好。
+- 布局外壳：导航、内容区域、详情/侧面板、操作区域和响应式折叠行为。
+- 语义令牌：颜色角色、字号比例、间距节奏、圆角/阴影策略、焦点环、错误/成功/警告/信息状态和动效策略。
+- 状态模型：加载、成功、错误、空、验证、禁用、业务阻塞、长内容和响应式状态（在范围内时）。
+- 证据计划：渲染检查、工作流路径、视口覆盖、可访问性信号和剩余的人工检查缺口。
 
-## UI Work Boundary
+## UI 工作边界
 
-Apply the UI baseline whenever work:
+当工作涉及以下情况时应用 UI 基线：
 
-- Creates a new visible page, route, screen, panel, modal, drawer, table, form, chart, dashboard, app shell, navigation, or workflow.
-- Changes layout, visual design, state handling, validation display, accessibility behavior, responsive behavior, or frontend component foundations.
-- Wires data into a user-facing surface where loading/error/empty/business-blocking states are visible.
+- 创建新的可见页面、路由、屏幕、面板、模态框、抽屉、表格、表单、图表、仪表板、应用外壳、导航或工作流。
+- 修改布局、视觉设计、状态处理、验证展示、可访问性行为、响应式行为或前端组件基础。
+- 将数据接入面向用户的界面，其中加载/错误/空/业务阻塞状态可见。
 
-Do not apply UI rules to backend-only work, storage-only work, deployment-only work, or non-visible refactors unless their output changes a user-visible surface.
+当后端独立工作、存储独立工作、部署独立工作或非可见重构的输出不改变用户可见界面时，不应用 UI 规则。
 
-## Production Brief Use
+## 生产简报使用
 
-The execution context may provide a task-scoped UI production brief. Treat it as
-the current task's product contract, not as a design suggestion and not as a
-replacement for loading the references selected for the task.
+执行上下文可能提供任务范围的 UI 生产简报。将其视为当前任务的产品契约，而非设计建议，也不替代为该任务加载的参考文档。
 
-The brief is compiled from product surface facts and task ownership, so keep implementation aligned to these dimensions:
+简报根据产品界面事实和任务归属编译而成，因此保持实现与以下维度对齐：
 
-| Brief area | What to decide in code |
+| 简报领域 | 代码中需决策的内容 |
 | --- | --- |
-| Surface decision | Pattern mode, nearest known patterns, task-owned regions, actions, states, quality rules, and evidence targets. |
-| Product intent | User role, business object, primary job, and the visible success outcome. |
-| Layout | Regions, density, responsive behavior, primary region, and forbidden filler. |
-| Information | Fields that must be visible, scan order, identity/status handling, and long-content behavior. |
-| Actions | Primary/contextual/dangerous actions, placement, pending behavior, and post-success update. |
-| States | Where loading, empty, validation, error, success, disabled, and business-blocking states appear. |
-| Visual system | Token usage, component choice, density consistency, and anti-demo visual rules. |
-| Content boundary | Product-language copy and internal-process terms that must not appear in the UI. |
+| 界面决策 | 模式类型、最近已知模式、任务归属区域、操作、状态、质量规则和证据目标。 |
+| 产品意图 | 用户角色、业务对象、主要工作和可见的成功结果。 |
+| 布局 | 区域、密度、响应式行为、主要区域和禁止的填充内容。 |
+| 信息 | 必须可见的字段、扫描顺序、身份/状态处理和长内容行为。 |
+| 操作 | 主要/上下文/危险操作、放置位置、待处理行为和成功后更新。 |
+| 状态 | 加载、空、验证、错误、成功、禁用和业务阻塞状态出现的位置。 |
+| 视觉系统 | 令牌使用、组件选择、密度一致性和反演示视觉规则。 |
+| 内容边界 | 产品语言文案和不得出现在 UI 中的内部流程术语。 |
 
-Ownership dimensions scope the work. A task may own only action wiring, state feedback, layout, data views, visual system, content boundary, or integration feedback. Do not expand a task into unrelated surfaces just because the reference file contains a larger pattern.
+归属维度限定工作范围。一个任务可能仅拥有操作接线、状态反馈、布局、数据视图、视觉系统、内容边界或集成反馈。不要因为参考文件包含更大的模式就将任务扩展到无关界面。
 
-When a structured surface decision is present, use `surface-decision.md` as the
-bridge between the selected pattern and the implementation. Scenario files
-explain product anatomy; token files explain visual primitives; the decision
-reference explains how task-owned regions, actions, and states become evidence.
+当存在结构化界面决策时，使用 `surface-decision.md` 作为选定模式与实现之间的桥梁。场景文件解释产品解剖结构；令牌文件解释视觉原语；决策参考解释任务归属的区域、操作和状态如何转化为证据。
 
-## Implementation
+## 实现
 
-- Build the usable workflow first: users must be able to complete the confirmed task, understand outcome, recover from failure, and continue.
-- Separate application chrome from content. Navigation and top-level actions should remain stable while tables, forms, details, and feedback change.
-- Implement state coverage next to the component that needs it. A global spinner or generic toast is not enough for forms, tables, destructive actions, or business blocks.
-- Keep command examples, verification notes, local ports, framework names, and delivery progress out of the product screen unless the product itself is a developer/runtime tool.
-- Use existing project conventions first: component library, router, data fetching, CSS approach, icons, tokens, and lint/test setup. Add new primitives only when the repo lacks a safe equivalent.
-- Apply the declared token asset plan before page-level styling: reuse or extend existing token/theme files first; create new token files only when no compatible asset exists. Do not create a second token system beside an existing one.
-- Use icons for compact tool actions when the icon meaning is standard. Pair icon-only controls with accessible labels and tooltips when needed.
+- 优先构建可用的工作流：用户必须能完成确认的任务、理解结果、从失败中恢复并继续。
+- 将应用外壳与内容分离。导航和顶层操作应保持稳定，而表格、表单、详情和反馈发生变化。
+- 在需要状态的组件旁边实现状态覆盖。全局旋转器或通用 toast 对于表单、表格、破坏性操作或业务阻塞来说是不够的。
+- 除非产品本身是开发者/运行时工具，否则不要在产品屏幕中展示命令示例、验证说明、本地端口、框架名称和交付进度。
+- 优先使用现有项目约定：组件库、路由、数据获取、CSS 方案、图标、令牌和 lint/test 设置。仅在仓库缺少安全等价物时才添加新原语。
+- 在页面级样式之前应用声明的令牌资产计划：优先重用或扩展现有令牌/主题文件；仅在不存在兼容资产时才创建新令牌文件。不要在现有系统旁边创建第二个令牌系统。
+- 当图标含义是标准的时候，使用图标作为紧凑的工具操作。在需要时为仅图标控件配以可访问的标签和工具提示。
 
-## Review
+## 审查
 
-Classify UI defects as product defects when they affect:
+当 UI 缺陷影响以下方面时，将其归类为产品缺陷：
 
-- Completion of the required workflow.
-- Visual hierarchy, information density, readable layout, or state clarity.
-- Accessibility, keyboard focus, touch targets, contrast, or semantics.
-- Responsive behavior at required viewports.
-- Product-boundary leakage or demo-only filler.
+- 必需工作流的完成。
+- 视觉层次、信息密度、可读布局或状态清晰度。
+- 可访问性、键盘焦点、触摸目标、对比度或语义。
+- 必需视口下的响应式行为。
+- 产品边界泄漏或仅演示用的填充内容。
 
-Evidence should name changed screens/components, checked states, checked viewports, token asset files changed/reused, rendered evidence when available, and known manual-review gaps.
+证据应指明变更的屏幕/组件、检查的状态、检查的视口、变更/重用的令牌资产文件、可用时的渲染证据以及已知的人工审查缺口。

@@ -7,7 +7,8 @@ use std::{
 use algorithm_client::AlgorithmClient;
 use log::{debug, info, warn};
 
-use crate::{    mcp_models::{
+use crate::{
+    mcp_models::{
         KnowledgeBrainstormContextInput, KnowledgeBrainstormContextResult, KnowledgeChunkCard,
         KnowledgeContextMatchedSource, KnowledgeMatchedLabel, KnowledgeMatchedSource,
         KnowledgeReadPlan, KnowledgeReadPlanChunk, KnowledgeSearchInput, KnowledgeSearchResult,
@@ -71,7 +72,7 @@ pub fn brainstorm_context(
         "phase_scope" | "concept_grounding" | "frontend_experience"
     ) {
         return Err(KnowledgeError::invalid(
-            "knowledge brainstorm context block must be phase_scope, concept_grounding, or frontend_experience",
+            "知识 brainstorm context block 必须为 phase_scope、concept_grounding 或 frontend_experience",
         ));
     }
     if input.request_ref.trim().is_empty()
@@ -79,7 +80,7 @@ pub fn brainstorm_context(
         || input.query_subject.trim().is_empty()
     {
         return Err(KnowledgeError::invalid(
-            "requestRef, stepId, and querySubject are required for knowledge brainstorm context",
+            "knowledge brainstorm context 需要 requestRef、stepId 和 querySubject",
         ));
     }
     let step_requirement = validate_brainstorm_request_scope(
@@ -190,8 +191,14 @@ fn search_cards(
     debug!(
         "search_cards: {} enabled sources (local={}, provider={})",
         enabled_sources.len(),
-        enabled_sources.iter().filter(|s| is_local_provider(s)).count(),
-        enabled_sources.iter().filter(|s| !is_local_provider(s)).count()
+        enabled_sources
+            .iter()
+            .filter(|s| is_local_provider(s))
+            .count(),
+        enabled_sources
+            .iter()
+            .filter(|s| !is_local_provider(s))
+            .count()
     );
 
     let mut provider_cards = Vec::<KnowledgeChunkCard>::new();
@@ -209,10 +216,7 @@ fn search_cards(
                 provider_cards.extend(cards)
             }
             Err(error) => {
-                warn!(
-                    "search_cards: provider '{}' failed: {}",
-                    source.name, error
-                );
+                warn!("search_cards: provider '{}' failed: {}", source.name, error);
             }
         }
     }
@@ -228,10 +232,7 @@ fn search_cards(
     } else {
         match search_local_sources(&local_sources, query, &parsed_focus, block, limit) {
             Ok(cards) => {
-                debug!(
-                    "search_cards: local search returned {} cards",
-                    cards.len()
-                );
+                debug!("search_cards: local search returned {} cards", cards.len());
                 cards
             }
             Err(error) => {
@@ -283,8 +284,7 @@ fn search_local_sources(
             .map(|document| (document.chunk_id, document.text))
             .collect::<BTreeMap<_, _>>();
         for chunk in &chunks_file.chunks {
-            let document_id =
-                lexical_document_id(&source.source_id, build_id, &chunk.chunk_id);
+            let document_id = lexical_document_id(&source.source_id, build_id, &chunk.chunk_id);
             if let Some(text) = docs_by_chunk.get(&chunk.chunk_id) {
                 bm25_documents.push(serde_json::json!({
                     "id": document_id,
@@ -310,10 +310,8 @@ fn search_local_sources(
         let lexical = *lexical_scores.get(&document_id).unwrap_or(&0.0);
         let semantic = semantic_match(&candidate.chunk, parsed_focus);
         let affinity = block_affinity_score(candidate.chunk.block_affinity.as_ref(), block);
-        let score = lexical * 0.40
-            + semantic.score * 0.25
-            + semantic.completeness * 0.20
-            + affinity * 0.15;
+        let score =
+            lexical * 0.40 + semantic.score * 0.25 + semantic.completeness * 0.20 + affinity * 0.15;
         if score <= 0.0 {
             continue;
         }
@@ -965,7 +963,7 @@ fn validate_brainstorm_request_scope(
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| {
             KnowledgeError::invalid(format!(
-                "knowledgeQueryPlan.blocks.{block}.executionOrder is missing from request"
+                "请求中缺少 knowledgeQueryPlan.blocks.{block}.executionOrder"
             ))
         })?;
     let Some(step) = execution_order.iter().find(|step| {
@@ -975,7 +973,7 @@ fn validate_brainstorm_request_scope(
             .unwrap_or(false)
     }) else {
         return Err(KnowledgeError::invalid(format!(
-            "stepId {step_id} does not belong to request knowledgeQueryPlan block {block}"
+            "stepId {step_id} 不属于请求的 knowledgeQueryPlan block {block}"
         )));
     };
     Ok(BrainstormKnowledgeStepRequirement {
@@ -998,11 +996,7 @@ fn validate_brainstorm_query_id(
         .as_deref()
         .map(str::trim)
         .filter(|value| !value.is_empty())
-        .ok_or_else(|| {
-            KnowledgeError::invalid(
-                "queryId is required for per_candidate_phase_cut knowledge steps",
-            )
-        })?;
+        .ok_or_else(|| KnowledgeError::invalid("per_candidate_phase_cut 知识步骤需要 queryId"))?;
     validate_query_id_segment(query_id)?;
     if query_id == "atomic_scope"
         && input
@@ -1013,7 +1007,7 @@ fn validate_brainstorm_query_id(
             .is_empty()
     {
         return Err(KnowledgeError::invalid(
-            "atomicScopeReason is required when queryId is atomic_scope",
+            "当 queryId 为 atomic_scope 时需要 atomicScopeReason",
         ));
     }
     Ok(())
@@ -1028,7 +1022,7 @@ fn validate_query_id_segment(query_id: &str) -> KnowledgeResult<()> {
         return Ok(());
     }
     Err(KnowledgeError::invalid(
-        "queryId must be 1-80 ASCII letters, numbers, underscores, or hyphens",
+        "queryId 必须为 1-80 个 ASCII 字母、数字、下划线或连字符",
     ))
 }
 
@@ -1041,13 +1035,11 @@ fn resolve_brainstorm_request_scope(
         .map_err(|error| KnowledgeError::invalid(error.to_string()))?;
     let delivery_id = request_index.delivery_id.ok_or_else(|| {
         KnowledgeError::invalid(format!(
-            "requestRef {request_ref} is missing deliveryId in request index"
+            "requestRef {request_ref} 在请求索引中缺少 deliveryId"
         ))
     })?;
     let phase_id = request_index.phase_id.ok_or_else(|| {
-        KnowledgeError::invalid(format!(
-            "requestRef {request_ref} is missing phaseId in request index"
-        ))
+        KnowledgeError::invalid(format!("requestRef {request_ref} 在请求索引中缺少 phaseId"))
     })?;
     Ok(BrainstormRequestScope {
         request_id,
@@ -1107,17 +1099,17 @@ fn persist_brainstorm_context(
 fn parse_request_id(request_ref: &str) -> KnowledgeResult<String> {
     let rest = request_ref
         .strip_prefix("loom://projects/")
-        .ok_or_else(|| KnowledgeError::invalid(format!("invalid requestRef: {request_ref}")))?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("无效的 requestRef：{request_ref}")))?;
     let mut parts = rest.split("/requests/");
     let _project_id = parts
         .next()
-        .ok_or_else(|| KnowledgeError::invalid(format!("invalid requestRef: {request_ref}")))?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("无效的 requestRef：{request_ref}")))?;
     let request_id = parts
         .next()
-        .ok_or_else(|| KnowledgeError::invalid(format!("invalid requestRef: {request_ref}")))?;
+        .ok_or_else(|| KnowledgeError::invalid(format!("无效的 requestRef：{request_ref}")))?;
     if request_id.is_empty() {
         return Err(KnowledgeError::invalid(format!(
-            "invalid requestRef: {request_ref}"
+            "无效的 requestRef：{request_ref}"
         )));
     }
     Ok(request_id.to_string())
@@ -1461,6 +1453,10 @@ mod tests {
         let cards = vec![provider_card("confluence-kb", 0.9)];
         let semantic_focus = vec!["object:openviking".to_string()];
         let sources = aggregate_sources(&cards, &semantic_focus, 5, usize::MAX);
-        assert_eq!(sources.len(), 1, "provider source should survive MAX branch");
+        assert_eq!(
+            sources.len(),
+            1,
+            "provider source should survive MAX branch"
+        );
     }
 }

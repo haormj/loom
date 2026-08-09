@@ -1,67 +1,67 @@
-# Django Logging
+# Django 日志
 
-## When To Use
+## 何时使用
 
-Use this reference only when the task owns Django logging infrastructure. Views, services, commands, and jobs otherwise use the configured logger only at their task-owned diagnostic boundaries.
+仅当任务拥有 Django 日志基础设施时才使用此参考。View、service、command 和 job 否则仅在各自任务拥有的诊断边界使用已配置的 logger。
 
-## Provider Decision
+## Provider 决策
 
-1. Preserve the repository's existing Django/Python logging configuration.
-2. For greenfield projects, use standard Python `logging` through Django's `LOGGING`/`dictConfig` boundary.
-3. Keep structlog or another provider only when the repository already selects it or an accepted structured-event requirement justifies it.
+1. 保留仓库已有的 Django/Python 日志配置。
+2. 对于全新项目，通过 Django 的 `LOGGING`/`dictConfig` 边界使用标准 Python `logging`。
+3. 仅当仓库已选择 structlog 或其他 provider，或已接受的结构化事件需求证明其合理性时才保留它们。
 
 ## Implementation Focus
 
-Use module loggers and Django categories deliberately. Do not disable Django's existing logging tree wholesale or attach the same handler to parent and child categories with propagation enabled.
+慎重地使用模块 logger 和 Django category。不要 wholesale 禁用 Django 已有的日志树，或在传播启用时将同一 handler 挂载到父和子 category。
 
-## Configuration Ownership
+## 配置归属
 
-Keep formatters, filters, handlers, category levels, and destinations in settings composed from environment-specific configuration. Avoid import-time `basicConfig` and do not put secrets or production paths in base settings.
+将 formatter、filter、handler、category 级别和目的地保存在从环境特定配置组合的 settings 中。避免导入时 `basicConfig`，不要在基础 settings 中放置密钥或生产路径。
 
-Separate access/security categories from business diagnostics. Preserve Django security logging behavior and redact sensitive request metadata before custom filters or formatters serialize it.
+将 access/security category 与业务诊断分开。保留 Django 安全日志行为，在自定义 filter 或 formatter 序列化之前脱敏敏感的请求元数据。
 
-## Correlation And Boundaries
+## 关联与边界
 
-Establish request correlation once in middleware using safe request metadata and `contextvars` when async execution is supported. Clear context after every response. Management commands, Celery tasks, and other workers create or propagate an operation id at their own entry boundary.
+当支持 async 执行时，在中间件中使用安全的请求元数据和 `contextvars` 建立一次请求关联。每次响应后清除上下文。Management command、Celery task 和其他 worker 在各自的入口边界创建或传播操作 id。
 
-Log critical transitions, dependency outcomes, async results, retries, terminal failures, and unexpected errors once. DRF/Django exception handling owns final unexpected request failures; views and services do not log and rethrow the same exception.
+关键转换、依赖结果、async 结果、重试、终态失败和意外错误仅记录一次。DRF/Django 异常处理负责最终的意外请求失败；view 和 service 不记录并重新抛出同一异常。
 
-## Async And File Output
+## 异步与文件输出
 
-Use a lifecycle-owned queue listener only when buffered output is accepted. Bound the queue, define overload behavior, and stop/drain it under the actual WSGI/ASGI or worker lifecycle.
+仅当已接受缓冲输出时才使用生命周期拥有的 queue listener。限定队列大小，定义过载行为，并在实际 WSGI/ASGI 或 worker 生命周期下停止/排空它。
 
-Console output is the greenfield default. File output requires an accepted application requirement plus process-safe rotation, compression, retention, disk bounds, and unavailable-path behavior. Multi-process WSGI workers must not share an unsafe rotating handler.
+Console 输出是全新应用的默认选择。文件输出需要已接受的应用需求加上进程安全的轮转、压缩、保留、磁盘限制和路径不可用行为。多进程 WSGI worker 不得共享不安全的轮转 handler。
 
-## Ownership And Failure Policy
+## 归属与失败策略
 
-The task must identify whether it owns provider setup, event instrumentation, queue buffering, file output, or only verification. Optional telemetry failure must not determine request correctness; security and recovery events remain subject to the accepted overload policy.
+任务必须确定它是否拥有 provider 设置、事件埋点、队列缓冲、文件输出或仅验证。可选的遥测失败不得决定请求正确性；安全和恢复事件仍受已接受的过载策略约束。
 
-Keep logging lifecycle and settings composition in the selected Django startup boundary. Deploy does not invent handlers, file paths, or retention behavior.
+将日志生命周期和 settings 组合保持在所选的 Django 启动边界中。Deploy 不发明 handler、文件路径或保留行为。
 
 ## Evidence Focus
 
-Record the selected settings boundary, categories and propagation policy, owned event, correlation and redaction rules, worker model, and focused runtime evidence.
+记录所选的 settings 边界、category 和传播策略、拥有的事件、关联和脱敏规则、worker 模型以及聚焦的运行时证据。
 
 ## Verification Focus
 
-- Load the actual Django settings and verify handler/category propagation does not duplicate events.
-- Capture a request or task event and assert stable fields, correlation, level, and redaction.
-- Prove expected validation/permission outcomes are not emitted as unexpected server failures.
-- When queue or file output is owned, test worker lifecycle, saturation, process assumptions, rotation, retention, and destination failure.
+- 加载实际的 Django settings，验证 handler/category 传播不会产生重复事件。
+- 捕获请求或 task 事件，断言稳定字段、关联、级别和脱敏。
+- 证明预期的验证/权限结果不会被当作意外服务器失败发出。
+- 当拥有队列或文件输出时，测试 worker 生命周期、饱和、进程假设、轮转、保留和目标失败。
 
-## Configuration Review
+## 配置审查
 
-- Derive levels, handlers, and destinations from validated environment-specific settings.
-- Keep Django, server, security, and business categories intentionally separated.
-- Verify process and worker assumptions before selecting file or queue handlers.
-- Exercise startup with missing required settings and confirm the failure is actionable.
-- Keep redaction and correlation behavior stable across requests, commands, and jobs.
-- Record the selected policy before changing the global logging tree.
+- 从已验证的环境特定 settings 派生级别、handler 和目的地。
+- 有意地将 Django、server、安全和业务 category 分开。
+- 在选择文件或队列 handler 之前验证进程和 worker 假设。
+- 在缺少必需 settings 时执行启动，确认失败是可操作的。
+- 保持脱敏和关联行为在请求、command 和 job 之间稳定。
+- 在更改全局日志树之前记录所选策略。
 
-## Unsafe Defaults
+## 不安全默认
 
-- `disable_existing_loggers: true` without auditing Django and server categories.
-- Duplicate handlers combined with propagation.
-- Logging request bodies, cookies, credentials, tokens, or raw ORM/provider errors.
-- Catch/log/rethrow in views, services, tasks, and exception middleware.
-- File rotation configured without accounting for multiple application workers.
+- 未审查 Django 和 server category 就使用 `disable_existing_loggers: true`。
+- 重复 handler 与传播组合。
+- 记录请求 body、cookie、凭证、token 或原始 ORM/provider 错误。
+- 在 view、service、task 和异常中间件中捕获/记录/重新抛出。
+- 文件轮转配置未考虑多个应用 worker。

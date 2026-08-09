@@ -1,58 +1,58 @@
-# SQL Schema Quality
+# SQL Schema 质量
 
-This file applies to portable relational schema and migration work. Load the selected provider overlay when the target database changes type, index, identity, JSON, or constraint behavior.
+本文件适用于可移植的关系 schema 和迁移工作。当目标数据库变更类型、索引、标识、JSON 或约束行为时加载选中的提供者覆盖。
 
 ## When To Use
 
-- The task changes migrations, table definitions, constraints, keys, indexes, audit/history tables, soft deletes, tenant columns, ORM mappings, seed/reference data, or database-backed invariants.
-- Use this when schema structure affects business correctness, data integrity, query behavior, or application startup.
-- If the task only changes read queries without schema changes, use `sql.queries` or `sql.optimization` when selected.
-- Do not load this file for a controller, API DTO, or frontend task that does not own persistence mapping.
+- 任务变更了迁移、表定义、约束、键、索引、审计/历史表、软删除、租户列、ORM 映射、种子/引用数据或数据库支持的不变式。
+- 当 schema 结构影响业务正确性、数据完整性、查询行为或应用启动时使用此参考。
+- 如果任务仅变更读取查询而不变更 schema，在选中时改用 `sql.queries` 或 `sql.optimization`。
+- 不要为不拥有持久化映射的控制器、API DTO 或前端任务加载此文件。
 
 ## Implementation Focus
 
-- Normalize business data enough that facts have one owner. Denormalize only for a named read/performance reason and keep the source-of-truth relationship clear.
-- Use primary keys, foreign keys, unique constraints, check constraints, and not-null/default rules to enforce important invariants at the database layer.
-- Choose data types for domain semantics and target dialect behavior: money/decimal precision, timestamp timezone, text length, enum/state storage, UUID/integer keys, and JSON only for truly flexible data.
-- Define relationship ownership before adding cascade rules. `ON DELETE CASCADE`, soft delete, restrict, and set-null each encode different business behavior.
-- Add indexes for foreign keys, common filters, uniqueness, and sort/pagination paths. Do not add indexes unrelated to a known query or invariant.
-- For many-to-many relationships, use a join table with explicit uniqueness and any relationship attributes. Avoid comma-separated IDs or unconstrained polymorphic references for core data.
-- Soft-delete and audit/history tables must preserve query semantics. Include active-record indexes or views/scopes where the application expects active-only behavior.
-- Migration files should be deterministic, reviewable, and compatible with the repository's migration tool. Avoid relying on ORM auto-DDL for production schema behavior when migrations exist.
-- Keep ORM mappings, schema constraints, and application validation consistent. Application validation may improve user feedback but should not be the only protection for core invariants.
-- Keep transaction ownership and state-transition invariants in the service/application boundary defined by Architecture. The schema enforces durable invariants; it does not replace domain workflow logic.
-- Treat provider-specific type and index choices as a separate dialect decision. Do not duplicate PostgreSQL or MySQL syntax in this common file.
+- 充分规范化业务数据使事实有一个所有者。仅因命名的读取/性能原因而反规范化并保持真相来源关系清晰。
+- 使用主键、外键、唯一约束、检查约束和非空/默认规则在数据库层强制重要不变式。
+- 为领域语义和目标方言行为选择数据类型：货币/decimal 精度、时间戳时区、文本长度、枚举/状态存储、UUID/整数键，JSON 仅用于真正灵活的数据。
+- 在添加级联规则之前定义关系所有权。`ON DELETE CASCADE`、软删除、restrict 和 set-null 各编码不同的业务行为。
+- 为外键、常见过滤、唯一性和排序/分页路径添加索引。不要添加与已知查询或不变式无关的索引。
+- 对于多对多关系，使用具有显式唯一性和任何关系属性的连接表。避免为核心数据使用逗号分隔 ID 或不受约束的多态引用。
+- 软删除和审计/历史表必须保留查询语义。在应用期望仅活动行为的地方包含活动记录索引或视图/作用域。
+- 迁移文件应是确定性的、可审查的并与仓库的迁移工具兼容。当迁移存在时避免依赖 ORM 自动 DDL 进行生产 schema 行为。
+- 保持 ORM 映射、schema 约束和应用验证一致。应用验证可以改善用户反馈但不应是核心不变式的唯一保护。
+- 将事务所有权和状态转换不变式保留在 Architecture 定义的服务/应用边界中。Schema 强制持久不变式；它不替代领域工作流逻辑。
+- 将提供者特定的类型和索引选择视为单独的方言决策。不要在此公共文件中复制 PostgreSQL 或 MySQL 语法。
 
 ### Temporal, Audit, And Soft-Delete Data
 
-- Use a history table or valid-time columns when the requirement is to answer what was true at a past time. Define interval boundaries, overlap rules, current-row uniqueness, and the read path; do not add history columns without a historical query contract.
-- Keep business audit events distinct from technical migration or database log records. An audit record needs actor/system identity, operation, time, affected subject, and a redaction policy for old/new values. Do not make triggers the only source of business meaning when the application owns the state transition.
-- Soft delete is a query and uniqueness contract, not only a nullable timestamp. Define the active predicate, restore behavior, foreign-key behavior, retention, and indexes/unique constraints for active rows. Every owned read path must apply the same visibility rule.
+- 当需求是回答过去某时间为真的内容时使用历史表或有效时间列。定义区间边界、重叠规则、当前行唯一性和读取路径；不要在没有历史查询契约的情况下添加历史列。
+- 保持业务审计事件与技术迁移或数据库日志记录区分。审计记录需要参与者/系统标识、操作、时间、受影响主体和旧/新值的脱敏策略。当应用拥有状态转换时不要使触发器成为业务含义的唯一来源。
+- 软删除是查询和唯一性契约，不仅是可空时间戳。定义活动谓词、恢复行为、外键行为、保留和活动行的索引/唯一约束。每个拥有的读取路径必须应用相同的可见性规则。
 
 ### Migration Compatibility
 
-- Classify a schema change as additive, backfill, compatible rewrite, or destructive removal before writing the migration.
-- For existing data, define the expand/backfill/contract order and the state the application can read at each intermediate step. Add defaults or nullable staging columns only when their temporary semantics are explicit.
-- Verify clean installation and upgrade from a representative prior schema. A migration that succeeds on an empty database does not prove compatibility with existing rows, indexes, constraints, or application read paths.
+- 在编写迁移之前将 schema 变更分类为添加、回填、兼容重写或破坏性移除。
+- 对于现有数据，定义扩展/回填/收缩顺序以及应用在每个中间步骤可以读取的状态。仅当临时语义显式时才添加默认值或可空暂存列。
+- 验证从代表性先前 schema 的干净安装和升级。在空数据库上成功的迁移不证明与现有行、索引、约束或应用读取路径的兼容性。
 
 ## Verification Focus
 
-- Run migration/app initialization for the target test database and verify schema validation when an ORM is present.
-- Test constraint behavior for required fields, unique business keys, foreign keys, check constraints, and delete/update behavior touched by the task.
-- For ORM-backed changes, prove write/read mapping, enum/state conversion, nullable/default handling, and relation loading needed by the task.
-- For soft delete/audit/history changes, test active query behavior and recorded historical data.
-- Run the repository's migration validation path from a clean schema when migration files changed. Do not validate only that the migration file parses.
-- For a compatibility migration, verify the intermediate schema during backfill and the final schema after the old representation is removed.
+- 为目标测试数据库运行迁移/应用初始化并在存在 ORM 时验证 schema 验证。
+- 测试任务涉及的必填字段、唯一业务键、外键、检查约束和删除/更新行为的约束行为。
+- 对于 ORM 支持的变更，证明任务所需的写入/读取映射、枚举/状态转换、可空/默认处理和关系加载。
+- 对于软删除/审计/历史变更，测试活动查询行为和记录的历史数据。
+- 当迁移文件变更时从干净 schema 运行仓库的迁移验证路径。不要仅验证迁移文件解析。
+- 对于兼容性迁移，验证回填期间的中间 schema 和移除旧表示后的最终 schema。
 
 ## Evidence Focus
 
-- In the evidence summary, name the schema decision: normalization, key strategy, constraint, data type, cascade behavior, index, soft delete, audit/history, migration compatibility, or ORM alignment.
+- 在证据总结中，说明 schema 决策：规范化、键策略、约束、数据类型、级联行为、索引、软删除、审计/历史、迁移兼容性或 ORM 对齐。
 
 ## Risks To Avoid
 
-- Relying on ORM auto-DDL when the project has a migration contract.
-- Adding a provider-specific column type without target-provider verification.
-- Using UI validation as the only protection for a durable invariant.
-- Adding indexes without a known filter, join, uniqueness, or ordering path.
-- Adding history, audit, or soft-delete columns without defining their read, restore, retention, and uniqueness semantics.
-- Treating a clean-database migration run as proof that an upgrade path is safe.
+- 当项目有迁移契约时依赖 ORM 自动 DDL。
+- 在没有目标提供者验证的情况下添加提供者特定的列类型。
+- 使用 UI 验证作为持久不变式的唯一保护。
+- 在没有已知过滤、连接、唯一性或排序路径的情况下添加索引。
+- 在没有定义读取、恢复、保留和唯一性语义的情况下添加历史、审计或软删除列。
+- 将干净数据库迁移运行视为升级路径安全的证明。

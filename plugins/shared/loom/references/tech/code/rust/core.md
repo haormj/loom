@@ -1,40 +1,40 @@
-# Rust Core Quality
+# Rust 核心质量
 
 ## When To Use
 
-- The task changes Rust application, library, CLI, service, systems, parser, worker, or shared crate code.
-- Use this for baseline Rust correctness: ownership-first API design, module visibility, type safety, iteration, unsafe boundaries, and production panic policy.
-- If the task only changes generated files, config, docs, or non-Rust code, do not expand scope because this reference is available.
+- 任务变更了 Rust 应用、库、CLI、服务、系统、解析器、worker 或共享 crate 代码。
+- 用于基线 Rust 正确性：所有权优先的 API 设计、模块可见性、类型安全、迭代、unsafe 边界和生产 panic 策略。
+- 如果任务仅变更生成的文件、配置、文档或非 Rust 代码，不要因为此参考可用就扩大范围。
 
 ## Implementation Focus
 
-- Design APIs around ownership and borrowing before reaching for `clone`, `Arc`, or interior mutability. Accept `&str`, `&[T]`, and borrowed views where callers do not need to transfer ownership.
-- Keep clones intentional. Clone small/copy-like data or owned values crossing async/thread boundaries when needed, but do not clone to silence the borrow checker without understanding lifetime ownership.
-- Use module visibility deliberately: keep internals private, expose `pub(crate)` only inside crate boundaries, and avoid expanding public API surface for test convenience.
-- Prefer enums and newtypes for domain states, identifiers, and constrained values. Do not pass raw strings/integers through business logic when invalid states can be modeled away.
-- Use iterators and combinators when they improve clarity; use straightforward loops when branching, error handling, or mutation would make iterator chains hard to read.
-- Avoid `unwrap` in production paths. Use `expect` only for true invariants with a specific message, and prefer `Result`/`Option` handling for recoverable situations.
-- Keep `unsafe` out of normal task work. If unavoidable, isolate it in a small function/module, document safety invariants, and add tests or Miri/sanitizer evidence where feasible.
-- Avoid global mutable state. Use explicit ownership, dependency injection, once-initialized configuration, or synchronization primitives appropriate to the runtime.
-- Keep serialization/deserialization types separate from domain types when validation, defaults, versioning, or visibility differ.
-- Let `cargo fmt` and clippy shape code, but do not make broad mechanical rewrites unrelated to the task.
+- 在使用 `clone`、`Arc` 或内部可变性之前，围绕所有权和借用设计 API。当调用者不需要转移所有权时接受 `&str`、`&[T]` 和借用视图。
+- 保持 clone 有意为之。在需要时 clone 小型/类似拷贝的数据或跨越异步/线程边界的拥有值，但不要在不理解生命周期所有权的情况下 clone 来静默借用检查器。
+- 有意使用模块可见性：保持内部私有，仅在 crate 边界内暴露 `pub(crate)`，避免为测试方便而扩大公共 API 面。
+- 为领域状态、标识符和受约束值优先使用枚举和 newtype。当无效状态可以被建模消除时，不要在业务逻辑中传递原始字符串/整数。
+- 当迭代器和组合器提高清晰度时使用它们；当分支、错误处理或变更会使迭代器链难以阅读时使用直观的循环。
+- 在生产路径中避免 `unwrap`。仅对真正的不变式使用 `expect` 并附带具体消息，对可恢复情况优先使用 `Result`/`Option` 处理。
+- 将 `unsafe` 排除在正常任务工作之外。如果不可避免，将其隔离在小函数/模块中，记录安全不变式，并在可行时添加测试或 Miri/sanitizer 证据。
+- 避免全局可变状态。使用显式所有权、依赖注入、一次性初始化配置或适合运行时的同步原语。
+- 当验证、默认值、版本控制或可见性不同时，将序列化/反序列化类型与领域类型分开。
+- 让 `cargo fmt` 和 clippy 塑造代码，但不要进行与任务无关的广泛机械重写。
 
 ## Boundary Decisions
 
-- Decide ownership and borrowing at the API boundary before using `clone`, `Arc`, or interior mutability. A clone that only satisfies the borrow checker is not an ownership design.
-- Model domain states, identifiers, and constrained values with enums/newtypes. Keep deserialization types separate when external defaults, validation, versioning, or visibility differ from domain invariants.
-- Keep `pub` surface minimal and use `pub(crate)` for intra-crate contracts. Do not widen visibility only to make a private implementation easy to test.
-- Treat `unsafe` as an isolated proof obligation: state the safety invariants, keep the block small, and add the strongest available test or sanitizer/Miri evidence for the risk.
-- Use `unwrap` only in tests or impossible internal invariants with a specific `expect` message. Recoverable input, I/O, parsing, configuration, and task failures belong in typed results.
-- Prefer a straightforward loop when iterator combinators obscure ownership, early returns, mutation, or error context. Idiomatic Rust is clarity plus explicit resource ownership, not maximal chaining.
+- 在使用 `clone`、`Arc` 或内部可变性之前，在 API 边界决定所有权和借用。仅为满足借用检查器的 clone 不是所有权设计。
+- 用枚举/newtype 建模领域状态、标识符和受约束值。当外部默认值、验证、版本控制或可见性与领域不变式不同时，保持反序列化类型分开。
+- 保持 `pub` 面最小，对 crate 内部契约使用 `pub(crate)`。不要仅为方便测试私有实现而扩大可见性。
+- 将 `unsafe` 视为隔离的证明义务：说明安全不变式，保持块小，并为风险添加最强的可用测试或 sanitizer/Miri 证据。
+- 仅在测试或不可能的内部不变式中使用 `unwrap` 并附带具体的 `expect` 消息。可恢复的输入、I/O、解析、配置和任务失败属于类型化结果。
+- 当迭代器组合器使所有权、提前返回、变更或错误上下文变得模糊时，优先使用直观的循环。惯用 Rust 是清晰度加上显式资源所有权，而非最大化链式调用。
 
 ## Verification Focus
 
-- Run `cargo test` for the changed crate/workspace or the repository's narrower configured command.
-- Run `cargo fmt --check` or `cargo fmt`, and `cargo clippy --all-targets --all-features` when configured or when code complexity warrants it.
-- Add tests for domain states, parse/serialize boundaries, invalid inputs, ownership-sensitive behavior, and invariant failures touched by the task.
-- Confirm no new production `unwrap`, undocumented `unsafe`, broad public visibility, or unnecessary clone-heavy workaround was introduced.
+- 为变更的 crate/workspace 或仓库更窄的配置命令运行 `cargo test`。
+- 运行 `cargo fmt --check` 或 `cargo fmt`，以及 `cargo clippy --all-targets --all-features`（当已配置或代码复杂性需要时）。
+- 为任务涉及的领域状态、解析/序列化边界、无效输入、所有权敏感行为和不变式失败添加测试。
+- 确认没有引入新的生产 `unwrap`、未记录的 `unsafe`、宽泛的公共可见性或不必要的 clone 密集型变通方案。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Rust decision made: borrowed API, clone justification, visibility boundary, domain enum/newtype, iterator-vs-loop choice, panic policy, unsafe boundary, or serialization/domain split.
+- 在证据总结中，说明做出的 Rust 决策：借用 API、clone 理由、可见性边界、领域枚举/newtype、迭代器 vs 循环选择、panic 策略、unsafe 边界或序列化/领域分离。

@@ -1,75 +1,75 @@
-# React Performance
+# React 性能
 
-Optimize only a task-owned, measurable rendering, interaction, startup, bundle, or memory risk. Begin with state ownership and component boundaries; memoization is a later tool, not the definition of performance work.
+仅优化任务所属的、可测量的渲染、交互、启动、包或内存风险。从状态所有权和组件边界开始；记忆化是后续工具，不是性能工作的定义。
 
-## Establish The Constraint
+## 建立约束
 
-Name the affected interaction and the representative workload: row count, update frequency, route chunk, image set, chart size, input latency, or retained resource. Reproduce with production-like data and a production build when development Strict Mode or source transforms distort measurements.
+命名受影响的交互和代表性工作负载：行数、更新频率、路由分块、图像集、图表大小、输入延迟或保留资源。当开发环境 Strict Mode 或源转换扭曲测量时，使用类生产数据和生产构建来复现。
 
-Use the repository's existing profiler, bundle analyzer, performance test, or browser tooling. Do not add a permanent dependency solely to produce one measurement when built-in timing and React DevTools answer the question.
+使用仓库现有的 profiler、包分析器、性能测试或浏览器工具。不要仅为产生一次测量而添加永久依赖，当内置计时和 React DevTools 能回答问题时。
 
-Define a comparison that can be repeated. A lower render count is not useful if the visible workflow becomes stale or inaccessible.
+定义可重复的比较。如果可见工作流变得过期或不可访问，较低的渲染计数是没有用的。
 
-## State Locality And Render Boundaries
+## 状态局部性与渲染边界
 
-Place transient state at the smallest owner that needs it. Typing in a filter, opening a row menu, or editing one form should not require unrelated page regions to subscribe to every update.
+将瞬态状态放在需要它的最小所有者处。在筛选器中输入、打开行菜单或编辑一个表单不应要求不相关的页面区域订阅每次更新。
 
-Select narrow store/query slices and preserve referential stability where consumers rely on it. Avoid one context value containing frequently changing data plus unrelated actions; split by lifetime or concern when profiling shows broad invalidation.
+选择窄的 store/query slice 并在消费者依赖时保持引用稳定。避免一个 context 值包含频繁变化的数据加不相关操作；当分析显示广泛失效时按生命周期或关注点拆分。
 
-Use stable domain keys. Index keys and remounting component definitions can turn updates into teardown/recreation, lose focus, and invalidate local state.
+使用稳定的领域键。索引键和重新挂载的组件定义可以将更新变为拆卸/重建，丢失焦点并使本地状态失效。
 
-## Memoization Decisions
+## 记忆化决策
 
-Use `memo` when a meaningful child is repeatedly rendered with equivalent props. Keep comparison functions complete and cheaper than rendering; compare all behavior-affecting props rather than only an ID.
+当一个有意义的子组件以等效 props 重复渲染时使用 `memo`。保持比较函数完整且比渲染便宜；比较所有影响行为的 props 而非仅一个 ID。
 
-Use `useMemo` for expensive derivation or an identity required by a memoized/subscription consumer. Use `useCallback` when callback identity is part of a proven boundary. Inline closures are acceptable outside measured hot paths.
+对昂贵派生或记忆化/订阅消费者所需的标识使用 `useMemo`。当回调标识是已证实边界的一部分时使用 `useCallback`。在已测量的热路径之外，内联闭包是可接受的。
 
-Memoization does not repair incorrect dependencies. Stale callbacks, validators, permissions, locale, or selected targets are correctness defects even when a profile is faster.
+记忆化不能修复不正确的依赖。过期的回调、验证器、权限、区域设置或选定目标即使 profile 更快也是正确性缺陷。
 
-## Collections And Expensive Work
+## 集合与昂贵工作
 
-Filter, sort, group, and aggregate once at the owning boundary. Keep source collections immutable and avoid repeating equivalent work in each row.
+在所属边界处一次性筛选、排序、分组和聚合。保持源集合不可变，避免在每行重复等效工作。
 
-For large collections, choose pagination, incremental rendering, or virtualization according to product behavior. Virtualized rows require stable item identity, measured/estimated size handling, keyboard/focus behavior, accessible collection semantics, and correct scroll restoration.
+对于大型集合，根据产品行为选择分页、增量渲染或虚拟化。虚拟化行需要稳定的条目标识、已测量/估计的大小处理、键盘/焦点行为、可访问集合语义和正确的滚动恢复。
 
-Move CPU-heavy pure work off the urgent interaction path only when measurement justifies worker/chunking complexity. Preserve cancellation and stale-result ordering.
+仅当测量证明 worker/分块复杂性合理时，将 CPU 密集的纯工作移出紧急交互路径。保留取消和过期结果排序。
 
-## Responsiveness And Scheduling
+## 响应性与调度
 
-Use `useTransition` or deferred values for non-urgent rendering while urgent input remains responsive. Pending UI must still expose the committed versus requested state and must not submit stale filters or targets.
+对非紧急渲染使用 `useTransition` 或 deferred values，同时紧急输入保持响应。Pending UI 仍须暴露已提交与请求的状态，不得提交过期的筛选或目标。
 
-Debounce network or expensive query work according to business behavior, not render updates indiscriminately. Cancel pending work and define what happens when input changes rapidly.
+根据业务行为对网络或昂贵查询工作进行防抖，而非不区分地防抖渲染更新。取消待处理工作并定义输入快速变化时发生什么。
 
-## Bundle And Asset Cost
+## 包与资源成本
 
-Split route-level or genuinely heavy optional capabilities with the repository's router/framework mechanism. Give lazy boundaries stable loading and error behavior; avoid a spinner flash for tiny local components.
+用仓库的路由/框架机制拆分路由级或真正沉重的可选能力。给惰性边界稳定的加载和错误行为；避免为微小的本地组件闪烁 spinner。
 
-Import library subpaths only when supported, remove duplicate dependencies, and keep server-only or optional packages out of the client bundle. Check generated chunks rather than assuming a dynamic import guarantees useful separation.
+仅在支持时导入库子路径，移除重复依赖，并将仅服务端或可选包排除在客户端包之外。检查生成的分块而非假设动态导入保证有用的分离。
 
-Optimize images through the established asset pipeline with dimensions, responsive sources, lazy/eager priority, and layout stability appropriate to the surface.
+通过已建立的资源管道优化图像，使用适合该界面的尺寸、响应式源、惰性/急切优先级和布局稳定性。
 
-## Resource Lifetime
+## 资源生命周期
 
-Dispose observers, subscriptions, workers, object URLs, timers, and third-party widgets. Bound caches and retained histories. Performance work that only reduces renders while leaking browser resources is incomplete.
+释放观察者、订阅、worker、object URL、定时器和第三方控件。限定缓存和保留历史。仅减少渲染但泄漏浏览器资源的性能工作是不完整的。
 
 ## Verification
 
-- Capture before/after measurements for the named workload and interaction.
-- Prove memoized paths update when every behavior-affecting prop changes.
-- Exercise large collection identity, action targeting, focus, scrolling, empty/loading/error states, and responsive layout.
-- Verify lazy chunks through the production build and exercise loading/error recovery.
-- Test rapid input, interruption, cancellation, and stale-result prevention for scheduled work.
-- Re-run accessibility and business-state checks after virtualization or rendering changes.
+- 捕获命名工作负载和交互的前后测量。
+- 证明记忆化路径在每个影响行为的 prop 变更时更新。
+- 练习大型集合标识、操作目标、焦点、滚动、空/加载/错误状态和响应式布局。
+- 通过生产构建验证惰性分块并练习加载/错误恢复。
+- 测试快速输入、中断、取消和计划工作的过期结果预防。
+- 在虚拟化或渲染变更后重新运行可访问性和业务状态检查。
 
-## Delivery Evidence
+## 交付证据
 
-Report the bottleneck, representative workload, selected intervention, repeatable measurement, and visible correctness assertions. A bundle build, profiler screenshot without context, or blanket memoization count does not establish improvement.
+报告瓶颈、代表性工作负载、所选干预、可重复测量和可见正确性断言。包构建、无上下文的 profiler 截图或全面记忆化计数不能建立改进。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- `memo`, `useMemo`, or `useCallback` applied to every component/value.
-- Custom comparators that ignore callbacks, permissions, locale, or mutable objects.
-- Virtualization introduced without focus, semantics, or dynamic-size behavior.
-- Development-only timing presented as production evidence.
-- Code splitting without testing chunk loading and failure behavior.
-- Transition/debounce logic allowed to submit stale targets or hide pending state.
+- 对每个组件/值应用 `memo`、`useMemo` 或 `useCallback`。
+- 忽略回调、权限、区域设置或可变对象的自定义比较器。
+- 引入无焦点、语义或动态大小行为的虚拟化。
+- 将仅开发环境的计时作为生产证据。
+- 代码拆分而不测试分块加载和失败行为。
+- 允许 transition/debounce 逻辑提交过期目标或隐藏 pending 状态。

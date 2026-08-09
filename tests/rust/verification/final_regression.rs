@@ -111,11 +111,7 @@ fn final_verification_reports_cover_protocol_metrics_and_delivery_isolation() {
         fixture.root_str(),
         FinalVerificationInput {
             reference_projection,
-            transcripts: vec![
-                transcript("codex"),
-                transcript("claude-code"),
-                transcript("opencode"),
-            ],
+            transcripts: vec![transcript("opencode")],
             setup_checks: setup_matrix(),
             package_entries: release_entries(),
             benchmark: BenchmarkInput {
@@ -182,7 +178,7 @@ fn final_verification_reports_cover_protocol_metrics_and_delivery_isolation() {
     let agent_audit =
         read_json_value(&final_dir.join("agent-transcript-audit.json")).expect("agent audit");
     assert_eq!(agent_audit["status"], "passed");
-    assert_eq!(agent_audit["audits"].as_array().expect("audits").len(), 3);
+    assert_eq!(agent_audit["audits"].as_array().expect("audits").len(), 1);
 
     let report = fs::read_to_string(final_dir.join("mcp-only-regression-report.md"))
         .expect("regression report");
@@ -223,8 +219,6 @@ fn release_entries() -> Vec<String> {
         "bin/loom-setup".to_string(),
         "python/runtime/README".to_string(),
         "python/algorithms/worker.py".to_string(),
-        "plugins/codex/plugin.json".to_string(),
-        "plugins/claude-code/plugin.json".to_string(),
         "plugins/opencode/plugin.json".to_string(),
     ]
 }

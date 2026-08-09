@@ -1,85 +1,85 @@
-# Nuxt Application Boundaries
+# Nuxt 应用边界
 
-Apply this reference only for an accepted Nuxt stack when the task owns Nuxt routing, server-rendered data/composition, server mutations/routes, runtime configuration, or framework migration. Ordinary Vue components use Vue references without loading the whole Nuxt boundary.
+仅对于已接受的 Nuxt 技术栈，当任务拥有 Nuxt 路由、服务端渲染数据/组合、服务端变更/路由、运行时配置或框架迁移时应用此参考。普通 Vue 组件使用 Vue 参考而不加载整个 Nuxt 边界。
 
-## File And Runtime Ownership
+## 文件与运行时所有权
 
-Follow the installed Nuxt version's `pages`, `layouts`, `middleware`, `plugins`, `composables`, `server`, `shared`, `public`, and module conventions. Keep auto-import behavior visible enough that server/client ownership remains understandable.
+遵循已安装 Nuxt 版本的 `pages`、`layouts`、`middleware`、`plugins`、`composables`、`server`、`shared`、`public` 和模块约定。保持自动导入行为足够可见，使服务端/客户端所有权保持可理解。
 
-Confirm SSR/SPA/SSG/hybrid route rules, Nitro preset, deployment runtime, and module compatibility before adopting examples. Do not change hosting/runtime mode for one feature.
+在采用示例之前确认 SSR/SPA/SSG/混合路由规则、Nitro preset、部署运行时和模块兼容性。不要为一个功能更改托管/运行时模式。
 
-Use server-only and client-only module boundaries intentionally. Browser bundles must not import secrets, database clients, filesystem-only code, or privileged provider SDKs.
+有意识地使用仅服务端和仅客户端模块边界。浏览器包不得导入密钥、数据库 client、仅文件系统代码或特权 provider SDK。
 
-## Pages, Layouts, And Middleware
+## 页面、布局与 Middleware
 
-Validate dynamic/catch-all/query params before reads/actions. Represent invalid, not-found, forbidden, and unavailable states through Nuxt route/error conventions rather than generic client crashes.
+在读取/操作之前验证动态/catch-all/查询参数。通过 Nuxt 路由/错误约定表示无效、未找到、禁止和不可用状态，而非通用客户端崩溃。
 
-Layouts own coherent product chrome/providers; route middleware owns navigation gating; server handlers still enforce authentication/authorization. Avoid redirect logic duplicated in every page.
+布局拥有连贯的产品壳/provider；路由 middleware 拥有导航门控；服务端 handler 仍执行认证/授权。避免在每个页面中重复重定向逻辑。
 
-Preserve navigation history, return context, metadata, and route rules. Keep product data fetching out of purely presentational layout components.
+保留导航历史、返回上下文、元数据和路由规则。将产品数据获取排除在纯展示型布局组件之外。
 
-## Data Fetching
+## 数据获取
 
-Use `useFetch` for HTTP-aware fetches and `useAsyncData` for arbitrary async data according to repository patterns. Choose server/lazy/immediate/watch/dedupe/default/transform behavior deliberately.
+按仓库模式对 HTTP 感知的 fetch 使用 `useFetch`，对任意异步数据使用 `useAsyncData`。有意识地选择 server/lazy/immediate/watch/dedupe/default/transform 行为。
 
-Provide stable unique keys containing every resource, route, locale, identity/tenant, and filter dimension. A process/client payload cache must not reuse one user's result for another.
+提供包含每个资源、路由、区域设置、标识/租户和筛选维度的稳定唯一键。进程/客户端载荷缓存不得将一个用户的结果复用于另一个。
 
-Avoid duplicate server fetch plus mounted client fetch. Understand payload hydration and when `refresh`/`clear` affects consumers sharing a key.
+避免重复的服务端 fetch 加挂载的客户端 fetch。理解载荷 hydration 和 `refresh`/`clear` 何时影响共享键的消费者。
 
-Parallelize independent data, avoid page-level waterfalls, and retain meaningful loading/error/empty/refreshing state for lazy client updates.
+并行化独立数据，避免页面级瀑布，为惰性客户端更新保留有意义的加载/错误/空/刷新状态。
 
-## Hydration And Client Boundaries
+## Hydration 与客户端边界
 
-Initial server and client markup must be deterministic. Guard browser storage, window size, time/random/locale, third-party widgets, and client-only permissions with stable fallback plus post-hydration update.
+初始服务端和客户端标记必须是确定性的。用稳定回退加 hydration 后更新保护浏览器存储、window 大小、时间/随机/区域设置、第三方控件和仅客户端权限。
 
-Use `<ClientOnly>` only around the smallest browser-only region and provide a fallback that preserves layout. Do not hide broad pages or suppress hydration warnings instead of fixing ownership.
+仅围绕最小的仅浏览器区域使用 `<ClientOnly>` 并提供保留布局的回退。不要隐藏宽泛页面或抑制 hydration 警告而非修复所有权。
 
-Plugins must declare server/client scope and injected types; per-request state cannot live in a process-global singleton.
+Plugin 必须声明服务端/客户端 scope 和注入类型；每请求状态不能存在于进程全局单例中。
 
-## Server Routes And Mutations
+## 服务端路由与变更
 
-Implement server handlers from the accepted interface contract: method/path/input/status/error/auth/exposure. Parse body/query/params, authenticate, authorize the target, validate, call application logic, and map safe errors.
+从已接受的接口契约实现服务端 handler：方法/路径/输入/状态/错误/auth/暴露。解析 body/查询/参数，认证，授权目标，验证，调用应用逻辑，并映射安全错误。
 
-Do not place substantial business/persistence logic in handlers or create a duplicate API beside an existing backend without explicit architecture ownership.
+不要在 handler 中放置大量业务/持久化逻辑，或在无显式架构所有权的情况下在现有后端旁创建重复 API。
 
-For mutations, enforce CSRF/origin/session/token/idempotency/concurrency policy as applicable and return identity/version/status for UI readback. Never trust client-visible guards.
+对于变更，在适用时执行 CSRF/origin/session/令牌/幂等/并发策略并返回标识/版本/状态供 UI 回读。永远不要信任客户端可见的守卫。
 
-## Runtime Configuration
+## 运行时配置
 
-Keep secrets in private runtime config and intentionally public values under `runtimeConfig.public`. Validate required values at startup/request boundary and avoid hardcoded local hosts.
+将密钥保留在私有运行时配置中，将有意公开的值放在 `runtimeConfig.public` 下。在启动/请求边界验证所需值，避免硬编码本地主机。
 
-Understand build-time versus runtime substitution for the selected Nitro preset/container/serverless/static target. Public runtime config remains visible to browsers.
+理解所选 Nitro preset/容器/serverless/静态目标的构建时与运行时替换。公共运行时配置对浏览器仍可见。
 
-## Cache And Route Rules
+## 缓存与路由规则
 
-Use route rules, prerendering, ISR/SWR/cache headers, and Nitro storage only for data with explicit freshness and identity isolation. Authenticated/mutable responses must not enter shared caches accidentally.
+仅对具有显式新鲜度和标识隔离的数据使用路由规则、预渲染、ISR/SWR/缓存 header 和 Nitro 存储。认证/可变响应不得意外进入共享缓存。
 
-After mutation, reconcile visible data and invalidate/refresh the exact owned key/route. Broad refreshes hide ownership and increase load.
+变更后，协调可见数据并失效/刷新精确拥有的键/路由。宽泛刷新隐藏所有权并增加负载。
 
-## Metadata And Errors
+## 元数据与错误
 
-Use `useHead`/`useSeoMeta` from validated page data and avoid duplicate global/page tags. Keep private/internal state out of public metadata.
+从验证的页面数据使用 `useHead`/`useSeoMeta`，避免重复的全局/页面标签。将私有/内部状态排除在公共元数据之外。
 
-Use Nuxt error/not-found boundaries with user-actionable recovery. Do not render provider stack traces or raw server errors.
+使用 Nuxt 错误/未找到边界配以用户可操作的恢复。不要渲染 provider 堆栈跟踪或原始服务端错误。
 
 ## Verification
 
-- Run Nuxt typecheck and production build for changed page/server/config/runtime boundaries.
-- Exercise SSR direct request, client navigation, lazy refresh, shared-key behavior, and hydration without mismatch suppression.
-- Test invalid/not-found/forbidden params, middleware, server auth/validation/errors, and mutation readback.
-- Verify private config/server modules are absent from browser output and runtime values resolve in the deployment preset.
-- Check cache/route-rule isolation across identity/tenant and exact post-mutation refresh.
+- 为变更的页面/服务端/配置/运行时边界运行 Nuxt typecheck 和生产构建。
+- 练习 SSR 直接请求、客户端导航、惰性刷新、共享键行为和无不匹配抑制的 hydration。
+- 测试无效/未找到/禁止参数、middleware、服务端 auth/验证/错误和变更回读。
+- 验证私有配置/服务端模块不存在于浏览器输出中，运行时值在部署 preset 中解析。
+- 检查跨标识/租户的缓存/路由规则隔离和变更后精确刷新。
 
-## Delivery Evidence
+## 交付证据
 
-Name the Nuxt file/runtime owner, data key and lifecycle, server/client boundary, runtime config/cache decision, and SSR/client assertion. Development navigation success does not prove SSR, hydration, secret separation, cache isolation, or deployment-preset behavior.
+命名 Nuxt 文件/运行时所有者、数据键和生命周期、服务端/客户端边界、运行时配置/缓存决策和 SSR/客户端断言。开发导航成功不能证明 SSR、hydration、密钥分离、缓存隔离或部署 preset 行为。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Nuxt reference loaded for every component in a Nuxt repository.
-- Unkeyed or under-keyed async data shared across users/filters.
-- Browser-only values changing initial hydration markup.
-- Server routes duplicating an accepted backend/application boundary.
-- Private config imported into client modules.
-- Authenticated/mutable data cached by broad route rules.
-- Hosting/Nitro preset changed for a feature-only task.
+- 为 Nuxt 仓库中的每个组件加载 Nuxt 参考。
+- 跨用户/筛选共享的无键或键不足的异步数据。
+- 仅浏览器值改变初始 hydration 标记。
+- 服务端路由重复已接受的后端/应用边界。
+- 私有配置导入客户端模块。
+- 认证/可变数据被宽泛路由规则缓存。
+- 仅为功能任务更改托管/Nitro preset。

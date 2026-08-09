@@ -1,84 +1,84 @@
-# C++ Language-Version Features
+# C++ 语言版本特性
 
 ## When To Use
 
-Use this reference only when the task explicitly owns APIs/features from a declared C++17/20/23 standard or changes the language target. Stable code should not be rewritten for novelty.
+仅当任务显式拥有来自声明的 C++17/20/23 标准的 API/特性或变更语言目标时才使用此参考。稳定代码不应为新奇性而重写。
 
 ## Implementation Focus
 
 ### Compatibility First
 
-Confirm target compile features, compiler versions, standard library implementation, platform SDK, deployment image, dependency compatibility, and feature-test macros. Language parser support does not guarantee the library or build system supports a feature.
+确认目标编译特性、编译器版本、标准库实现、平台 SDK、部署镜像、依赖兼容性和特性测试宏。语言解析器支持不保证库或构建系统支持某特性。
 
-Prefer `target_compile_features(... cxx_std_XX)` or repository equivalent over source assumptions. Keep fallback/guard behavior when the supported matrix spans feature availability.
+优先使用 `target_compile_features(... cxx_std_XX)` 或仓库等效方案而非源码假设。当支持矩阵跨越特性可用性时保持回退/守卫行为。
 
-Do not upgrade the standard inside source only; update build declarations, CI/toolchain presets, package consumers, docs/examples, and compatibility tests within task scope.
+不要仅在源码中升级标准；在任务范围内更新构建声明、CI/toolchain preset、包消费者、文档/示例和兼容性测试。
 
 ### Concepts And Constraints
 
-Use standard concepts and small named domain concepts to express operations/relationships required by a generic API. Require semantics callers can understand; a syntactic expression alone may be too weak.
+使用标准概念和小型命名领域概念来表达泛型 API 所需的操作/关系。要求调用者能理解的语义；仅语法表达可能太弱。
 
-Put constraints where overload resolution can use them and avoid redundant `static_assert` diagnostics. Verify invalid types fail for the intended reason without making ordinary diagnostics unreadable.
+将约束放在重载解析能使用的地方并避免冗余的 `static_assert` 诊断。验证无效类型因预期原因失败而不使普通诊断不可读。
 
-Concepts do not justify templating non-generic behavior or exposing implementation details in public headers.
+概念不证明将非泛型行为模板化或在公共头中暴露实现细节。
 
 ### Ranges And Views
 
-Use range algorithms/pipelines when they clarify ownership and transformation. Views are lazy and often non-owning: ensure the source, captured references, and temporary adaptors outlive iteration.
+当 range 算法/pipeline 能澄清所有权和转换时使用它们。视图是延迟的且通常非拥有：确保源码、捕获的引用和临时适配器比迭代活得更久。
 
-Materialize when data crosses an async/storage/API boundary, must own results, or repeated traversal has different cost/semantics. Beware single-pass ranges, dangling borrowed ranges, proxy references, and mutation invalidation.
+当数据跨越异步/存储/API 边界、必须拥有结果或重复遍历有不同成本/语义时物化。注意单遍 range、悬空借用 range、代理引用和变更失效。
 
-Measure complex pipelines in hot paths and preserve clear error/empty behavior.
+在热路径中测量复杂 pipeline 并保留清晰的错误/空行为。
 
 ### Expected, Optional, And Variants
 
-Use `std::expected` when supported for recoverable value-or-error results that callers must inspect. Define a stable error type and avoid nested expected/optional/variant structures that obscure state.
+在支持时使用 `std::expected` 处理调用者必须检查的可恢复值或错误结果。定义稳定的错误类型并避免使状态模糊的嵌套 expected/optional/variant 结构。
 
-Use `optional` for presence/absence, not for detailed failure. Use variants for a closed set of meaningful alternatives and make visitation exhaustive.
+使用 `optional` 表示存在/缺失，而非详细失败。对有意义的封闭替代集合使用 variant 并使访问穷尽。
 
-Preserve repository exception/status conventions at boundaries instead of mixing styles because a new type exists.
+在边界保留仓库异常/状态约定，而非因为新类型存在就混合风格。
 
 ### Coroutines
 
-Use coroutines only with an established task/runtime abstraction. The coroutine return type owns handle lifetime, scheduler/executor affinity, cancellation, exception propagation, destruction, and continuation behavior.
+仅与已建立的任务/运行时抽象一起使用协程。协程返回类型拥有句柄生命周期、调度器/执行器亲和性、取消、异常传播、销毁和续体行为。
 
-Never hand-roll a sample coroutine type for production without proving final suspend, frame destruction, move/copy behavior, abandonment, concurrent resume, and error/cancellation semantics.
+在没有证明 final suspend、帧销毁、移动/拷贝行为、放弃、并发恢复和错误/取消语义的情况下，永远不要为生产手卷示例协程类型。
 
-Avoid holding locks or unsafe references across suspension and make source/owner lifetimes explicit.
+避免跨挂起持有锁或不安全引用并使源码/所有者生命周期显式。
 
 ### Comparison, Initialization, And Compile Time
 
-Defaulted `<=>` is appropriate only when memberwise equality/order matches the domain. Partial/weak/strong ordering and floating-point NaN require deliberate semantics.
+仅当逐成员相等/排序匹配领域时默认 `<=>` 才合适。部分/弱/强排序和浮点 NaN 需要刻意的语义。
 
-Designated initializers apply to aggregates and order rules; do not make public aggregate layout an accidental API. Use builders/constructors when validation or compatibility matters.
+指定初始化器适用于聚合和排序规则；不要使公共聚合布局成为意外 API。当验证或兼容性重要时使用构建器/构造函数。
 
-Use `constexpr`/`consteval` for stable pure computation with meaningful compile-time benefit. Keep diagnostics/build cost bounded and verify runtime-equivalent behavior where relevant.
+对具有有意义的编译时收益的稳定纯计算使用 `constexpr`/`consteval`。保持诊断/构建成本有界并在相关时验证运行时等效行为。
 
 ### Formatting, Modules, And Library Availability
 
-Use `std::format`/`print` only when the target standard library supports required formatters/locales; otherwise preserve the accepted formatting/logging library.
+仅当目标标准库支持所需的格式化器/locale 时才使用 `std::format`/`print`；否则保留已接受的格式化/日志库。
 
-Modules require compiler, generator, dependency scanner, cache, test, package, and IDE support. Introduce them only as an owned build migration, not a file-local cleanup.
+模块需要编译器、生成器、依赖扫描器、缓存、测试、包和 IDE 支持。仅作为拥有的构建迁移引入它们，而非文件局部清理。
 
-Feature-test macros and isolated adapters are preferable to scattered compiler-version preprocessor branches.
+特性测试宏和隔离适配器比分散的编译器版本预处理器分支更可取。
 
 ## Verification Focus
 
-- Build the exact compiler/standard-library/platform matrix affected by the feature.
-- Test concept acceptance/rejection, range lifetime/materialization, expected/variant states, and comparison semantics.
-- Exercise coroutine completion, failure, cancellation, abandonment, and destruction on the actual runtime.
-- Verify feature guards/fallbacks and package consumers when the supported matrix is mixed.
-- Measure compile/runtime cost when the feature is selected for performance.
+- 构建受特性影响的确切编译器/标准库/平台矩阵。
+- 测试概念接受/拒绝、range 生命周期/物化、expected/variant 状态和比较语义。
+- 在实际运行时上演练协程完成、失败、取消、放弃和销毁。
+- 当支持矩阵混合时验证特性守卫/回退和包消费者。
+- 当为性能选择特性时测量编译/运行时成本。
 
 ## Evidence Focus
 
-Name the feature, accepted standard/toolchain proof, ownership/lifetime/error semantics, fallback, and behavior/compatibility assertion. A successful local compile is not cross-toolchain or runtime-lifecycle evidence.
+说明特性、已接受的标准/toolchain 证明、所有权/生命周期/错误语义、回退和行为/兼容性断言。成功的本地编译不是跨工具链或运行时生命周期证据。
 
 ## Unsafe Defaults
 
-- C++20/23 feature selected from prose without build/toolchain ownership.
-- Lazy view escaping its source lifetime.
-- Concepts added to ordinary non-generic code.
-- Coroutine handle/runtime implemented from a tutorial sample.
-- Defaulted comparison used for business-specific or floating order.
-- Modules introduced without build/package ecosystem support.
+- 从正文选择 C++20/23 特性而没有构建/toolchain 所有权。
+- 延迟视图逃逸其源码生命周期。
+- 对普通非泛型代码添加概念。
+- 从教程示例实现协程句柄/运行时。
+- 对业务特定或浮点排序使用默认比较。
+- 没有构建/包生态系统支持就引入模块。

@@ -1,10 +1,10 @@
-# Flutter Navigation And Deep Links
+# Flutter 导航与深链接
 
-Implement task-owned route definitions, parameters, redirects, shell navigation, back-stack semantics, or deep links using the repository's selected router. GoRouter examples are not permission to replace Navigator, AutoRoute, Beamer, or another accepted stack.
+使用仓库所选的路由实现任务所属的路由定义、参数、重定向、壳导航、返回栈语义或深链接。GoRouter 示例不是替换 Navigator、AutoRoute、Beamer 或其他已接受技术栈的许可。
 
-## Router Ownership
+## 路由所有权
 
-Construct one application router at a stable composition boundary and inject/watch only the auth/session state needed for redirects. Keep feature route definitions cohesive without competing router instances.
+在稳定的组合边界构造一个应用路由并仅注入/监听重定向所需的 auth/session 状态。保持功能路由定义内聚，无竞争路由实例。
 
 ```dart
 GoRoute(
@@ -19,62 +19,62 @@ GoRoute(
 )
 ```
 
-The snippet illustrates parameter validation. Use the selected router's equivalent and preserve accepted paths/names.
+代码片段说明参数验证。使用所选路由的等价物并保留已接受的路径/名称。
 
-## Stack Semantics
+## 栈语义
 
-Use replace/location navigation for switching canonical destinations and push navigation when users need back-stack return. Do not use `go`/replacement for modal/detail drill-down that must return to filtered list context, or push duplicate shell roots repeatedly.
+对切换规范目标使用 replace/location 导航，当用户需要返回栈返回时使用 push 导航。不要对必须返回筛选列表上下文的模态/详情下钻使用 `go`/replacement，或重复 push 重复的壳根。
 
-Define behavior for system back, app-bar back, browser back/forward, tab switching, nested navigators, modals, and unsaved drafts. Keep list filters/scroll/selection restorable when the workflow requires return context.
+为系统返回、app bar 返回、浏览器返回/前进、标签切换、嵌套导航器、模态和未保存草稿定义行为。在工作流需要返回上下文时保持列表筛选/滚动/选择可恢复。
 
-## Shells And Nested Navigation
+## 壳与嵌套导航
 
-Use shell/stateful shell routes for persistent app chrome or independent tab stacks when selected. Give nested navigators stable keys and avoid recreating them on every rebuild.
+在所选时为持久应用壳或独立标签栈使用 shell/stateful shell 路由。为嵌套导航器提供稳定键，避免每次重建重新创建。
 
-Shell redirects/loading must not flicker protected content. Keep app bars, navigation rails/bars, and drawer selection derived from route state rather than duplicated booleans/path substring checks.
+壳重定向/加载不得闪烁受保护内容。从路由状态派生 app bar、导航 rail/bar 和抽屉选择，而非重复的布尔值/路径子字符串检查。
 
-## Parameters And Data
+## 参数与数据
 
-Pass stable IDs and small serializable route/query values. Validate missing/malformed values before API/storage/state commands and render/redirect according to invalid, not-found, forbidden, and unavailable outcomes.
+传递稳定 ID 和小型可序列化路由/查询值。在 API/存储/状态命令之前验证缺失/格式错误的值，并按无效、未找到、禁止和不可用结果渲染/重定向。
 
-Do not place large mutable entities, secrets, full form drafts, or authorization decisions in route extras. Extras may not survive process restart, web refresh, or deep links.
+不要在路由 extra 中放置大型可变实体、密钥、完整表单草稿或授权决策。Extra 可能无法在进程重启、Web 刷新或深链接中存活。
 
-Query parameters are appropriate for shareable filter/sort/page/tab context. Encode/decode deliberately and clear stale values when changing workflows.
+查询参数适用于可共享的筛选/排序/分页/标签上下文。有意识地编码/解码并在变更工作流时清除过期值。
 
-## Redirects And Auth
+## 重定向与 Auth
 
-Redirect logic must be deterministic and side-effect free: read current session/onboarding/feature state and return a target or null. Do not perform network requests, show dialogs, write storage, or emit analytics inside redirect callbacks.
+重定向逻辑必须是确定性的且无副作用：读取当前 session/onboarding/功能状态并返回目标或 null。不要在重定向回调内执行网络请求、显示对话框、写入存储或发出分析。
 
-Handle unknown/loading auth state without redirect loops or flashes. Preserve intended destination safely for login return. Router guards improve UX but do not replace server authorization.
+处理未知/加载 auth 状态而无重定向循环或闪烁。为登录返回安全保留目标目的地。路由守卫改善 UX 但不替代服务端授权。
 
-Navigation after provider/bloc commands belongs in a listener/orchestration boundary and should fire once for the accepted success state, not during widget build.
+provider/bloc 命令后的导航属于监听器/编排边界，应仅为已接受的成功状态触发一次，而非在 widget 构建期间。
 
-## Deep Links And Platform Setup
+## 深链接与平台设置
 
-Preserve web base path/history fallback and Android/iOS URL schemes, universal/app links, host/path allowlists, and cold/warm-start behavior when deep links are owned.
+在拥有深链接时保留 Web base path/history 回退和 Android/iOS URL scheme、universal/app link、主机/路径白名单和冷/暖启动行为。
 
-Reject or safely route unsupported paths and untrusted query values. Deep links must not bypass onboarding/auth/tenant/resource authorization.
+拒绝或安全路由不受支持的路径和不受信查询值。深链接不得绕过 onboarding/auth/租户/资源授权。
 
-Deployment hosting must serve the Flutter web entry point for client routes while preserving API paths; validate direct refresh, not only in-app navigation.
+部署托管必须为客户端路由服务 Flutter Web 入口点同时保留 API 路径；验证直接刷新，不仅是应用内导航。
 
 ## Verification
 
-- Test initial location, named/path navigation, push/replace, back, nested/shell, and tab-stack behavior owned by the task.
-- Exercise valid/missing/malformed params and not-found/forbidden/unavailable states.
-- Verify auth loading, redirect, login return, logout, and no redirect loops when changed.
-- Test list-detail-return filter/scroll/selection preservation and dirty-draft confirmation.
-- Exercise cold/warm deep links and web refresh/back-forward on selected platforms.
-- Confirm navigation listeners fire once for the displayed target after state changes.
+- 测试任务所属的初始位置、命名/路径导航、push/replace、返回、嵌套/壳和标签栈行为。
+- 练习有效/缺失/格式错误的参数和未找到/禁止/不可用状态。
+- 在变更时验证 auth 加载、重定向、登录返回、登出和无重定向循环。
+- 测试列表-详情-返回筛选/滚动/选择保留和脏草稿确认。
+- 在所选平台上练习冷/暖深链接和 Web 刷新/返回-前进。
+- 确认导航监听器在状态变更后为显示目标仅触发一次。
 
-## Delivery Evidence
+## 交付证据
 
-Name the route/location and router/widget/integration assertion proving stack, redirect, parameter, or deep-link behavior. A route table or direct callback call cannot prove platform links, browser refresh, nested stacks, or listener deduplication.
+命名路由/位置和证明栈、重定向、参数或深链接行为的路由/widget/集成断言。路由表或直接回调调用不能证明平台链接、浏览器刷新、嵌套栈或监听器去重。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- GoRouter loaded/introduced from stack availability without navigation ownership.
-- Push/replacement semantics chosen interchangeably.
-- Large mutable objects or secrets passed through route extras/query.
-- Redirect callbacks performing network, storage, dialog, or analytics side effects.
-- Router guards treated as authorization.
-- Deep links tested only through in-app taps.
+- 在无导航所有权的情况下从技术栈可用性加载/引入 GoRouter。
+- push/replace 语义互换选择。
+- 通过路由 extra/查询传递大型可变对象或密钥。
+- 重定向回调执行网络、存储、对话框或分析副作用。
+- 将路由守卫视为授权。
+- 仅通过应用内点击测试深链接。

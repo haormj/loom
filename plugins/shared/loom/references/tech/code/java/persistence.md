@@ -1,123 +1,123 @@
-# Java JPA And Hibernate Fundamentals
+# Java JPA 与 Hibernate 基础
 
-This reference owns JPA/Hibernate entity semantics independent of Spring Boot: identity, value mapping, relationships, fetch behavior, persistence context, locking, and provider interaction. Spring Data repositories, transaction proxies, Boot migration startup, and Spring test slices belong to Spring Boot data/testing references.
+此参考拥有独立于 Spring Boot 的 JPA/Hibernate 实体语义：标识、值映射、关系、获取行为、持久化上下文、锁定和提供者交互。Spring Data repository、事务代理、Boot 迁移启动和 Spring 测试切片属于 Spring Boot 数据/测试参考。
 
 ## When To Use
 
-Use this reference when Java implementation work changes JPA/Hibernate entities, mappings, relationships, fetch behavior, persistence-context semantics, optimistic/pessimistic concurrency, or provider-facing lifecycle behavior. It applies whether repositories are implemented with Spring Data, another framework, or direct JPA.
+当 Java 实现工作变更 JPA/Hibernate 实体、映射、关系、获取行为、持久化上下文语义、乐观/悲观并发或面向提供者的生命周期行为时使用此参考。无论 repository 用 Spring Data、其他框架还是直接 JPA 实现都适用。
 
-Do not use it for repository API design, transaction proxy placement, migration startup, datasource configuration, or Spring test slices. Those concerns belong to the selected backend framework reference.
+不要用于 repository API 设计、事务代理放置、迁移启动、数据源配置或 Spring 测试切片。这些关注属于选中的后端框架参考。
 
 ## Implementation Focus
 
 ### Entity Boundary
 
-Entities are persistence models with identity and lifecycle. They are not HTTP request/response DTOs. Keep lazy proxies, audit/version columns, credentials, and internal flags out of transport serialization.
+实体是具有标识和生命周期的持久化模型。它们不是 HTTP 请求/响应 DTO。将延迟代理、审计/版本列、凭据和内部标志排除在传输序列化之外。
 
-Use access style consistently. Keep constructors/factories sufficient to establish required invariants. Avoid unrestricted setters when state transitions have rules.
+一致使用访问风格。保持构造函数/工厂足以建立必需的不变式。当状态转换有规则时避免不受限制的 setter。
 
-Equality and hash code must remain stable while an entity moves from transient to persisted state. Do not include mutable fields, collections, or lazy associations. Be careful with generated IDs before persistence.
+当实体从瞬态移动到持久化状态时，相等性和哈希码必须保持稳定。不要包含可变字段、集合或延迟关联。在持久化之前注意生成的 ID。
 
 ### Value Mapping
 
-Align mappings with the selected provider and migration:
+将映射与选中的提供者和迁移对齐：
 
-- explicit nullability and lengths for constrained strings
-- enum storage with stable external values or deliberate string mapping
-- `BigDecimal` precision/scale for money-like values
-- `Instant`, `OffsetDateTime`, or domain-specific time semantics with an explicit zone policy
-- converters for value objects only when round-trip and query behavior are defined
-- generated IDs compatible with the selected provider
+- 受约束字符串的显式可空性和长度
+- 具有稳定外部值或刻意字符串映射的枚举存储
+- 货币类值的 `BigDecimal` 精度/标度
+- 具有显式时区策略的 `Instant`、`OffsetDateTime` 或领域特定时间语义
+- 仅当定义了往返和查询行为时才对值对象使用转换器
+- 与选中的提供者兼容的生成 ID
 
-Do not assume one provider's boolean, UUID, enum, timestamp, JSON, sequence, or identity behavior applies to another.
+不要假设一个提供者的 boolean、UUID、枚举、时间戳、JSON、序列或标识行为适用于另一个。
 
 ### Relationship Ownership
 
-Define the aggregate/lifecycle owner before choosing annotations. For bidirectional relationships, helper methods must update both sides.
+在选择注解之前定义聚合/生命周期所有者。对于双向关系，辅助方法必须更新双方。
 
-Use cascade only for operations the parent truly owns. `CascadeType.ALL` and `orphanRemoval` can delete or rewrite data unexpectedly when the child has an independent lifecycle. Avoid many-to-many mappings when the join relation has attributes or lifecycle behavior; model the join entity explicitly.
+仅对父级真正拥有的操作使用级联。当子级具有独立生命周期时，`CascadeType.ALL` 和 `orphanRemoval` 可能意外删除或重写数据。当连接关系具有属性或生命周期行为时避免多对多映射；显式建模连接实体。
 
-Keep collections initialized and avoid exposing mutable collections directly when callers could bypass invariants.
+保持集合已初始化，当调用者可能绕过不变式时避免直接暴露可变集合。
 
 ### Fetch Behavior
 
-Associations are lazy by default unless a specific bounded access path requires otherwise. Solve access paths with projection, fetch join, entity graph, or batch fetching at the query boundary. Do not switch every relation to eager to hide initialization failures.
+除非特定有界访问路径另有要求，否则关联默认延迟。在查询边界用投影、fetch join、entity graph 或批量获取解决访问路径。不要将每个关系切换为 eager 以隐藏初始化失败。
 
-Multiple collection fetch joins can create cartesian multiplication. Collection fetch joins and pagination need special care because row-level pagination may not represent aggregate-level pages.
+多个集合 fetch join 可能产生笛卡尔积。集合 fetch join 和分页需要特别注意，因为行级分页可能不代表聚合级页面。
 
-Keep Open Session in View deliberate. Business/API mapping should normally load required data inside an owned service/query boundary.
+有意使用 Open Session in View。业务/API 映射通常应在拥有的服务/查询边界内加载所需数据。
 
 ### Query Shape And Pagination
 
-Choose the fetch plan from the read model rather than from the entity graph:
+从读取模型而非实体图选择获取计划：
 
-| Read need | Preferred shape | Boundary to verify |
+| 读取需求 | 首选形态 | 需验证的边界 |
 |---|---|---|
-| List or summary | DTO/projection with only required columns | deterministic ordering and bounded page size |
-| Detail with one bounded association | entity graph or one fetch join | no lazy access after the service boundary |
-| Detail with multiple collections | staged queries, batch fetching, or explicit read model | no row multiplication or duplicate aggregates |
-| Dynamic filters | criteria/specification with an allowlisted field map | no client-controlled property or sort expression |
+| 列表或摘要 | 仅包含必需列的 DTO/投影 | 确定性排序和有界页面大小 |
+| 带一个有界关联的详情 | entity graph 或一个 fetch join | 服务边界后无延迟访问 |
+| 带多个集合的详情 | 分阶段查询、批量获取或显式读取模型 | 无行乘积或重复聚合 |
+| 动态过滤 | 带允许字段映射的 criteria/specification | 无客户端控制的属性或排序表达式 |
 
-For paged queries, keep the data query and count query semantically aligned. Do not combine collection fetch joins with pageable results without proving aggregate-level page boundaries. Add a stable tie-breaker to ordering, and keep page size limits in the accepted API/runtime contract.
+对于分页查询，保持数据查询和计数查询语义对齐。在没有证明聚合级页面边界的情况下不要将集合 fetch join 与分页结果组合。为排序添加稳定的决胜键，并在已接受的 API/运行时契约中保持页面大小限制。
 
-Treat query tuning as an evidence-backed change: inspect the generated SQL and provider query plan, then change the fetch shape or index contract. Do not use a global eager mapping or a cache annotation as a substitute for understanding the access path.
+将查询调优视为有证据支持的变更：检查生成的 SQL 和提供者查询计划，然后更改获取形态或索引契约。不要用全局 eager 映射或缓存注解替代理解访问路径。
 
 ### Batch And Bulk Boundaries
 
-For large writes, use a bounded batch size and flush/clear the persistence context at a deliberate boundary. The exact batching setting and identifier strategy must be compatible with the selected provider; generated identity strategies can change batching behavior.
+对于大批量写入，使用有界的批量大小并在刻意的边界刷新/清除持久化上下文。确切的批处理设置和标识符策略必须与选中的提供者兼容；生成的标识策略可能更改批处理行为。
 
-Bulk JPQL/native updates bypass managed entities, entity callbacks, and normal dirty checking. After a bulk operation, clear or refresh affected managed state before it is read or returned, and verify the committed database result. Streaming large reads requires a transaction/resource scope that remains open for the stream and closes it deterministically.
+批量 JPQL/native 更新绕过受管实体、实体回调和正常的脏检查。在批量操作后，在读取或返回之前清除或刷新受影响的受管状态，并验证提交的数据库结果。流式大读取需要一个为流保持打开并确定性地关闭它的事务/资源范围。
 
 ### Cache And Measurement
 
-Second-level or query caching is a provider-level optimization, not a default JPA feature. Enable it only when the accepted performance requirement defines cache scope, invalidation, tenant/authorization isolation, staleness, and memory bounds. Never cache mutable entities or sensitive data globally by default.
+二级或查询缓存是提供者级优化，不是默认 JPA 特性。仅当已接受的性能需求定义缓存范围、失效、租户/授权隔离、过期和内存边界时才启用。永远不要默认全局缓存可变实体或敏感数据。
 
-Measure before and after changes using SQL count/latency, allocation or result size, and the provider query plan. A generic AOP timer or a passing unit test is not proof that an N+1 query, a paging plan, or a cache invalidation problem was fixed.
+使用 SQL 计数/延迟、分配或结果大小以及提供者查询计划在变更前后测量。通用 AOP 计时器或通过的单元测试不证明 N+1 查询、分页计划或缓存失效问题已修复。
 
 ### Persistence Context
 
-Understand managed, detached, removed, and transient states. Bulk JPQL/native updates bypass managed entity state and callbacks. Flush timing can expose constraints before commit; tests that only inspect in-memory entities do not prove database state.
+理解受管、分离、已删除和瞬态状态。批量 JPQL/native 更新绕过受管实体状态和回调。刷新时机可能在提交前暴露约束；仅检查内存实体的测试不证明数据库状态。
 
-Avoid calling `save` repeatedly on already managed entities without a reason. Dirty checking persists managed changes at flush/commit.
+避免无原因地反复对已受管实体调用 `save`。脏检查在刷新/提交时持久化受管变更。
 
 ### Concurrency
 
-Use `@Version` when optimistic concurrency is part of the accepted data architecture. Translate stale updates into a stable conflict outcome. Pessimistic locks require bounded lock duration, ordering, and timeout behavior.
+当乐观并发是已接受数据架构的一部分时使用 `@Version`。将过期更新转换为稳定的冲突结果。悲观锁需要有界的锁定持续时间、排序和超时行为。
 
-Do not use synchronization inside one JVM as a substitute for database concurrency control in a multi-instance or multi-threaded runtime.
+在多实例或多线程运行时中不要将一个 JVM 内的同步用作数据库并发控制的替代。
 
 ### Lifecycle Hooks And Auditing
 
-JPA callbacks should remain local and deterministic. Do not call repositories, remote services, or asynchronous workflows from entity callbacks. Auditing identity/time must be available in API, job, migration, and system execution paths that create records.
+JPA 回调应保持局部和确定性。不要从实体回调调用 repository、远程服务或异步工作流。审计标识/时间必须在创建记录的 API、作业、迁移和系统执行路径中可用。
 
 ## Verification Focus
 
-Useful JPA evidence includes:
+有用的 JPA 证据包括：
 
-- mapping/migration agreement for IDs, enums, time, money, nullability, lengths, and versions
-- relationship helper and cascade/orphan behavior
-- write/flush/clear/read round-trip
-- lazy/fetch behavior for owned read paths
-- query shape, SQL count, deterministic ordering, and page/count agreement for list paths
-- bulk update visibility after clearing or refreshing the persistence context
-- bounded batch flush/clear behavior for large writes
-- stale-version or lock conflict behavior
-- provider-compatible schema validation
+- ID、枚举、时间、货币、可空性、长度和版本的映射/迁移一致性
+- 关系辅助方法和级联/孤儿行为
+- 写入/刷新/清除/读取往返
+- 拥有读取路径的延迟/获取行为
+- 列表路径的查询形态、SQL 计数、确定性排序和页面/计数一致性
+- 清除或刷新持久化上下文后的批量更新可见性
+- 大批量写入的有界批量刷新/清除行为
+- 过期版本或锁冲突行为
+- 提供者兼容的 schema 验证
 
 ## Evidence Focus
 
-Prefer provider-backed evidence for behavior that depends on generated identifiers, dialect mappings, flush order, locking, constraints, or fetch plans. A unit test over detached objects cannot prove persistence-context or database behavior.
+对于依赖于生成标识符、方言映射、刷新顺序、锁定、约束或获取计划的行为，优先使用提供者支持的证据。对分离对象的单元测试不能证明持久化上下文或数据库行为。
 
-For mapping changes, identify the entity field, migration column, provider, and round-trip assertion. For relationship or concurrency changes, record the lifecycle operation and the exact cascade, orphan, version, lock, or conflict outcome that was verified.
+对于映射变更，标识实体字段、迁移列、提供者和往返断言。对于关系或并发变更，记录生命周期操作和验证的确切级联、孤儿、版本、锁或冲突结果。
 
 ## Unsafe Defaults
 
-- Entities as API DTOs.
-- Lombok-generated equality or `toString` over relationships.
-- Global eager loading.
-- `CascadeType.ALL` without lifecycle ownership.
-- JPA callbacks that invoke external or repository work.
-- Hiding provider differences behind an in-memory test database.
-- Collection fetch joins combined with pageable results without aggregate-level evidence.
-- Bulk updates followed by reads from stale managed entities.
-- Global second-level/query caching without an invalidation and isolation contract.
+- 实体作为 API DTO。
+- Lombok 生成的关系相等性或 `toString`。
+- 全局 eager 加载。
+- 没有生命周期所有权的 `CascadeType.ALL`。
+- 调用外部或 repository 工作的 JPA 回调。
+- 用内存测试数据库隐藏提供者差异。
+- 集合 fetch join 与分页结果组合而没有聚合级证据。
+- 批量更新后从过期的受管实体读取。
+- 没有失效和隔离契约的全局二级/查询缓存。

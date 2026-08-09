@@ -144,9 +144,9 @@ impl LoomMcpUserGateResult {
             .as_deref()
             .map(LoomMcpUserGatePreResponseContract::request_scoped);
         let agent_instruction = if pre_response_contract.is_some() {
-            "Before replying to this user gate, execute preResponseContract in order. When requestRef is present, call loom.inspectRequest first, then call loom.readFieldGroup only for requestReadPlan.groups whose whenToRead applies before the visible response. Groups scheduled after user confirmation remain required before the submit/confirm call. For Brainstorm gates, complete every request-scoped knowledge step required by the returned knowledge_context_plan before presenting options or confirmation. Do not answer from the prompt alone, call loom.continue, or expose internal ids. After the pre-response steps finish, present the returned prompt in the user's language and wait for the user's response.".to_string()
+            "在回复此 user gate 之前，按顺序执行 preResponseContract。当 requestRef 存在时，先调用 loom.inspectRequest，然后仅对 requestReadPlan.groups 中 whenToRead 适用于可见响应之前的 group 调用 loom.readFieldGroup。用户确认之后调度的 groups 在 submit/confirm 调用之前仍为必需。对于 Brainstorm gates，在呈现选项或确认之前完成返回的 knowledge_context_plan 所需的每个 request-scoped knowledge 步骤。不要仅从 prompt 回答、调用 loom.continue 或暴露内部 ids。pre-response 步骤完成后，用用户语言呈现返回的 prompt 并等待用户响应。".to_string()
         } else {
-            "This is a user gate. Present the returned prompt in the user's language and wait for the user's response. Do not invent a continuation action or report the workflow as complete.".to_string()
+            "这是一个 user gate。用用户语言呈现返回的 prompt 并等待用户响应。不要编造继续操作或将工作流报告为完成。".to_string()
         };
         Self {
             project_root: project_root.into(),

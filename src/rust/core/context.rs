@@ -12,23 +12,15 @@ pub struct ProjectToolInput {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HostKind {
-    Codex,
-    ClaudeCode,
     Opencode,
 }
 
 impl HostKind {
     pub fn from_env_value(value: Option<&str>) -> Self {
-        match value
-            .unwrap_or("codex")
-            .trim()
-            .to_ascii_lowercase()
-            .as_str()
-        {
-            "claude_code" | "claude-code" | "claude" => Self::ClaudeCode,
-            "opencode" | "open_code" | "open-code" => Self::Opencode,
-            _ => Self::Codex,
-        }
+        let _ = value
+            .map(|v| v.trim().to_ascii_lowercase())
+            .unwrap_or_else(|| "opencode".to_string());
+        Self::Opencode
     }
 }
 
@@ -59,23 +51,23 @@ pub struct NormalizedProjectRoot {
 pub fn normalize_project_root(raw: &str) -> Result<NormalizedProjectRoot, String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
-        return Err("projectRoot is required.".to_string());
+        return Err("projectRoot 为必填项。".to_string());
     }
 
     let path = Path::new(trimmed);
     if !path.is_absolute() {
-        return Err("projectRoot must be an absolute path.".to_string());
+        return Err("projectRoot 必须为绝对路径。".to_string());
     }
     if !path.exists() {
-        return Err("projectRoot must exist.".to_string());
+        return Err("projectRoot 必须存在。".to_string());
     }
     if !path.is_dir() {
-        return Err("projectRoot must be a directory.".to_string());
+        return Err("projectRoot 必须为目录。".to_string());
     }
 
     let canonical = path
         .canonicalize()
-        .map_err(|error| format!("projectRoot cannot be canonicalized: {error}"))?;
+        .map_err(|error| format!("projectRoot 无法规范化：{error}"))?;
     Ok(NormalizedProjectRoot {
         display: canonical.to_string_lossy().into_owned(),
         path: canonical,

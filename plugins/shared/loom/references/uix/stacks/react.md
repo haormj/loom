@@ -1,15 +1,15 @@
-# UIX Stack: React
+# UIX 技术栈：React
 
-Use for React, Next.js, Remix, Vite React, and similar component-driven React projects.
+用于 React、Next.js、Remix、Vite React 和类似组件驱动的 React 项目。
 
-## Structure
+## 结构
 
-- Follow the repo's existing router and component conventions.
-- Keep app shell, page route, feature components, and reusable UI primitives separated once the screen has real workflow complexity.
-- Prefer feature folders for business surfaces and `components/ui` or existing design-system folders for reusable primitives.
-- Keep data fetching/mutation logic close to route/page conventions, but avoid putting every state and helper into one giant component.
+- 遵循仓库现有的路由器和组件约定。
+- 当屏幕有真实工作流复杂度时，保持应用外壳、页面路由、功能组件和可重用 UI 原语分离。
+- 业务界面优先使用功能文件夹，可重用原语使用 `components/ui` 或现有设计系统文件夹。
+- 将数据获取/变更逻辑靠近路由/页面约定，但避免将每个状态和助手放入一个巨型组件。
 
-## Suggested Component Split
+## 建议的组件拆分
 
 ```text
 src/
@@ -26,27 +26,27 @@ src/
     tokens
 ```
 
-For a workbench page, split at least:
+对于工作台页面，至少拆分：
 
-- `AppShell` or route layout.
-- `PageHeader` or topbar.
-- `FilterBar`.
-- `DataTable` or object list.
-- `DetailPanel` or drawer.
-- `FormPanel` for create/edit actions.
-- `EmptyState`, `ErrorState`, and `SkeletonRows`.
+- `AppShell` 或路由布局。
+- `PageHeader` 或顶栏。
+- `FilterBar`。
+- `DataTable` 或对象列表。
+- `DetailPanel` 或抽屉。
+- 用于创建/编辑操作的 `FormPanel`。
+- `EmptyState`、`ErrorState` 和 `SkeletonRows`。
 
-## Implementation Rules
+## 实现规则
 
-- Use semantic tokens through CSS variables, Tailwind theme, CSS modules, styled system, or the repo's existing approach.
-- Represent UI states explicitly: loading, empty, error, validation, submitting, success, disabled, and business-blocking.
-- Use controlled form state or a form library already present in the repo.
-- Use stable keys, memoization only where useful, and avoid state that can drift between displayed record and submitted record.
-- Use existing icon libraries; prefer accessible icon buttons with labels/tooltips.
-- If a token template is selected for the task, adapt it into the repo's existing global CSS, Tailwind, or theme location. Do not paste template declarations into every component.
-- Keep route/page components as orchestration and move repeated UI into feature/shared components when the page owns more than one workflow region.
+- 通过 CSS 变量、Tailwind 主题、CSS modules、styled system 或仓库现有方法使用语义令牌。
+- 显式表示 UI 状态：加载、空、错误、验证、提交、成功、禁用和业务阻塞。
+- 使用受控表单状态或仓库中已有的表单库。
+- 使用稳定键，仅在有用处进行 memoization，避免显示记录和提交记录之间可能漂移的状态。
+- 使用现有图标库；优先使用带标签/工具提示的可访问图标按钮。
+- 如果为任务选定了令牌模板，将其适配到仓库现有的全局 CSS、Tailwind 或主题位置。不要将模板声明粘贴到每个组件中。
+- 当页面拥有多个工作流区域时，保持路由/页面组件作为编排，并将重复 UI 移入功能/共享组件。
 
-## State Pattern
+## 状态模式
 
 ```tsx
 type LoadState<T> =
@@ -56,45 +56,43 @@ type LoadState<T> =
   | { status: 'ready'; data: T };
 ```
 
-Do not collapse business blocking into generic `error`. Keep it as a domain state rendered near the related action.
+不要将业务阻塞折叠为通用 `error`。将其保持为在相关操作附近渲染的领域状态。
 
-## React/Next Notes
+## React/Next 说明
 
-- Next App Router: keep server/client boundaries clear; only mark components client-side when they need interaction.
-- Vite/SPA: keep API clients and state helpers outside the page component when reused.
-- Avoid hydration mismatch from random values, dates, or viewport-only rendering.
-- Put metadata and runtime/deployment notes in docs or results, not product UI.
+- Next App Router：保持服务端/客户端边界清晰；仅在需要交互时将组件标记为客户端。
+- Vite/SPA：当重用时将 API 客户端和状态助手放在页面组件之外。
+- 避免随机值、日期或仅视口渲染导致的水合不匹配。
+- 将元数据和运行时/部署说明放在文档或结果中，而非产品 UI。
 
-## Verification
+## 验证
 
-- Run the repo's focused build/lint/test commands when available.
-- Render the page and inspect at relevant viewport sizes.
-- Check that state transitions do not remount the whole surface unnecessarily.
-- Confirm evidence names React components or styles that actually consume the token asset.
+- 可用时运行仓库的聚焦构建/lint/test 命令。
+- 渲染页面并在相关视口尺寸检查。
+- 检查状态转换不会不必要地重新挂载整个界面。
+- 确认证据指名实际消费令牌资产的 React 组件或样式。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `react.split.workflow_regions` | React page orchestration is separated from reusable feature components, data/API modules, formatters, state views, and token-consuming styles. | Page component owns all fetching, form, table, modal/drawer, state rendering, and styling once the workflow has multiple regions. |
+| `react.split.workflow_regions` | React 页面编排与可重用功能组件、数据/API 模块、格式化器、状态视图和令牌消费样式分离。 | 当工作流有多个区域时页面组件拥有所有获取、表单、表格、模态/抽屉、状态渲染和样式。 |
 
-## Route And Data Boundary
+## 路由和数据边界
 
-The UIX stack decides how the visible page is composed; the repository's React,
-Next.js, router, data, and API references decide how code crosses runtime
-boundaries.
+UIX 技术栈决定可见页面的组合方式；仓库的 React、Next.js、路由器、数据和 API 参考决定代码如何跨越运行时边界。
 
 ```text
 route/layout -> page orchestration -> feature view -> shared primitive
-                           \\-> query/mutation adapter -> state view -> readback
+                           \-> query/mutation adapter -> state view -> readback
 ```
 
-- Keep route/layout responsible for shell and navigation context, page orchestration responsible for task scope, and feature components responsible for visible regions and actions.
-- Keep API clients, query keys, serializers, and mutations in the existing data boundary. Do not fetch from every presentational component.
-- For Next.js, preserve server/client boundaries, hydration determinism, loading/error/not-found behavior, and direct route refresh. For Vite or a client-only app, preserve the accepted router and same-origin/API configuration.
-- Pass stable record identity and explicit action callbacks into row/detail/form components; do not let a stale global selection decide a mutation target.
+- 保持路由/布局负责外壳和导航上下文，页面编排负责任务范围，功能组件负责可见区域和操作。
+- 将 API 客户端、查询键、序列化器和变更保留在现有数据边界中。不要从每个展示组件获取数据。
+- 对于 Next.js，保留服务端/客户端边界、水合确定性、加载/错误/未找到行为和直接路由刷新。对于 Vite 或仅客户端应用，保留已接受的路由器和同源/API 配置。
+- 将稳定的记录标识和显式操作回调传入行/详情/表单组件；不要让过时的全局选择决定变更目标。
 
-## Token And State Ownership
+## 令牌和状态归属
 
 ```tsx
 <FeaturePage>
@@ -105,7 +103,4 @@ route/layout -> page orchestration -> feature view -> shared primitive
 </FeaturePage>
 ```
 
-Use one app-level token source and one state owner per concern. A feature can
-extend semantic tokens when its product surface needs a new role, but it must
-not create component-local color, spacing, or state conventions that conflict
-with the shared system.
+每个关注点使用一个应用级令牌源和一个状态所有者。功能可以在其产品界面需要新角色时扩展语义令牌，但它不得创建与共享系统冲突的组件本地颜色、间距或状态约定。

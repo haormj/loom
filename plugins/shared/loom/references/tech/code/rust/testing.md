@@ -1,39 +1,39 @@
-# Rust Testing Quality
+# Rust 测试质量
 
 ## When To Use
 
-- The task adds or changes Rust tests, doctests, integration tests, async tests, property tests, snapshots, mocks/fakes, benchmarks, fuzz targets, or behavior implemented in Rust.
-- Use this when Rust behavior needs proof through Cargo, clippy, doctests, Miri, benchmarks, or fuzzing.
-- Follow existing crate/workspace test layout unless the task explicitly owns test infrastructure.
+- 任务添加或变更 Rust 测试、文档测试、集成测试、异步测试、属性测试、快照、mock/fake、基准测试、模糊测试目标或 Rust 实现的行为。
+- 当 Rust 行为需要通过 Cargo、clippy、文档测试、Miri、基准测试或模糊测试证明时使用此参考。
+- 遵循现有的 crate/workspace 测试布局，除非任务显式拥有测试基础设施。
 
 ## Implementation Focus
 
-- Put unit tests near private logic when they need module access; use `tests/` integration tests for public API and end-to-end behavior.
-- Add doctests for public APIs where examples should stay compiling and useful. Do not add doctests that require hidden setup unless marked appropriately.
-- Test `Result` and `Option` branches without relying on panics unless panic is the contract.
-- Use async test macros matching the runtime selected by the crate.
-- Prefer small fakes or trait-based test doubles for external boundaries. Use mocking crates only when interaction expectations are important and already accepted by the project.
-- Use property-based tests for parsers, encoders, algorithms, state machines, or invariants with broad input space.
-- Use snapshots only for stable complex output, and keep review/update workflow explicit.
-- Keep benchmarks in `benches/` or the repository benchmark setup. Do not use benchmarks as correctness tests.
-- Use fuzzing for untrusted parsers/protocol inputs when the task touches security or robustness-sensitive parsing.
-- Clean up temp files, spawned tasks, test databases, environment variables, and global state through RAII/test fixtures.
+- 当单元测试需要模块访问时将其放在私有逻辑附近；对公共 API 和端到端行为使用 `tests/` 集成测试。
+- 为公共 API 添加文档测试，使示例保持编译和有用。不要添加需要隐藏设置的文档测试，除非适当标记。
+- 测试 `Result` 和 `Option` 分支而不依赖 panic，除非 panic 是契约。
+- 使用与 crate 选定运行时匹配的异步测试宏。
+- 对外部边界优先使用小型 fake 或基于 trait 的测试替身。仅在交互预期重要且已被项目接受时使用 mock crate。
+- 对解析器、编码器、算法、状态机或具有广泛输入空间的不变式使用基于属性的测试。
+- 仅对稳定的复杂输出使用快照，并保持审查/更新工作流显式。
+- 将基准测试放在 `benches/` 或仓库基准测试设置中。不要将基准测试用作正确性测试。
+- 当任务涉及安全或鲁棒性敏感的解析时，对不可信解析器/协议输入使用模糊测试。
+- 通过 RAII/测试夹具清理临时文件、spawned 任务、测试数据库、环境变量和全局状态。
 
 ## Decision Rules
 
-- Choose unit tests for private/pure logic, integration tests for public crate contracts, doctests for public examples, and runtime tests for async/resource behavior. Do not use a mock to claim provider or executor behavior was verified.
-- Match async test macros and runtime to the crate. Assert cancellation, task completion, channel closure, and cleanup when those are part of the changed contract.
-- Use property tests for parsers, encoders, state machines, or invariants with broad input space; use examples/fixtures for a finite business matrix. Keep generated cases diagnosable.
-- Use snapshots only for stable complex output and keep update review explicit. Keep benchmarks and fuzz targets separate from correctness tests.
-- Report changed branches and risk evidence rather than imposing a universal coverage percentage. Miri, sanitizer, benchmark, or fuzz evidence should be added when the changed risk actually requires it.
+- 对私有/纯逻辑选择单元测试，对公共 crate 契约选择集成测试，对公共示例选择文档测试，对异步/资源行为选择运行时测试。不要使用 mock 来声称提供者或执行器行为已被验证。
+- 将异步测试宏和运行时与 crate 匹配。当取消、任务完成、通道关闭和清理是变更契约的一部分时，断言它们。
+- 对解析器、编码器、状态机或具有广泛输入空间的不变式使用属性测试；对有限业务矩阵使用示例/夹具。保持生成用例可诊断。
+- 仅对稳定的复杂输出使用快照并保持更新审查显式。将基准测试和模糊测试目标与正确性测试分开。
+- 报告变更的分支和风险证据，而非施加统一的覆盖率百分比。当变更风险确实需要时才添加 Miri、sanitizer、基准测试或模糊测试证据。
 
 ## Verification Focus
 
-- Run `cargo test` for the changed crate/workspace or a narrower configured command.
-- Run `cargo fmt --check` or `cargo fmt`, and `cargo clippy --all-targets --all-features` when configured or relevant.
-- Run doctests, async tests, snapshot review, benchmarks, Miri, or fuzzing only when the task touches that risk area or the repository requires it.
-- Confirm tests do not rely on order, global state, or external services unless explicitly marked as integration tests.
+- 为变更的 crate/workspace 或更窄的配置命令运行 `cargo test`。
+- 在配置或相关时运行 `cargo fmt --check` 或 `cargo fmt`，以及 `cargo clippy --all-targets --all-features`。
+- 仅当任务涉及该风险区域或仓库要求时才运行文档测试、异步测试、快照审查、基准测试、Miri 或模糊测试。
+- 确认测试不依赖顺序、全局状态或外部服务，除非显式标记为集成测试。
 
 ## Evidence Focus
 
-- In the evidence summary, name the behavior verified and the Cargo commands run.
+- 在证据总结中，说明已验证的行为和运行的 Cargo 命令。

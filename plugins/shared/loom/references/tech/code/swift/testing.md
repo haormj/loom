@@ -1,40 +1,40 @@
-# Swift Testing Quality
+# Swift 测试质量
 
-This file applies Swift testing guidance to task-owned changes.
+本文件将 Swift 测试指导应用于任务拥有的变更。
 
 ## When To Use
 
-- The task changes Swift behavior, view models, networking, persistence, async flows, actors, SwiftUI surfaces, package modules, or test files.
-- Use this when XCTest, Swift Testing, UI tests, snapshot tests, performance tests, async tests, or test doubles are the right proof.
-- If no Swift behavior is touched, do not add Swift tests just because this reference is selected.
+- 任务变更了 Swift 行为、view model、网络、持久化、异步流程、actor、SwiftUI 表面、包模块或测试文件。
+- 当 XCTest、Swift Testing、UI 测试、快照测试、性能测试、异步测试或测试替身是正确的证明时使用此参考。
+- 如果未触及 Swift 行为，不要仅因为此参考被选中就添加 Swift 测试。
 
 ## Implementation Focus
 
-- Follow the repository's test framework and target layout: XCTest, Swift Testing, Xcode UI tests, package tests, snapshot library, naming, helpers, and fixtures.
-- Use dependency injection through protocols, closures, clocks, URL protocols, storage adapters, or fakes to make behavior testable without real networks or device state.
-- Test async code directly with async tests. Avoid arbitrary sleeps; use expectations, test clocks, streams, or timeout helpers that make completion deterministic.
-- For actors and concurrent code, test concurrent access, cancellation, and failure paths, not just single-threaded success.
-- Use UI tests for critical user flows and interaction contracts; use snapshot tests only when the repository already has stable snapshot tooling.
-- Use performance tests for owned performance work and keep metrics focused on the changed hot path.
-- Keep tests independent. Reset shared stores, keychain/user defaults, files, caches, and app state between tests using the repository's helpers.
-- Name tests around behavior and condition, not implementation details. One test can contain multiple assertions when they prove one behavior.
+- 遵循仓库的测试框架和目标布局：XCTest、Swift Testing、Xcode UI 测试、包测试、快照库、命名、辅助和夹具。
+- 通过 protocol、闭包、时钟、URL protocol、存储适配器或 fake 使用依赖注入，使行为可测试而无需真实网络或设备状态。
+- 直接用异步测试测试异步代码。避免任意 sleep；使用期望、测试时钟、流或超时辅助使完成确定性。
+- 对于 actor 和并发代码，测试并发访问、取消和失败路径，而非仅单线程成功。
+- 对关键用户流程和交互契约使用 UI 测试；仅当仓库已有稳定快照工具时才使用快照测试。
+- 为拥有的性能工作使用性能测试并保持指标聚焦于变更的热路径。
+- 保持测试独立。使用仓库的辅助在测试之间重置共享存储、keychain/用户默认值、文件、缓存和应用状态。
+- 围绕行为和条件命名测试，而非实现细节。当一个测试证明一个行为时可以包含多个断言。
 
 ## Decision Rules
 
-- Select the narrowest proof: XCTest/Swift Testing for pure logic, async/actor tests for concurrency, UI tests for critical interactions, and performance tests for an owned hot path.
-- Inject protocols, URL protocols, clocks, storage adapters, and fakes at boundaries so tests do not depend on real networks, device state, keychain, user defaults, or global stores.
-- Test async success, failure, cancellation, timeout, actor isolation, and stream termination without arbitrary sleeps. Use expectations, test clocks, streams, or deterministic timeout helpers.
-- Keep UI assertions on user-visible behavior and include error/empty/disabled states when they exist. Snapshot tests are supplementary unless the repository treats them as an established contract.
-- Reset files, caches, stores, user defaults, keychain, and app state between tests. Name tests after behavior and condition rather than implementation details.
-- Report changed-branch and platform evidence instead of imposing a universal coverage percentage; record simulator/device limitations when they prevent the required test.
+- 选择最窄证明：纯逻辑用 XCTest/Swift Testing，并发用异步/actor 测试，关键交互用 UI 测试，拥有的热路径用性能测试。
+- 在边界注入 protocol、URL protocol、时钟、存储适配器和 fake，使测试不依赖真实网络、设备状态、keychain、用户默认值或全局存储。
+- 测试异步成功、失败、取消、超时、actor 隔离和流终止，无任意 sleep。使用期望、测试时钟、流或确定性超时辅助。
+- 保持 UI 断言在用户可见行为上，并在存在时包含错误/空/禁用状态。快照测试是补充性的，除非仓库将它们视为已建立的契约。
+- 在测试之间重置文件、缓存、存储、用户默认值、keychain 和应用状态。按行为和条件而非实现细节命名测试。
+- 报告变更分支和平台证据而非施加通用覆盖率百分比；当模拟器/设备限制阻止所需测试时记录。
 
 ## Verification Focus
 
-- Run the targeted Swift test command and platform build required for the changed target.
-- Cover success, invalid input, error mapping, cancellation/timeout, empty state, boundary values, and platform-specific branches touched by the task.
-- For UI changes, verify at least the changed interaction path plus one error/empty/disabled state when those states exist.
-- Record platform or simulator limitations if the local environment cannot run the required UI/device test.
+- 运行变更目标所需的定向 Swift 测试命令和平台构建。
+- 覆盖任务涉及的成功、无效输入、错误映射、取消/超时、空状态、边界值和平台特定分支。
+- 对于 UI 变更，验证至少变更的交互路径加上一个错误/空/禁用状态（当这些状态存在时）。
+- 如果本地环境无法运行所需的 UI/设备测试则记录平台或模拟器限制。
 
 ## Evidence Focus
 
-- In the evidence summary, name the proof type: XCTest/Swift Testing unit test, async test, actor concurrency test, UI test, snapshot test, performance metric, test double, or platform limitation.
+- 在证据总结中，说明证明类型：XCTest/Swift Testing 单元测试、异步测试、actor 并发测试、UI 测试、快照测试、性能指标、测试替身或平台限制。

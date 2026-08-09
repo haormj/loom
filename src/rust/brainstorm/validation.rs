@@ -22,7 +22,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
             repair_issues: vec![issue(
                 "BRAINSTORM_CANDIDATE_ROOT_INVALID",
                 "candidate",
-                "Brainstorm candidate JSON root must be an object.",
+                "Brainstorm candidate JSON 根必须是对象。",
             )],
         };
     };
@@ -30,7 +30,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
         return GateCheck {
             gate: Some(missing_block_gate(
                 ClarificationBlockName::PhaseScope,
-                vec!["clarificationProgress is missing. Continue the Brainstorm conversation before submit.".to_string()],
+                vec!["clarificationProgress 缺失。在提交前继续 Brainstorm 对话。".to_string()],
             )),
             repair_issues: vec![],
         };
@@ -49,7 +49,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                     "CLARIFICATION_PROGRESS_LEGACY_FIELDS",
                     "clarificationProgress",
                     &format!(
-                        "clarificationProgress must use confirmedBlocks/skippedBlocks/finalSummaryConfirmed. Remove unsupported fields: {}.",
+                        "clarificationProgress 必须使用 confirmedBlocks/skippedBlocks/finalSummaryConfirmed。移除不支持的字段：{}。",
                         present_forbidden.join(", ")
                     ),
                 )],
@@ -65,7 +65,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                 repair_issues: vec![issue(
                     "CLARIFICATION_PROGRESS_CONFIRMED_BLOCKS_REQUIRED",
                     "clarificationProgress.confirmedBlocks",
-                    "clarificationProgress.confirmedBlocks must list each user-confirmed block when finalSummaryConfirmed is true.",
+                    "当 finalSummaryConfirmed 为 true 时，clarificationProgress.confirmedBlocks 必须列出每个用户已确认的块。",
                 )],
             };
         }
@@ -123,9 +123,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                         final_summary_required_before_write: true,
                         user_visible_confirmation_required: true,
                     },
-                    issues: vec![format!(
-                        "{block:?} cannot be skipped. It must be user-confirmed before submit."
-                    )],
+                    issues: vec![format!("{block:?} 不能被跳过。它必须在提交前由用户确认。")],
                 }),
                 repair_issues: vec![],
             };
@@ -153,7 +151,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                     final_summary_required_before_write: true,
                     user_visible_confirmation_required: true,
                 },
-                issues: vec![format!("{block:?} is not confirmed yet.")],
+                issues: vec![format!("{block:?} 尚未确认。")],
             }),
             repair_issues: vec![],
         };
@@ -173,7 +171,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                     final_summary_required_before_write: true,
                     user_visible_confirmation_required: true,
                 },
-                issues: vec!["final_summary is not confirmed yet.".to_string()],
+                issues: vec!["final_summary 尚未确认。".to_string()],
             }),
             repair_issues: vec![],
         };
@@ -213,7 +211,8 @@ pub fn gate_check(raw: &Value) -> GateCheck {
                     user_visible_confirmation_required: true,
                 },
                 issues: vec![
-                    "userConfirmation.confirmationBasis must prove the summary was shown and confirmed after presentation.".to_string(),
+                    "userConfirmation.confirmationBasis 必须证明摘要在呈现后已被展示并确认。"
+                        .to_string(),
                 ],
             }),
             repair_issues: vec![],
@@ -244,7 +243,7 @@ pub fn validate_candidate(
             issues.push(issue(
                 "PHASE_PLAN_SCOPE_REF_INVALID",
                 "phasePlan.current.scopeRefs",
-                "phasePlan.current.scopeRefs must reference scope.included ids.",
+                "phasePlan.current.scopeRefs 必须引用 scope.included 中的 ids。",
             ));
             break;
         }
@@ -259,7 +258,7 @@ pub fn validate_candidate(
             issues.push(issue(
                 "PHASE_PLAN_ACCEPTANCE_REF_INVALID",
                 "phasePlan.current.acceptanceRefs",
-                "phasePlan.current.acceptanceRefs must reference acceptance ids.",
+                "phasePlan.current.acceptanceRefs 必须引用 acceptance 中的 ids。",
             ));
             break;
         }
@@ -273,7 +272,7 @@ pub fn validate_candidate(
         issues.push(issue(
             "CURRENT_PHASE_MISSING",
             "roadmap.phases",
-            "roadmap.phases must contain roadmap.currentPhaseId.",
+            "roadmap.phases 必须包含 roadmap.currentPhaseId。",
         ));
     }
     if !candidate
@@ -285,7 +284,7 @@ pub fn validate_candidate(
         issues.push(issue(
             "ACTIVE_PHASE_MISSING",
             "roadmap.phases",
-            "roadmap.phases must include the active phase.",
+            "roadmap.phases 必须包含当前活跃阶段。",
         ));
     }
     if !candidate.scope.deferred.is_empty() {
@@ -296,7 +295,7 @@ pub fn validate_candidate(
             issues.push(issue(
                 "NEXT_PHASE_PREVIEW_REQUIRED",
                 "phasePlan.nextPhasePreview",
-                "Deferred scope requires nextPhasePreview.kind=candidate.",
+                "延后的 scope 要求 nextPhasePreview.kind=candidate。",
             ));
         }
     }
@@ -313,14 +312,14 @@ pub fn validate_candidate(
             issues.push(issue(
                 "FRONTEND_TARGET_MISSING",
                 "frontendExperience",
-                "A confirmed frontend_experience block requires frontendExperience.",
+                "已确认的 frontend_experience 块要求 frontendExperience。",
             ));
         }
         if !frontend_confirmed && !frontend_skipped {
             issues.push(issue(
                 "FRONTEND_BLOCK_UNRESOLVED",
                 "clarificationProgress",
-                "frontend_experience must be confirmed or explicitly skipped.",
+                "frontend_experience 必须被确认或明确跳过。",
             ));
         }
     }
@@ -328,14 +327,14 @@ pub fn validate_candidate(
         issues.push(issue(
             "CONCEPT_GROUNDING_MISSING",
             "conceptGrounding",
-            "conceptGrounding is required after concept_grounding confirmation.",
+            "concept_grounding 确认后需要 conceptGrounding。",
         ));
     }
     if candidate.concept_confirmation.is_none() {
         issues.push(issue(
             "CONCEPT_CONFIRMATION_MISSING",
             "conceptConfirmation",
-            "conceptConfirmation is required after concept_grounding confirmation.",
+            "concept_grounding 确认后需要 conceptConfirmation。",
         ));
     }
     validate_glossary_updates(candidate, &mut issues);
@@ -357,7 +356,7 @@ fn validate_security_requirement(
         issues.push(issue(
             "SECURITY_REQUIREMENT_RATIONALE_REQUIRED",
             "securityRequirement.rationale",
-            "securityRequirement must explain why authentication is or is not applicable to the confirmed scope.",
+            "securityRequirement 必须说明为何身份验证对已确认的范围适用或不适用。",
         ));
     }
     if matches!(
@@ -368,7 +367,7 @@ fn validate_security_requirement(
         issues.push(issue(
             "SECURITY_REQUIREMENT_TRUST_MODEL_INVALID",
             "securityRequirement.clientTrustModels",
-            "A not_applicable security requirement must not declare a client trust model.",
+            "not_applicable 的 security requirement 不得声明 client trust model。",
         ));
     }
     if !matches!(
@@ -379,7 +378,7 @@ fn validate_security_requirement(
         issues.push(issue(
             "SECURITY_REQUIREMENT_TRUST_MODEL_REQUIRED",
             "securityRequirement.clientTrustModels",
-            "A protected or deferred security requirement must identify the client trust model that needs protection.",
+            "受保护或延后的 security requirement 必须标识需要保护的 client trust model。",
         ));
     }
     for source_ref in &requirement.source_refs {
@@ -406,14 +405,14 @@ fn validate_glossary_updates(
             issues.push(issue(
                 "GLOSSARY_UPDATE_REASON_REQUIRED",
                 &format!("{path}.reason"),
-                "A glossary update must explain why the delivery glossary changes.",
+                "glossary update 必须说明交付术语表为何变更。",
             ));
         }
         match update.operation {
             GlossaryUpdateOperation::Add if update.concept.is_none() => issues.push(issue(
                 "GLOSSARY_UPDATE_CONCEPT_REQUIRED",
                 &format!("{path}.concept"),
-                "An add glossary update requires a concept object using the phase concept shape.",
+                "add glossary update 需要一个使用 phase concept 形状的 concept 对象。",
             )),
             GlossaryUpdateOperation::Replace
                 if update
@@ -425,7 +424,7 @@ fn validate_glossary_updates(
                 issues.push(issue(
                     "GLOSSARY_UPDATE_REPLACE_PAYLOAD_REQUIRED",
                     &path,
-                    "A replace glossary update requires a non-empty conceptRef and a replacement concept object.",
+                    "replace glossary update 需要非空的 conceptRef 和一个替换 concept 对象。",
                 ));
             }
             GlossaryUpdateOperation::Remove
@@ -437,13 +436,13 @@ fn validate_glossary_updates(
                 issues.push(issue(
                     "GLOSSARY_UPDATE_CONCEPT_REF_REQUIRED",
                     &format!("{path}.conceptRef"),
-                    "A remove glossary update requires a non-empty conceptRef.",
+                    "remove glossary update 需要非空的 conceptRef。",
                 ));
             }
             GlossaryUpdateOperation::Remove if update.concept.is_some() => issues.push(issue(
                 "GLOSSARY_UPDATE_REMOVE_CONCEPT_FORBIDDEN",
                 &format!("{path}.concept"),
-                "A remove glossary update must not include a replacement concept.",
+                "remove glossary update 不得包含替换 concept。",
             )),
             _ => {}
         }
@@ -505,7 +504,7 @@ fn validate_nested_source_refs(
                         issues.push(issue(
                             "CONCEPT_ACCEPTANCE_REF_INVALID",
                             "conceptGrounding.deliveryConceptGlossary",
-                            "acceptanceRefs must not be empty.",
+                            "acceptanceRefs 不得为空。",
                         ));
                         break;
                     }
@@ -518,7 +517,7 @@ fn validate_nested_source_refs(
                     issues.push(issue(
                         "CONCEPT_ACCEPTANCE_REF_INVALID",
                         "conceptGrounding.phaseConceptGrounding",
-                        "acceptanceRefs must not be empty.",
+                        "acceptanceRefs 不得为空。",
                     ));
                     break;
                 }
@@ -578,7 +577,7 @@ fn validate_source_ref(
         issues.push(issue(
             "KNOWLEDGE_REF_NOT_ALLOWED",
             field_path,
-            "Knowledge source ids, chunk ids, inspect output, and knowledge paths must not enter Brainstorm formal sources.",
+            "Knowledge source ids、chunk ids、inspect output 和 knowledge paths 不得进入 Brainstorm 的正式 sources。",
         ));
         return;
     }
@@ -586,7 +585,7 @@ fn validate_source_ref(
         issues.push(issue(
             "SOURCE_REF_INVALID",
             field_path,
-            "sourceRefs must reference requirement source item ids from requirementContext.sourceItems.",
+            "sourceRefs 必须引用 requirementContext.sourceItems 中的 requirement source item ids。",
         ));
     }
 }

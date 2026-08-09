@@ -1,77 +1,77 @@
-# React Native Collection Performance
+# React Native 集合性能
 
-Apply this reference when the task explicitly owns measurable mobile collection performance, virtualization, large feeds/tables, image-heavy rows, refresh/pagination responsiveness, or collection memory pressure.
+当任务显式拥有可测量的移动集合性能、虚拟化、大型 feed/表格、图像密集行、刷新/分页响应性或集合内存压力时应用此参考。
 
-## Choose The Collection Primitive
+## 选择集合原语
 
-Use `FlatList` for dynamic flat collections, `SectionList` for grouped/sticky sections, and an established high-performance list such as FlashList only when the repository already supports it or measurement justifies adoption.
+对动态平面集合使用 `FlatList`，对分组/粘性 section 使用 `SectionList`，仅在仓库已支持或测量证明采用时使用已建立的高性能列表如 FlashList。
 
-A `ScrollView` with mapped rows is acceptable for a small bounded collection whose full content must render together. Do not replace it mechanically; choose according to expected size, nested scrolling, accessibility, and interaction needs.
+对于必须一起渲染完整内容的小型有界集合，带映射行的 `ScrollView` 是可接受的。不要机械替换；按预期大小、嵌套滚动、可访问性和交互需求选择。
 
-Name the representative item count, row complexity, update frequency, image size, and target interaction before tuning.
+在调优之前命名代表性条目数、行复杂度、更新频率、图像大小和目标交互。
 
-## Identity And Row Commands
+## 标识与行命令
 
-Use stable domain identity in `keyExtractor`. Index keys are unsafe for inserted, removed, sorted, filtered, paginated, refreshed, or optimistic records.
+在 `keyExtractor` 中使用稳定领域标识。索引键对插入、删除、排序、筛选、分页、刷新或乐观记录不安全。
 
-Bind press/swipe/menu/selection actions to the rendered item's stable ID or immutable snapshot. Do not read a mutable selected record after async confirmation.
+将按压/滑动/菜单/选择操作绑定到渲染条目的稳定 ID 或不可变快照。不要在异步确认后读取可变选定记录。
 
-Preserve row-local draft/focus/expanded state across unrelated updates; if state should reset when identity changes, make that key transition explicit.
+在不相关更新之间保留行本地草稿/焦点/展开状态；如果状态应在标识变更时重置，使该键转换显式。
 
-## Render Boundaries
+## 渲染边界
 
-Memoize a non-trivial row only after establishing parent churn and stable props. A memoized row still rerenders if callbacks, style objects, selectors, or item objects change each time.
+仅在建立父抖动和稳定 prop 后记忆化非平凡行。如果回调、样式对象、选择器或条目对象每次变更，记忆化的行仍会重新渲染。
 
-Stabilize `renderItem`, handlers, headers/footers, separators, and `extraData` when they participate in the measured boundary. Do not hide behavior-affecting state from `extraData` or a comparator to reduce render counts.
+当参与已测量边界时稳定 `renderItem`、处理器、头/尾、分隔器和 `extraData`。不要从 `extraData` 或比较器中隐藏影响行为的状态以减少渲染计数。
 
-Select narrow state/query slices per row and avoid each row subscribing to the entire collection/store.
+每行选择窄状态/查询 slice，避免每行订阅整个集合/store。
 
-## Measurement And Windowing
+## 测量与窗口化
 
-Use `getItemLayout` only for truly fixed dimensions including separators. Incorrect estimates break scroll-to-index, focus, sticky headers, and visible-position restoration.
+仅对包括分隔器的真正固定尺寸使用 `getItemLayout`。不正确的估计破坏 scroll-to-index、焦点、粘性头和可见位置恢复。
 
-Tune initial render, batch size, window size, clipping, and estimated item size against actual devices and rows. Defaults are often safer than copied aggressive values; Android/iOS clipping and memory behavior differ.
+针对实际设备和行调优初始渲染、批次大小、窗口大小、裁剪和估计条目尺寸。默认值通常比复制的激进值更安全；Android/iOS 裁剪和内存行为不同。
 
-For variable rows, use the list library's measurement/override mechanisms and stable item types instead of pretending all rows share one height.
+对于可变行，使用列表库的测量/override 机制和稳定条目类型，而非假装所有行共享一个高度。
 
-## Refresh, Pagination, And Search
+## 刷新、分页与搜索
 
-Separate initial loading, pull-to-refresh, loading-more, empty, end-of-list, partial/error, offline, and retry state. Refresh should not erase usable content unless the product contract requires it.
+分离初始加载、下拉刷新、加载更多、空、列表结束、部分/错误、离线和重试状态。刷新不应擦除可用内容，除非产品契约要求。
 
-Guard duplicate pagination with request/cursor ownership, not only a stale `loading` closure. Use server cursors/tokens when provided and reject responses for superseded filters/accounts.
+用请求/游标所有权保护重复分页，不仅是过期的 `loading` 闭包。在提供时使用服务端游标/令牌并拒绝被取代筛选/账户的响应。
 
-Deduplicate by stable identity, preserve ordering rules, and define how refresh reconciles optimistic/local rows. `onEndReached` may fire more than once and during layout changes.
+按稳定标识去重，保留排序规则，定义刷新如何协调乐观/本地行。`onEndReached` 可能在布局变更期间多次触发。
 
-## Images And Memory
+## 图像与内存
 
-Request/display appropriately sized images, reserve dimensions, provide failure fallback, and use the repository caching component. Avoid decoding full-resolution images in many rows.
+请求/显示适当大小的图像，预留尺寸，提供失败回退，使用仓库缓存组件。避免在多行中解码全分辨率图像。
 
-Dispose row-owned resources and avoid retaining large item histories, closures, or decoded assets after data changes.
+释放行拥有的资源，避免在数据变更后保留大型条目历史、闭包或解码资源。
 
-## Accessibility And Interaction
+## 可访问性与交互
 
-Give rows and actions accessible names, roles, states, and adequate touch targets. Avoid nesting multiple ambiguous pressables without clear focus/activation behavior.
+为行和操作提供可访问名称、角色、状态和足够触摸目标。避免嵌套多个没有清晰焦点/激活行为的模糊可按压。
 
-Preserve keyboard/screen-reader focus when rows recycle, filters change, or pagination appends. Announce refresh/error/end state where product behavior requires it.
+在行回收、筛选变更或分页追加时保留键盘/屏幕阅读器焦点。在产品行为需要时宣告刷新/错误/结束状态。
 
 ## Verification
 
-- Profile a production-like build with representative data on the affected platform/device class.
-- Verify keys and exact action targets across sort, filter, refresh, pagination, optimistic updates, and row recycling.
-- Exercise initial/refresh/more/empty/end/error/offline states and duplicate `onEndReached` calls.
-- Test scroll-to-index/restoration and dynamic dimensions when layout optimization is used.
-- Check memory/image behavior, focus, touch targets, and accessible row/action semantics.
+- 在受影响平台/设备类上用代表性数据性能分析类生产构建。
+- 在排序、筛选、刷新、分页、乐观更新和行回收之间验证键和精确操作目标。
+- 练习初始/刷新/更多/空/结束/错误/离线状态和重复 `onEndReached` 调用。
+- 在使用布局优化时测试 scroll-to-index/恢复和动态尺寸。
+- 检查内存/图像行为、焦点、触摸目标和可访问行/操作语义。
 
-## Delivery Evidence
+## 交付证据
 
-Report the workload, primitive, identity strategy, measured bottleneck, tuning decision, before/after observation, and correctness assertions. `memo`/`useCallback` presence or a smooth tiny fixture is not performance evidence.
+报告工作负载、原语、标识策略、已测量瓶颈、调优决策、前后观察和正确性断言。`memo`/`useCallback` 存在或流畅的小型 fixture 不是性能证据。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- FlatList required for every small bounded collection.
-- Every row memoized and every callback wrapped without measurement.
-- Index keys or selected global state used for row commands.
-- Fixed `getItemLayout` copied for variable rows.
-- Aggressive window/clipping values copied across platforms.
-- Pagination guarded only by a stale local boolean.
-- Performance gains claimed from development mode or unrealistic data.
+- 为每个小型有界集合要求 FlatList。
+- 在无测量的情况下每行记忆化和每个回调包装。
+- 行命令使用索引键或选定全局状态。
+- 为可变行复制固定 `getItemLayout`。
+- 跨平台复制的激进窗口/裁剪值。
+- 仅由过期本地布尔保护的分页。
+- 从开发模式或不现实数据声称的性能收益。

@@ -1,79 +1,79 @@
-# Non-Functional Requirements In Loom Architecture
+# Loom 架构中的非功能需求
 
-Use this reference when writing architecture NFRs or assessing whether a design gives implementation a verifiable quality target.
+当编写架构 NFR 或评估设计是否给实现提供可验证的质量目标时，使用本引用。
 
-NFRs in Loom must be concrete enough to guide implementation and verification. They are not slogans.
+Loom 中的 NFR 必须足够具体以指导实现和验证。它们不是口号。
 
-## Supported Categories
+## 支持的类别
 
-| Category | Good Target Shape |
+| 类别 | 良好目标形态 |
 |---|---|
-| performance | Bounded API/list/query latency, pagination, payload size, build/start expectation. |
-| scalability | Bounded growth behavior for users, records, background work, queue depth, storage, or read model size. |
-| availability | Runtime surface health, graceful degradation, dependency outage behavior, recovery target, or maintenance behavior. |
-| reliability | Recovery behavior, idempotency, transaction safety, retry limits, data loss boundary. |
-| security | Authentication/authorization boundary, sensitive field handling, error disclosure, audit needs. |
-| maintainability | Module ownership, migration readability, field mapping alignment, testable seams. |
-| observability | Logs/events/errors/probes that prove critical transitions or failures. |
-| cost | Avoiding unnecessary services, storage duplication, or runtime complexity in current phase. |
+| performance | 有界 API/列表/查询延迟、分页、载荷大小、构建/启动期望。 |
+| scalability | 用户、记录、后台工作、队列深度、存储或读取模型大小的有界增长行为。 |
+| availability | 运行时面健康、优雅降级、依赖中断行为、恢复目标或维护行为。 |
+| reliability | 恢复行为、幂等性、事务安全、重试限制、数据丢失边界。 |
+| security | 认证/授权边界、敏感字段处理、错误披露、审计需求。 |
+| maintainability | 模块所有权、迁移可读性、字段映射对齐、可测试接缝。 |
+| observability | 证明关键转换或失败的日志/事件/错误/探针。 |
+| cost | 在当前阶段避免不必要的服务、存储重复或运行时复杂性。 |
 
-## Writing Rules
+## 编写规则
 
-Each NFR must include:
+每个 NFR 必须包含：
 
-- stable NFR id
-- category
-- target
-- rationale
-- architecture refs to decisions and risks when applicable
-- verification strategy
+- 稳定的 NFR id
+- 类别
+- 目标
+- 理由
+- 适用时指向决策和风险的架构引用
+- 验证策略
 
-Each target also needs measurement context:
+每个目标还需要度量上下文：
 
-- **source**: confirmed requirement or a derived minimum needed for current-phase product quality
-- **source refs**: current-phase scope, acceptance, or requirement-detail evidence; a confirmed requirement must cite acceptance or requirement-detail evidence rather than only a broad scope
-- **indicator**: observable value, state, or behavior used to evaluate the target
-- **workload or condition**: dataset, request shape, dependency failure, lifecycle event, or operating condition under which it applies
-- **evaluation boundary**: test, static analysis, review, local runtime, or another concrete boundary that can produce evidence
-- **owner artifacts**: modules and interfaces whose implementation can satisfy or violate the target
+- **来源**：确认的需求或当前阶段产品质量所需的派生最低要求
+- **来源引用**：当前阶段范围、验收或需求详情证据；确认的需求必须引用验收或需求详情证据，而非仅广泛范围
+- **指标**：用于评估目标的可观测值、状态或行为
+- **工作负载或条件**：适用时的数据集、请求形态、依赖失败、生命周期事件或运行条件
+- **评估边界**：能产生证据的测试、静态分析、评审、本地运行时或其他具体边界
+- **拥有工件**：实现可满足或违反目标的模块和接口
 
-Good NFR:
+良好 NFR：
 
-- category: performance
-- target: list endpoints support bounded pagination and do not require loading all records
-- rationale: the staff list page is a repeated operational workflow
-- related decisions/risks: pagination decision and unbounded-list risk records
-- verification strategy: task verification covers paginated query parameters and result metadata
+- 类别：performance
+- 目标：列表端点支持有界分页，不要求加载所有记录
+- 理由：员工列表页是重复的操作工作流
+- 相关决策/风险：分页决策和无界列表风险记录
+- 验证策略：任务验证覆盖分页查询参数和结果元数据
 
-Scalability NFRs should describe the current phase's growth boundary, not a generic future scale claim:
+可扩展性 NFR 应描述当前阶段的增长边界，而非通用的未来规模声明：
 
-- target: list reads remain bounded by pagination and indexed filters as records grow beyond manual review size
-- verification strategy: task verification covers bounded query parameters and the declared default/max page size
+- 目标：当记录增长超过人工评审大小时，列表读取仍受分页和索引过滤器的有界约束
+- 验证策略：任务验证覆盖有界查询参数和声明的默认/最大页大小
 
-Availability NFRs should describe concrete runtime or dependency behavior:
+可用性 NFR 应描述具体的运行时或依赖行为：
 
-- target: when a downstream approval service is unavailable, the API returns an actionable unavailable response instead of silent success
-- rationale: operators need to distinguish retryable outage from business rejection
-- related risk: approval dependency outage
-- verification strategy: task verification covers the unavailable dependency path or documents a known gap
+- 目标：当下游审批服务不可用时，API 返回可操作的不可用响应而非静默成功
+- 理由：操作人员需要区分可重试中断和业务拒绝
+- 相关风险：审批依赖中断
+- 验证策略：任务验证覆盖不可用依赖路径或记录已知差距
 
-Weak NFR: "The system should be fast."
+弱 NFR："系统应该快。"
 
-Do not write a numeric latency, throughput, availability, RPO, RTO, or cost target unless it is confirmed or can be justified from a concrete current-phase operating boundary. A derived minimum may specify bounded behavior without inventing a number, such as a maximum accepted page size or deterministic unavailable response.
+不要编写数值延迟、吞吐量、可用性、RPO、RTO 或成本目标，除非它已确认或可从具体当前阶段运行边界论证。派生最低要求可以在不编造数字的情况下指定有界行为，如最大接受页大小或确定性不可用响应。
 
-## Missing User NFRs
+## 缺失用户 NFR
 
-When the user did not state explicit NFRs:
+当用户未声明明确 NFR 时：
 
-- Do not block the flow.
-- Infer only minimum product-quality NFRs needed for current-phase delivery.
-- Record them as architecture assumptions with verification strategy.
-- Keep targets modest and implementation-verifiable.
-- Do not invent cloud-scale targets, multi-region availability, or high-throughput assumptions when the current phase is local/internal and no requirement supports them.
+- 不要阻塞流程。
+- 仅推断当前阶段交付所需的最低产品质量 NFR。
+- 将它们记录为带验证策略的架构假设。
+- 保持目标适度且实现可验证。
+- 当当前阶段是本地/内部且无需求支持时，不要编造云规模目标、多区域可用性或高吞吐量假设。
 
-## Anti-Patterns
+## 反模式
 
-- Writing NFRs with no verification strategy.
-- Turning every best practice into a mandatory NFR.
-- Creating cloud-scale NFRs for a local-first or internal product phase.
-- Mixing UI quality rules into architecture NFRs; use UIX contract for UI-specific quality.
+- 编写没有验证策略的 NFR。
+- 将每个最佳实践变为强制性 NFR。
+- 为本地优先或内部产品阶段创建云规模 NFR。
+- 将 UI 质量规则混入架构 NFR；UI 特定质量使用 UIX 契约。

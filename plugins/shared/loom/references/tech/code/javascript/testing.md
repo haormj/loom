@@ -1,31 +1,31 @@
-# JavaScript Testing Quality
+# JavaScript 测试质量
 
 ## When To Use
 
-- The task adds or changes JavaScript tests, fixtures, test setup, mocks, runtime smoke checks, module import checks, or behavior implemented in plain JavaScript.
-- Use this when JavaScript behavior needs proof across Node, browser, async, module, or side-effect boundaries.
-- Follow the repository's existing runner and style unless the task explicitly owns test infrastructure.
+- 任务添加或变更 JavaScript 测试、夹具、测试设置、mock、运行时冒烟检查、模块导入检查或纯 JavaScript 实现的行为。
+- 当 JavaScript 行为需要跨越 Node、浏览器、异步、模块或副作用边界证明时使用此参考。
+- 遵循仓库现有的运行器和风格，除非任务显式拥有测试基础设施。
 
 ## Implementation Focus
 
-- Test externally visible behavior through stable module exports, CLI commands, HTTP handlers, browser interactions, or runtime adapters. Avoid tests that only prove private implementation steps.
-- Await or return every promise under test. Do not mix callback-style `done` with `async` tests unless the runner requires it for a legacy API.
-- Cover async success, rejection, timeout, cancellation, and cleanup paths when those flows changed.
-- Use fake timers only when timer behavior is the subject of the test. Advance timers deliberately, flush pending microtasks where needed, and restore real timers.
-- Match the test environment to the code: Node for filesystem/process/server code, jsdom or browser runner for DOM/storage APIs, and bundler/framework runner for browser modules.
-- Mock network, filesystem, time, random IDs, and process boundaries at stable adapters. Do not mock the function whose business logic is being verified.
-- Add module import smoke tests when changing ESM/CommonJS boundaries, dynamic imports, package exports, or CLI entry modules.
-- Avoid snapshot-only coverage for interactive or business behavior. Assertions should name the observable result, error, side effect, or state transition.
-- Keep fixtures realistic enough to catch validation and defaulting bugs; malformed input fixtures are required when parser or boundary code changed.
-- Treat coverage as risk evidence rather than a universal percentage. Prioritize changed contracts, failure/cleanup paths, concurrency boundaries, and regressions; do not weaken assertions or add artificial tests only to reach a fixed number.
+- 通过稳定的模块导出、CLI 命令、HTTP 处理器、浏览器交互或运行时适配器测试外部可见行为。避免仅证明私有实现步骤的测试。
+- 等待或返回每个被测 promise。不要将回调风格的 `done` 与 `async` 测试混用，除非运行器因遗留 API 需要它。
+- 当异步成功、拒绝、超时、取消和清理流程变更时覆盖它们。
+- 仅当定时器行为是测试主题时使用假定时器。有意推进定时器，在需要时刷新待处理的微任务，并恢复真实定时器。
+- 将测试环境与代码匹配：Node 用于文件系统/进程/服务器代码，jsdom 或浏览器运行器用于 DOM/存储 API，bundler/框架运行器用于浏览器模块。
+- 在稳定适配器处 mock 网络、文件系统、时间、随机 ID 和进程边界。不要 mock 正在验证其业务逻辑的函数。
+- 当变更 ESM/CommonJS 边界、动态导入、包导出或 CLI 入口模块时添加模块导入冒烟测试。
+- 避免对交互或业务行为仅使用快照覆盖。断言应命名可观察的结果、错误、副作用或状态转换。
+- 保持夹具足够真实以捕获验证和默认值 bug；当解析器或边界代码变更时需要格式错误的输入夹具。
+- 将覆盖率视为风险证据而非统一百分比。优先变更的契约、失败/清理路径、并发边界和回归；不要仅为达到固定数字而削弱断言或添加人为测试。
 
 ## Verification Focus
 
-- Run the configured JavaScript test command and the lint/build command that covers changed files.
-- Confirm no unhandled promise rejection, leaked timer, open handle, or test-environment mismatch appears in test output.
-- For browser tests, include the relevant user interaction or runtime API path; for Node tests, include configuration and filesystem/process error paths when touched.
-- Record unsupported runtime or browser gaps only when they are outside the task boundary or blocked by repository infrastructure.
+- 运行配置的 JavaScript 测试命令和覆盖变更文件的 lint/build 命令。
+- 确认测试输出中没有未处理的 promise 拒绝、泄漏的定时器、打开的句柄或测试环境不匹配。
+- 对于浏览器测试，包含相关的用户交互或运行时 API 路径；对于 Node 测试，在涉及时包含配置和文件系统/进程错误路径。
+- 仅当不受支持的运行时或浏览器缺口在任务边界之外或被仓库基础设施阻塞时才记录它们。
 
 ## Evidence Focus
 
-- In the evidence summary, name the JavaScript behavior verified and the commands run.
+- 在证据总结中，说明已验证的 JavaScript 行为和运行的命令。

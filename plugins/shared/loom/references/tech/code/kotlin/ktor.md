@@ -1,40 +1,40 @@
-# Kotlin Ktor Server Quality
+# Kotlin Ktor 服务器质量
 
 ## When To Use
 
-- The task changes Ktor routing, plugins, serialization, authentication, CORS, StatusPages, WebSockets, database integration, request validation, or server tests.
-- Use this when HTTP behavior, plugin setup, request lifecycle, or server runtime contracts affect correctness.
-- If Kotlin code is not a Ktor server, use core/coroutine/persistence-related references instead.
+- 任务变更了 Ktor 路由、插件、序列化、认证、CORS、StatusPages、WebSocket、数据库集成、请求验证或服务器测试。
+- 当 HTTP 行为、插件设置、请求生命周期或服务器运行时契约影响正确性时使用此参考。
+- 如果 Kotlin 代码不是 Ktor 服务器，改用核心/协程/持久化相关参考。
 
 ## Implementation Focus
 
-- Keep application setup modular using the repository's existing `configureX` or route module pattern. Do not put all routing, plugin, and service code into `main`.
-- Keep serialization contracts explicit. Use the existing JSON settings and DTO annotations; do not silently enable lenient or unknown-key behavior unless it matches API compatibility needs.
-- Validate path/query parameters and request bodies at the route boundary. Map validation, not found, auth, and business errors into the app's standard response shape.
-- Install `StatusPages` or use the existing error pipeline to prevent raw exceptions from becoming inconsistent responses.
-- Configure authentication from validated configuration. Do not hard-code JWT secrets, issuers, audiences, or token expiry in route code.
-- Scope protected routes with `authenticate` and keep authorization checks in server-side code, not only client logic.
-- Configure CORS for actual allowed origins in production paths. `anyHost` is acceptable only for local/dev profiles that are clearly isolated.
-- Keep database work off the event loop and in the repository/service boundary. Use suspended transaction patterns or dispatcher boundaries according to the selected persistence library.
-- For WebSockets, own session registration/removal, ping/timeout settings, frame size expectations, and cleanup on disconnect.
-- Keep route DTOs separate from persistence rows or domain internals when serialization shape, security, or validation differs.
+- 使用仓库现有的 `configureX` 或路由模块模式保持应用设置模块化。不要将所有路由、插件和服务代码放入 `main`。
+- 保持序列化契约显式。使用现有 JSON 设置和 DTO 注解；不要静默启用宽松或未知键行为，除非匹配 API 兼容性需求。
+- 在路由边界验证路径/查询参数和请求体。将验证、未找到、认证和业务错误映射到应用的标准响应形态。
+- 安装 `StatusPages` 或使用现有错误 pipeline 以防止原始异常变为不一致响应。
+- 从已验证的配置中配置认证。不要在路由代码中硬编码 JWT 密钥、签发者、受众或令牌过期。
+- 用 `authenticate` 限定受保护路由，并将授权检查保留在服务器端代码中，而非仅客户端逻辑。
+- 在生产路径中为实际允许的源配置 CORS。`anyHost` 仅对明确隔离的本地/开发 profile 可接受。
+- 将数据库工作排除在事件循环之外并保留在 repository/服务边界。根据选中的持久化库使用 suspend 事务模式或调度器边界。
+- 对于 WebSocket，拥有会话注册/移除、ping/超时设置、帧大小期望和断开连接时的清理。
+- 当序列化形态、安全或验证不同时将路由 DTO 与持久化行或领域内部分开。
 
 ## Boundary Decisions
 
-- Keep `Application` module setup, plugin installation, route registration, and service construction in the repository's existing module boundaries. A route should translate HTTP input/output, not own database transactions or business policy.
-- Use the selected serialization configuration as an API contract. Do not copy permissive sample settings such as `isLenient` or `ignoreUnknownKeys` into production unless compatibility requirements justify them.
-- Make status codes and error bodies consistent across success, validation, not-found, authentication, and unexpected-error paths. Reuse the existing error mapper instead of returning ad hoc strings from individual handlers.
-- Read secrets and issuer/audience settings from configured environment. Local defaults may support development, but must be visibly scoped and must not become production credentials.
-- Keep blocking database drivers behind a dispatcher or suspended transaction boundary. Do not assume that a `suspend` route makes blocking JDBC/Exposed work non-blocking.
+- 将 `Application` 模块设置、插件安装、路由注册和服务构造保留在仓库现有的模块边界中。路由应转换 HTTP 输入/输出，而非拥有数据库事务或业务策略。
+- 将选中的序列化配置用作 API 契约。不要将宽松示例设置如 `isLenient` 或 `ignoreUnknownKeys` 复制到生产中，除非兼容性要求证明。
+- 使状态码和错误体在成功、验证、未找到、认证和意外错误路径之间一致。复用现有错误映射器而非从个别处理器返回临时字符串。
+- 从已配置环境中读取密钥和签发者/受众设置。本地默认值可以支持开发，但必须可见地限定且不得成为生产凭据。
+- 将阻塞数据库驱动程序保留在调度器或 suspend 事务边界之后。不要假设 `suspend` 路由使阻塞 JDBC/Exposed 工作变为非阻塞。
 
 ## Verification Focus
 
-- Use `testApplication` or the repository's Ktor test setup for changed routes/plugins.
-- Test success, bad request, not found, auth failure, forbidden, and error response branches touched by the task.
-- Run the Gradle test/build task for the server module.
-- For WebSockets or long-lived sessions, test connect/disconnect cleanup or at least smoke the lifecycle path.
-- Verify route registration through the same application module used by the runtime, so tests cannot pass against a route tree that production does not install.
+- 对变更的路由/插件使用 `testApplication` 或仓库的 Ktor 测试设置。
+- 测试任务涉及的成功、错误请求、未找到、认证失败、禁止和错误响应分支。
+- 为服务器模块运行 Gradle 测试/构建任务。
+- 对于 WebSocket 或长生命会话，测试连接/断开清理或至少冒烟生命周期路径。
+- 通过运行时使用的相同应用模块验证路由注册，使测试不能针对生产未安装的路由树通过。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Ktor decision: route module, serialization, validation boundary, StatusPages mapping, auth config, CORS, database boundary, WebSocket lifecycle, or DTO separation.
+- 在证据总结中，说明 Ktor 决策：路由模块、序列化、验证边界、StatusPages 映射、认证配置、CORS、数据库边界、WebSocket 生命周期或 DTO 分离。

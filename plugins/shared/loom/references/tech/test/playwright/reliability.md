@@ -1,56 +1,56 @@
-# Playwright Reliability And Repair
+# Playwright 可靠性与修复
 
-Load this reference for failed, blocked, retried, inconsistent, or flaky browser checks. The objective is to preserve the original signal, identify its class, and make the smallest justified repair.
+为失败、blocked、重试、不一致或不稳定的浏览器检查加载此参考。目标是保留原始信号、标识其类别并进行最小的合理修复。
 
-## Preserve The Signal
+## 保留信号
 
-- Keep the original check id, command, attempt count, observed outcome, and artifact refs.
-- A pass after retry is not equivalent to a first-attempt pass.
-- Do not delete a failing assertion, add a broad catch, mark a test skipped, or raise global retries to make delivery green.
-- Do not rewrite failed or blocked evidence as passed to satisfy the delivery result contract.
-- Inspect compact check evidence first; open trace/report/screenshot artifacts only when the cause remains ambiguous.
+- 保留原始检查 ID、命令、尝试计数、观察到的结果和产物引用。
+- 重试后的通过不等同于首次尝试通过。
+- 不要删除失败断言、添加宽泛 catch、将测试标记为跳过或提高全局重试来使交付变绿。
+- 不要将失败或 blocked 证据重写为通过来满足交付结果契约。
+- 首先检查紧凑检查证据；仅在原因仍然模糊时打开 trace/报告/截图产物。
 
-## Failure Classification
+## 失败分类
 
-| Class | Typical signal | Repair boundary |
+| 类别 | 典型信号 | 修复边界 |
 | --- | --- | --- |
-| Product defect | wrong visible state, request, navigation, focus, layout, or persistence outcome | application code, then rerun assigned check |
-| Test defect | stale locator, wrong seed, assertion outside accepted behavior, leaked route handler | test/fixture/config only |
-| Environment blocker | browser missing, service unavailable, credentials absent, unsupported host capability | prepare/fix environment or report concrete blocker |
-| Flaky synchronization | intermittent race, animation, eventual response, non-isolated data | causal wait, stable assertion, isolation fix |
-| Contract gap | assigned check cannot be performed inside task/runtime boundary | route to planning/architecture contract repair; do not invent evidence |
+| 产品缺陷 | 错误的可见状态、请求、导航、焦点、布局或持久化结果 | 应用代码，然后重跑分配的检查 |
+| 测试缺陷 | 过期定位器、错误种子、已接受行为之外的断言、泄漏的路由处理器 | 仅测试/fixture/配置 |
+| 环境阻止项 | 浏览器缺失、service 不可用、凭据缺失、不受支持的主机能力 | 准备/修复环境或报告具体阻止项 |
+| 不稳定同步 | 间歇性竞争、动画、最终响应、未隔离数据 | 因果等待、稳定断言、隔离修复 |
+| 契约差距 | 分配的检查无法在任务/运行时边界内执行 | 路由到规划/架构契约修复；不要发明证据 |
 
-Classify from evidence. A timeout alone does not identify the class.
+从证据分类。仅超时不能标识类别。
 
-## Environment Route
+## 环境路由
 
-Browser installation and launch failures are not test retries and are not product-code repair work.
+浏览器安装和启动失败不是测试重试，也不是产品代码修复工作。
 
-Use `blocked` only when the supplied browser execution environment cannot launch or run. A reachable browser that observes application startup, API, selector, assertion, state, or workflow failure is `failed` product evidence and remains eligible for execution repair.
+仅当提供的浏览器执行环境无法启动或运行时使用 `blocked`。可到达的浏览器观察到应用启动、API、选择器、断言、状态或工作流失败是 `failed` 产品证据，仍有资格进行执行修复。
 
-1. MCP runs host integrity and launch smoke checks.
-2. Host launch failure triggers the exact-version managed-container smoke automatically.
-3. If both fail, Loom records blocked browser checks and proceeds to Review without creating an execution-repair task.
-4. The user gate offers only `retry_browser_environment`, `submit_external_browser_evidence`, and `approve_quality_waiver`.
+1. MCP 运行主机完整性和启动冒烟检查。
+2. 主机启动失败自动触发精确版本受管容器冒烟。
+3. 如果两者都失败，Loom 记录 blocked 浏览器检查并进入 Review 而不创建执行修复任务。
+4. 用户门仅提供 `retry_browser_environment`、`submit_external_browser_evidence` 和 `approve_quality_waiver`。
 
-Retry only after the environment, container runtime, registry access, or system dependencies changed. External evidence must cover every required check id with a concrete report/artifact and observed outcome. A waiver records accepted missing evidence; it does not rewrite blocked checks as passed.
+仅在环境、容器运行时、registry 访问或系统依赖变更后重试。外部证据必须用具体报告/产物和观察到的结果覆盖每个必需的检查 ID。豁免记录已接受的缺失证据；它不将 blocked 检查重写为通过。
 
-## Diagnostic Order
+## 诊断顺序
 
-1. Read the check status, attempts, command, and observed outcome.
-2. Confirm the expected viewport, backend mode, base URL, and project runner.
-3. Reproduce the single check once with the same environment.
-4. Inspect the trace timeline: navigation, actions, network, console, DOM snapshots, and assertion target.
-5. Inspect screenshot/video only for visual state that the trace does not settle.
-6. Compare the locator and expected outcome with current product semantics and API contract.
-7. Repair one classified cause and rerun the same check.
-8. Use repeated execution only after the original check passes once.
+1. 读取检查状态、尝试、命令和观察到的结果。
+2. 确认预期视口、后端模式、base URL 和项目 runner。
+3. 用相同环境复现单个检查一次。
+4. 检查 trace 时间线：导航、操作、网络、控制台、DOM 快照和断言目标。
+5. 仅在视觉状态无法通过 trace 确定时检查截图/视频。
+6. 将定位器和预期结果与当前产品语义和 API 契约比较。
+7. 修复一个分类原因并重跑相同检查。
+8. 仅在原始检查通过一次后使用重复执行。
 
-Do not start by rerunning the entire suite or increasing timeout.
+不要从重跑整个套件或增加超时开始。
 
-## Interactive Diagnostics
+## 交互式诊断
 
-Use local diagnostics only after the focused check reproduces:
+仅在聚焦检查复现后使用本地诊断：
 
 ```bash
 pnpm playwright test path/to/check.spec.ts --debug
@@ -58,7 +58,7 @@ pnpm playwright test path/to/check.spec.ts --headed
 pnpm playwright show-trace test-results/.../trace.zip
 ```
 
-UI mode is useful for local exploration when the project supports it. Remove committed `page.pause()`, slow motion, always-on traces, and temporary console dumping after diagnosis. When browser console or page errors are relevant, capture them narrowly and attach a concise failure summary rather than streaming unbounded output:
+UI 模式在项目支持时对本地探索有用。诊断后移除提交的 `page.pause()`、慢动作、始终开启的 trace 和临时控制台转储。当浏览器控制台或页面错误相关时，窄范围捕获它们并附加简洁失败摘要，而非流式传输无界输出：
 
 ```typescript
 const pageErrors: string[] = [];
@@ -67,9 +67,9 @@ page.on('pageerror', error => pageErrors.push(error.message));
 expect(pageErrors).toEqual([]);
 ```
 
-## Synchronization Repairs
+## 同步修复
 
-Replace fixed sleeps with the event that makes the next step valid:
+用使下一步有效的事件替换固定休眠：
 
 ```typescript
 const response = page.waitForResponse(r =>
@@ -80,63 +80,63 @@ expect((await response).status()).toBe(200);
 await expect(page.getByRole('status')).toContainText('Profile updated');
 ```
 
-Use locator actionability and web-first assertions. Avoid `networkidle` for apps with continuous traffic. Wait for URL only when navigation is the expected transition.
+使用定位器可操作性和 web-first 断言。对有持续流量的应用避免 `networkidle`。仅当导航是预期转换时等待 URL。
 
-## Locator Repairs
+## 定位器修复
 
-- If strict mode finds multiple matches, scope to the business region/record.
-- If a role/name is missing because the UI is non-semantic, repair the UI when in task scope.
-- If copy intentionally changed, update the locator and assertion to the accepted product language.
-- Do not replace a meaningful locator with `.first()`, XPath, generated classes, or `force: true`.
+- 如果 strict mode 找到多个匹配，限定到业务区域/记录。
+- 如果角色/名称因 UI 非语义而缺失，在任务范围内修复 UI。
+- 如果文案有意变更，更新定位器和断言为已接受的产品语言。
+- 不要用 `.first()`、XPath、生成的类或 `force: true` 替换有意义的定位器。
 
-## Isolation Repairs
+## 隔离修复
 
-- Generate unique mutable record keys per worker and retry.
-- Reset mocks, routes, storage, clock, and test data through owned fixtures.
-- Do not share page/context instances across tests.
-- Make cleanup idempotent and record-specific.
-- If the product enforces global uniqueness or queue ordering, use namespaced state or a narrowly serial group with the dependency documented.
+- 为每个 worker 和重试生成唯一可变记录键。
+- 通过拥有的 fixture 重置 mock、路由、存储、时钟和测试数据。
+- 不要跨测试共享 page/context 实例。
+- 使清理幂等且特定于记录。
+- 如果产品强制全局唯一性或队列排序，使用命名空间状态或带有文档化依赖的窄序列组。
 
-## Network Repairs
+## 网络修复
 
-- Start response waits before triggering actions.
-- Match method and endpoint, not a broad substring.
-- Ensure a route mock does not intercept unrelated calls.
-- For `backendMode: real`, restore the real central path; keep mocks only for the assigned edge condition.
-- Separate slow backend startup from UI assertion timeout.
+- 在触发操作之前启动响应等待。
+- 匹配方法和端点，而非宽泛子字符串。
+- 确保路由 mock 不拦截无关调用。
+- 对于 `backendMode: real`，恢复真实中央路径；仅将 mock 保留给分配的边界条件。
+- 将慢后端启动与 UI 断言超时分开。
 
-## Visual Reliability
+## 视觉可靠性
 
-- Wait for fonts, critical media, and deterministic data before capture.
-- Disable animations/caret for snapshots without changing application logic.
-- Pin browser, viewport, locale, timezone, and color scheme used by the baseline.
-- Mask only genuinely variable values.
-- Do not update snapshots until the rendered change is reviewed as intended.
+- 捕获前等待字体、关键媒体和确定性数据。
+- 不改变应用逻辑的情况下为快照禁用动画/光标。
+- 固定基线使用的浏览器、视口、区域设置、时区和配色方案。
+- 仅遮罩真正可变的值。
+- 在渲染变更被审查为有意之前不要更新快照。
 
-## Retry Policy
+## 重试策略
 
-Retries capture diagnostics and reveal instability; they are not the repair.
+重试捕获诊断并揭示不稳定性；它们不是修复。
 
-- Keep local retries at zero during diagnosis.
-- Preserve `attempts > 1` in evidence after a retry success.
-- After a fix, repeat the focused check enough times to exercise the former race; avoid a fixed universal count when the risk differs.
-- Repeated failure with the same signature and no progress is a stop condition, not a reason for endless reruns.
-- If repeated runs expose a real intermittent product defect, keep it a product defect.
+- 诊断期间保持本地重试为零。
+- 重试成功后在证据中保留 `attempts > 1`。
+- 修复后，重复聚焦检查足够次数以练习先前的竞争；当风险不同时避免固定通用计数。
+- 相同签名且无进展的重复失败是停止条件，而非无尽重跑的理由。
+- 如果重复运行暴露真实的间歇性产品缺陷，保持其为产品缺陷。
 
-## Timeout Policy
+## 超时策略
 
-Increase a timeout only when the accepted operation legitimately takes longer and the check already waits on the correct condition. Prefer a scoped assertion, navigation, action, or server-start timeout. A global timeout increase can hide every unrelated regression.
+仅当已接受操作合理地需要更长时间且检查已等待正确条件时增加超时。优先使用范围限定的断言、导航、操作或服务端启动超时。全局超时增加可能隐藏每个不相关的回归。
 
-- Measure whether delay belongs to build/startup, navigation, action completion, or assertion convergence.
-- Keep the increase local to that boundary and retain a failure message that identifies the unmet condition.
-- Do not combine a timeout increase with extra retries before proving which change fixed the signal.
+- 测量延迟属于构建/启动、导航、操作完成还是断言收敛。
+- 将增加保持在该边界本地并保留标识未满足条件的失败消息。
+- 在证明哪个变更修复了信号之前不要将超时增加与额外重试结合。
 
-## Artifact Handling
+## 产物处理
 
-- Keep trace, screenshot, video, and report files as refs.
-- Avoid copying full logs or trace content into repair context.
-- Redact or avoid secrets and sensitive payloads.
-- Retain artifacts from the failing/retried attempt until the repair is reviewed.
-- Successful first-pass checks usually need counts/refs, not artifact inspection.
+- 将 trace、截图、视频和报告文件保留为引用。
+- 避免将完整日志或 trace 内容复制到修复上下文中。
+- 编辑或避免密钥和敏感载荷。
+- 保留失败/重试尝试的产物直到修复被审查。
+- 成功的首次通过检查通常需要计数/引用，而非产物检查。
 
-Repair is complete only when the same assigned check passes with the intended viewport/backend mode, the attempt history remains truthful, the root cause is removed rather than suppressed, and no unmanaged runtime process remains. If the supplied runtime becomes unavailable during the closure task, record the specific blocker once. Do not reinstall browsers, rerun the same launch command, mark the product task failed, or enter generic execution repair.
+修复仅在相同分配的检查以预期视口/后端模式通过、尝试历史保持真实、根因被移除而非被抑制、且无不受管运行时进程残留时才算完成。如果提供的运行时在闭环任务期间变得不可用，记录一次具体阻止项。不要重新安装浏览器、重跑相同启动命令、将产品任务标记为失败或进入通用执行修复。

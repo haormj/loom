@@ -1,31 +1,31 @@
-# ASP.NET Core Testing
+# ASP.NET Core 测试
 
-Use the repository's selected test framework and the narrowest boundary that proves the task. ASP.NET Core work does not automatically require every test type; framework testing guidance is selected only for tasks that own test implementation.
+使用仓库已选择的测试框架和能证明任务的最窄边界。ASP.NET Core 工作并不自动需要每种测试类型；框架测试指引仅对拥有测试实现的任务选择。
 
-## Proof Boundary
+## 证明边界
 
-| Claim | Suitable proof |
+| 声明 | 合适的证明 |
 |---|---|
-| Domain invariant/value object | Plain unit test |
-| Application handler/orchestration | Unit test with owned ports mocked/faked |
-| EF mapping/query/transaction | Selected-provider integration test |
-| DI/options registration | Focused service-provider/host startup test |
-| Route, middleware, filters, auth, serialization | `WebApplicationFactory<Program>` HTTP test |
-| Published runtime/AOT behavior | Published artifact smoke/integration test |
+| 领域不变量/值对象 | 纯单元测试 |
+| 应用 handler/编排 | 使用已拥有端口 mock/fake 的单元测试 |
+| EF 映射/查询/事务 | 已选 provider 的集成测试 |
+| DI/options 注册 | 聚焦的 service-provider/host 启动测试 |
+| 路由、中间件、过滤器、认证、序列化 | `WebApplicationFactory<Program>` HTTP 测试 |
+| 发布的运行时/AOT 行为 | 发布产物的冒烟/集成测试 |
 
-Calling a Minimal API delegate or controller method directly cannot prove route binding, global validation, middleware, exception handlers, authorization, response serialization, or host configuration.
+直接调用 Minimal API delegate 或控制器方法不能证明路由绑定、全局验证、中间件、异常 handler、授权、响应序列化或 host 配置。
 
-## Unit And Handler Tests
+## 单元与 Handler 测试
 
-Construct domain/application components directly when framework DI is irrelevant. Mock repositories, clocks, queues, HTTP ports, identity, and other owned boundaries; do not mock the rule/handler being tested.
+当框架 DI 无关时，直接构造 domain/application 组件。Mock repository、clock、queue、HTTP 端口、identity 和其他已拥有的边界；不要 mock 被测试的规则/handler。
 
-Assert returned values plus state transitions, calls, absence of forbidden side effects, cancellation, and typed failures. Keep time, IDs, and randomness deterministic through explicit ports where outcomes depend on them.
+断言返回值以及状态转换、调用、禁止副作用的缺失、取消和类型化失败。在结果依赖时间、ID 和随机性时，通过显式端口保持它们的确定性。
 
-Use test data builders/factories for readable valid defaults and override only scenario-relevant fields. Avoid one giant shared fixture whose mutation creates order dependence.
+使用测试数据 builder/factory 创建可读的有效默认值，仅覆盖场景相关字段。避免一个巨大的共享 fixture 因其变更造成顺序依赖。
 
-## WebApplicationFactory Fidelity
+## WebApplicationFactory 保真度
 
-Derive a focused factory from the actual entry point and preserve production service registration, middleware, route groups, JSON options, validation, auth, and exception handling. Override only external/runtime dependencies outside the test's claim.
+从实际入口点派生聚焦的 factory，保留生产服务注册、中间件、route group、JSON 选项、验证、认证和异常处理。仅覆盖测试声明之外的外部/运行时依赖。
 
 ```csharp
 public sealed class ApiFactory : WebApplicationFactory<Program>
@@ -39,48 +39,48 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 }
 ```
 
-Use the factory client to assert exact status, headers, problem details, JSON shape, and durable effects. Dispose clients/factories and avoid shared mutable host/database state between tests.
+使用 factory 客户端断言精确的状态、header、problem detail、JSON 形态和持久效果。释放客户端/factory，避免测试间共享可变的 host/数据库状态。
 
-Do not replace authentication in the only security test. A stable test scheme may be used for non-auth behavior, while dedicated auth tests execute the selected real scheme/policy and denied paths.
+不要在唯一的安全测试中替换认证。非认证行为可使用稳定的测试 scheme，而专门的认证测试执行所选的真实 scheme/policy 和拒绝路径。
 
-## EF Core Tests
+## EF Core 测试
 
-Use the accepted provider when testing constraints, SQL translation, decimals, JSON, collations, migrations, transactions, locking, or concurrency. EF InMemory does not behave like a relational database, and SQLite is not a universal substitute for SQL Server/PostgreSQL/MySQL.
+测试约束、SQL 翻译、小数、JSON、collation、迁移、事务、锁或并发时使用已接受的 provider。EF InMemory 的行为不像关系数据库，SQLite 也不能通用替代 SQL Server/PostgreSQL/MySQL。
 
-Isolate database state per test through transactions, schemas/databases, or deterministic cleanup compatible with the provider. Assert database readback and rollback, not only in-memory tracked entities.
+通过事务、schema/数据库或与 provider 兼容的确定性清理来隔离每个测试的数据库状态。断言数据库回读和回滚，而不仅仅是内存中的 tracked 实体。
 
-Use containers/shared dependencies only for suites that own provider fidelity, and reuse infrastructure according to the repository harness without leaking data across cases.
+仅对拥有 provider 保真度的测试套件使用容器/共享依赖，并按照仓库 harness 复用基础设施，不跨用例泄漏数据。
 
-## Configuration, Health, And Hosted Services
+## 配置、健康与 Hosted Service
 
-Host startup tests should cover valid options and missing/invalid mandatory settings. Health tests should prove liveness/readiness classification and dependency transitions.
+Host 启动测试应覆盖有效选项和缺失/无效的强制设置。健康测试应证明 liveness/readiness 分类和依赖状态转换。
 
-For `BackgroundService`, create deterministic completion signals and cancellation. Do not wait arbitrary wall-clock delays. Verify scope creation, bounded retries, idempotency, shutdown, and resource cleanup where owned.
+对于 `BackgroundService`，创建确定性的完成信号和取消。不要等待任意的墙钟延迟。在拥有的边界验证 scope 创建、有界重试、幂等、关闭和资源清理。
 
-Check for open servers, database connections, timers, consumers, and unobserved tasks after tests. Open-handle/resource warnings are failures to understand, not noise to suppress globally.
+测试后检查是否有开放的服务器、数据库连接、定时器、消费者和未观察的 task。开放 handle/资源警告是需要理解的失败，而非全局抑制的噪声。
 
-## HTTP Contract Coverage
+## HTTP 契约覆盖
 
-For changed operations, cover the relevant set of success, malformed input, not found, conflict/concurrency, unauthenticated, forbidden/wrong owner, dependency unavailable, and cancellation behavior.
+对于变更的操作，覆盖相关的成功、格式错误输入、not found、冲突/并发、未认证、禁止/错误归属者、依赖不可用和取消行为集合。
 
-Assert pagination bounds/order, conditional headers, location, content type, and sensitive-field exclusion when declared. Test list isolation separately from detail/mutation authorization.
+当声明时断言分页边界/顺序、条件 header、location、content type 和敏感字段排除。将列表隔离与 detail/mutation 授权分开测试。
 
-OpenAPI snapshots can detect contract drift when the repository uses them, but they do not replace behavior tests.
+当仓库使用 OpenAPI 快照时可以检测契约漂移，但它们不替代行为测试。
 
-## Verification Commands
+## 验证命令
 
-Run the changed test project/filter first, such as `dotnet test tests/Orders.Tests --filter FullyQualifiedName~ApproveOrder`. Then run the owning project/solution build or focused suite when shared contracts, DI, middleware, or project references changed. Preserve repository configuration and target framework flags.
+先运行变更的测试项目/过滤器，例如 `dotnet test tests/Orders.Tests --filter FullyQualifiedName~ApproveOrder`。当共享契约、DI、中间件或项目引用变更时，运行所属项目/solution 构建或聚焦测试套件。保留仓库配置和 target framework 标志。
 
-## Delivery Evidence
+## 交付证据
 
-Record the test boundary, scenario, command, and meaningful assertion. A passing `dotnet test` count alone does not prove real middleware, authorization, provider semantics, startup validation, migration safety, or resource cleanup.
+记录测试边界、场景、命令和有意义的断言。仅凭通过的 `dotnet test` 计数不能证明真实中间件、授权、provider 语义、启动验证、迁移安全或资源清理。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Integration tests added for every pure rule.
-- Direct endpoint calls claimed as HTTP pipeline evidence.
-- Real auth replaced in the only authorization test.
-- EF InMemory/SQLite claimed as proof of selected-provider semantics.
-- Shared mutable factory/database state and order-dependent tests.
-- Arbitrary sleeps for hosted/background behavior.
-- OpenAPI snapshots used as the only route behavior proof.
+- 为每个纯规则添加集成测试。
+- 将直接端点调用声称为 HTTP 管道证据。
+- 在唯一的授权测试中替换真实认证。
+- 将 EF InMemory/SQLite 声称为已选 provider 语义的证明。
+- 共享可变的 factory/数据库状态和顺序依赖的测试。
+- 对 hosted/background 行为使用任意 sleep。
+- 将 OpenAPI 快照用作唯一的路由行为证明。

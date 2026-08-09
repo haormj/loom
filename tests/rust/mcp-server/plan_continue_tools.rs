@@ -44,7 +44,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         .expect("prompt")
         .contains("phase_scope"));
     let prompt = value["prompt"].as_str().expect("prompt");
-    assert!(prompt.contains("active phase boundary options"));
+    assert!(prompt.contains("当前阶段边界选项"));
     assert!(!prompt.contains("phase-1 boundary"));
     assert_eq!(value["gate"]["currentBlock"], "phase_scope");
     assert!(value["gate"].get("requestReadGroups").is_none());
@@ -108,14 +108,14 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         current_turn_rule["meaning"]
             .as_str()
             .expect("meaning")
-            .contains("instead of asking again"),
+            .contains("而非再次询问"),
         "{current_turn_rule:#}"
     );
     assert!(
         current_turn_rule["blockSpecificRule"]
             .as_str()
             .expect("block specific rule")
-            .contains("active phase boundary"),
+            .contains("当前阶段边界"),
         "{current_turn_rule:#}"
     );
     let requirement_context = inspected
@@ -147,19 +147,20 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
     .expect("read current block rules");
     let rules_text =
         serde_json::to_string(&current_block_rules.fields).expect("serialize current block rules");
-    assert!(rules_text.contains("active phase"));
+    assert!(rules_text.contains("当前阶段"));
     assert!(!rules_text.contains("active phase-1"));
-    assert!(rules_text.contains("call loom.knowledgeBrainstormContext"));
-    assert!(rules_text.contains("full-project roadmap"));
-    assert!(rules_text.contains("full multi-stage roadmap"));
-    assert!(rules_text.contains("Do not output numbered full-project phases"));
-    assert!(rules_text.contains("decompose the source-grounded current-phase candidate work"));
+    assert!(rules_text.contains("调用 loom.knowledgeBrainstormContext"));
+    assert!(rules_text.contains("完整的项目路线图"));
+    assert!(rules_text.contains("多阶段路线图"));
+    assert!(rules_text.contains("不要输出编号的完整项目阶段"));
+    assert!(rules_text.contains("将基于源的当前阶段候选工作分解为 scope items"));
     assert!(rules_text.contains("goal-essential item"));
     assert!(rules_text.contains("flow-support item"));
     assert!(rules_text.contains("current-object lifecycle item"));
-    assert!(rules_text
-        .contains("recommended option from all goal-essential items plus all flow-support items"));
-    assert!(rules_text.contains("Do not expose these internal category names to the user"));
+    assert!(
+        rules_text.contains("从所有 goal-essential items 加上所有 flow-support items 生成推荐选项")
+    );
+    assert!(rules_text.contains("不要向用户暴露这些内部类别名称"));
     assert!(!current_block_rules
         .fields
         .keys()
@@ -190,7 +191,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
             .value
             .as_str()
             .unwrap_or_default()
-            .contains("not a full multi-stage project roadmap")
+            .contains("而非完整的多阶段项目路线图")
     );
     assert_eq!(
         knowledge_fields.fields["knowledgeQueryPlan.toolContract"].value["contextTool"],
@@ -199,15 +200,15 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
     assert!(knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
-        .contains("do not silently fall back"));
+        .contains("不要静默回退到无知识的答案"));
     assert!(knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
-        .contains("Do not ask the user to choose, name, enable, or manage a knowledge source"));
+        .contains("不要要求用户在 Brainstorm 澄清中选择、命名、启用或管理 knowledge source"));
     assert!(knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
-        .contains("empty knowledge result is allowed"));
+        .contains("允许空的 knowledge 结果"));
     assert!(knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
@@ -215,7 +216,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
     assert!(knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
-        .contains("object:core business object"));
+        .contains("object:核心业务对象"));
     assert!(!knowledge_fields.fields["knowledgeQueryPlan.sharedRules"]
         .value
         .to_string()
@@ -224,7 +225,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         knowledge_fields.fields["knowledgeQueryPlan.blocks.phase_scope.executionOrder"]
             .value
             .to_string()
-            .contains("Do not output or confirm the overall dependency sequence")
+            .contains("不要将整体依赖序列作为编号项目阶段输出或确认")
     );
     assert_eq!(
         knowledge_fields.fields["knowledgeQueryPlan.blocks.phase_scope.executionOrder"].value[1]
@@ -348,13 +349,13 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
         "brainstorm_clarification_block"
     );
     let concept_rules = read_block_rules_text(&server, &fixture, &request_ref);
-    assert!(concept_rules.contains("business scenario"));
-    assert!(concept_rules.contains("scope-by-scope coverage"));
-    assert!(concept_rules.contains("decision impact ordering"));
-    assert!(concept_rules.contains("lifecycle scan"));
-    assert!(concept_rules.contains("object-operation summary"));
-    assert!(concept_rules.contains("Do not show internal names such as concept_grounding"));
-    assert!(concept_rules.contains("Do not present only noun definitions"));
+    assert!(concept_rules.contains("业务场景"));
+    assert!(concept_rules.contains("逐 scope 覆盖"));
+    assert!(concept_rules.contains("决策影响排序"));
+    assert!(concept_rules.contains("生命周期扫描"));
+    assert!(concept_rules.contains("对象-操作摘要"));
+    assert!(concept_rules.contains("不要向用户展示内部名称，如 concept_grounding"));
+    assert!(concept_rules.contains("不要仅呈现名词定义"));
     assert!(concept_rules.contains("concept_grounding_scope_item"));
 
     request_ref = confirm_block(
@@ -374,14 +375,14 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
         .expect("frontend request ref")
         .to_string();
     let frontend_rules = read_block_rules_text(&server, &fixture, &request_ref);
-    assert!(frontend_rules.contains("page operation path"));
-    assert!(frontend_rules.contains("pagination/list behavior"));
-    assert!(frontend_rules.contains("query criteria"));
-    assert!(frontend_rules.contains("success feedback"));
-    assert!(frontend_rules.contains("business-blocking feedback"));
-    assert!(frontend_rules.contains("refresh/readback"));
-    assert!(frontend_rules.contains("Do not show internal names such as frontend_experience"));
-    assert!(frontend_rules.contains("do not use a hardcoded industry field list"));
+    assert!(frontend_rules.contains("页面操作路径"));
+    assert!(frontend_rules.contains("分页/列表行为"));
+    assert!(frontend_rules.contains("查询条件"));
+    assert!(frontend_rules.contains("成功反馈"));
+    assert!(frontend_rules.contains("业务阻断反馈"));
+    assert!(frontend_rules.contains("刷新/回读"));
+    assert!(frontend_rules.contains("不要向用户展示内部名称，如 frontend_experience"));
+    assert!(frontend_rules.contains("不要使用硬编码的行业字段列表"));
     assert!(frontend_rules.contains("frontend_experience_page_operation_path"));
 
     request_ref = confirm_block(
@@ -433,17 +434,16 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
         .iter()
         .any(|group| group.group_id == "requirement_full_text"));
     let final_rules = read_block_rules_text(&server, &fixture, &request_ref);
-    assert!(final_rules.contains("pre-submit coverage checklist"));
-    assert!(final_rules.contains("Do not show internal names such as final_summary"));
+    assert!(final_rules.contains("提交前覆盖检查清单"));
+    assert!(final_rules.contains("不要向用户展示内部名称，如 final_summary"));
     assert!(!final_rules.contains("requirementSemanticGrounding"));
-    assert!(final_rules
-        .contains("one user-visible coverage checklist with exactly one confirmation action"));
-    assert!(final_rules.contains("current phase to submit"));
-    assert!(final_rules.contains("confirmed business rules"));
-    assert!(final_rules.contains("confirmed page operation path"));
-    assert!(final_rules.contains("does not narrow, omit, override, or compress"));
-    assert!(final_rules.contains("Previously confirmed block details remain"));
-    assert!(final_rules.contains("Incorporate the correction into the affected existing fields"));
+    assert!(final_rules.contains("一个用户可见的覆盖检查清单，仅一个确认动作"));
+    assert!(final_rules.contains("当前要提交的阶段"));
+    assert!(final_rules.contains("已确认的业务规则"));
+    assert!(final_rules.contains("已确认的页面操作路径"));
+    assert!(final_rules.contains("不会缩窄、省略、覆盖或压缩"));
+    assert!(final_rules.contains("先前确认的块细节通过结构化字段"));
+    assert!(final_rules.contains("将修正纳入受影响的已有字段"));
 
     let write_action = confirm_block(
         &server,
@@ -603,7 +603,7 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
             ["resultObservation"]["constraints"][0]
             .as_str()
             .expect("result observation shape rule")
-            .contains("empty is not a result observation")
+            .contains("empty 不是结果观察")
     );
     assert!(
         write_contract["fields"]["outputContract"]["schemaProjection"]["fieldContract"]
@@ -611,7 +611,7 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
             ["resultObservation"]["constraints"][0]
             .as_str()
             .expect("result observation shape rule")
-            .contains("Do not use frontendInteractionState values here")
+            .contains("不要在此处使用 frontendInteractionState 值")
     );
     assert!(
         write_contract["fields"]["outputContract"]["schemaProjection"]["fieldContract"]
@@ -619,7 +619,7 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
             ["properties"]["requiredStates"]["constraints"][0]
             .as_str()
             .expect("required states shape rule")
-            .contains("empty is valid only here")
+            .contains("empty 仅在此处")
     );
     assert!(
         write_contract["fields"]["outputContract"]["schemaProjection"]["fieldContract"]
@@ -627,7 +627,7 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
             ["properties"]["requiredStates"]["constraints"][0]
             .as_str()
             .expect("required states shape rule")
-            .contains("Do not use frontendResultObservationMode values here")
+            .contains("不要在此处使用 frontendResultObservationMode 值")
     );
     assert!(write_contract["fields"]["enumRefs"]["conceptRiskFactor"]
         .as_array()
@@ -635,13 +635,13 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
         .contains(&json!("business_invariant")));
     assert!(write_contract["fields"]["rules"]["candidateWrite"]
         .to_string()
-        .contains("never replace typed object arrays with string arrays"));
+        .contains("绝不用字符串数组替换类型化对象数组"));
     assert!(write_contract["fields"]["rules"]["candidateWrite"]
         .to_string()
-        .contains("scope.deferred is non-empty"));
+        .contains("scope.deferred 非空"));
     let candidate_rules = write_contract["fields"]["rules"]["candidateWrite"].to_string();
-    assert!(candidate_rules.contains("not from final_summary alone"));
-    assert!(candidate_rules.contains("Self-review must verify"));
+    assert!(candidate_rules.contains("而非仅从 final_summary 构建"));
+    assert!(candidate_rules.contains("自检必须验证"));
     assert!(candidate_rules.contains("scope.included"));
     assert!(candidate_rules.contains("domainModel.businessFlows"));
     assert!(candidate_rules.contains("frontendExperience"));
@@ -923,7 +923,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
     assert!(result["agentInstruction"]
         .as_str()
         .unwrap_or_default()
-        .contains("Do not ask the user to reconfirm"));
+        .contains("不要要求用户重新确认"));
 
     let dependency_empty = structured(
         server
@@ -992,7 +992,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
     assert!(still_missing["agentInstruction"]
         .as_str()
         .unwrap_or_default()
-        .contains("distinct queryId"));
+        .contains("不同的 queryId"));
 
     let closure_b_empty = structured(
         server

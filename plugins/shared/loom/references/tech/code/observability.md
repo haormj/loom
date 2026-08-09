@@ -1,67 +1,67 @@
-# Application Observability
+# 应用可观测性
 
-Use this reference only when the task owns a structured observability concern: request tracing, an async or scheduled flow, an external dependency boundary, a resilience decision, sensitive error handling, or an explicit `implement_observability` action. It is an application implementation reference, not a deployment or infrastructure logging contract.
+仅当任务拥有结构化可观测性相关问题时才使用此参考：请求追踪、异步或调度流程、外部依赖边界、弹性决策、敏感错误处理，或显式的 `implement_observability` 动作。它是应用实现参考，不是部署或基础设施日志契约。
 
 ## When To Use
 
-- Keep business state and audit records in the domain/persistence boundary. Logs, metrics, and traces explain execution; they are not the source of truth for business history.
-- Keep transport error shape in the selected API error reference. Log the server-side diagnostic once at the boundary that has operation and correlation context.
-- Keep framework-specific provider wiring, middleware, async handlers, and file appenders in a selected framework `logging.md` reference. When no overlay exists, this file provides the ecosystem-native fallback, but the repository's established provider still takes precedence.
-- Do not add a logger, collector, sidecar, container volume, or external service unless the accepted task owns that behavior and its failure policy.
+- 将业务状态和审计记录保留在领域/持久化边界。日志、指标和追踪解释执行过程；它们不是业务历史的真相来源。
+- 将传输错误形态保留在选中的 API 错误参考中。在具有操作和关联上下文的边界处记录一次服务端诊断。
+- 将框架特定的提供者接线、中间件、异步处理器和文件追加器保留在选中的框架 `logging.md` 参考中。当没有覆盖时，本文件提供生态系统原生回退，但仓库已建立的提供者仍然优先。
+- 除非已接受的任务拥有该行为及其失败策略，否则不要添加日志器、收集器、sidecar、容器卷或外部服务。
 
 ## Implementation Focus
 
-Preserve the repository's existing logging abstraction, provider, and configuration first. When the task owns logging infrastructure and no selected framework `logging.md` applies, use the ecosystem-native boundary: Python `logging`, Java/Kotlin SLF4J, .NET `ILogger`, Go `slog`, a repository-established Rust `tracing`/`log` facade, a PSR-3 logger for PHP, or the existing Node logger. For a greenfield Node service that requires structured JSON, prefer Pino. Do not introduce multiple providers or make business modules depend on provider-specific APIs.
+优先保留仓库现有的日志抽象、提供者和配置。当任务拥有日志基础设施且没有选中的框架 `logging.md` 适用时，使用生态系统原生边界：Python `logging`、Java/Kotlin SLF4J、.NET `ILogger`、Go `slog`、仓库已建立的 Rust `tracing`/`log` 门面、PHP 的 PSR-3 日志器，或现有的 Node 日志器。对于需要结构化 JSON 的全新 Node 服务，优先使用 Pino。不要引入多个提供者或使业务模块依赖提供者特定的 API。
 
-Provider selection does not imply file logging, asynchronous buffering, or an external collector. Those mechanics require an accepted operability requirement or an existing repository contract.
+提供者选择不意味着文件日志、异步缓冲或外部收集器。这些机制需要已接受的可操作性需求或现有仓库契约。
 
 ## Structured Events
 
-Use stable event names and structured fields rather than interpolated prose. A useful event has:
+使用稳定的事件名和结构化字段而非插值文本。一个有用的事件具有：
 
-- `timestamp`, level, service/module, operation, outcome, and stable error/event code
-- request, trace, or job correlation id when the execution boundary provides one
-- a bounded resource type and safe identifier when needed to diagnose the operation
-- dependency, attempt, duration, or queue metadata when it explains a controlled boundary
+- `timestamp`、级别、服务/模块、操作、结果，以及稳定的错误/事件代码
+- 当执行边界提供时，包含请求、追踪或作业关联 ID
+- 当需要诊断操作时，包含有界资源类型和安全标识符
+- 当需要解释受控边界时，包含依赖、尝试次数、持续时间或队列元数据
 
-Keep levels meaningful: expected validation, not-found, conflict, and cancellation outcomes should not be emitted as unexpected server errors. Unexpected failures should carry the exception cause and stack at one owning boundary. Do not log the same failure at controller, service, adapter, and global-handler layers.
+保持级别有意义：预期的验证、未找到、冲突和取消结果不应作为意外服务器错误发出。意外失败应在单个拥有边界携带异常原因和堆栈。不要在控制器、服务、适配器和全局处理器层都记录同一个失败。
 
-A business implementation task adds events only for boundaries it owns: critical state transitions, external dependency outcomes, async job or consumer outcomes, retries and terminal failures, and unexpected errors at the single layer with enough context. Loading this reference does not grant ownership of global logger setup; that requires structured logging-infrastructure ownership, plus the selected framework `logging.md` when an overlay exists.
+业务实现任务仅为其拥有的边界添加事件：关键状态转换、外部依赖结果、异步作业或消费者结果、重试和终止失败，以及在具有足够上下文的单个层的意外错误。加载此参考不授予全局日志器设置的所有权；那需要结构化日志基础设施所有权，加上当覆盖存在时选中的框架 `logging.md`。
 
 ## Redaction And Cardinality
 
-Never log passwords, access or refresh tokens, cookies, authorization headers, signing keys, connection strings, full request/response bodies, raw provider responses, or personal data unless an accepted redaction policy explicitly permits a safe field. Redaction must happen before serialization and must cover exception context, async payloads, test fixtures, metrics attributes, and trace attributes.
+永远不要记录密码、访问或刷新令牌、cookie、授权头、签名密钥、连接字符串、完整请求/响应体、原始提供者响应或个人数据，除非已接受脱敏策略明确允许某个安全字段。脱敏必须在序列化之前完成，并且必须覆盖异常上下文、异步载荷、测试夹具、指标属性和追踪属性。
 
-Use bounded values for metric names, tags, span attributes, and event dimensions. Do not use raw URLs with ids, arbitrary exception messages, user ids, order ids, or unbounded tenant values as dimensions. Prefer stable operation, outcome, dependency, and error-code values.
+为指标名、标签、span 属性和事件维度使用有界值。不要将带有 ID 的原始 URL、任意异常消息、用户 ID、订单 ID 或无界租户值用作维度。优先使用稳定的操作、结果、依赖和错误代码值。
 
 ## Correlation And Async Boundaries
 
-Honor the accepted request-id policy for HTTP work and preserve correlation across supported outbound, queue, scheduled, worker, and reactive boundaries. Copy only the immutable context required by the operation; never retain request-scoped objects or credentials in background work. Generate a job/operation correlation id when no request exists.
+遵循已接受的 HTTP request-id 策略，并在支持的外发、队列、调度、worker 和响应式边界保持关联。仅复制操作所需的不变上下文；永远不要在后台工作中保留请求范围对象或凭据。当没有请求存在时生成作业/操作关联 ID。
 
-An async logger must use a bounded queue and an explicit overload policy. It must not block business requests indefinitely, silently discard security or failure events, or grow without limit. Flush or drain according to the framework lifecycle during graceful shutdown.
+异步日志器必须使用有界队列和显式过载策略。它不得无限阻塞业务请求、静默丢弃安全或失败事件，或无限增长。在优雅关闭期间根据框架生命周期刷新或排空。
 
 ## File Output, Rotation, And Retention
 
-When the application explicitly owns file logging, configure the repository's logging framework with a stable directory, format, size/time rotation, compression policy, and retention limit. The policy must bound disk use and define what happens when the directory is unavailable or the disk is full. Do not write logs into source, build output, or a path that is silently lost on the intended runtime.
+当应用程序显式拥有文件日志时，使用仓库的日志框架配置稳定的目录、格式、大小/时间轮转、压缩策略和保留限制。策略必须限制磁盘使用并定义目录不可用或磁盘满时发生什么。不要将日志写入源码、构建输出或在目标运行时上会静默丢失的路径。
 
-Async file appenders must preserve the same redaction, ordering expectations, backpressure policy, and shutdown behavior as console or structured output. Rotation and retention are application configuration concerns; do not ask Deploy to invent Logback/Serilog settings, log volumes, or retention values.
+异步文件追加器必须保持与控制台或结构化输出相同的脱敏、排序期望、背压策略和关闭行为。轮转和保留是应用配置关注点；不要让 Deploy 编造 Logback/Serilog 设置、日志卷或保留值。
 
 ## Evidence Focus
 
-Name the selected logging provider, owned execution boundaries, event fields, redaction rules, correlation policy, and any async or file-output behavior. Evidence should identify the implementation and verification that prove the accepted logging contract rather than treating a successful build as sufficient.
+说明选中的日志提供者、拥有的执行边界、事件字段、脱敏规则、关联策略，以及任何异步或文件输出行为。证据应识别证明已接受日志契约的实现和验证，而不是将成功的构建视为充分。
 
 ## Verification Focus
 
-- Assert stable event fields, level choice, correlation propagation, and one-boundary error logging for the owned flow.
-- Prove secrets, sensitive payloads, exception details, and high-cardinality values are absent from logs, metrics, and traces.
-- Exercise async success, failure, cancellation, retry, queue saturation, and shutdown behavior when the task owns an async logger or worker boundary.
-- For file logging, verify directory/configuration, rotation trigger, compression, retention cleanup, bounded disk behavior, and unavailable-destination handling with the selected framework.
-- Treat an exporter or local logging dependency outage according to the accepted operability policy; application correctness must not silently depend on telemetry availability unless explicitly required.
+- 对拥有的流程断言稳定的事件字段、级别选择、关联传播和单边界错误日志。
+- 证明日志、指标和追踪中不存在密钥、敏感载荷、异常详情和高基数值。
+- 当任务拥有异步日志器或 worker 边界时，演练异步成功、失败、取消、重试、队列饱和和关闭行为。
+- 对于文件日志，使用选中的框架验证目录/配置、轮转触发、压缩、保留清理、有界磁盘行为和不可用目标处理。
+- 根据已接受的可操作性策略对待导出器或本地日志依赖中断；应用程序正确性不得静默依赖于遥测可用性，除非明确要求。
 
 ## Unsafe Defaults
 
-- `print`/console concatenation for structured application events.
-- Logging and rethrowing the same exception at every layer.
-- Unbounded async queues, unbounded retention, or rotation without a disk-use limit.
-- Request bodies, tokens, credentials, or raw exception/provider messages in telemetry.
-- Treating a successful logger configuration or build as proof that correlation, redaction, rotation, and shutdown behavior work.
+- 对结构化应用事件使用 `print`/控制台拼接。
+- 在每个层都记录并重新抛出同一个异常。
+- 无界异步队列、无界保留或没有磁盘使用限制的轮转。
+- 遥测中的请求体、令牌、凭据或原始异常/提供者消息。
+- 将成功的日志器配置或构建视为关联、脱敏、轮转和关闭行为有效的证明。

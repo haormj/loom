@@ -1,42 +1,42 @@
-# PHP Symfony Quality
+# PHP Symfony 质量
 
-This file applies Symfony conventions to task-owned behavior.
+本文件将 Symfony 约定应用于任务拥有的行为。
 
 ## When To Use
 
-- The task changes Symfony controllers, services, DTO validation, Doctrine integration, Messenger handlers, console commands, event subscribers, voters, serializer groups, or kernel tests.
-- Use this when Symfony's container, routing, validation, security, event, or message lifecycle affects correctness.
-- If the PHP project is not Symfony, do not borrow Symfony-specific structure.
+- 任务变更了 Symfony 控制器、服务、DTO 验证、Doctrine 集成、Messenger 处理器、控制台命令、事件订阅器、voter、序列化器组或 kernel 测试。
+- 当 Symfony 的容器、路由、验证、安全、事件或消息生命周期影响正确性时使用此参考。
+- 如果 PHP 项目不是 Symfony，不要借用 Symfony 特定结构。
 
 ## Implementation Focus
 
-- Keep controllers thin: map request input, validate, authorize, call an application service/handler, and return a typed response. Do not bury business workflows in controller methods.
-- Prefer constructor injection and autowired services. Do not pull services from the container inside domain/application code unless the repository already owns a service-locator boundary.
-- Use DTOs with Symfony Validator constraints for request payloads when the task owns input semantics. Keep validation errors aligned with the API error contract.
-- Keep Doctrine entities separate from API request/response DTOs. Avoid exposing entities directly when serializer groups would hide business rules or lazy-loading surprises.
-- Put multi-entity writes in explicit transaction/application service boundaries. Doctrine repositories should not secretly perform full workflows.
-- Use voters for user permission decisions and application/domain services for business eligibility. Do not conflate authorization with business state validation.
-- Event subscribers/listeners should react to meaningful events and stay small. If a listener starts to own workflow decisions, move that logic into a service and test it directly.
-- Messenger messages should be small, serializable, and idempotent where retries are possible. Handlers should load current state by identifier and handle missing/stale data deliberately.
-- Console commands should validate arguments/options, delegate work to services, return correct exit codes, and avoid embedding business logic.
-- Serializer groups, normalizers, and response DTOs must make public response shape intentional; do not rely on default object serialization.
+- 保持控制器精简：映射请求输入、验证、授权、调用应用服务/处理器并返回类型化响应。不要在控制器方法中埋藏业务工作流。
+- 优先使用构造函数注入和自动装配服务。除非仓库已拥有服务定位器边界否则不要在领域/应用代码中从容器拉取服务。
+- 当任务拥有输入语义时使用带 Symfony Validator 约束的 DTO 处理请求载荷。保持验证错误与 API 错误契约对齐。
+- 将 Doctrine 实体与 API 请求/响应 DTO 分开。当序列化器组会隐藏业务规则或延迟加载意外时避免直接暴露实体。
+- 将多实体写入放在显式事务/应用服务边界中。Doctrine repository 不应秘密执行完整工作流。
+- 为用户权限决策使用 voter，为业务资格使用应用/领域服务。不要将授权与业务状态验证混淆。
+- 事件订阅器/监听器应对有意义的事件做出反应并保持小。如果监听器开始拥有工作流决策，将该逻辑移到服务中并直接测试。
+- Messenger 消息应小、可序列化且在可能重试的地方幂等。处理器应按标识符加载当前状态并刻意处理缺失/过期数据。
+- 控制台命令应验证参数/选项、将工作委托给服务、返回正确退出码并避免嵌入业务逻辑。
+- 序列化器组、normalizer 和响应 DTO 必须使公共响应形态有意；不要依赖默认对象序列化。
 
 ## Delivery Decisions
 
-- Keep the Symfony container as composition infrastructure. Construct domain/application services through configuration and inject them; do not make domain code discover services from the container.
-- Choose DTO validation, entity validation, or domain validation by ownership. Request DTOs protect transport shape, while domain rules must still hold when called from a command, Messenger handler, or test.
-- Keep Doctrine repositories focused on persistence queries. Put multi-entity workflows, transaction ownership, and state transitions in an application service or handler.
-- Treat Messenger retries as a new handler invocation: load current state by identifier, make duplicate execution safe, and distinguish permanent validation failures from transient infrastructure failures.
-- Make serializer groups or response DTOs explicit for every public route changed. Lazy relations and internal fields must not become accidental API output.
+- 将 Symfony 容器保留为组合基础设施。通过配置构造领域/应用服务并注入它们；不要让领域代码从容器发现服务。
+- 按所有权选择 DTO 验证、实体验证或领域验证。请求 DTO 保护传输形态，而领域规则在从命令、Messenger 处理器或测试调用时仍必须成立。
+- 保持 Doctrine repository 聚焦于持久化查询。将多实体工作流、事务所有权和状态转换放在应用服务或处理器中。
+- 将 Messenger 重试视为新的处理器调用：按标识符加载当前状态、使重复执行安全，并区分永久验证失败和瞬态基础设施失败。
+- 为每个变更的公共路由使序列化器组或响应 DTO 显式。延迟关系和内部字段不得成为意外的 API 输出。
 
 ## Verification Focus
 
-- Run kernel/controller functional tests for route changes and service/unit tests for business changes.
-- Test validation failure, voter denial/allowance, successful response shape, and persistence state when those paths are touched.
-- For Messenger, test handler behavior and dispatch shape using the project's configured transport test helpers.
-- For console commands, run or test the command with success and failure inputs, including exit code expectations.
-- For a kernel route or message path, verify the actual configured service/container wiring rather than only instantiating the controller or handler directly.
+- 为路由变更运行 kernel/控制器功能测试，为业务变更运行服务/单元测试。
+- 在涉及这些路径时测试验证失败、voter 拒绝/允许、成功响应形态和持久化状态。
+- 对于 Messenger，使用项目配置的传输测试辅助测试处理器行为和分派形态。
+- 对于控制台命令，用成功和失败输入运行或测试命令，包括退出码期望。
+- 对于 kernel 路由或消息路径，验证实际配置的服务/容器接线而非仅直接实例化控制器或处理器。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Symfony decision: DTO validation, controller/service split, Doctrine boundary, voter, event subscriber, Messenger handler, console command, serializer shape, or kernel-test proof.
+- 在证据总结中，说明 Symfony 决策：DTO 验证、控制器/服务分离、Doctrine 边界、voter、事件订阅器、Messenger 处理器、控制台命令、序列化器形态或 kernel 测试证明。

@@ -23,7 +23,7 @@ impl DomainDispatcher for UnimplementedDomainDispatcher {
             project_root: input.project_root.clone(),
             error: LoomMcpFailure {
                 code: "not_implemented_for_batch".to_string(),
-                message: "loom.plan requires the Brainstorm domain handler.".to_string(),
+                message: "loom.plan 需要 Brainstorm domain handler。".to_string(),
                 target_batch: Some(7),
                 domain: Some("brainstorm".to_string()),
                 route_action: None,

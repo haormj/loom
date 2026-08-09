@@ -1,32 +1,32 @@
-# API Security And Authorization
+# API 安全和授权
 
-## Scope Rule
+## 范围规则
 
-Declare only the authentication and authorization behavior required by the current phase, existing repository pattern, or confirmed technical baseline. Do not invent OAuth/JWT/session systems for phases that only require local scaffolding or unauthenticated internal prototypes.
+仅声明当前阶段、已有仓库模式或已确认技术基线所需的认证和授权行为。不要为仅需本地脚手架或未认证内部原型的阶段编造 OAuth/JWT/session 系统。
 
-## Auth Policy Facts
+## 认证策略事实
 
-For protected HTTP APIs, the accepted API contract should state:
+对于受保护的 HTTP API，已接受 API 契约应说明：
 
-- whether authentication is required
-- which actors or roles may perform the operation
-- which permission or ownership rule applies
-- the unauthenticated and unauthorized status behavior
-- whether sensitive resource existence should be hidden
+- 是否需要认证
+- 哪些参与者或角色可执行操作
+- 适用哪些权限或所有权规则
+- 未认证和未授权的状态行为
+- 是否应隐藏敏感资源的存在
 
-Use existing repository roles and permissions when available.
+有可用仓库角色和权限时使用它们。
 
-JWT is not the default authentication mechanism. Select it only from an explicitly accepted security profile that matches the current client trust and token-authority scenario. If the profile is absent, do not add JWT or substitute it for a deferred security decision.
+JWT 不是默认认证机制。仅从明确接受且匹配当前客户端信任和 token 权威场景的安全配置中选择它。如果配置不存在，不要添加 JWT 或用其替代推迟的安全决策。
 
-For a same-origin browser requirement with an accepted server-session dependency, use the `server_session` profile with `same_origin_cookie`. The backend resolves the authenticated user and roles from the server-side login session, such as the accepted Redis session store, before evaluating `actorRefs` and `permissionRefs`. This is session authentication, not JWT; do not add bearer headers, token claims, issuer, audience, or JWT algorithm settings.
+对于具有已接受服务端 session 依赖的同源浏览器需求，使用 `server_session` 配置配以 `same_origin_cookie`。后端从服务端登录 session（如已接受的 Redis session store）解析已认证用户和角色，然后再评估 `actorRefs` 和 `permissionRefs`。这是 session 认证，不是 JWT；不要添加 bearer 头、token claim、签发者、受众或 JWT 算法设置。
 
-## Implementation Expectations
+## 实现期望
 
-- Enforce authorization server-side when the task owns backend code.
-- UI-only hiding of buttons is not sufficient evidence for protected operations.
-- Keep error messages useful but do not leak sensitive resource existence or internal policy details.
-- Record auth assumptions as architecture risks when authentication is deferred but the operation is sensitive.
+- 当任务拥有后端代码时在服务端强制授权。
+- 仅 UI 隐藏按钮不足以作为受保护操作的证据。
+- 保持错误消息有用，但不泄露敏感资源存在或内部策略细节。
+- 当认证被推迟但操作敏感时，将认证假设记录为架构风险。
 
-## Verification Hooks
+## 验证钩子
 
-When auth is in task scope, verification should cover at least one allowed path and one denied/missing-auth path. If the current phase intentionally has no auth, do not create fake auth checks; record the decision in Architecture quality or risk when relevant.
+当认证在任务范围内时，验证应至少覆盖一个允许路径和一个拒绝/缺失认证路径。如果当前阶段有意不做认证，不要创建假认证检查；在相关时将决策记录在架构质量或风险中。

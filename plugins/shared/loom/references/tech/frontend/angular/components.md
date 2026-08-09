@@ -1,16 +1,16 @@
-# Angular Components And Templates
+# Angular 组件与模板
 
-Components translate task-owned business surfaces into accessible rendering and interactions. Design component APIs around product concepts and visible workflow state, not raw backend entities or generic wrappers.
+组件将任务所属的业务界面转化为可访问的渲染和交互。围绕产品概念和可见工作流状态设计组件 API，而非原始后端实体或通用包装器。
 
-## Component Responsibility
+## 组件职责
 
-Container/surface components may coordinate route data, API/facade/store state, and business actions. Presentational components receive typed inputs, emit user intent, and render states without hidden navigation, HTTP, or store mutation.
+容器/界面组件可以协调路由数据、API/facade/store 状态和业务操作。展示型组件接收类型化输入、发出用户意图并渲染状态，不含隐藏导航、HTTP 或 store 修改。
 
-Split components at reusable behavior/visual boundaries or independent state ownership. Do not fragment every row/label into a component, and do not build one page component that owns unrelated list, detail, form, modal, and transport logic.
+在可复用行为/视觉边界或独立状态所有权处拆分组件。不要将每行/标签拆分为组件，也不要构建一个拥有不相关列表、详情、表单、模态和传输逻辑的页面组件。
 
-## Inputs, Outputs, And Models
+## 输入、输出与模型
 
-Use signal inputs/outputs/models only on a compatible Angular version. Required inputs are appropriate when the component cannot render without a value; optional inputs need explicit defaults and fallback behavior.
+仅在兼容 Angular 版本上使用 signal input/output/model。当组件没有值就无法渲染时必需输入是合适的；可选输入需要显式默认值和回退行为。
 
 ```typescript
 @Component({
@@ -26,23 +26,23 @@ export class OrderRowComponent {
 }
 ```
 
-Emit stable identifiers plus required context. A row action should not depend on a mutable global selected item that can change after sorting, filtering, refresh, or modal opening.
+发出稳定标识符加所需上下文。行操作不应依赖可在排序、筛选、刷新或模态打开后变更的可变全局选定项。
 
-Use `model<T>()` for genuinely controlled simple values. Save/validate/confirm workflows need explicit events and draft state rather than implicit two-way mutation of persisted objects.
+对真正受控的简单值使用 `model<T>()`。保存/验证/确认工作流需要显式事件和草稿状态，而非持久化对象的隐式双向修改。
 
-## Template Control Flow
+## 模板控制流
 
-Keep templates declarative and bounded. Use `@if` for mutually exclusive state, `@for (...; track item.id)` for dynamic collections, and `@empty` for collection-empty output where supported.
+保持模板声明式且有界。在支持处使用 `@if` 表示互斥状态，`@for (...; track item.id)` 表示动态集合，`@empty` 表示集合空输出。
 
-Avoid methods/getters that allocate, sort, filter, format, or mutate on every change-detection pass. Compute view models in signals/selectors/pipes. Do not use `track $index` for reorderable, pageable, insertable, or refreshable records.
+避免在每次变更检测传递时分配、排序、筛选、格式化或修改的方法/getter。在 signal/选择器/pipe 中计算视图模型。不要对可重排、可分页、可插入或可刷新的记录使用 `track $index`。
 
-Keep loading/error/empty feedback near the affected region while retaining page context and recovery actions. Overlay spinners should not erase unrelated usable work.
+在受影响区域附近保持加载/错误/空反馈，同时保留页面上下文和恢复操作。覆盖 spinner 不应擦除不相关的可用工作。
 
-## Forms And Controls
+## 表单与控件
 
-Use native semantic controls or the established component library. Every input has a programmatic label; validation messages associate to the field; icon-only buttons have accessible names; disabled and read-only semantics are not interchangeable.
+使用原生语义控件或已建立的组件库。每个输入有编程标签；验证消息关联到字段；仅图标按钮有可访问名称；禁用和只读语义不可互换。
 
-For typed reactive forms, initialize defaults intentionally and keep DTO conversion at a boundary:
+对于类型化响应式表单，有意识地初始化默认值并在边界保持 DTO 转换：
 
 ```typescript
 readonly form = this.formBuilder.nonNullable.group({
@@ -51,47 +51,47 @@ readonly form = this.formBuilder.nonNullable.group({
 });
 ```
 
-Show field and form-level backend errors, preserve valid draft values, focus/announce meaningful blocking errors, and prevent duplicate submits. Confirmation dialogs must keep affected object identity and consequence visible.
+显示字段和表单级后端错误，保留有效草稿值，聚焦/宣告有意义的阻止错误，防止重复提交。确认对话框必须保持受影响对象标识和后果可见。
 
-## Content Projection And Reuse
+## 内容投影与复用
 
-Use content projection for stable extension points such as toolbar actions, card/header content, empty state, or modal footer. Name/select slots clearly and provide sensible default rendering where appropriate.
+为稳定扩展点（如工具栏操作、卡片/头内容、空状态或模态页脚）使用内容投影。清晰命名/选择 slot 并在适当时提供合理的默认渲染。
 
-Avoid generic shell components with many boolean inputs and projection slots that hide page composition. Prefer focused product primitives with typed APIs.
+避免具有许多布尔输入和投影 slot 的通用壳组件隐藏页面组合。优先使用具有类型化 API 的聚焦产品原语。
 
-## Styling, Layout, And Responsiveness
+## 样式、布局与响应式
 
-Use repository UIX tokens, semantic colors, spacing, typography, density, and component primitives. Keep component styles scoped according to the existing strategy and avoid `::ng-deep`, global selectors, and one-off inline values unless a documented integration requires them.
+使用仓库 UIX 令牌、语义颜色、间距、排版、密度和组件原语。按现有策略保持组件样式限定，避免 `::ng-deep`、全局选择器和一次性内联值，除非文档化集成需要。
 
-Business tables need stable columns/actions and a narrow-screen strategy such as cards, drawer/detail route, or intentional horizontal handling. Fixed toolbars, overlays, menus, and dialogs must not overlap content or lose keyboard/focus behavior.
+业务表格需要稳定的列/操作和窄屏策略（如卡片、抽屉/详情路由或有意的水平处理）。固定工具栏、覆盖层、菜单和对话框不得重叠内容或丢失键盘/焦点行为。
 
-Use Angular CDK overlay/focus utilities or the selected component library for complex dialogs, menus, drag/drop, and focus trapping rather than reimplementing interaction primitives casually.
+使用 Angular CDK overlay/focus 工具或所选组件库处理复杂对话框、菜单、拖放和焦点陷阱，而非随意重新实现交互原语。
 
-## Performance And Lifecycle
+## 性能与生命周期
 
-OnPush and stable input identity reduce work only when state updates are explicit. Virtualize genuinely large lists with CDK or repository tooling after measuring, and preserve item identity, keyboard behavior, and scroll restoration.
+OnPush 和稳定输入标识仅在状态更新显式时减少工作。在测量后用 CDK 或仓库工具虚拟化真正大型列表，并保留条目标识、键盘行为和滚动恢复。
 
-Clean up event/observer/subscription resources through `DestroyRef`, `takeUntilDestroyed`, async pipe, or signal interop. Avoid manual DOM listeners and timers without teardown.
+通过 `DestroyRef`、`takeUntilDestroyed`、async pipe 或 signal interop 清理事件/观察者/订阅资源。避免无清理的手动 DOM 监听器和定时器。
 
 ## Verification
 
-- Test visible behavior through public inputs, DOM roles/labels/text, and emitted user events.
-- Cover loading, empty, populated, validation, disabled, submitting, conflict, permission, and destructive confirmation states owned by the component.
-- Verify row/action identity after sort, filter, pagination, refresh, and overlay open/close.
-- Exercise keyboard, focus return, error announcement, and accessible naming for custom interactions.
-- Verify responsive behavior for dense lists/forms/details and long/localized content.
-- Build templates to catch missing standalone imports and invalid bindings.
+- 通过公共输入、DOM 角色/标签/文本和发出的用户事件测试可见行为。
+- 覆盖组件所属的加载、空、已填充、验证、禁用、提交中、冲突、权限和破坏性确认状态。
+- 在排序、筛选、分页、刷新和覆盖层打开/关闭后验证行/操作标识。
+- 练习自定义交互的键盘、焦点返回、错误宣告和可访问命名。
+- 验证密集列表/表单/详情和长/本地化内容的响应式行为。
+- 构建模板以捕获缺失的 standalone 导入和无效绑定。
 
-## Delivery Evidence
+## 交付证据
 
-Name the component API/state and the rendered interaction assertion proving it. Private-field tests, shallow class construction, or static template inspection cannot prove binding, focus, accessibility, action identity, or responsive behavior.
+命名组件 API/状态和证明它的渲染交互断言。私有字段测试、浅类构造或静态模板检查不能证明绑定、焦点、可访问性、操作标识或响应式行为。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Presentational components making HTTP/store/router decisions.
-- Persisted entities mutated through two-way binding.
-- Template methods doing repeated filtering/sorting/allocation.
-- Index tracking on dynamic business records.
-- Generic projected shells replacing clear page composition.
-- Custom dialogs/menus without focus and keyboard behavior.
-- One-off styles bypassing UIX/design-system tokens.
+- 展示型组件做出 HTTP/store/router 决策。
+- 通过双向绑定修改持久化实体。
+- 模板方法执行重复筛选/排序/分配。
+- 对动态业务记录使用索引跟踪。
+- 通用投影壳替换清晰的页面组合。
+- 无焦点和键盘行为的自定义对话框/菜单。
+- 绕过 UIX/设计系统令牌的一次性样式。

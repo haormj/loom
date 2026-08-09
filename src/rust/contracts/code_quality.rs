@@ -68,42 +68,11 @@ pub fn build_code_quality_seed(baseline: &TechnicalBaselineContract) -> Value {
 }
 
 pub fn code_quality_enum_refs() -> Value {
+    let catalog = reference_catalog::vendor_catalog();
+    let code_groups = catalog.known_reference_groups("code");
     json!({
         "knownReferenceGroups": {
-                "code": {
-                    "common": ["observability"],
-                "java": ["core", "spring", "persistence", "security", "reactive", "testing"],
-                "springboot": ["web", "data", "security", "testing", "runtime", "async", "cache", "integration", "resilience", "cloud", "observability", "logging"],
-                "mybatisplus": ["configuration", "mapping", "crud", "wrappers", "plugins", "security", "extensions"],
-                "django": ["models", "serializers", "views", "security", "testing", "logging"],
-                "fastapi": ["schemas", "data", "routing", "security", "testing", "migration", "logging"],
-                "aspnetcore": ["minimal", "architecture", "data", "security", "testing", "runtime", "logging"],
-                "nestjs": ["controllers", "dtos", "services", "security", "testing", "migration", "logging"],
-                "react": ["core", "hooks", "state", "performance", "testing", "server-components", "react19", "migration"],
-                "nextjs": ["core", "app-router", "data", "actions", "server-components", "runtime", "testing"],
-                "vue": ["core", "components", "state", "typescript", "nuxt", "build", "mobile", "testing"],
-                "angular": ["core", "components", "routing", "rxjs", "ngrx", "testing"],
-                "reactnative": ["core", "structure", "navigation", "platform", "lists", "storage", "testing"],
-                "flutter": ["core", "structure", "widgets", "navigation", "riverpod", "bloc", "performance", "testing"],
-                "typescript": ["core", "types", "guards", "config", "patterns", "testing"],
-                "javascript": ["core", "async", "modules", "node", "browser", "testing"],
-                "python": ["core", "typing", "async", "packaging", "testing"],
-                "go": ["core", "concurrency", "interfaces", "structure", "generics", "testing"],
-                "csharp": ["core", "modern", "persistence", "blazor", "performance", "testing"],
-                "cpp": ["core", "modern", "templates", "performance", "concurrency", "build", "testing"],
-                "kotlin": ["core", "coroutines", "ktor", "compose", "multiplatform", "dsl", "testing"],
-                "php": ["core", "modern", "laravel", "symfony", "async", "testing"],
-                "rust": ["core", "ownership", "traits", "errors", "async", "testing"],
-                "swift": ["core", "swiftui", "concurrency", "protocols", "memory", "testing"],
-                "sql": [
-                    "schema", "queries", "dialects", "optimization", "windows",
-                    "mysql.schema", "mysql.queries", "mysql.transactions",
-                    "postgresql.schema", "postgresql.queries", "postgresql.transactions",
-                    "sqlserver.schema", "sqlserver.queries", "sqlserver.transactions",
-                    "oracle.schema", "oracle.queries", "oracle.transactions"
-                ],
-                "redis": ["core", "cache", "atomicity", "messaging"]
-            }
+            "code": code_groups
         },
         "focusTag": ["api", "api_client", "frontend", "persistence", "security", "async", "reactive", "cache", "performance", "configuration", "runtime", "integration", "resilience", "observability", "cloud", "migration", "architecture", "testing", "sql", "sql_schema", "sql_query", "sql_transaction", "sql_test", "generics", "analytics", "memory", "hooks", "state", "server_components", "react19", "app_router", "server_actions", "data_fetching", "build_tooling", "mobile", "nuxt", "routing", "rxjs", "ngrx", "riverpod", "bloc", "list_performance", "storage"],
         "confidence": ["high", "medium", "low"]
@@ -276,13 +245,16 @@ fn redis_reference_items_for_task(
 pub fn code_reference_load_plan(
     reference_groups: &BTreeMap<String, Vec<String>>,
 ) -> Vec<ReferenceLoadPlanItem> {
+    let catalog = reference_catalog::vendor_catalog();
     let mut load_plan = Vec::new();
     if !reference_groups.is_empty() {
-        load_plan.push(ReferenceLoadPlanItem {
-            ref_id: "tech.code.common".to_string(),
-            path: "tech/code/common.md".to_string(),
-            reason: "Common Loom code quality rules for repository adaptation, delivery evidence, and verification.".to_string(),
-        });
+        for prepend in catalog.prepend_items_for_route("code") {
+            load_plan.push(ReferenceLoadPlanItem {
+                ref_id: prepend.ref_id.clone(),
+                path: prepend.path.clone(),
+                reason: prepend.reason.clone(),
+            });
+        }
     }
     load_plan.extend(reference_groups.iter().flat_map(|(group_key, groups)| {
         groups
@@ -620,13 +592,13 @@ fn signal_from_selection(track: &str, source_path: &str, raw_selection: &str) ->
     let mapped = language.is_some() || !frameworks.is_empty() || !dialects.is_empty();
     let confidence = if mapped { "high" } else { "low" }.to_string();
     let reason = if language.is_some() {
-        "Mapped language from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的语言。".to_string()
     } else if !frameworks.is_empty() {
-        "Mapped framework from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的框架。".to_string()
     } else if !dialects.is_empty() {
-        "Mapped storage dialect from confirmed TechnicalBaseline stack selection.".to_string()
+        "从已确认 TechnicalBaseline 技术栈选择中映射的存储方言。".to_string()
     } else {
-        "No known Loom code reference profile matched this stack selection.".to_string()
+        "没有已知的 Loom 代码参考配置匹配此技术栈选择。".to_string()
     };
     CodeStackSignal {
         source_track: track.to_string(),
@@ -754,493 +726,9 @@ fn task_focus_tags(task: &TaskDefinition) -> Vec<String> {
         "{} {} {:?}",
         task.title, task.objective, task.implementation_actions
     ));
-    if contains_any(
-        &text,
-        &[
-            "state",
-            "store",
-            "context",
-            "reducer",
-            "zustand",
-            "redux",
-            "tanstack",
-            "query client",
-            "selected record",
-            "form draft",
-            "状态",
-            "表单草稿",
-            "选中记录",
-        ],
-    ) {
-        push_unique(&mut tags, "state");
-    }
-    if contains_any(
-        &text,
-        &[
-            "hook",
-            "hooks",
-            "useeffect",
-            "usememo",
-            "usecallback",
-            "useref",
-            "custom hook",
-            "debounce",
-            "localstorage",
-            "effect cleanup",
-            "钩子",
-            "副作用",
-            "防抖",
-        ],
-    ) {
-        push_unique(&mut tags, "hooks");
-    }
-    if contains_any(
-        &text,
-        &[
-            "server component",
-            "server components",
-            "react server component",
-            "rsc",
-            "suspense",
-            "streaming",
-            "use client",
-            "hydration",
-            "服务端组件",
-            "服务端渲染",
-            "水合",
-        ],
-    ) {
-        push_unique(&mut tags, "server_components");
-    }
-    if contains_any(
-        &text,
-        &[
-            "react 19",
-            "useactionstate",
-            "useformstatus",
-            "useoptimistic",
-            "use()",
-            "ref as prop",
-            "action state",
-            "optimistic",
-            "乐观更新",
-        ],
-    ) {
-        push_unique(&mut tags, "react19");
-    }
-    if contains_any(
-        &text,
-        &[
-            "app router",
-            "layout.tsx",
-            "page.tsx",
-            "loading.tsx",
-            "error.tsx",
-            "not-found.tsx",
-            "route group",
-            "route handler",
-            "generate metadata",
-            "metadata api",
-            "dynamic route",
-            "parallel route",
-            "intercepting route",
-        ],
-    ) {
-        push_unique(&mut tags, "app_router");
-    }
-    if contains_any(
-        &text,
-        &[
-            "server action",
-            "server actions",
-            "use server",
-            "form action",
-            "revalidatepath",
-            "revalidatetag",
-            "useformstatus",
-            "useactionstate",
-        ],
-    ) {
-        push_unique(&mut tags, "server_actions");
-    }
-    if contains_any(
-        &text,
-        &[
-            "data fetching",
-            "fetch",
-            "cache",
-            "revalidate",
-            "isr",
-            "swr",
-            "usefetch",
-            "useasyncdata",
-            "uselazyfetch",
-            "数据获取",
-            "缓存",
-        ],
-    ) {
-        push_unique(&mut tags, "data_fetching");
-    }
-    if contains_any(
-        &text,
-        &[
-            "nuxt",
-            "nitro",
-            "definepagemeta",
-            "runtimeconfig",
-            "clientonly",
-            "usehead",
-            "useseometa",
-            "hydration",
-        ],
-    ) {
-        push_unique(&mut tags, "nuxt");
-    }
-    if contains_any(
-        &text,
-        &[
-            "vite",
-            "vite config",
-            "build tooling",
-            "bundle",
-            "chunk",
-            "sourcemap",
-            "dev server",
-            "proxy",
-            "tree shaking",
-            "构建",
-            "打包",
-        ],
-    ) {
-        push_unique(&mut tags, "build_tooling");
-    }
-    if contains_any(
-        &text,
-        &[
-            "mobile",
-            "native",
-            "quasar",
-            "capacitor",
-            "pwa",
-            "service worker",
-            "offline",
-            "push notification",
-            "geolocation",
-            "camera",
-            "移动端",
-            "离线",
-        ],
-    ) {
-        push_unique(&mut tags, "mobile");
-    }
-    if contains_any(
-        &text,
-        &[
-            "route",
-            "router",
-            "routing",
-            "navigation",
-            "navigate",
-            "deep link",
-            "deeplink",
-            "guard",
-            "resolver",
-            "tab",
-            "stack",
-            "drawer",
-            "query param",
-            "route param",
-            "路由",
-            "导航",
-            "守卫",
-            "深链",
-        ],
-    ) {
-        push_unique(&mut tags, "routing");
-    }
-    if contains_any(
-        &text,
-        &[
-            "rxjs",
-            "observable",
-            "subscription",
-            "subject",
-            "behaviorsubject",
-            "httpclient",
-            "http client",
-            "api call",
-            "switchmap",
-            "mergemap",
-            "concatmap",
-            "exhaustmap",
-            "takeuntildestroyed",
-            "marble",
-            "流式",
-            "订阅",
-            "可观察",
-        ],
-    ) {
-        push_unique(&mut tags, "rxjs");
-    }
-    if contains_any(
-        &text,
-        &[
-            "ngrx",
-            "store",
-            "action group",
-            "entity adapter",
-            "selector",
-            "effect",
-            "effects",
-            "reducer",
-            "store devtools",
-            "facade",
-        ],
-    ) {
-        push_unique(&mut tags, "ngrx");
-    }
-    if contains_any(
-        &text,
-        &[
-            "riverpod",
-            "consumerwidget",
-            "consumer widget",
-            "widgetref",
-            "provider scope",
-            "providerscope",
-            "state notifier",
-            "statenotifier",
-            "async notifier",
-            "asyncnotifier",
-        ],
-    ) {
-        push_unique(&mut tags, "riverpod");
-    }
-    if contains_any(
-        &text,
-        &[
-            " bloc ",
-            "cubit",
-            "blocbuilder",
-            "bloc builder",
-            "bloclistener",
-            "bloc listener",
-            "blocconsumer",
-            "bloc consumer",
-            "blocprovider",
-            "bloc provider",
-            "event driven",
-        ],
-    ) {
-        push_unique(&mut tags, "bloc");
-    }
-    if contains_any(
-        &text,
-        &[
-            "list",
-            "feed",
-            "flatlist",
-            "sectionlist",
-            "flashlist",
-            "virtualized",
-            "infinite scroll",
-            "pull to refresh",
-            "refreshcontrol",
-            "onendreached",
-            "list performance",
-            "列表性能",
-            "列表",
-            "动态列表",
-            "下拉刷新",
-            "无限滚动",
-        ],
-    ) {
-        push_unique(&mut tags, "list_performance");
-    }
-    if contains_any(
-        &text,
-        &[
-            "asyncstorage",
-            "mmkv",
-            "securestore",
-            "secure store",
-            "storage",
-            "persist",
-            "persistent",
-            "local cache",
-            "localstorage",
-            "缓存持久化",
-            "本地存储",
-        ],
-    ) {
-        push_unique(&mut tags, "storage");
-    }
-    if contains_any(
-        &text,
-        &[
-            "async",
-            "concurrent",
-            "queue",
-            "stream",
-            "websocket",
-            "并发",
-            "异步",
-        ],
-    ) {
-        push_unique(&mut tags, "async");
-    }
-    if task_is_backend_task(task)
-        && contains_any(
-            &text,
-            &[
-                "spring cache",
-                "cachemanager",
-                "cache manager",
-                "cacheable",
-                "cacheevict",
-                "caffeine",
-                "redis cache",
-                "application cache",
-                "in-memory cache",
-                "cache aside",
-                "cache-aside",
-                "cache hit",
-                "cache miss",
-                "缓存",
-                "缓存键",
-                "缓存失效",
-                "缓存策略",
-            ],
-        )
-    {
-        push_unique(&mut tags, "cache");
-    }
-    if contains_any(
-        &text,
-        &[
-            "performance",
-            "optimi",
-            "slow",
-            "index",
-            "cache",
-            "性能",
-            "优化",
-            "索引",
-            "缓存",
-        ],
-    ) {
-        push_unique(&mut tags, "performance");
-    }
-    if contains_any(
-        &text,
-        &[
-            "runtime",
-            "actuator",
-            "health",
-            "profile",
-            "configuration",
-            "config",
-            "startup",
-            "shutdown",
-            "logging",
-            "tracing",
-            "observability",
-            "resilience",
-            "运行",
-            "健康检查",
-            "启动",
-            "关闭",
-            "日志",
-            "链路追踪",
-        ],
-    ) {
-        push_unique(&mut tags, "runtime");
-    }
-    if contains_any(
-        &text,
-        &[
-            "integration",
-            "external service",
-            "downstream",
-            "webclient",
-            "spring cloud",
-            "cloud gateway",
-            "gateway",
-            "config server",
-            "service discovery",
-            "discovery",
-            "eureka",
-            "circuit breaker",
-            "retry",
-            "timeout",
-            "resilience",
-            "集成",
-            "外部服务",
-            "下游",
-            "网关",
-            "服务发现",
-            "熔断",
-            "重试",
-            "超时",
-        ],
-    ) {
-        push_unique(&mut tags, "integration");
-    }
-    if contains_any(
-        &text,
-        &[
-            "migration",
-            "migrate",
-            "port from",
-            "from django",
-            "from drf",
-            "迁移",
-            "迁出",
-            "迁到",
-        ],
-    ) {
-        push_unique(&mut tags, "migration");
-    }
-    if contains_any(
-        &text,
-        &[
-            "architecture",
-            "clean architecture",
-            "cqrs",
-            "mediatr",
-            "layer",
-            "layers",
-            "use case",
-            "handler",
-            "module boundary",
-            "dependency injection",
-            "provider",
-            "providers",
-            "架构",
-            "分层",
-            "用例",
-            "依赖注入",
-        ],
-    ) {
-        push_unique(&mut tags, "architecture");
-    }
-    if contains_any(
-        &text,
-        &[
-            "generic",
-            "generics",
-            "type parameter",
-            "template",
-            "templates",
-            "concept",
-            "concepts",
-            "constraints",
-            "泛型",
-            "模板",
-            "类型参数",
-        ],
-    ) {
-        push_unique(&mut tags, "generics");
+    let catalog = reference_catalog::vendor_catalog();
+    for tag in catalog.focus_tags_from_text(&text, task_is_backend_task(task)) {
+        push_unique(&mut tags, &tag);
     }
     tags
 }
@@ -1261,57 +749,8 @@ fn extend_focus_tags_from_context(tags: &mut Vec<String>, context: &CodeReferenc
 }
 
 fn signal_applies_to_task(signal: &CodeStackSignal, focus_tags: &[String]) -> bool {
-    let roles = signal
-        .roles
-        .iter()
-        .map(String::as_str)
-        .collect::<BTreeSet<_>>();
-    let has_focus = |tag: &str| focus_tags.iter().any(|item| item == tag);
-    match signal.language.as_deref() {
-        Some("sql") => {
-            has_focus("sql")
-                || has_focus("persistence")
-                || has_focus("performance")
-                || has_focus("analytics")
-        }
-        Some("typescript") => {
-            has_focus("frontend")
-                || has_focus("configuration")
-                || has_focus("runtime")
-                || has_focus("migration")
-                || (roles.contains("backend")
-                    && (has_focus("api") || has_focus("backend") || has_focus("testing")))
-        }
-        Some("javascript") => {
-            has_focus("frontend")
-                || (roles.contains("backend")
-                    && (has_focus("api") || has_focus("backend") || has_focus("testing")))
-        }
-        Some(_) => {
-            let frontend_applies = roles.contains("frontend") && has_focus("frontend");
-            let backend_applies = roles.contains("backend")
-                && (has_focus("backend")
-                    || has_focus("api")
-                    || has_focus("persistence")
-                    || has_focus("security")
-                    || has_focus("configuration")
-                    || has_focus("runtime")
-                    || has_focus("integration")
-                    || has_focus("migration")
-                    || has_focus("architecture")
-                    || has_focus("testing"));
-            let persistence_applies = roles.contains("persistence") && has_focus("persistence");
-            let unclassified_applies = roles.is_empty()
-                && (has_focus("api")
-                    || has_focus("backend")
-                    || has_focus("persistence")
-                    || has_focus("security")
-                    || has_focus("configuration")
-                    || has_focus("runtime"));
-            frontend_applies || backend_applies || persistence_applies || unclassified_applies
-        }
-        None => roles.contains("frontend") && has_focus("frontend"),
-    }
+    let catalog = reference_catalog::vendor_catalog();
+    catalog.signal_applies_to_task(signal.language.as_deref(), &signal.roles, focus_tags)
 }
 
 fn reference_items_for_signal(
@@ -2225,104 +1664,20 @@ fn frontend_reference_items_for_signal(
 }
 
 fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanItem {
-    if group_key == "mybatisplus"
-        && matches!(
-            group,
-            "configuration"
-                | "mapping"
-                | "crud"
-                | "wrappers"
-                | "plugins"
-                | "security"
-                | "extensions"
-        )
-    {
+    let catalog = reference_catalog::vendor_catalog();
+    if let Some(entry) = catalog.resolve_entry("code", group_key, group) {
         return ReferenceLoadPlanItem {
-            ref_id: format!("bk.spring.mybatisplus.{group}"),
-            path: format!("tech/backend/springboot/mybatis-plus/{group}.md"),
-            reason: format!(
-                "Selected MyBatis-Plus {group} reference for this task-owned persistence capability."
-            ),
-        };
-    }
-    if let Some((ref_prefix, path_group, label)) = match group_key {
-        "springboot" => Some(("bk.spring", "springboot", "Spring Boot")),
-        "django" => Some(("bk.django", "django", "Django")),
-        "fastapi" => Some(("bk.fastapi", "fastapi", "FastAPI")),
-        "aspnetcore" => Some(("bk.aspnet", "aspnetcore", "ASP.NET Core")),
-        "nestjs" => Some(("bk.nest", "nestjs", "NestJS")),
-        _ => None,
-    } {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("{ref_prefix}.{group}"),
-            path: format!("tech/backend/{path_group}/{group}.md"),
-            reason: format!("Selected {label} {group} framework quality reference for this task."),
-        };
-    }
-    if let Some((ref_prefix, path_group, label)) = match group_key {
-        "react" => Some(("fe.react", "react", "React")),
-        "nextjs" => Some(("fe.next", "nextjs", "Next.js")),
-        "vue" => Some(("fe.vue", "vue", "Vue")),
-        "angular" => Some(("fe.angular", "angular", "Angular")),
-        "reactnative" => Some(("fe.rn", "react-native", "React Native")),
-        "flutter" => Some(("fe.flutter", "flutter", "Flutter")),
-        _ => None,
-    } {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("{ref_prefix}.{group}"),
-            path: format!("tech/frontend/{path_group}/{group}.md"),
-            reason: format!(
-                "Selected {label} {group} frontend framework quality reference for this task."
-            ),
-        };
-    }
-    if group_key == "sql" {
-        if let Some((provider, subject)) = group.split_once('.') {
-            if matches!(provider, "mysql" | "postgresql" | "sqlserver" | "oracle")
-                && matches!(subject, "schema" | "queries" | "transactions")
-            {
-                let label = match provider {
-                    "mysql" => "MySQL",
-                    "postgresql" => "PostgreSQL",
-                    "sqlserver" => "SQL Server",
-                    _ => "Oracle",
-                };
-                return ReferenceLoadPlanItem {
-                    ref_id: format!("tech.code.sql.{provider}.{subject}"),
-                    path: format!("tech/code/sql/{provider}/{subject}.md"),
-                    reason: format!(
-                        "Selected {label} {subject} dialect reference for this persistence task."
-                    ),
-                };
-            }
-        }
-    }
-    if group_key == "redis"
-        && matches!(
-            group,
-            "core" | "cache" | "session" | "atomicity" | "messaging"
-        )
-    {
-        return ReferenceLoadPlanItem {
-            ref_id: format!("tech.code.redis.{group}"),
-            path: format!("tech/code/redis/{group}.md"),
-            reason: format!("Selected Redis {group} reference for this task-owned capability."),
-        };
-    }
-    if group_key == "common" && group == "observability" {
-        return ReferenceLoadPlanItem {
-            ref_id: "tech.code.observability".to_string(),
-            path: "tech/code/observability.md".to_string(),
-            reason: "Selected the task-owned cross-stack observability implementation reference."
-                .to_string(),
+            ref_id: entry.ref_id,
+            path: entry.path,
+            reason: entry
+                .reason
+                .unwrap_or_else(|| format!("为此任务选择的 {group_key}.{group} 实现质量参考。")),
         };
     }
     ReferenceLoadPlanItem {
         ref_id: format!("tech.code.{group_key}.{group}"),
         path: format!("tech/code/{group_key}/{group}.md"),
-        reason: format!(
-            "Selected {group_key}.{group} implementation quality reference for this task."
-        ),
+        reason: format!("为此任务选择的 {group_key}.{group} 实现质量参考。"),
     }
 }
 
@@ -2848,13 +2203,11 @@ pub fn jvm_package_naming_policy(applies_to: Vec<String>) -> CodePackageNamingPo
     CodePackageNamingPolicy {
         applies_to,
         priority_order: vec![
-            "existing production package root in src/main".to_string(),
-            "build metadata group such as Gradle group or Maven groupId".to_string(),
-            "confirmed organization or product namespace from project context".to_string(),
-            "fallback app.<project_slug> derived from repository or confirmed project name"
-                .to_string(),
-            "absolute fallback app.generated only when no stable project slug exists"
-                .to_string(),
+            "src/main 中已有的生产包根路径".to_string(),
+            "构建元数据 group，如 Gradle group 或 Maven groupId".to_string(),
+            "来自项目上下文的已确认组织或产品命名空间".to_string(),
+            "从仓库或已确认项目名称派生的回退 app.<project_slug>".to_string(),
+            "仅在不存在稳定项目 slug 时的绝对回退 app.generated".to_string(),
         ],
         forbidden_package_prefixes: forbidden_jvm_package_prefixes()
             .into_iter()
@@ -2863,8 +2216,9 @@ pub fn jvm_package_naming_policy(applies_to: Vec<String>) -> CodePackageNamingPo
         fallback_package_template: "app.<project_slug>".to_string(),
         absolute_fallback_package: "app.generated".to_string(),
         notes: vec![
-            "project_slug must use lowercase letters and digits; split invalid separators into package segments and drop empty segments.".to_string(),
-            "Fallback packages are local bootstrap namespaces, not public organization identities, and should be replaced when a real organization namespace is known.".to_string(),
+            "project_slug 必须使用小写字母和数字；将无效分隔符拆分为包段并丢弃空段。".to_string(),
+            "回退包是本地引导命名空间，不是公共组织标识，在已知真实组织命名空间时应被替换。"
+                .to_string(),
         ],
     }
 }
@@ -5503,11 +4857,11 @@ mod tests {
             let content = fs::read_to_string(&path)
                 .unwrap_or_else(|error| panic!("read {}: {error}", path.display()));
             for section in [
-                "## Provider Decision",
-                "## Correlation And Boundaries",
-                "## Async And File Output",
+                "## Provider 决策",
+                "## 关联与边界",
+                "## 异步与文件输出",
                 "## Verification Focus",
-                "## Unsafe Defaults",
+                "## 不安全默认",
             ] {
                 assert!(
                     content.contains(section),
@@ -6665,14 +6019,14 @@ mod tests {
             root.join("plugins/shared/loom/references/tech/code/java/persistence.md"),
         )
         .expect("read Java persistence reference");
-        assert!(persistence.contains("Spring Data repositories"));
-        assert!(persistence.contains("selected provider"));
+        assert!(persistence.contains("Spring Data repository"));
+        assert!(persistence.contains("选中的提供者"));
 
         let reactive = fs::read_to_string(
             root.join("plugins/shared/loom/references/tech/code/java/reactive.md"),
         )
         .expect("read Java reactive reference");
-        assert!(reactive.contains("dedicated external-service integration reference"));
+        assert!(reactive.contains("专用的外部服务集成参考"));
         assert!(reactive.contains("StepVerifier"));
     }
 }

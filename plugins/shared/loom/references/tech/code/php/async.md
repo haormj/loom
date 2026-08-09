@@ -1,41 +1,41 @@
-# PHP Async Quality
+# PHP 异步质量
 
-This file applies only to PHP async runtimes and async I/O boundaries.
+本文件仅适用于 PHP 异步运行时和异步 I/O 边界。
 
 ## When To Use
 
-- The task changes Swoole, ReactPHP, Amphp, Fiber-based scheduling, WebSocket/server loops, async queues, streams, timers, or concurrent HTTP/database clients.
-- Use this when correctness depends on event-loop ownership, coroutine lifecycle, cancellation, timeout behavior, or avoiding blocking calls in async code.
-- If the project is a regular synchronous PHP/Laravel/Symfony request-response app, do not introduce an async runtime just because this reference is available.
+- 任务变更了 Swoole、ReactPHP、Amphp、基于 Fiber 的调度、WebSocket/服务器循环、异步队列、流、定时器或并发 HTTP/数据库客户端。
+- 当正确性依赖于事件循环所有权、协程生命周期、取消、超时行为或避免异步代码中的阻塞调用时使用此参考。
+- 如果项目是常规同步 PHP/Laravel/Symfony 请求-响应应用，不要仅因为此参考可用就引入异步运行时。
 
 ## Implementation Focus
 
-- Follow the async stack already present in the repository. Do not mix Swoole, ReactPHP, Amphp, custom Fibers, and framework queue workers in one task without an explicit boundary.
-- Keep exactly one clear owner for an event loop or long-running server process. Do not start loops inside controllers, request handlers, service constructors, or tests that cannot shut them down.
-- Use async-compatible clients for network, database, Redis, filesystem, and timer work inside coroutine/event-loop paths. Move unavoidable blocking calls outside the hot path or behind an explicit worker/offload boundary.
-- For Swoole, make coroutine boundaries visible: close clients, set timeouts, handle failed connects, and use wait groups/channels for fan-out work that must be joined before responding.
-- For ReactPHP and Amphp, propagate promise/future failures instead of swallowing them in callbacks. Close sockets/connections on error and arrange timer/cancellation cleanup.
-- Treat native Fibers as a primitive, not a scheduler. Do not build a bespoke async framework unless the repository already owns that abstraction.
-- Use bounded channels, queues, or concurrency limits for fan-out. Unbounded producer/consumer paths need a task-owned reason and backpressure behavior.
-- Keep shared mutable state out of callbacks where possible. When shared state is unavoidable, isolate mutation to one coroutine/task or use the runtime's concurrency-safe primitive.
-- Long-running workers need graceful shutdown: signal handling, loop stop, in-flight request handling, connection close, and idempotent cleanup.
+- 遵循仓库中已存在的异步技术栈。不要在没有显式边界的情况下在一个任务中混合 Swoole、ReactPHP、Amphp、自定义 Fiber 和框架队列 worker。
+- 为事件循环或长时间运行的服务器进程保持恰好一个清晰的所有者。不要在控制器、请求处理器、服务构造函数或无法关闭它们的测试中启动循环。
+- 在协程/事件循环路径内对网络、数据库、Redis、文件系统和定时器工作使用异步兼容客户端。将不可避免的阻塞调用移到热路径之外或显式 worker/卸载边界之后。
+- 对于 Swoole，使协程边界可见：关闭客户端、设置超时、处理失败连接，并使用 wait group/channel 进行必须在响应之前汇合的扇出工作。
+- 对于 ReactPHP 和 Amphp，传播 promise/future 失败而非在回调中吞掉它们。在错误时关闭 socket/连接并安排定时器/取消清理。
+- 将原生 Fiber 视为原语而非调度器。除非仓库已拥有该抽象否则不要构建定制异步框架。
+- 为扇出使用有界 channel、队列或并发限制。无界生产者/消费者路径需要任务拥有的理由和背压行为。
+- 尽可能将共享可变状态排除在回调之外。当共享状态不可避免时，将变更隔离到一个协程/任务或使用运行时的并发安全原语。
+- 长时间运行的 worker 需要优雅关闭：信号处理、循环停止、进行中请求处理、连接关闭和幂等清理。
 
 ## Runtime Selection
 
-- Select the async runtime from the accepted stack and the task-owned execution boundary. Swoole, ReactPHP, Amphp, and native Fibers have different loop, client, cancellation, and deployment assumptions; do not substitute one for another by syntax similarity.
-- Treat a Fiber as a cooperative control-flow primitive. It does not provide an event loop, non-blocking I/O, scheduling, or cancellation by itself.
-- Keep framework queues and async HTTP/event-loop work separate unless the repository explicitly owns the bridge. A queue worker's retry lifecycle is not equivalent to an event-loop promise or coroutine.
-- Make blocking boundaries explicit in evidence: identify the client/driver, the offload mechanism, and the shutdown owner. A method named `async` is not proof that its PDO, filesystem, or HTTP calls are non-blocking.
+- 从已接受的技术栈和任务拥有的执行边界选择异步运行时。Swoole、ReactPHP、Amphp 和原生 Fiber 有不同的循环、客户端、取消和部署假设；不要通过语法相似性用另一个替代。
+- 将 Fiber 视为协作控制流原语。它本身不提供事件循环、非阻塞 I/O、调度或取消。
+- 除非仓库显式拥有桥接否则保持框架队列和异步 HTTP/事件循环工作分开。队列 worker 的重试生命周期不等同于事件循环 promise 或协程。
+- 在证据中使阻塞边界显式：标识客户端/驱动程序、卸载机制和关闭所有者。名为 `async` 的方法不证明其 PDO、文件系统或 HTTP 调用是非阻塞的。
 
 ## Verification Focus
 
-- Run the existing async/server smoke command when runtime code changes, and prove the process can start and stop cleanly.
-- Test success, timeout, cancellation, connection failure, and handler exception branches touched by the task.
-- For concurrent fan-out, verify all tasks are joined or cancelled and that partial failure returns the intended result.
-- For server/request handlers, exercise at least one real request path and one invalid/error request path.
-- Check that the changed async path does not contain obvious blocking calls such as `sleep`, synchronous HTTP clients, blocking PDO calls, or file I/O in an event-loop callback unless explicitly offloaded.
-- Verify the selected runtime's actual startup command and one lifecycle teardown path; do not claim portability across Swoole, ReactPHP, Amphp, and Fibers from a unit test alone.
+- 当运行时代码变更时运行现有的异步/服务器冒烟命令，并证明进程可以干净地启动和停止。
+- 测试任务涉及的成功、超时、取消、连接失败和处理器异常分支。
+- 对于并发扇出，验证所有任务被汇合或取消且部分失败返回预期结果。
+- 对于服务器/请求处理器，演练至少一个真实请求路径和一个无效/错误请求路径。
+- 检查变更的异步路径不包含明显的阻塞调用如 `sleep`、同步 HTTP 客户端、阻塞 PDO 调用或事件循环回调中的文件 I/O，除非显式卸载。
+- 验证选中运行时的实际启动命令和一个生命周期拆卸路径；不要仅从单元测试声称跨 Swoole、ReactPHP、Amphp 和 Fiber 的可移植性。
 
 ## Evidence Focus
 
-- In the evidence summary, name the async decision: runtime owner, coroutine boundary, event-loop cleanup, non-blocking client, timeout/cancellation, backpressure, or shutdown proof.
+- 在证据总结中，说明异步决策：运行时所有者、协程边界、事件循环清理、非阻塞客户端、超时/取消、背压或关闭证明。

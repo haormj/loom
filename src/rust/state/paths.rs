@@ -60,10 +60,7 @@ pub fn project_paths(project_root: &str) -> StateResult<ProjectPaths> {
 
 pub fn to_project_relative(project_root: &Path, absolute_path: &Path) -> StateResult<String> {
     let relative = absolute_path.strip_prefix(project_root).map_err(|_| {
-        StateError::InvalidArgument(format!(
-            "path is outside project root: {}",
-            absolute_path.display()
-        ))
+        StateError::InvalidArgument(format!("路径在项目根目录之外：{}", absolute_path.display()))
     })?;
     Ok(relative
         .components()
@@ -75,13 +72,13 @@ pub fn to_project_relative(project_root: &Path, absolute_path: &Path) -> StateRe
 pub fn from_project_relative(project_root: &Path, relative_path: &str) -> StateResult<PathBuf> {
     if relative_path.trim().is_empty() {
         return Err(StateError::InvalidArgument(
-            "project-relative path is required".to_string(),
+            "项目相对路径为必填项".to_string(),
         ));
     }
     let relative = Path::new(relative_path);
     if relative.is_absolute() {
         return Err(StateError::InvalidArgument(
-            "project-relative path must not be absolute".to_string(),
+            "项目相对路径不能为绝对路径".to_string(),
         ));
     }
     if relative
@@ -89,7 +86,7 @@ pub fn from_project_relative(project_root: &Path, relative_path: &str) -> StateR
         .any(|component| matches!(component, std::path::Component::ParentDir))
     {
         return Err(StateError::InvalidArgument(
-            "project-relative path must not contain '..'".to_string(),
+            "项目相对路径不能包含 '..'".to_string(),
         ));
     }
     Ok(project_root.join(relative))

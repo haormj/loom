@@ -1,112 +1,112 @@
-# System Design For Loom Architecture
+# Loom 架构的系统设计
 
-Use this reference when defining architecture foundation, domain/interface contracts, behavior, or runtime delivery sections.
+当定义架构基础、领域/接口契约、行为或运行时交付章节时，使用本引用。
 
-## System Boundary
+## 系统边界
 
-Every Architecture artifact should make the current phase boundary explicit:
+每个架构工件应使当前阶段边界明确：
 
-| Boundary | Required Description |
+| 边界 | 必需描述 |
 |---|---|
-| Product boundary | What user or operator capability is delivered now. |
-| Module boundary | Which modules own which responsibilities. |
-| Data boundary | Which module owns each entity and invariant. |
-| Interface boundary | Which APIs, service methods, jobs, or adapters are current-phase contracts. |
-| Runtime boundary | Which build/start/probe/environment facts the implementation must preserve. |
-| Deferred boundary | Which tempting future capabilities are deliberately not current tasks. |
+| 产品边界 | 现在交付什么用户或运维人员能力。 |
+| 模块边界 | 哪些模块拥有哪些职责。 |
+| 数据边界 | 哪个模块拥有每个实体和不变量。 |
+| 接口边界 | 哪些 API、服务方法、作业或适配器是当前阶段契约。 |
+| 运行时边界 | 实现必须保持哪些构建/启动/探针/环境事实。 |
+| 推迟边界 | 哪些诱人的未来能力是故意不作为当前任务的。 |
 
-## Component Shape
+## 组件形态
 
-For each current-phase module, capture:
+对于每个当前阶段模块，捕获：
 
 - `moduleId`
-- responsibility
-- owned entities or state
-- exposed interfaces
-- accepted input/output contracts
-- dependencies
-- acceptance refs and requirement detail refs
-- risks or decisions that apply
+- 职责
+- 拥有实体或状态
+- 暴露接口
+- 接受的输入/输出契约
+- 依赖
+- 验收引用和需求详情引用
+- 适用的风险或决策
 
-Module descriptions should be implementation-facing. A reader should know where code belongs and what must not be mixed together.
+模块描述应面向实现。读者应知道代码属于哪里以及什么不得混在一起。
 
-## Context And Trust Boundaries
+## 上下文和信任边界
 
-Identify every current-phase caller, operator, external system, and durable store that crosses the product boundary. For each crossing, define:
+识别每个跨越产品边界的当前阶段调用方、运维人员、外部系统和持久存储。对于每次跨越，定义：
 
-- who initiates it and which component owns the receiving boundary
-- whether communication is synchronous, asynchronous, scheduled, or file-based
-- authentication, authorization, or data-sensitivity implications when applicable
-- accepted input/output ownership and failure visibility
-- whether the dependency is required for startup, required for one capability, or optional
+- 谁发起它以及哪个组件拥有接收边界
+- 通信是同步、异步、定时还是基于文件的
+- 适用时的认证、授权或数据敏感性影响
+- 接受的输入/输出所有权和失败可见性
+- 依赖是启动必需、仅一个能力必需还是可选的
 
-Do not draw an external box without defining the interaction contract and trust assumptions that make it relevant.
+不要在未定义使其相关的交互契约和信任假设的情况下画外部框。
 
-## Interaction Design
+## 交互设计
 
-For user or system flows:
+对于用户或系统流程：
 
-- Define trigger, actor/system, happy path, validation/blocking path, failure path, and observable result.
-- Connect each step to interface refs and state machine refs when available.
-- Include state or persistence changes for actions that mutate data.
-- Define success and business-blocking feedback for user-visible operations.
-- For external dependencies, define timeout ownership, retry or no-retry rationale, duplicate protection, fallback/degraded behavior, and the observable signal when recovery is needed.
-- For asynchronous interactions, define delivery guarantee, ordering boundary, idempotency owner, replay behavior, and how completion or terminal failure becomes visible.
+- 定义触发器、参与者/系统、正常路径、校验/阻断路径、失败路径和可观测结果。
+- 在可用时将每个步骤连接到接口引用和状态机引用。
+- 对于变更数据的操作，包含状态或持久化更改。
+- 为用户可见操作定义成功和业务阻断反馈。
+- 对于外部依赖，定义超时所有权、重试或不重试理由、重复保护、降级/回退行为以及需要恢复时的可观测信号。
+- 对于异步交互，定义投递保证、排序边界、幂等拥有者、回放行为以及完成或终态失败如何变为可见。
 
-## Capacity And Growth Triggers
+## 容量和增长触发器
 
-Describe capacity only where a current requirement or a bounded product-quality minimum makes it relevant:
+仅当当前需求或有界产品质量最低要求使其相关时描述容量：
 
-- workload or data condition that changes the architecture behavior
-- bounded query, batch, queue, payload, or concurrency rule
-- scale unit, such as application instance, worker, partition, or read model
-- trigger that would justify a later structural change
+- 改变架构行为的工作负载或数据条件
+- 有界查询、批量、队列、载荷或并发规则
+- 扩展单元，如应用实例、worker、分区或读取模型
+- 能证明后续结构变更合理的触发器
 
-Do not invent traffic numbers, multi-region topology, or horizontal scaling machinery without an accepted target. “Scalable” is not a design until the workload, boundary, and trigger are stated.
+不要在未接受目标的情况下编造流量数字、多区域拓扑或水平扩展机制。"可扩展"在工作负载、边界和触发器确定之前不是设计。
 
-## Runtime Design
+## 运行时设计
 
-Runtime design is a code-level contract, not deployment success.
+运行时设计是代码级契约，不是部署成功。
 
-Include:
+包含：
 
-- build command and working directory when known
-- start command or runtime entry when known
-- runtime surfaces and probe paths
-- environment variables required by the current phase
-- generated artifacts that must be preserved
-- constraints that later deploy should consume
+- 已知时的构建命令和工作目录
+- 已知时的启动命令或运行时入口
+- 运行时面和探针路径
+- 当前阶段需要的环境变量
+- 必须保留的生成工件
+- 后续部署应消费的约束
 
-Do not require Docker, registry access, cloud deployment, or clean install during Architecture.
+在架构阶段不要要求 Docker、registry 访问、云部署或全新安装。
 
-## Failure Design
+## 失败设计
 
-Each stateful flow should identify:
+每个有状态流程应识别：
 
-- validation failure
-- dependency failure
-- persistence failure
-- duplicate or replayed request
-- partial write or inconsistent state risk
-- recovery or user-visible blocking response
+- 校验失败
+- 依赖失败
+- 持久化失败
+- 重复或回放请求
+- 部分写入或不一致状态风险
+- 恢复或用户可见阻断响应
 
-When a failure affects implementation or verification, create an architecture risk record.
+当失败影响实现或验证时，创建架构风险记录。
 
-## Anti-Patterns
+## 反模式
 
-- Component diagrams without ownership.
-- Generic "frontend/backend/database" boxes with no module responsibility.
-- Runtime surfaces that list `/api` as a probe when it is only a prefix, not a real endpoint.
-- Ignoring failure paths until Review.
-- Treating deferred phase components as current dependencies.
+- 没有所有权的组件图。
+- 没有模块职责的通用"前端/后端/数据库"框。
+- 将 `/api` 列为探针的运行时面，当它只是前缀而非真实端点时。
+- 直到评审才考虑失败路径。
+- 将推迟阶段组件视为当前依赖。
 
-## Example Direction
+## 示例方向
 
-For a CRUD-like internal product, a strong system design usually defines:
+对于类 CRUD 的内部产品，强大的系统设计通常定义：
 
-- app shell or worker/admin surface
-- API boundary for each business operation
-- domain service or module owning validation
-- persistence model and migration ownership
-- list/detail/readback paths
-- failure feedback for duplicate, invalid state, permission, and storage errors
+- 应用 shell 或 worker/管理面
+- 每个业务操作的 API 边界
+- 拥有校验的领域服务或模块
+- 持久化模型和迁移所有权
+- 列表/详情/回读路径
+- 重复、无效状态、权限和存储错误的失败反馈

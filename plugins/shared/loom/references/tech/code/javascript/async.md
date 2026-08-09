@@ -1,55 +1,55 @@
-# JavaScript Async Quality
+# JavaScript 异步质量
 
 ## When To Use
 
-- The task changes promises, `async`/`await`, fetch flows, timers, retries, cancellation, queues, streams, workers, background jobs, or event-driven JavaScript.
-- Use this when correctness depends on ordering, parallelism, error propagation, cleanup, or backpressure.
-- If the change is purely synchronous JavaScript, do not add async abstractions because this reference is available.
+- 任务变更了 promise、`async`/`await`、fetch 流程、定时器、重试、取消、队列、流、worker、后台作业或事件驱动的 JavaScript。
+- 当正确性依赖于排序、并行性、错误传播、清理或背压时使用此参考。
+- 如果变更纯粹是同步 JavaScript，不要因为此参考可用就添加异步抽象。
 
 ## Implementation Focus
 
-- Choose parallelism intentionally. Use sequential `await` when later work depends on earlier output; use `Promise.all` only for independent all-or-nothing work; use `Promise.allSettled` when partial success is valid.
-- For fetch or HTTP helpers, check response status before parsing success data. Preserve enough status/body information for callers to render a useful error or decide on retry.
-- Add cancellation where user navigation, component unmount, request replacement, or long-running work can make the result stale. Wire `AbortController` through the actual call path rather than creating an unused controller.
-- Pair timeouts with cancellation and timer cleanup. A timeout implemented with `Promise.race` should not leave the underlying operation running forever when the platform supports aborting it.
-- Retry only idempotent or explicitly deduplicated operations. Do not retry form submissions, payments, writes, or state transitions unless the backend contract makes the retry safe.
-- Limit concurrency for large batches, file processing, crawling, queue workers, or user-triggered bulk operations. Avoid unbounded `Promise.all(items.map(...))` on unbounded input.
-- Do not leave floating promises. If fire-and-forget is intentional, attach error handling and make the lifecycle owner clear.
-- Use `finally` or equivalent cleanup for locks, loading state, subscriptions, timers, temporary files, and active operation markers.
-- For streams, prefer backpressure-aware APIs such as `pipeline` in Node or readable stream iteration where supported. Do not buffer large streams into memory unless the data size is bounded.
+- 有意选择并行性。当后续工作依赖先前输出时使用顺序 `await`；仅对独立的全有或全无工作使用 `Promise.all`；当部分成功有效时使用 `Promise.allSettled`。
+- 对 fetch 或 HTTP 辅助函数，在解析成功数据之前检查响应状态。保留足够的状态/主体信息供调用者渲染有用错误或决定重试。
+- 当用户导航、组件卸载、请求替换或长时间运行的工作可能使结果过时时添加取消。将 `AbortController` 连接到实际调用路径，而不是创建未使用的控制器。
+- 将超时与取消和定时器清理配对。用 `Promise.race` 实现的超时不应在平台支持中止时让底层操作永远运行。
+- 仅重试幂等或显式去重的操作。不要重试表单提交、支付、写入或状态转换，除非后端契约使重试安全。
+- 对大批量、文件处理、爬取、队列 worker 或用户触发的批量操作限制并发。避免在无界输入上使用无界的 `Promise.all(items.map(...))`。
+- 不要留下浮动 promise。如果发后即忘是有意的，附加错误处理并使生命周期所有者清晰。
+- 对锁、加载状态、订阅、定时器、临时文件和活动操作标记使用 `finally` 或等效清理。
+- 对于流，优先使用背压感知 API，如 Node 中的 `pipeline` 或支持的 readable stream 迭代。不要将大型流缓冲到内存中，除非数据大小有界。
 
 ### Combinator And Failure Selection
 
-Choose the combinator from the business outcome:
+根据业务结果选择组合器：
 
-| Outcome | Pattern | Failure meaning |
+| 结果 | 模式 | 失败含义 |
 |---|---|---|
-| All independent results are required | `Promise.all` | first rejection fails the operation; define cleanup for other work |
-| Each result is useful independently | `Promise.allSettled` | return or record per-item success and failure |
-| First successful source is acceptable | `Promise.any` | reject only after every candidate fails; preserve `AggregateError` context |
-| First settlement ends the race | `Promise.race` | the losing operation still needs cancellation when it can continue running |
-| Ordered dependency | sequential `await` or `for await` | later work must not start before prior state is valid |
+| 需要所有独立结果 | `Promise.all` | 首个拒绝使操作失败；为其他工作定义清理 |
+| 每个结果独立有用 | `Promise.allSettled` | 返回或记录每项成功和失败 |
+| 首个成功来源可接受 | `Promise.any` | 仅在所有候选都失败后拒绝；保留 `AggregateError` 上下文 |
+| 首个结算结束竞争 | `Promise.race` | 落败操作仍需取消（当它可以继续运行时） |
+| 有序依赖 | 顺序 `await` 或 `for await` | 后续工作不得在先前状态有效之前开始 |
 
-Do not use `Promise.all` as an unbounded batch scheduler. For large or user-controlled collections, add a bounded queue, define whether failures stop or continue the batch, and preserve input-to-result correlation.
+不要将 `Promise.all` 用作无界批量调度器。对于大型或用户控制的集合，添加有界队列，定义失败是停止还是继续批处理，并保留输入到结果的关联。
 
 ### Timeout And Cancellation Ownership
 
-Timeout, abort, and retry are separate decisions. A timeout must stop or detach the underlying operation, clear its timer, and return an error category callers can distinguish from validation or business rejection. Pass one `AbortSignal` through the complete call chain; do not create a controller in a helper that no owner can abort.
+超时、中止和重试是独立的决策。超时必须停止或分离底层操作、清除其定时器，并返回调用者可与验证或业务拒绝区分的错误类别。通过完整调用链传递一个 `AbortSignal`；不要在没有任何所有者可以中止的辅助函数中创建控制器。
 
-Retry only transient failures and keep the attempt budget outside the operation's business result. Backoff must be cancellable. A retry around a non-idempotent write requires an idempotency key or an equivalent deduplication contract.
+仅重试暂时性失败，并将尝试预算保持在操作的业务结果之外。退避必须可取消。围绕非幂等写入的重试需要幂等键或等效去重契约。
 
 ### Queue And Stream Boundaries
 
-An async generator should define page/cursor advancement, termination, duplicate handling, and cleanup when iteration stops early. A concurrency queue should release waiters in a `finally` path and define behavior when queued work is cancelled. For Node streams, use `pipeline` or equivalent propagation so source, transform, destination, and abort all share failure and cleanup semantics.
+异步生成器应定义页面/游标推进、终止、重复处理和提前停止迭代时的清理。并发队列应在 `finally` 路径中释放等待者，并定义排队工作被取消时的行为。对于 Node 流，使用 `pipeline` 或等效传播，使源、转换、目标和中止都共享失败和清理语义。
 
 ## Verification Focus
 
-- Test success, failure, timeout, cancellation, and cleanup paths for changed async flows.
-- Test ordering when operations must be sequential and independence when operations are intentionally parallel.
-- Check that rejected promises are observed by tests or callers; no new unhandled rejection should appear in runtime output.
-- For retries, verify retry count, backoff/stop condition, and non-retry behavior for unsafe or non-retryable errors.
-- For combinators and queues, verify partial-failure policy, bounded concurrency, input/result correlation, early iterator termination, and cleanup of losing or cancelled work.
+- 为变更的异步流程测试成功、失败、超时、取消和清理路径。
+- 当操作必须顺序时测试排序，当操作有意并行时测试独立性。
+- 检查被拒绝的 promise 是否被测试或调用者观察；运行时输出中不应出现新的未处理拒绝。
+- 对于重试，验证重试计数、退避/停止条件以及对不安全或不可重试错误的非重试行为。
+- 对于组合器和队列，验证部分失败策略、有界并发、输入/结果关联、提前迭代器终止以及落败或取消工作的清理。
 
 ## Evidence Focus
 
-- In the evidence summary, name the async decision: sequential flow, parallel batch, cancellation, timeout, retry policy, concurrency limit, stream handling, or cleanup guarantee.
+- 在证据总结中，说明异步决策：顺序流、并行批处理、取消、超时、重试策略、并发限制、流处理或清理保证。

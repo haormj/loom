@@ -1,20 +1,20 @@
-# React Native Client Storage
+# React Native 客户端存储
 
-Apply storage guidance only when the task owns device persistence, secure credentials, offline drafts, cached records, remembered preferences, persisted state, hydration, migration, expiry, or identity-scoped cleanup.
+仅当任务拥有设备持久化、安全凭据、离线草稿、缓存记录、记忆偏好、持久化状态、hydration、迁移、过期或标识范围清理时应用存储指导。
 
-## Classify The Data
+## 分类数据
 
-For each value, name sensitivity, authority, size, access frequency, lifetime, identity/tenant/environment scope, offline requirement, expiry, and conflict behavior before choosing a backend.
+为每个值，在选择后端之前命名敏感性、权威、大小、访问频率、生命周期、标识/租户/环境范围、离线需求、过期和冲突行为。
 
-Use platform secure storage/keychain/keystore through the repository abstraction for tokens or sensitive credentials. AsyncStorage fits small non-sensitive async values; MMKV or another synchronous store fits frequent reads only when already compatible and justified.
+通过仓库抽象使用平台安全存储/keychain/keystore 处理令牌或敏感凭据。AsyncStorage 适合小型非敏感异步值；MMKV 或其他同步存储仅在已兼容且有理由时适合频繁读取。
 
-Files/databases suit larger structured/offline data. Do not turn key-value storage into an unbounded database or use local persistence as authoritative server state.
+文件/数据库适合更大的结构化/离线数据。不要将键值存储变为无界数据库或使用本地持久化作为权威服务端状态。
 
-## Keys And Stored Shape
+## 键与存储形状
 
-Centralize and namespace keys by app/environment, feature, schema version, and identity dimensions as needed. Avoid one global `user`, `settings`, or `draft` key shared across accounts.
+按需按应用/环境、功能、schema 版本和标识维度集中和命名空间键。避免跨账户共享一个全局 `user`、`settings` 或 `draft` 键。
 
-Store a versioned envelope when data evolves:
+当数据演进时存储版本化信封：
 
 ```ts
 type StoredDraft<T> = {
@@ -26,56 +26,56 @@ type StoredDraft<T> = {
 }
 ```
 
-Validate parsed values at the boundary. Corrupt JSON, partial writes, unknown versions, missing fields, expired data, and downgrade scenarios need explicit discard, migrate, or recovery behavior.
+在边界验证解析值。损坏的 JSON、部分写入、未知版本、缺失字段、过期数据和降级场景需要显式丢弃、迁移或恢复行为。
 
-## Hydration And Rendering
+## Hydration 与渲染
 
-Represent unhydrated, ready, missing, invalid/migrating, and failed states. Do not briefly render a default as persisted truth and then replace it after storage resolves.
+表示未 hydrate、就绪、缺失、无效/迁移中和失败状态。不要短暂地将默认值渲染为持久化真相然后在存储解析后替换。
 
-Sequence hydration and writes. A slow initial read must not overwrite a user change made before it completes; key/account changes must invalidate older completions.
+排序 hydration 和写入。慢速初始读取不得覆盖在其完成前进行的用户变更；键/账户变更必须使旧的完成失效。
 
-Avoid using a new object/function default as a hook dependency that restarts hydration every render. Keep storage hooks typed and expose meaningful error/retry/reset behavior.
+避免使用新对象/函数默认作为每次渲染重启 hydration 的 hook 依赖。保持存储 hook 类型化并暴露有意义的错误/重试/重置行为。
 
-## Writes And Consistency
+## 写入与一致性
 
-Define whether UI updates before or after durable write and what happens on write failure. For important drafts/settings, surface failure and retain recoverable in-memory state rather than pretending persistence succeeded.
+定义 UI 在持久写入之前还是之后更新以及写入失败时发生什么。对于重要草稿/设置，暴露失败并保留可恢复的内存状态而非假装持久化成功。
 
-Serialize writes per key or use storage transactions/batches where available. Concurrent functional updates must read from one current owner, not a stale closure.
+按键序列化写入或在可用时使用存储事务/批次。并发函数式更新必须从一个当前所有者读取，而非过期闭包。
 
-Limit and expire caches/drafts/history. Define eviction and storage-pressure behavior; mobile OS cleanup and unavailable storage are normal failure modes.
+限定和过期缓存/草稿/历史。定义驱逐和存储压力行为；移动 OS 清理和不可用存储是正常失败模式。
 
-## Identity And Lifecycle Cleanup
+## 标识与生命周期清理
 
-Clear or re-scope data on logout, account/tenant/environment switch, permission downgrade, schema migration, and app reset. Do not call backend-wide `clear()` when the app shares storage with unrelated features.
+在登出、账户/租户/环境切换、权限降级、schema 迁移和应用重置时清除或重新限定数据。当应用与不相关功能共享存储时不要调用后端范围的 `clear()`。
 
-Persist only durable slices. Loading flags, transient errors, open overlays, in-flight mutations, and mutable selected rows should not survive restart by default.
+仅持久化持久切片。加载标志、临时错误、打开的覆盖层、进行中的变更和可变选定行默认不应在重启后存活。
 
-For offline edits, define sync identity, conflict detection, retry/idempotency, tombstones, and readback. A cached DTO plus later overwrite is not an offline architecture.
+对于离线编辑，定义同步标识、冲突检测、重试/幂等、墓碑和回读。缓存的 DTO 加后来覆盖不是离线架构。
 
-## Security And Privacy
+## 安全与隐私
 
-Assume non-secure storage, logs, backups, and device files can be inspected. Do not store raw passwords, private keys, unrestricted provider payloads, or secrets in AsyncStorage/MMKV.
+假设非安全存储、日志、备份和设备文件可被检查。不要将原始密码、私钥、不受限 provider 载荷或密钥存储在 AsyncStorage/MMKV 中。
 
-Minimize sensitive retention, redact diagnostics, and follow platform backup/screenshot/data-protection policy where required. Biometric gating does not automatically encrypt arbitrary app storage.
+最小化敏感保留，编辑诊断，并在需要时遵循平台备份/截图/数据保护策略。生物识别门控不会自动加密任意应用存储。
 
 ## Verification
 
-- Test first run, valid hydration, missing/corrupt/expired/unknown-version data, migration, update, removal, and write failure.
-- Prove a late hydration cannot overwrite a newer write or another account/key.
-- Verify logout/account/tenant/environment cleanup without deleting unrelated keys.
-- Confirm sensitive values use the accepted secure backend and are absent from ordinary storage/logs.
-- Exercise restart/offline/reconnect/conflict behavior when the task owns offline persistence.
+- 测试首次运行、有效 hydration、缺失/损坏/过期/未知版本数据、迁移、更新、移除和写入失败。
+- 证明晚期 hydration 不能覆盖较新写入或另一个账户/键。
+- 验证登出/账户/租户/环境清理而不删除不相关键。
+- 确认敏感值使用已接受的安全后端且不存在于普通存储/日志中。
+- 当任务拥有离线持久化时练习重启/离线/重新连接/冲突行为。
 
-## Delivery Evidence
+## 交付证据
 
-Name the data class, backend, key namespace, schema/migration, hydration/write ordering, cleanup triggers, and assertions proving failure safety. A successful `setItem`/`getItem` round trip does not establish identity isolation, security, migration, or concurrency correctness.
+命名数据类、后端、键命名空间、schema/迁移、hydration/写入排序、清理触发器和证明失败安全的断言。成功的 `setItem`/`getItem` 往返不能建立标识隔离、安全、迁移或并发正确性。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- MMKV or AsyncStorage selected from speed alone.
-- Generic keys shared across accounts/environments.
-- `JSON.parse` output trusted without shape/version validation.
-- Default state shown as persisted truth before hydration.
-- Slow hydration allowed to overwrite current user input.
-- Whole storage cleared on logout.
-- Server records persisted as offline truth without sync/conflict policy.
+- 仅从速度选择 MMKV 或 AsyncStorage。
+- 跨账户/环境共享的通用键。
+- `JSON.parse` 输出在无形状/版本验证的情况下被信任。
+- hydration 之前显示默认状态为持久化真相。
+- 慢速 hydration 允许覆盖当前用户输入。
+- 登出时清除整个存储。
+- 服务端记录在无同步/冲突策略的情况下持久化为离线真相。

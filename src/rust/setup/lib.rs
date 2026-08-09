@@ -13,7 +13,6 @@ use std::sync::{
 };
 use std::thread;
 use std::time::{Duration, SystemTime};
-use toml_edit::{DocumentMut, Item};
 use zip::{write::SimpleFileOptions, CompressionMethod, ZipWriter};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -30,28 +29,7 @@ const PLAYWRIGHT_LOCK_STALE_AFTER: Duration = Duration::from_secs(30 * 60);
 const PLAYWRIGHT_LOCK_POLL: Duration = Duration::from_millis(250);
 const INSTALL_STAMP: &str = ".loom-mcp-install.json";
 const SHARED_LOOM_REFERENCES: &str = "plugins/shared/loom/references";
-const SHARED_LOOM_SKILLS: &str = "plugins/shared/loom/skills";
 const SHARED_DEPLOY_REFERENCES: &str = "plugins/shared/loom-deploy/references";
-const REQUIRED_SHARED_SKILL_FILES: &[&str] = &[
-    "plugins/shared/loom/skills/godot/SKILL.md",
-    "plugins/shared/loom/skills/godot/godot-api/SKILL.md",
-    "plugins/shared/loom/skills/godot/godot-e2e/SKILL.md",
-    "plugins/shared/loom/skills/godot/gdunit-driver/SKILL.md",
-    "plugins/shared/loom/skills/godot/headless-build/SKILL.md",
-    "plugins/shared/loom/skills/godot/input-mapper/SKILL.md",
-    "plugins/shared/loom/skills/godot/mcp-driver/SKILL.md",
-    "plugins/shared/loom/skills/godot/project-scaffold/SKILL.md",
-    "plugins/shared/loom/skills/godot/screenshot/SKILL.md",
-    "plugins/shared/loom/skills/godot/visual-qa/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/animation/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/audio/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/navigation/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/particles/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/physics/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/shader/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/tilemap/SKILL.md",
-    "plugins/shared/loom/skills/godot/reviewer/ui/SKILL.md",
-];
 const REQUIRED_SHARED_REFERENCE_FILES: &[&str] = &[
     "plugins/shared/loom/references/uix/anti-patterns.md",
     "plugins/shared/loom/references/uix/content.md",
@@ -329,39 +307,31 @@ const LEGACY_MARKERS: &[&str] = &[
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AgentKind {
-    Codex,
-    ClaudeCode,
     Opencode,
 }
 
 impl AgentKind {
     pub fn parse(raw: &str) -> Result<Self, SetupError> {
         match raw.trim().to_ascii_lowercase().as_str() {
-            "codex" => Ok(Self::Codex),
-            "claude" | "claude-code" | "claude_code" => Ok(Self::ClaudeCode),
             "opencode" | "open-code" | "open_code" => Ok(Self::Opencode),
             other => Err(SetupError::InvalidArgument(format!(
-                "unsupported agent '{other}', expected codex, claude-code, opencode, or all"
+                "不支持的代理 '{other}'，应为 opencode 或 all"
             ))),
         }
     }
 
-    pub fn all() -> [Self; 3] {
-        [Self::Codex, Self::ClaudeCode, Self::Opencode]
+    pub fn all() -> [Self; 1] {
+        [Self::Opencode]
     }
 
     pub fn as_str(self) -> &'static str {
         match self {
-            Self::Codex => "codex",
-            Self::ClaudeCode => "claude-code",
             Self::Opencode => "opencode",
         }
     }
 
     fn host_env(self) -> &'static str {
         match self {
-            Self::Codex => "codex",
-            Self::ClaudeCode => "claude-code",
             Self::Opencode => "opencode",
         }
     }
@@ -386,7 +356,7 @@ impl TargetPlatform {
             "linux-arm64" | "linux-aarch64" => Ok(Self::LinuxArm64),
             "windows-x64" | "windows-amd64" => Ok(Self::WindowsX64),
             other => Err(SetupError::InvalidArgument(format!(
-                "unsupported platform '{other}'"
+                "不支持的平台 '{other}'"
             ))),
         }
     }
@@ -456,8 +426,6 @@ pub struct PythonManifest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct PluginManifest {
-    pub codex: String,
-    pub claude_code: String,
     pub opencode: String,
 }
 
@@ -476,8 +444,6 @@ impl ReleaseManifest {
                 algorithms: "python/algorithms".to_string(),
             },
             plugins: PluginManifest {
-                codex: "plugins/codex".to_string(),
-                claude_code: "plugins/claude-code".to_string(),
                 opencode: "plugins/opencode".to_string(),
             },
         }
@@ -485,8 +451,6 @@ impl ReleaseManifest {
 
     fn plugin_path(&self, agent: AgentKind) -> &str {
         match agent {
-            AgentKind::Codex => &self.plugins.codex,
-            AgentKind::ClaudeCode => &self.plugins.claude_code,
             AgentKind::Opencode => &self.plugins.opencode,
         }
     }
@@ -505,8 +469,6 @@ pub struct SetupEnvironment {
     pub loom_home: PathBuf,
     pub user_home: PathBuf,
     pub package_root: PathBuf,
-    pub codex_home: PathBuf,
-    pub claude_home: PathBuf,
     pub opencode_home: PathBuf,
 }
 
@@ -610,35 +572,30 @@ impl SetupEnvironment {
         let user_home = env_path("LOOM_SETUP_USER_HOME")
             .or_else(|| env_path("HOME"))
             .or_else(|| env_path("USERPROFILE"))
-            .ok_or_else(|| SetupError::InvalidArgument("HOME/USERPROFILE is required".into()))?;
+            .ok_or_else(|| {
+                SetupError::InvalidArgument("需要 HOME 或 USERPROFILE 环境变量".into())
+            })?;
         let loom_home = env_path("LOOM_HOME").unwrap_or_else(|| user_home.join(".loom"));
         let package_root = package_root_arg
             .or_else(|| env_path("LOOM_SETUP_PACKAGE_ROOT"))
             .or_else(package_root_from_current_exe)
             .ok_or_else(|| {
                 SetupError::InvalidArgument(
-                    "package root is required; set LOOM_SETUP_PACKAGE_ROOT or pass --package-root"
-                        .into(),
+                    "需要包根目录；请设置 LOOM_SETUP_PACKAGE_ROOT 或传递 --package-root".into(),
                 )
             })?;
-        let codex_home = env_path("CODEX_HOME").unwrap_or_else(|| user_home.join(".codex"));
-        let claude_home = env_path("CLAUDE_HOME").unwrap_or_else(|| user_home.join(".claude"));
         let opencode_home =
             env_path("OPENCODE_CONFIG_HOME").unwrap_or_else(|| user_home.join(".config/opencode"));
         Ok(Self {
             loom_home,
             user_home,
             package_root,
-            codex_home,
-            claude_home,
             opencode_home,
         })
     }
 
     pub fn for_test(user_home: PathBuf, loom_home: PathBuf, package_root: PathBuf) -> Self {
         Self {
-            codex_home: user_home.join(".codex"),
-            claude_home: user_home.join(".claude"),
             opencode_home: user_home.join(".config/opencode"),
             user_home,
             loom_home,
@@ -672,26 +629,14 @@ impl SetupEnvironment {
 
     pub fn agent_plugin_root(&self, agent: AgentKind) -> PathBuf {
         match agent {
-            AgentKind::Codex => self.user_home.join("plugins/loom"),
-            AgentKind::ClaudeCode => self.claude_home.join("skills/loom"),
             AgentKind::Opencode => self.opencode_home.join("plugins/loom.js"),
         }
     }
 
     pub fn agent_mcp_registration_path(&self, agent: AgentKind) -> PathBuf {
         match agent {
-            AgentKind::Codex => self.codex_home.join("mcp/loom.json"),
-            AgentKind::ClaudeCode => self.claude_home.join("mcp/loom.json"),
             AgentKind::Opencode => self.opencode_home.join("mcp/loom.json"),
         }
-    }
-
-    pub fn codex_config_path(&self) -> PathBuf {
-        self.codex_home.join("config.toml")
-    }
-
-    pub fn claude_config_path(&self) -> PathBuf {
-        self.user_home.join(".claude.json")
     }
 
     pub fn opencode_config_path(&self) -> PathBuf {
@@ -722,7 +667,7 @@ fn repo_root() -> Result<PathBuf, SetupError> {
         .ancestors()
         .nth(3)
         .map(Path::to_path_buf)
-        .ok_or_else(|| SetupError::InvalidArgument("failed to resolve repository root".into()))
+        .ok_or_else(|| SetupError::InvalidArgument("无法解析仓库根目录".into()))
 }
 
 fn current_binary_dir() -> Result<PathBuf, SetupError> {
@@ -735,11 +680,12 @@ fn current_binary_dir() -> Result<PathBuf, SetupError> {
     })?;
     let dir = exe
         .parent()
-        .ok_or_else(|| SetupError::InvalidArgument("current executable has no parent".into()))?;
+        .ok_or_else(|| SetupError::InvalidArgument("当前可执行文件没有父目录".into()))?;
     if dir.file_name().and_then(|name| name.to_str()) == Some("deps") {
-        return dir.parent().map(Path::to_path_buf).ok_or_else(|| {
-            SetupError::InvalidArgument("failed to resolve cargo target directory".into())
-        });
+        return dir
+            .parent()
+            .map(Path::to_path_buf)
+            .ok_or_else(|| SetupError::InvalidArgument("无法解析 cargo target 目录".into()));
     }
     Ok(dir.to_path_buf())
 }
@@ -830,10 +776,6 @@ pub enum SetupError {
         path: PathBuf,
         source: serde_json::Error,
     },
-    Toml {
-        path: PathBuf,
-        source: toml_edit::TomlError,
-    },
     ChecksumMismatch {
         path: PathBuf,
         expected: String,
@@ -856,33 +798,24 @@ impl fmt::Display for SetupError {
             Self::InvalidArgument(message) => write!(formatter, "{message}"),
             Self::Io { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::Json { path, source } => write!(formatter, "{}: {source}", path.display()),
-            Self::Toml { path, source } => write!(formatter, "{}: {source}", path.display()),
             Self::ChecksumMismatch {
                 path,
                 expected,
                 actual,
             } => write!(
                 formatter,
-                "checksum mismatch for {}: expected {expected}, got {actual}",
+                "{} 的校验和不匹配：预期 {expected}，实际 {actual}",
                 path.display()
             ),
             Self::MissingPackageEntry(path) => {
-                write!(
-                    formatter,
-                    "release package entry is missing: {}",
-                    path.display()
-                )
+                write!(formatter, "发布包条目缺失：{}", path.display())
             }
             Self::LegacyCleanupBlocked(blocked) => {
-                write!(
-                    formatter,
-                    "legacy cleanup blocked for {} path(s)",
-                    blocked.len()
-                )
+                write!(formatter, "旧版清理被阻止，涉及 {} 个路径", blocked.len())
             }
             Self::DoctorFailed(checks) => write!(
                 formatter,
-                "doctor failed: {} check(s) did not pass",
+                "doctor 检查失败：{} 项检查未通过",
                 checks
                     .iter()
                     .filter(|check| check.status != "passed")
@@ -895,7 +828,7 @@ impl fmt::Display for SetupError {
                 ..
             } => write!(
                 formatter,
-                "{program} failed with exit status {status}: {}",
+                "{program} 失败，退出状态码 {status}：{}",
                 stderr.trim()
             ),
         }
@@ -948,7 +881,7 @@ pub fn prepare_browser_runtime(
     for browser in &browsers {
         if !matches!(browser.as_str(), "chromium" | "firefox" | "webkit") {
             return Err(SetupError::InvalidArgument(format!(
-                "unsupported Playwright browser `{browser}`; use chromium, firefox, or webkit"
+                "不支持的 Playwright 浏览器 `{browser}`；请使用 chromium、firefox 或 webkit"
             )));
         }
     }
@@ -1108,7 +1041,7 @@ fn prepare_browser_runtime_version(
             .filter(|value| !value.trim().is_empty())
             .ok_or_else(|| {
                 SetupError::InvalidArgument(format!(
-                    "installed Playwright package has no version: {}",
+                    "已安装的 Playwright 包没有版本号：{}",
                     installed_package.display()
                 ))
             })?
@@ -1159,7 +1092,7 @@ fn prepare_browser_runtime_version(
         };
         if browser_entries.is_empty() {
             return Err(SetupError::InvalidArgument(format!(
-                "Playwright browser install produced no cache entries under {}",
+                "Playwright 浏览器安装在 {} 下未产生缓存条目",
                 browsers_path.display()
             )));
         }
@@ -1194,7 +1127,7 @@ fn prepare_browser_runtime_version(
         )?
         .ok_or_else(|| {
             SetupError::InvalidArgument(format!(
-                "prepared Playwright runtime failed doctor checks: {}",
+                "准备好的 Playwright 运行时未通过 doctor 检查：{}",
                 runtime_root.display()
             ))
         })?;
@@ -1286,7 +1219,7 @@ fn browser_runtime_doctor(
         "manifest_version",
         manifest.schema_version == PLAYWRIGHT_RUNTIME_SCHEMA_VERSION
             && manifest.runtime_revision == PLAYWRIGHT_RUNTIME_REVISION,
-        "Runtime manifest schema and Loom runtime revision match.",
+        "运行时清单架构和 Loom 运行时修订版本匹配。",
     ));
     let lock_path = runtime_root.join("package-lock.json");
     let lock_matches = sha256_file(&lock_path)
@@ -1295,7 +1228,7 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "package_lock_checksum",
         lock_matches,
-        "Runtime package lock checksum matches the manifest.",
+        "运行时包锁校验和与清单匹配。",
     ));
     let installed_package = runtime_root.join("node_modules/@playwright/test/package.json");
     let installed_version_matches = read_json_value(&installed_package)
@@ -1310,12 +1243,12 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "runner_package_version",
         installed_version_matches,
-        "Installed @playwright/test version matches the manifest.",
+        "已安装的 @playwright/test 版本与清单匹配。",
     ));
     checks.push(browser_doctor_check(
         "runner_executable",
         runtime_root.join(&manifest.runner_relative_path).is_file(),
-        "Playwright runner executable is present.",
+        "Playwright 运行器可执行文件存在。",
     ));
     let browsers_present = !manifest.browser_entries.is_empty()
         && manifest
@@ -1325,7 +1258,7 @@ fn browser_runtime_doctor(
     checks.push(browser_doctor_check(
         "browser_cache",
         browsers_present,
-        "Required Playwright browser cache entries are present.",
+        "所需的 Playwright 浏览器缓存条目存在。",
     ));
     if checks.iter().all(|check| check.status == "passed") {
         checks.extend(manifest.browsers.iter().map(|browser| {
@@ -1343,8 +1276,7 @@ fn browser_doctor_check(check_id: &str, passed: bool, summary: &str) -> BrowserR
         summary: summary.to_string(),
         failure_code: (!passed).then(|| "runtime_integrity_failed".to_string()),
         diagnostic: None,
-        remediation: (!passed)
-            .then(|| "Rebuild the Loom-managed Playwright runtime cache.".to_string()),
+        remediation: (!passed).then(|| "重建 Loom 管理的 Playwright 运行时缓存。".to_string()),
     }
 }
 
@@ -1367,7 +1299,7 @@ fn browser_launch_doctor_check(
             check_id: format!("launch_smoke_{browser}"),
             scope: "launch".to_string(),
             status: "passed".to_string(),
-            summary: format!("{browser} launched, rendered a page, and closed successfully."),
+            summary: format!("{browser} 已启动、渲染页面并成功关闭。"),
             failure_code: None,
             diagnostic: None,
             remediation: None,
@@ -1379,7 +1311,7 @@ fn browser_launch_doctor_check(
                 check_id: format!("launch_smoke_{browser}"),
                 scope: "launch".to_string(),
                 status: "failed".to_string(),
-                summary: format!("{browser} could not launch on the host."),
+                summary: format!("{browser} 无法在主机上启动。"),
                 failure_code: Some(failure_code.to_string()),
                 diagnostic: Some(diagnostic),
                 remediation: Some(browser_launch_remediation(failure_code).to_string()),
@@ -1389,12 +1321,10 @@ fn browser_launch_doctor_check(
             check_id: format!("launch_smoke_{browser}"),
             scope: "launch".to_string(),
             status: "failed".to_string(),
-            summary: format!("{browser} launch doctor could not start Node.js."),
+            summary: format!("{browser} 启动 doctor 无法启动 Node.js。"),
             failure_code: Some("node_runtime_unavailable".to_string()),
             diagnostic: Some(error.to_string()),
-            remediation: Some(
-                "Install a compatible Node.js runtime or make it available on PATH.".to_string(),
-            ),
+            remediation: Some("安装兼容的 Node.js 运行时或使其在 PATH 中可用。".to_string()),
         },
     }
 }
@@ -1422,14 +1352,14 @@ fn classify_browser_launch_failure(diagnostic: &str) -> &'static str {
 fn browser_launch_remediation(failure_code: &str) -> &'static str {
     match failure_code {
         "missing_system_dependencies" => {
-            "Use Loom's managed Playwright container fallback or install the host browser system dependencies."
+            "使用 Loom 管理的 Playwright 容器回退，或安装主机浏览器系统依赖。"
         }
-        "browser_executable_missing" => "Reprepare the Loom browser runtime for this platform.",
+        "browser_executable_missing" => "为当前平台重新准备 Loom 浏览器运行时。",
         "browser_launch_permission_denied" => {
-            "Correct host execution permissions or use Loom's managed Playwright container fallback."
+            "修正主机执行权限或使用 Loom 管理的 Playwright 容器回退。"
         }
-        "browser_platform_mismatch" => "Prepare the runtime on the current OS and CPU architecture.",
-        _ => "Inspect the bounded launch diagnostic and use Loom's managed Playwright container fallback.",
+        "browser_platform_mismatch" => "在当前操作系统和 CPU 架构上准备运行时。",
+        _ => "检查有限的启动诊断信息并使用 Loom 管理的 Playwright 容器回退。",
     }
 }
 
@@ -1502,7 +1432,8 @@ fn managed_container_doctor(
                                 check_id: "managed_container_smoke".to_string(),
                                 scope: "container".to_string(),
                                 status: "passed".to_string(),
-                                summary: "Managed Playwright container launched every requested browser successfully.".to_string(),
+                                summary: "托管 Playwright 容器成功启动了所有请求的浏览器。"
+                                    .to_string(),
                                 failure_code: None,
                                 diagnostic: None,
                                 remediation: None,
@@ -1526,19 +1457,18 @@ fn managed_container_doctor(
     }
     let (failure_code, diagnostic) = last_failure.unwrap_or((
         "container_runtime_unavailable",
-        "No managed container runtime candidate was available.".to_string(),
+        "没有可用的托管容器运行时候选。".to_string(),
     ));
     (
         vec![BrowserRuntimeDoctorCheck {
             check_id: "managed_container_smoke".to_string(),
             scope: "container".to_string(),
             status: "failed".to_string(),
-            summary: "Managed Playwright container fallback is unavailable.".to_string(),
+            summary: "托管 Playwright 容器回退不可用。".to_string(),
             failure_code: Some(failure_code.to_string()),
             diagnostic: Some(diagnostic),
             remediation: Some(
-                "Start a Docker-compatible container runtime, restore registry access, or provide external browser evidence."
-                    .to_string(),
+                "启动 Docker 兼容的容器运行时，恢复注册表访问，或提供外部浏览器证据。".to_string(),
             ),
         }],
         None,
@@ -1582,7 +1512,7 @@ fn validate_playwright_version_spec(value: &str) -> Result<(), SetupError> {
         || lower.starts_with("https:")
     {
         return Err(SetupError::InvalidArgument(format!(
-            "unsupported Playwright version spec `{value}`; use a registry version, range, or tag"
+            "不支持的 Playwright 版本规范 `{value}`；请使用注册表版本、范围或标签"
         )));
     }
     Ok(())
@@ -1886,7 +1816,7 @@ impl BrowserRuntimeLock {
                     }
                     if started.elapsed().unwrap_or_default() >= PLAYWRIGHT_LOCK_WAIT {
                         return Err(SetupError::InvalidArgument(format!(
-                            "timed out waiting for Playwright runtime lock {}",
+                            "等待 Playwright 运行时锁 {} 超时",
                             path.display()
                         )));
                     }
@@ -2018,12 +1948,12 @@ pub fn doctor(
     report.checks.push(check_path(
         "runtime.current",
         &current,
-        "current runtime directory or symlink",
+        "当前运行时目录或符号链接",
     ));
     report.checks.push(check_path(
         "runtime.mcpServer",
         &server_binary,
-        "loom-mcp-server binary",
+        "loom-mcp-server 二进制文件",
     ));
     report.checks.push(check_mcp_surface());
     report.checks.push(check_python_worker(env));
@@ -2031,7 +1961,7 @@ pub fn doctor(
         report.checks.push(check_path(
             &format!("{}.plugin", agent.as_str()),
             &env.agent_plugin_root(*agent),
-            "agent plugin files",
+            "代理插件文件",
         ));
         report.checks.push(check_agent_plugin_version(env, *agent));
         report
@@ -2088,17 +2018,9 @@ pub fn write_package_layout(
     })?;
     write_text(
         &package_dir.join(&manifest.python.runtime).join("README"),
-        "This local development package uses the host python3 runtime when a bundled Python runtime is not present.\n",
+        "本本地开发包在未提供内置 Python 运行时时使用主机 python3 运行时。\n",
     )?;
 
-    copy_required(
-        &repo.join(&manifest.plugins.codex),
-        &package_dir.join(&manifest.plugins.codex),
-    )?;
-    copy_required(
-        &repo.join(&manifest.plugins.claude_code),
-        &package_dir.join(&manifest.plugins.claude_code),
-    )?;
     copy_required(
         &repo.join(&manifest.plugins.opencode),
         &package_dir.join(&manifest.plugins.opencode),
@@ -2106,10 +2028,6 @@ pub fn write_package_layout(
     copy_required(
         &repo.join(SHARED_LOOM_REFERENCES),
         &package_dir.join(SHARED_LOOM_REFERENCES),
-    )?;
-    copy_required(
-        &repo.join(SHARED_LOOM_SKILLS),
-        &package_dir.join(SHARED_LOOM_SKILLS),
     )?;
     copy_required(
         &repo.join(SHARED_DEPLOY_REFERENCES),
@@ -2179,7 +2097,7 @@ fn read_manifest(package_root: &Path) -> Result<ReleaseManifest, SetupError> {
 fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(), SetupError> {
     if manifest.schema_version != PACKAGE_SCHEMA_VERSION {
         return Err(SetupError::InvalidArgument(format!(
-            "unsupported package schemaVersion {}",
+            "不支持的包 schemaVersion {}",
             manifest.schema_version
         )));
     }
@@ -2188,11 +2106,8 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
         manifest.binaries.setup.as_str(),
         manifest.python.runtime.as_str(),
         manifest.python.algorithms.as_str(),
-        manifest.plugins.codex.as_str(),
-        manifest.plugins.claude_code.as_str(),
         manifest.plugins.opencode.as_str(),
         SHARED_LOOM_REFERENCES,
-        SHARED_LOOM_SKILLS,
         SHARED_DEPLOY_REFERENCES,
     ];
     for relative in required {
@@ -2207,12 +2122,6 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
             return Err(SetupError::MissingPackageEntry(path));
         }
     }
-    for relative in REQUIRED_SHARED_SKILL_FILES {
-        let path = package_root.join(relative);
-        if !path.is_file() {
-            return Err(SetupError::MissingPackageEntry(path));
-        }
-    }
     validate_plugin_manifests(package_root, manifest)?;
     audit_package_contents(package_root)?;
     Ok(())
@@ -2220,31 +2129,9 @@ fn validate_package(package_root: &Path, manifest: &ReleaseManifest) -> Result<(
 
 fn validate_plugin_manifests(
     package_root: &Path,
-    manifest: &ReleaseManifest,
+    _manifest: &ReleaseManifest,
 ) -> Result<(), SetupError> {
-    for (plugin_root, manifest_file) in [
-        (&manifest.plugins.codex, ".codex-plugin/plugin.json"),
-        (&manifest.plugins.claude_code, ".claude-plugin/plugin.json"),
-    ] {
-        let path = package_root.join(plugin_root).join(manifest_file);
-        let value = read_json_value(&path)?;
-        let name = value.get("name").and_then(Value::as_str);
-        let version = value.get("version").and_then(Value::as_str);
-        if name != Some("loom") {
-            return Err(SetupError::InvalidArgument(format!(
-                "agent plugin manifest {} must identify the loom plugin",
-                path.display()
-            )));
-        }
-        if version != Some(manifest.version.as_str()) {
-            return Err(SetupError::InvalidArgument(format!(
-                "agent plugin manifest {} has version {:?}, expected {}",
-                path.display(),
-                version,
-                manifest.version
-            )));
-        }
-    }
+    let _ = package_root;
     Ok(())
 }
 
@@ -2255,8 +2142,6 @@ fn audit_package_contents(package_root: &Path) -> Result<(), SetupError> {
         "node_modules/",
         "dist/",
         ".git/",
-        "scripts/refresh-local-codex-plugin.js",
-        "scripts/refresh-local-claude-plugin.js",
         "scripts/refresh-local-opencode-plugin.js",
         "scripts/uninstall-local-adapter.js",
         "scripts/lib/loom-user-install.js",
@@ -2279,7 +2164,7 @@ fn audit_package_contents(package_root: &Path) -> Result<(), SetupError> {
                 .any(|prefix| relative.starts_with(prefix))
         {
             return Err(SetupError::InvalidArgument(format!(
-                "release package must not include legacy or source-only entry: {relative}"
+                "发布包不得包含旧版或仅源码条目：{relative}"
             )));
         }
     }
@@ -2303,10 +2188,10 @@ fn verify_checksums(package_root: &Path) -> Result<(), SetupError> {
         let mut parts = trimmed.split_whitespace();
         let expected = parts
             .next()
-            .ok_or_else(|| SetupError::InvalidArgument("invalid checksums.txt line".into()))?;
+            .ok_or_else(|| SetupError::InvalidArgument("无效的 checksums.txt 行".into()))?;
         let relative = parts
             .next()
-            .ok_or_else(|| SetupError::InvalidArgument("invalid checksums.txt line".into()))?;
+            .ok_or_else(|| SetupError::InvalidArgument("无效的 checksums.txt 行".into()))?;
         let path = package_root.join(relative);
         let actual = sha256_file(&path)?;
         if expected != actual {
@@ -2389,112 +2274,8 @@ fn install_agent_plugin(
 ) -> Result<(), SetupError> {
     let runtime_template = env.runtime_current().join(manifest.plugin_path(agent));
     match agent {
-        AgentKind::Codex => install_codex_plugin(env, &runtime_template, &manifest.version),
-        AgentKind::ClaudeCode => install_claude_plugin(env, &runtime_template, &manifest.version),
         AgentKind::Opencode => install_opencode_plugin(env, &runtime_template, &manifest.version),
     }
-}
-
-fn install_codex_plugin(
-    env: &SetupEnvironment,
-    template: &Path,
-    version: &str,
-) -> Result<(), SetupError> {
-    let target = env.agent_plugin_root(AgentKind::Codex);
-    cleanup_codex_plugin_cache(env)?;
-    prepare_generated_target(&target)?;
-    copy_dir(template, &target)?;
-    install_skill_references(env, &target)?;
-    write_install_stamp(&target, AgentKind::Codex, version)?;
-    write_codex_plugin_cache(env, &target)?;
-    update_codex_marketplace(env)?;
-    Ok(())
-}
-
-fn cleanup_codex_plugin_cache(env: &SetupEnvironment) -> Result<(), SetupError> {
-    for target in [
-        env.codex_home.join("plugins/cache/local/loom"),
-        env.codex_home.join("plugins/cache/local-plugins/loom"),
-    ] {
-        if target.exists() {
-            remove_path(&target)?;
-        }
-    }
-    Ok(())
-}
-
-fn write_codex_plugin_cache(env: &SetupEnvironment, plugin_root: &Path) -> Result<(), SetupError> {
-    let manifest_path = plugin_root.join(".codex-plugin/plugin.json");
-    let manifest = read_json_value(&manifest_path)?;
-    let version = manifest
-        .get("version")
-        .and_then(Value::as_str)
-        .ok_or_else(|| SetupError::MissingPackageEntry(manifest_path.clone()))?;
-    let cache_root = env
-        .codex_home
-        .join("plugins/cache/local-plugins/loom")
-        .join(version);
-    copy_dir(plugin_root, &cache_root)
-}
-
-fn update_codex_marketplace(env: &SetupEnvironment) -> Result<(), SetupError> {
-    let marketplace_path = env.user_home.join(".agents/plugins/marketplace.json");
-    let mut value = if marketplace_path.exists() {
-        read_json_value(&marketplace_path)?
-    } else {
-        json!({
-            "name": "local-plugins",
-            "interface": { "displayName": "Local Plugins" },
-            "plugins": []
-        })
-    };
-    value["name"] = json!("local-plugins");
-    if !value["plugins"].is_array() {
-        value["plugins"] = json!([]);
-    }
-    let plugins = value["plugins"].as_array_mut().expect("plugins is array");
-    plugins.retain(|entry| entry.get("name").and_then(Value::as_str) != Some("loomline"));
-    let entry = json!({
-        "name": "loom",
-        "source": { "source": "local", "path": "./plugins/loom" },
-        "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
-        "category": "Productivity"
-    });
-    if let Some(existing) = plugins
-        .iter_mut()
-        .find(|entry| entry.get("name").and_then(Value::as_str) == Some("loom"))
-    {
-        *existing = entry;
-    } else {
-        plugins.push(entry);
-    }
-    write_json(&marketplace_path, &value)
-}
-
-fn install_claude_plugin(
-    env: &SetupEnvironment,
-    template: &Path,
-    version: &str,
-) -> Result<(), SetupError> {
-    let target = env.agent_plugin_root(AgentKind::ClaudeCode);
-    prepare_generated_target(&target)?;
-    copy_dir(template, &target)?;
-    install_skill_references(env, &target)?;
-    write_install_stamp(&target, AgentKind::ClaudeCode, version)?;
-    let commands_root = env.claude_home.join("commands");
-    fs::create_dir_all(&commands_root).map_err(|source| SetupError::Io {
-        path: commands_root.clone(),
-        source,
-    })?;
-    for name in ["loom.md", "loom-deploy.md"] {
-        let source = target.join("commands").join(name);
-        if source.exists() {
-            let command_target = commands_root.join(name);
-            copy_path(&source, &command_target)?;
-            write_file_marker(&command_target, "Loom MCP-only Claude command")?;
-        }
-    }
-    Ok(())
 }
 
 fn install_opencode_plugin(
@@ -2518,22 +2299,15 @@ fn install_opencode_plugin(
             &template.join(".opencode/commands").join(name),
             &command_target,
         )?;
-        write_file_marker(&command_target, "Loom MCP-only OpenCode command")?;
+        write_file_marker(&command_target, "Loom 仅 MCP 的 OpenCode 命令")?;
     }
     let plugin_target = plugin_root.join("loom.js");
     copy_path(&template.join(".opencode/plugins/loom.js"), &plugin_target)?;
-    write_js_file_marker(&plugin_target, "Loom MCP-only OpenCode plugin")?;
+    write_js_file_marker(&plugin_target, "Loom 仅 MCP 的 OpenCode 插件")?;
     install_standalone_references(
         env,
         SHARED_LOOM_REFERENCES,
         &env.opencode_home.join("references/loom"),
-        AgentKind::Opencode,
-        version,
-    )?;
-    install_standalone_references(
-        env,
-        SHARED_LOOM_SKILLS,
-        &env.opencode_home.join("references/loom/skills"),
         AgentKind::Opencode,
         version,
     )?;
@@ -2556,20 +2330,6 @@ fn install_opencode_plugin(
         }),
     )?;
     Ok(())
-}
-
-fn install_skill_references(env: &SetupEnvironment, plugin_root: &Path) -> Result<(), SetupError> {
-    copy_shared_references(
-        env,
-        SHARED_LOOM_REFERENCES,
-        &plugin_root.join("skills/loom/references"),
-    )?;
-    copy_shared_references(
-        env,
-        SHARED_DEPLOY_REFERENCES,
-        &plugin_root.join("skills/loom-deploy/references"),
-    )?;
-    copy_shared_references(env, SHARED_LOOM_SKILLS, &plugin_root.join("skills"))
 }
 
 fn install_standalone_references(
@@ -2612,8 +2372,6 @@ fn write_mcp_registration(
     });
     write_json(&env.common_registration_path(agent), &registration)?;
     match agent {
-        AgentKind::Codex => write_codex_mcp_config(env, &command, agent)?,
-        AgentKind::ClaudeCode => write_claude_mcp_config(env, &command, agent)?,
         AgentKind::Opencode => write_opencode_mcp_config(env, &command, agent)?,
     }
     Ok(())
@@ -2621,57 +2379,8 @@ fn write_mcp_registration(
 
 fn effective_mcp_registration_path(env: &SetupEnvironment, agent: AgentKind) -> PathBuf {
     match agent {
-        AgentKind::Codex => env.codex_config_path(),
-        AgentKind::ClaudeCode => env.claude_config_path(),
         AgentKind::Opencode => env.opencode_config_path(),
     }
-}
-
-fn write_codex_mcp_config(
-    env: &SetupEnvironment,
-    command: &Path,
-    agent: AgentKind,
-) -> Result<(), SetupError> {
-    let path = env.codex_config_path();
-    let mut document = read_toml_document(&path)?;
-    let snippet = format!(
-        "[mcp_servers.loom]\ncommand = {command}\nargs = []\nstartup_timeout_sec = 30\n\n[mcp_servers.loom.env]\nLOOM_RUNTIME_HOME = {runtime}\nLOOM_HOME = {home}\nLOOM_HOST = {host}\n",
-        command = toml_string(&path_string(command)),
-        runtime = toml_string(&path_string(env.runtime_current())),
-        home = toml_string(&path_string(&env.loom_home)),
-        host = toml_string(agent.host_env()),
-    );
-    let snippet_document = parse_toml_document(&path, &snippet)?;
-    document["mcp_servers"]["loom"] = snippet_document["mcp_servers"]["loom"].clone();
-    write_toml_document(&path, &document)?;
-    remove_generated_codex_mcp_json(env)?;
-    Ok(())
-}
-
-fn write_claude_mcp_config(
-    env: &SetupEnvironment,
-    command: &Path,
-    agent: AgentKind,
-) -> Result<(), SetupError> {
-    let path = env.claude_config_path();
-    let mut value = read_json_if_exists(&path)?.unwrap_or_else(|| json!({}));
-    ensure_object_root(&mut value);
-    if !value.get("mcpServers").is_some_and(Value::is_object) {
-        value["mcpServers"] = json!({});
-    }
-    value["mcpServers"]["loom"] = json!({
-        "type": "stdio",
-        "command": path_string(command),
-        "args": [],
-        "env": {
-            "LOOM_RUNTIME_HOME": path_string(env.runtime_current()),
-            "LOOM_HOME": path_string(&env.loom_home),
-            "LOOM_HOST": agent.host_env()
-        }
-    });
-    write_json(&path, &value)?;
-    remove_generated_agent_mcp_json(env, agent)?;
-    Ok(())
 }
 
 fn write_opencode_mcp_config(
@@ -2702,37 +2411,6 @@ fn write_opencode_mcp_config(
     write_json(&path, &value)?;
     remove_generated_agent_mcp_json(env, agent)?;
     Ok(())
-}
-
-fn read_toml_document(path: &Path) -> Result<DocumentMut, SetupError> {
-    if !path.exists() {
-        return Ok(DocumentMut::new());
-    }
-    let text = fs::read_to_string(path).map_err(|source| SetupError::Io {
-        path: path.to_path_buf(),
-        source,
-    })?;
-    parse_toml_document(path, &text)
-}
-
-fn parse_toml_document(path: &Path, text: &str) -> Result<DocumentMut, SetupError> {
-    text.parse::<DocumentMut>()
-        .map_err(|source| SetupError::Toml {
-            path: path.to_path_buf(),
-            source,
-        })
-}
-
-fn write_toml_document(path: &Path, document: &DocumentMut) -> Result<(), SetupError> {
-    let mut text = document.to_string();
-    if !text.ends_with('\n') {
-        text.push('\n');
-    }
-    write_text(path, &text)
-}
-
-fn toml_string(value: &str) -> String {
-    serde_json::to_string(value).expect("serializing a string cannot fail")
 }
 
 fn cleanup_agent_session(env: &SetupEnvironment, agent: AgentKind) -> Result<(), SetupError> {
@@ -2782,21 +2460,6 @@ fn cleanup_legacy(
 
 fn legacy_paths_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<PathBuf> {
     match agent {
-        AgentKind::Codex => vec![
-            env.user_home.join("plugins/loom"),
-            env.user_home.join("plugins/loomline"),
-            env.codex_home.join("plugins/cache/local/loomline"),
-            env.codex_home.join("plugins/cache/local-plugins/loomline"),
-        ],
-        AgentKind::ClaudeCode => vec![
-            env.claude_home.join("skills/loom"),
-            env.claude_home.join("skills/loomline"),
-            env.claude_home.join("commands/loom.md"),
-            env.claude_home.join("commands/loom-deploy.md"),
-            env.claude_home.join("commands/loomline.md"),
-            env.claude_home.join("commands/loomline-deploy.md"),
-            env.claude_home.join("plugins/data/loomline-skills-dir"),
-        ],
         AgentKind::Opencode => vec![
             env.opencode_home.join("commands/loom.md"),
             env.opencode_home.join("commands/loom-deploy.md"),
@@ -2824,7 +2487,7 @@ fn cleanup_legacy_path(path: &Path, outcome: &mut LegacyCleanupOutcome) -> Resul
     }
     outcome.blocked.push(LegacyBlockedPath {
         path: path_string(path),
-        reason: "existing path has no Loom stamp or legacy CLI marker".to_string(),
+        reason: "现有路径没有 Loom 标记或旧版 CLI 标记".to_string(),
     });
     Ok(())
 }
@@ -2914,7 +2577,8 @@ fn file_contains_marker(path: &Path) -> Result<bool, SetupError> {
         return Ok(false);
     };
     Ok(LEGACY_MARKERS.iter().any(|marker| content.contains(marker))
-        || content.contains("Loom MCP-only"))
+        || content.contains("Loom MCP-only")
+        || content.contains("Loom 仅 MCP"))
 }
 
 fn prepare_generated_target(target: &Path) -> Result<(), SetupError> {
@@ -2922,7 +2586,7 @@ fn prepare_generated_target(target: &Path) -> Result<(), SetupError> {
         if !is_confirmed_loom_generated(target)? {
             return Err(SetupError::LegacyCleanupBlocked(vec![LegacyBlockedPath {
                 path: path_string(target),
-                reason: "target exists and is not confirmed as Loom-generated".to_string(),
+                reason: "目标已存在且未被确认为 Loom 生成".to_string(),
             }]));
         }
         remove_path(target)?;
@@ -2943,22 +2607,6 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
         remove_path(&plugin_root)?;
         removed.push(path_string(plugin_root));
     }
-    if matches!(agent, AgentKind::Codex) {
-        if remove_codex_marketplace_entry(env)? {
-            removed.push(path_string(
-                env.user_home.join(".agents/plugins/marketplace.json"),
-            ));
-        }
-        if remove_codex_mcp_config(env)? {
-            removed.push(path_string(env.codex_config_path()));
-        }
-        if remove_generated_codex_mcp_json(env)? {
-            removed.push(path_string(env.agent_mcp_registration_path(agent)));
-        }
-    }
-    if matches!(agent, AgentKind::ClaudeCode) && remove_claude_mcp_config(env)? {
-        removed.push(path_string(env.claude_config_path()));
-    }
     if matches!(agent, AgentKind::Opencode) && remove_opencode_mcp_config(env)? {
         removed.push(path_string(env.opencode_config_path()));
     }
@@ -2971,11 +2619,9 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
     let mut cleanup_paths = vec![
         env.common_registration_path(agent),
         env.agent_session_root(agent),
+        env.agent_mcp_registration_path(agent),
     ];
-    if !matches!(agent, AgentKind::Codex) {
-        cleanup_paths.push(env.agent_mcp_registration_path(agent));
-    }
-    for path in cleanup_paths {
+    for path in cleanup_paths.drain(..) {
         if path.exists() {
             remove_path(&path)?;
             removed.push(path_string(path));
@@ -2986,11 +2632,6 @@ fn uninstall_agent(env: &SetupEnvironment, agent: AgentKind) -> Result<Vec<Strin
 
 fn uninstall_files_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<PathBuf> {
     match agent {
-        AgentKind::Codex => vec![],
-        AgentKind::ClaudeCode => vec![
-            env.claude_home.join("commands/loom.md"),
-            env.claude_home.join("commands/loom-deploy.md"),
-        ],
         AgentKind::Opencode => vec![
             env.opencode_home.join("commands/loom.md"),
             env.opencode_home.join("commands/loom-deploy.md"),
@@ -3000,58 +2641,6 @@ fn uninstall_files_for_agent(env: &SetupEnvironment, agent: AgentKind) -> Vec<Pa
             env.opencode_home.join(".loom-opencode-mcp-install.json"),
         ],
     }
-}
-
-fn remove_codex_marketplace_entry(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.user_home.join(".agents/plugins/marketplace.json");
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut value = read_json_value(&path)?;
-    let Some(plugins) = value.get_mut("plugins").and_then(Value::as_array_mut) else {
-        return Ok(false);
-    };
-    let before = plugins.len();
-    plugins.retain(|entry| entry.get("name").and_then(Value::as_str) != Some("loom"));
-    if plugins.len() == before {
-        return Ok(false);
-    }
-    write_json(&path, &value)?;
-    Ok(true)
-}
-
-fn remove_codex_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.codex_config_path();
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut document = read_toml_document(&path)?;
-    let removed = document
-        .get_mut("mcp_servers")
-        .and_then(Item::as_table_like_mut)
-        .and_then(|servers| servers.remove("loom"))
-        .is_some();
-    if removed {
-        write_toml_document(&path, &document)?;
-    }
-    Ok(removed)
-}
-
-fn remove_claude_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    let path = env.claude_config_path();
-    if !path.exists() {
-        return Ok(false);
-    }
-    let mut value = read_json_value(&path)?;
-    let removed = value
-        .get_mut("mcpServers")
-        .and_then(Value::as_object_mut)
-        .and_then(|servers| servers.remove("loom"))
-        .is_some();
-    if removed {
-        write_json(&path, &value)?;
-    }
-    Ok(removed)
 }
 
 fn remove_opencode_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError> {
@@ -3069,10 +2658,6 @@ fn remove_opencode_mcp_config(env: &SetupEnvironment) -> Result<bool, SetupError
         write_json(&path, &value)?;
     }
     Ok(removed)
-}
-
-fn remove_generated_codex_mcp_json(env: &SetupEnvironment) -> Result<bool, SetupError> {
-    remove_generated_agent_mcp_json(env, AgentKind::Codex)
 }
 
 fn remove_generated_agent_mcp_json(
@@ -3158,13 +2743,13 @@ fn check_mcp_surface() -> DoctorCheck {
         DoctorCheck {
             name: "mcp.toolsResources".to_string(),
             status: "passed".to_string(),
-            detail: "required MCP tools are registered".to_string(),
+            detail: "所需 MCP 工具已注册".to_string(),
         }
     } else {
         DoctorCheck {
             name: "mcp.toolsResources".to_string(),
             status: "failed".to_string(),
-            detail: format!("missing tools: {}", missing.join(", ")),
+            detail: format!("缺失的工具：{}", missing.join(", ")),
         }
     }
 }
@@ -3177,19 +2762,19 @@ fn check_python_worker(env: &SetupEnvironment) -> DoctorCheck {
         return DoctorCheck {
             name: "python.worker".to_string(),
             status: "failed".to_string(),
-            detail: format!("missing worker {}", algorithms.display()),
+            detail: format!("缺失 worker {}", algorithms.display()),
         };
     }
     if !python.exists() {
         return DoctorCheck {
             name: "python.worker".to_string(),
             status: "skipped".to_string(),
-            detail: "bundled python executable is not present in this package".to_string(),
+            detail: "此包中未提供内置 python 可执行文件".to_string(),
         };
     }
     let smoke = json!({
         "operation": "tokenize",
-        "text": "Loom MCP doctor smoke"
+        "text": "Loom MCP doctor 冒烟测试"
     });
     let output = Command::new(&python)
         .arg(&algorithms)
@@ -3209,7 +2794,7 @@ fn check_python_worker(env: &SetupEnvironment) -> DoctorCheck {
         Ok(output) if output.status.success() => DoctorCheck {
             name: "python.worker".to_string(),
             status: "passed".to_string(),
-            detail: "tokenization smoke passed".to_string(),
+            detail: "分词冒烟测试通过".to_string(),
         },
         Ok(output) => DoctorCheck {
             name: "python.worker".to_string(),
@@ -3230,24 +2815,12 @@ fn check_agent_mcp_registration(
     server_binary: &Path,
 ) -> DoctorCheck {
     match agent {
-        AgentKind::Codex => check_codex_mcp_config(env, server_binary),
-        AgentKind::ClaudeCode => check_claude_mcp_config(env, server_binary),
         AgentKind::Opencode => check_opencode_mcp_config(env, server_binary),
     }
 }
 
 fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> DoctorCheck {
     let (name, path) = match agent {
-        AgentKind::Codex => (
-            "codex.pluginVersion",
-            env.agent_plugin_root(agent)
-                .join(".codex-plugin/plugin.json"),
-        ),
-        AgentKind::ClaudeCode => (
-            "claude-code.pluginVersion",
-            env.agent_plugin_root(agent)
-                .join(".claude-plugin/plugin.json"),
-        ),
         AgentKind::Opencode => (
             "opencode.pluginVersion",
             env.opencode_home.join(".loom-opencode-mcp-install.json"),
@@ -3265,10 +2838,7 @@ fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> Docto
             return DoctorCheck {
                 name: name.to_string(),
                 status: "failed".to_string(),
-                detail: format!(
-                    "runtime manifest version is missing or invalid: {}",
-                    runtime_manifest.display()
-                ),
+                detail: format!("运行时清单版本缺失或无效：{}", runtime_manifest.display()),
             }
         }
     };
@@ -3287,82 +2857,17 @@ fn check_agent_plugin_version(env: &SetupEnvironment, agent: AgentKind) -> Docto
         DoctorCheck {
             name: name.to_string(),
             status: "passed".to_string(),
-            detail: format!("agent plugin version {expected}"),
+            detail: format!("代理插件版本 {expected}"),
         }
     } else {
         DoctorCheck {
             name: name.to_string(),
             status: "failed".to_string(),
             detail: format!(
-                "agent plugin version {:?} does not match runtime {expected}: {}",
+                "代理插件版本 {:?} 与运行时 {expected} 不匹配：{}",
                 actual,
                 path.display()
             ),
-        }
-    }
-}
-
-fn check_codex_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> DoctorCheck {
-    let path = env.codex_config_path();
-    let name = "codex.mcpRegistration".to_string();
-    let document = match read_toml_document(&path) {
-        Ok(document) => document,
-        Err(error) => {
-            return DoctorCheck {
-                name,
-                status: "failed".to_string(),
-                detail: error.to_string(),
-            }
-        }
-    };
-    let command = document["mcp_servers"]["loom"]["command"].as_str();
-    let host = document["mcp_servers"]["loom"]["env"]["LOOM_HOST"].as_str();
-    if command == Some(path_string(server_binary).as_str()) && host == Some("codex") {
-        DoctorCheck {
-            name,
-            status: "passed".to_string(),
-            detail: format!(
-                "Codex config contains [mcp_servers.loom]: {}",
-                path.display()
-            ),
-        }
-    } else {
-        DoctorCheck {
-            name,
-            status: "failed".to_string(),
-            detail: format!("missing or stale [mcp_servers.loom] in {}", path.display()),
-        }
-    }
-}
-
-fn check_claude_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> DoctorCheck {
-    let path = env.claude_config_path();
-    let name = "claude-code.mcpRegistration".to_string();
-    let value = match read_json_value(&path) {
-        Ok(value) => value,
-        Err(error) => {
-            return DoctorCheck {
-                name,
-                status: "failed".to_string(),
-                detail: error.to_string(),
-            }
-        }
-    };
-    let loom = &value["mcpServers"]["loom"];
-    let command = loom["command"].as_str();
-    let host = loom["env"]["LOOM_HOST"].as_str();
-    let server_matches = command == Some(path_string(server_binary).as_str());
-    if loom["type"].as_str() == Some("stdio") && server_matches && host == Some("claude-code") {
-        DoctorCheck {
-            name,
-            status: "passed".to_string(),
-            detail: format!("Claude config contains mcpServers.loom: {}", path.display()),
-        }
-    } else {
-        DoctorCheck {
-            name,
-            status: "failed".to_string(),
-            detail: format!("missing or stale mcpServers.loom in {}", path.display()),
         }
     }
 }
@@ -3376,7 +2881,7 @@ fn check_opencode_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> Do
             return DoctorCheck {
                 name,
                 status: "failed".to_string(),
-                detail: format!("missing OpenCode config: {}", path.display()),
+                detail: format!("缺失 OpenCode 配置：{}", path.display()),
             }
         }
         Err(error) => {
@@ -3402,13 +2907,13 @@ fn check_opencode_mcp_config(env: &SetupEnvironment, server_binary: &Path) -> Do
         DoctorCheck {
             name,
             status: "passed".to_string(),
-            detail: format!("OpenCode config contains mcp.loom: {}", path.display()),
+            detail: format!("OpenCode 配置包含 mcp.loom：{}", path.display()),
         }
     } else {
         DoctorCheck {
             name,
             status: "failed".to_string(),
-            detail: format!("missing or stale mcp.loom in {}", path.display()),
+            detail: format!("{} 中缺失或过期的 mcp.loom", path.display()),
         }
     }
 }
@@ -3418,13 +2923,13 @@ fn check_path(name: &str, path: &Path, detail: &str) -> DoctorCheck {
         DoctorCheck {
             name: name.to_string(),
             status: "passed".to_string(),
-            detail: format!("{detail}: {}", path.display()),
+            detail: format!("{detail}：{}", path.display()),
         }
     } else {
         DoctorCheck {
             name: name.to_string(),
             status: "failed".to_string(),
-            detail: format!("missing {detail}: {}", path.display()),
+            detail: format!("缺失 {detail}：{}", path.display()),
         }
     }
 }
@@ -3452,10 +2957,7 @@ fn write_archive_checksum(archive: &Path) -> Result<(), SetupError> {
         .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| {
-            SetupError::InvalidArgument(format!(
-                "archive path has no valid file name: {}",
-                archive.display()
-            ))
+            SetupError::InvalidArgument(format!("归档路径没有有效的文件名：{}", archive.display()))
         })?;
     let checksum_path = archive.with_file_name(format!("{file_name}.sha256"));
     write_text(&checksum_path, &format!("{hash}  {file_name}\n"))
@@ -3473,11 +2975,10 @@ fn write_zip_archive(package_dir: &Path, archive: &Path) -> Result<(), SetupErro
     let root_name = package_dir
         .file_name()
         .and_then(|name| name.to_str())
-        .ok_or_else(|| SetupError::InvalidArgument("package directory must have a name".into()))?;
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有名称".into()))?;
     zip_dir_inner(package_dir, package_dir, root_name, &mut zip, options)?;
-    zip.finish().map_err(|error| {
-        SetupError::InvalidArgument(format!("failed to finish zip archive: {error}"))
-    })?;
+    zip.finish()
+        .map_err(|error| SetupError::InvalidArgument(format!("完成 zip 归档失败：{error}")))?;
     Ok(())
 }
 
@@ -3512,12 +3013,12 @@ fn zip_dir_inner(
         if path.is_dir() {
             zip.add_directory(format!("{archive_name}/"), options)
                 .map_err(|error| {
-                    SetupError::InvalidArgument(format!("failed to add zip directory: {error}"))
+                    SetupError::InvalidArgument(format!("添加 zip 目录失败：{error}"))
                 })?;
             zip_dir_inner(base, &path, root_name, zip, options)?;
         } else if path.is_file() {
             zip.start_file(archive_name, options).map_err(|error| {
-                SetupError::InvalidArgument(format!("failed to add zip file: {error}"))
+                SetupError::InvalidArgument(format!("添加 zip 文件失败：{error}"))
             })?;
             let bytes = fs::read(&path).map_err(|source| SetupError::Io {
                 path: path.clone(),
@@ -3540,10 +3041,10 @@ fn write_tar_gz_archive(
     let package_name = package_dir
         .file_name()
         .and_then(|name| name.to_str())
-        .ok_or_else(|| SetupError::InvalidArgument("package directory must have a name".into()))?;
-    let parent = package_dir.parent().ok_or_else(|| {
-        SetupError::InvalidArgument("package directory must have a parent".into())
-    })?;
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有名称".into()))?;
+    let parent = package_dir
+        .parent()
+        .ok_or_else(|| SetupError::InvalidArgument("包目录必须有父目录".into()))?;
     let status = Command::new("tar")
         .arg("-czf")
         .arg(archive)
@@ -3557,7 +3058,7 @@ fn write_tar_gz_archive(
         })?;
     if !status.success() {
         return Err(SetupError::InvalidArgument(format!(
-            "tar failed with status {status}"
+            "tar 失败，状态码 {status}"
         )));
     }
     Ok(())
@@ -3762,14 +3263,6 @@ fn read_json_value(path: &Path) -> Result<Value, SetupError> {
         path: path.to_path_buf(),
         source,
     })
-}
-
-fn read_json_if_exists(path: &Path) -> Result<Option<Value>, SetupError> {
-    if path.exists() {
-        read_json_value(path).map(Some)
-    } else {
-        Ok(None)
-    }
 }
 
 fn read_jsonc_if_exists(path: &Path) -> Result<Option<Value>, SetupError> {

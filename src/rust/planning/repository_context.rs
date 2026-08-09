@@ -70,7 +70,7 @@ fn materialize_request_inner(
         .find(|phase| phase.phase_id == phase_id)
         .ok_or_else(|| {
             state::store::StateError::InvalidArgument(format!(
-                "phase {} does not exist in delivery {}",
+                "阶段 {} 不存在于交付 {} 中",
                 phase_id, delivery_id
             ))
         })?;
@@ -100,7 +100,7 @@ fn materialize_request_inner(
         .get("brainstormContract")
         .ok_or_else(|| {
             state::store::StateError::InvalidArgument(
-                "latest brainstormContract ref is missing".to_string(),
+                "最新的 brainstormContract 引用缺失".to_string(),
             )
         })?
         .clone();
@@ -180,20 +180,20 @@ fn build_request_root(
             Value::Array(repository_lens.completed_phase_summaries.clone());
     }
     let mut generation_rules = vec![
-        "Summarize repository code facts only.",
-        "Do not restate or infer current phase scope, acceptance, tasks, or review conclusions.",
-        "All paths must stay inside projectRoot and must not use forbidden prefixes.",
-        "technologySignals and structureSignals are objects, not arrays.",
-        "repoOverview.primaryApplications, structureSignals.rootPaths, structureSignals.entryPoints, existingCapabilities, relevantSurfaces, and recommendedReadRefs are arrays of objects with the fields shown in outputContract.resultTemplate.",
-        "Every existingCapabilities[].surfaceRefs and recommendedReadRefs[].surfaceRefs value must reference a relevantSurfaces[].surfaceId.",
-        "Use enumRefs.surfaceRelevance only for relevantSurfaces[].relevance; integration_boundary is not a surface relevance value and belongs only to recommendedReadRefs[].reason.",
-        "Use architecture_boundary for code surfaces that define API, module, service, frontend/backend, or persistence boundaries.",
+        "仅总结仓库代码事实。",
+        "不要重述或推断当前阶段范围、验收标准、任务或评审结论。",
+        "所有路径必须位于 projectRoot 内部，且不得使用禁用前缀。",
+        "technologySignals 和 structureSignals 是对象，不是数组。",
+        "repoOverview.primaryApplications、structureSignals.rootPaths、structureSignals.entryPoints、existingCapabilities、relevantSurfaces 和 recommendedReadRefs 是对象数组，其字段如 outputContract.resultTemplate 所示。",
+        "每个 existingCapabilities[].surfaceRefs 和 recommendedReadRefs[].surfaceRefs 值必须引用某个 relevantSurfaces[].surfaceId。",
+        "仅对 relevantSurfaces[].relevance 使用 enumRefs.surfaceRelevance；integration_boundary 不是表面相关性值，仅属于 recommendedReadRefs[].reason。",
+        "对定义 API、模块、服务、前端/后端或持久化边界的代码表面使用 architecture_boundary。",
     ];
     if matches!(
         repository_lens.phase_development_mode,
         PhaseDevelopmentMode::IncrementalDelivery
     ) {
-        generation_rules.push("When scanPurpose.completedPhaseSummaries exists, inspect and report current repository facts after those delivered phases instead of treating the repository as blank.");
+        generation_rules.push("当 scanPurpose.completedPhaseSummaries 存在时，检查并报告这些已交付阶段之后的当前仓库事实，而不是将仓库视为空白。");
     }
     let mut scan_contract_fields = vec![
         "baselineProjectKind",
@@ -245,7 +245,7 @@ fn build_request_root(
                 "targetId": "candidate",
                 "path": candidate_file,
                 "required": true,
-                "description": "Write the RepositoryContext candidate JSON."
+                "description": "写入 RepositoryContext 候选 JSON。"
             }],
             "schemaShape": schema_shape,
             "schemaProjection": {
@@ -274,23 +274,23 @@ fn build_request_root(
                     "contextQuality.confidence": "enumRefs.confidence"
                 },
                 "objectShapeRules": {
-                    "technologySignals": "object with primaryLanguages, frameworks, packageManagers, buildCommands, testCommands, notes arrays",
-                    "structureSignals": "object with rootPaths, entryPoints, configurationFiles arrays",
-                    "repoOverview.primaryApplications[]": "objects with applicationId, name, kind, rootPath",
-                    "relevantSurfaces[]": "objects with surfaceId, kind, path, summary, relevance, suggestedUse",
-                    "recommendedReadRefs[]": "objects with path, reason, priority, summary, surfaceRefs",
-                    "contextQuality.warnings[]": "objects with code and message; use [] only when there are no warnings",
-                    "warnings[]": "objects with code and message; use [] only when there are no warnings"
+                    "technologySignals": "包含 primaryLanguages、frameworks、packageManagers、buildCommands、testCommands、notes 数组的对象",
+                    "structureSignals": "包含 rootPaths、entryPoints、configurationFiles 数组的对象",
+                    "repoOverview.primaryApplications[]": "包含 applicationId、name、kind、rootPath 的对象",
+                    "relevantSurfaces[]": "包含 surfaceId、kind、path、summary、relevance、suggestedUse 的对象",
+                    "recommendedReadRefs[]": "包含 path、reason、priority、summary、surfaceRefs 的对象",
+                    "contextQuality.warnings[]": "包含 code 和 message 的对象；无警告时使用 []",
+                    "warnings[]": "包含 code 和 message 的对象；无警告时使用 []"
                 }
             },
             "resultTemplate": {
                 "status": "ready",
                 "repoOverview": {
-                    "summary": "Short repository summary from the current phase perspective.",
+                    "summary": "从当前阶段视角的简短仓库摘要。",
                     "repositoryShape": "unknown",
                     "primaryApplications": [{
                         "applicationId": "app-main",
-                        "name": "Main application",
+                        "name": "主应用程序",
                         "kind": "service | cli | web_app | library | unknown",
                         "rootPath": "."
                     }]
@@ -301,7 +301,7 @@ fn build_request_root(
                     "packageManagers": ["package-manager"],
                     "buildCommands": ["build command"],
                     "testCommands": ["test command"],
-                    "notes": ["Short technology note. Use [] only when none."]
+                    "notes": ["简短的技术说明。无则使用 []。"]
                 },
                 "structureSignals": {
                     "rootPaths": [{
@@ -311,24 +311,24 @@ fn build_request_root(
                     "entryPoints": [{
                         "path": "project-relative/path",
                         "kind": "module | cli | server | page | test | config | unknown",
-                        "description": "Why this entry point matters."
+                        "description": "说明此入口点的重要性。"
                     }],
                     "configurationFiles": ["project-relative/config-file"]
                 },
                 "existingCapabilities": [{
                     "capabilityId": "cap-existing-example",
-                    "name": "Existing capability name",
+                    "name": "现有能力名称",
                     "status": "partial",
-                    "summary": "Observed repository capability from the current codebase.",
+                    "summary": "从当前代码库观察到的仓库能力。",
                     "surfaceRefs": ["surface-example"],
                     "confidence": "medium",
-                    "deliveryRelevance": "Why this matters to the overall delivery or upcoming Brainstorm."
+                    "deliveryRelevance": "说明此项对整体交付或后续 Brainstorm 的重要性。"
                 }],
                 "relevantSurfaces": [{
                     "surfaceId": "surface-example",
                     "kind": "module",
                     "path": "project-relative/path",
-                    "summary": "Surface summary.",
+                    "summary": "表面摘要。",
                     "relevance": "extension_point",
                     "suggestedUse": "inspect_or_extend"
                 }],
@@ -336,7 +336,7 @@ fn build_request_root(
                     "path": "project-relative/path",
                     "reason": "implemented_capability",
                     "priority": "medium",
-                    "summary": "Why the agent should read this file first.",
+                    "summary": "说明 agent 应优先阅读此文件的原因。",
                     "surfaceRefs": ["surface-example"]
                 }],
                 "contextQuality": {
@@ -344,12 +344,12 @@ fn build_request_root(
                     "confidence": "medium",
                     "warnings": [{
                         "code": "LOW_CONFIDENCE_REPOSITORY_SCAN",
-                        "message": "Use [] only when there are no warnings."
+                        "message": "无警告时使用 []。"
                     }]
                 },
                 "warnings": [{
                     "code": "LOW_CONFIDENCE_REPOSITORY_SCAN",
-                    "message": "Use [] only when there are no warnings."
+                    "message": "无警告时使用 []。"
                 }]
             }
         },
@@ -358,15 +358,15 @@ fn build_request_root(
                 {
                     "groupId": "repository_context_scan_contract",
                     "required": true,
-                    "purpose": "Read the repository scanning purpose and baseline lens before inspecting the repository.",
-                    "whenToRead": "Read before any repository inspection.",
+                    "purpose": "在检查仓库之前阅读仓库扫描目的和基线视角。",
+                    "whenToRead": "在任何仓库检查之前阅读。",
                     "selectors": read_selectors_value_from_paths(scan_contract_fields)
                 },
                 {
                     "groupId": "repository_context_generation_rules",
                     "required": true,
-                    "purpose": "Read the hard safety rules and enum sets before writing RepositoryContext.",
-                    "whenToRead": "Read before drafting the candidate.",
+                    "purpose": "在编写 RepositoryContext 之前阅读硬性安全规则和枚举集合。",
+                    "whenToRead": "在起草候选内容之前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "generationRules",
                         "enumRefs.projectKind",
@@ -386,8 +386,8 @@ fn build_request_root(
                 {
                     "groupId": "repository_context_write_contract",
                     "required": true,
-                    "purpose": "Read the write target and schema projection before writing the candidate.",
-                    "whenToRead": "Read only when ready to write RepositoryContext.",
+                    "purpose": "在编写候选内容之前阅读写入目标和 schema 投影。",
+                    "whenToRead": "仅在准备好编写 RepositoryContext 时阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "outputContract.writeTargets",
                         "outputContract.submitTool",
@@ -514,15 +514,15 @@ where
             vec![issue(
                 "TARGET_MISSING",
                 "candidate",
-                "No authorized RepositoryContext target was written.",
+                "未写入已授权的 RepositoryContext 目标。",
             )],
         ));
     };
     let delivery_id = authorized.delivery_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("authorized deliveryId is missing".to_string())
+        state::store::StateError::InvalidArgument("已授权的 deliveryId 缺失".to_string())
     })?;
     let phase_id = authorized.phase_id.clone().ok_or_else(|| {
-        state::store::StateError::InvalidArgument("authorized phaseId is missing".to_string())
+        state::store::StateError::InvalidArgument("已授权的 phaseId 缺失".to_string())
     })?;
     if let Some(result) = ensure_latest_request(
         &input.project_root,
@@ -560,7 +560,7 @@ where
                     vec![issue(
                         "REPOSITORY_CONTEXT_SCHEMA_INVALID",
                         "candidate",
-                        &format!("RepositoryContext candidate JSON has an invalid schema: {error}"),
+                        &format!("RepositoryContext 候选 JSON 的 schema 无效：{error}"),
                     )],
                 ));
             }
@@ -951,11 +951,11 @@ fn normalize_context_warning_item(item: &mut Value, default_code: &str) {
                 .and_then(Value::as_str)
                 .is_some_and(|value| !value.trim().is_empty())
             {
-                object.insert("message".to_string(), json!("Repository context warning."));
+                object.insert("message".to_string(), json!("仓库上下文警告。"));
             }
         }
         _ => {
-            *item = json!({ "code": default_code, "message": "Repository context warning." });
+            *item = json!({ "code": default_code, "message": "仓库上下文警告。" });
         }
     }
 }
@@ -1033,7 +1033,7 @@ fn validate_repository_context(
                 issues.push(issue(
                     "SURFACE_REF_INVALID",
                     "existingCapabilities.surfaceRefs",
-                    "existingCapabilities.surfaceRefs must reference relevantSurfaces.surfaceId.",
+                    "existingCapabilities.surfaceRefs 必须引用 relevantSurfaces.surfaceId。",
                 ));
                 break;
             }
@@ -1051,7 +1051,7 @@ fn validate_repository_context(
                 issues.push(issue(
                     "READ_REF_SURFACE_INVALID",
                     "recommendedReadRefs.surfaceRefs",
-                    "recommendedReadRefs.surfaceRefs must reference relevantSurfaces.surfaceId.",
+                    "recommendedReadRefs.surfaceRefs 必须引用 relevantSurfaces.surfaceId。",
                 ));
                 break;
             }
@@ -1070,7 +1070,7 @@ fn validate_relative_path(
         issues.push(issue(
             "PATH_REQUIRED",
             field,
-            "RepositoryContext paths must not be empty.",
+            "RepositoryContext 路径不得为空。",
         ));
         return;
     }
@@ -1081,7 +1081,7 @@ fn validate_relative_path(
         issues.push(issue(
             "FORBIDDEN_PATH_PREFIX",
             field,
-            "RepositoryContext paths must not point into .git/, .loom/, or node_modules/.",
+            "RepositoryContext 路径不得指向 .git/、.loom/ 或 node_modules/。",
         ));
         return;
     }
@@ -1089,7 +1089,7 @@ fn validate_relative_path(
         issues.push(issue(
             "PATH_OUTSIDE_PROJECT",
             field,
-            "RepositoryContext paths must stay inside projectRoot.",
+            "RepositoryContext 路径必须位于 projectRoot 内部。",
         ));
     }
 }
@@ -1108,7 +1108,7 @@ fn ensure_latest_request(
     if delivery.active_phase_id != phase_id {
         return Ok(Some(stale_failure(
             project_root,
-            "RepositoryContext submit must bind to the active phase.".to_string(),
+            "RepositoryContext 提交必须绑定到当前活跃阶段。".to_string(),
         )));
     }
     let Some(phase) = delivery
@@ -1118,13 +1118,13 @@ fn ensure_latest_request(
     else {
         return Ok(Some(stale_failure(
             project_root,
-            format!("delivery {} is missing phase {}", delivery_id, phase_id),
+            format!("交付 {} 缺少阶段 {}", delivery_id, phase_id),
         )));
     };
     if phase.latest_refs.get(latest_ref_key).map(String::as_str) != Some(request_ref) {
         return Ok(Some(stale_failure(
             project_root,
-            "RepositoryContext submit must use the active phase latest requestRef.".to_string(),
+            "RepositoryContext 提交必须使用当前活跃阶段的最新 requestRef。".to_string(),
         )));
     }
     Ok(None)

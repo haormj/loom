@@ -91,7 +91,7 @@ pub fn phase_scope_gate() -> Value {
 
 pub fn phase_scope_prompt(phase_id: &str) -> String {
     format!(
-        "Brainstorm clarification for {phase_id} is active. Do not wait for @loom continue or report this as an optional next step. Immediately inspect the returned requestRef, read its required requestReadPlan groups, run the required request-scoped knowledge context steps, and present the active phase-scope options in the user's language. Wait for the user's visible confirmation before calling loom.brainstormConfirmBlock."
+        "Brainstorm 对 {phase_id} 的澄清已激活。不要等待 @loom continue 或将其报告为可选的下一步。立即检查返回的 requestRef，阅读其必需的 requestReadPlan groups，运行必需的 request-scoped knowledge context 步骤，并用用户语言呈现当前阶段范围选项。在调用 loom.brainstormConfirmBlock 之前等待用户可见确认。"
     )
 }
 
@@ -527,7 +527,7 @@ fn attach_next_phase_seed(root: &mut Value, source_phase_id: &str, handoff: &Nex
         "goal": handoff.goal,
         "scopePreview": handoff.scope_preview,
         "reason": handoff.reason,
-        "usageRule": "Use this as the non-binding seed for the active phase boundary. Query request-scoped knowledge before presenting options, and do not turn this seed into a full-project roadmap."
+        "usageRule": "将此作为当前阶段边界的非约束性种子。在呈现选项前查询 request-scoped knowledge，不要将此种子变成完整的项目路线图。"
     });
     if let Some(groups) = root
         .pointer_mut("/requestReadPlan/groups")
@@ -543,8 +543,8 @@ fn attach_next_phase_seed(root: &mut Value, source_phase_id: &str, handoff: &Nex
                 json!({
                     "groupId": "next_phase_seed",
                     "required": true,
-                    "purpose": "Read the next phase seed before composing phase continuation options.",
-                    "whenToRead": "Read after the conversation protocol and compact requirement context, before querying knowledge or presenting phase_scope options.",
+                    "purpose": "在组合阶段继续选项前阅读 next phase seed。",
+                    "whenToRead": "在对话协议和紧凑需求上下文之后、查询 knowledge 或呈现 phase_scope 选项之前阅读。",
                     "selectors": read_selectors_value_from_paths([
                         "nextPhaseSeed.fromPhaseId",
                         "nextPhaseSeed.phaseId",
@@ -626,10 +626,10 @@ fn attach_phase_continuation_context(
         },
         "previousPhaseId": source_phase_id,
         "rules": [
-            "Use nextPhaseSeed as the non-binding starting point for this phase clarification.",
-            "Use phaseContinuationContext.repository as current code facts so implemented prior-phase capabilities are not re-asked as new scope.",
-            "Use the field-level deliveryContext and latestConfirmedRequirementDecision reads as accepted prior Brainstorm facts.",
-            "Confirm only the current phase; do not regenerate a complete future roadmap."
+            "将 nextPhaseSeed 作为此阶段澄清的非约束性起点。",
+            "将 phaseContinuationContext.repository 用作当前代码事实，使已实现的先前阶段能力不被重新作为新 scope 询问。",
+            "将字段级 deliveryContext 和 latestConfirmedRequirementDecision 读取作为已接受的先前 Brainstorm 事实。",
+            "仅确认当前阶段；不要重新生成完整的未来路线图。"
         ]
     });
     if let Some(repository_projection) = repository_projection {
@@ -668,8 +668,8 @@ fn attach_phase_continuation_context(
                 json!({
                     "groupId": "phase_continuation_context",
                     "required": true,
-                    "purpose": "Read phase continuation context before presenting the current phase scope.",
-                    "whenToRead": "Read before knowledge queries and before presenting phase_scope options.",
+                    "purpose": "在呈现当前阶段范围之前阅读阶段继续上下文。",
+                    "whenToRead": "在 knowledge 查询之前和呈现 phase_scope 选项之前阅读。",
                     "selectors": read_selectors_value_from_paths(fields)
                 }),
             );

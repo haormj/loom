@@ -1,22 +1,22 @@
-# UIX Token: Color System
+# UIX 令牌：颜色系统
 
-Load this file for any frontend work that creates or changes visual styling. Use existing project tokens first. When a project has no usable color system, create semantic roles before styling components.
+为任何创建或修改视觉样式的前端工作加载此文件。优先使用现有项目令牌。当项目没有可用的颜色系统时，在样式化组件之前创建语义角色。
 
-## Required Roles
+## 必需角色
 
-Define roles, not raw colors:
+定义角色，而非原始颜色：
 
-- `surface`, `surface-muted`, `surface-raised`, `surface-inset`.
-- `text`, `text-muted`, `text-subtle`, `text-inverse`.
-- `border`, `border-strong`, `divider`.
-- `primary`, `primary-hover`, `primary-active`, `primary-contrast`.
-- `secondary` and `accent` only when the product needs a second meaning.
-- `success`, `warning`, `danger`, `info`, each with background, border, text, and icon roles.
-- `focus-ring`, `selection`, `scrim`.
+- `surface`、`surface-muted`、`surface-raised`、`surface-inset`。
+- `text`、`text-muted`、`text-subtle`、`text-inverse`。
+- `border`、`border-strong`、`divider`。
+- `primary`、`primary-hover`、`primary-active`、`primary-contrast`。
+- `secondary` 和 `accent` 仅当产品需要第二种含义时。
+- `success`、`warning`、`danger`、`info`，每个都有背景、边框、文本和图标角色。
+- `focus-ring`、`selection`、`scrim`。
 
-## CSS Token Skeleton
+## CSS 令牌骨架
 
-Use project naming when it already exists. For a new web surface, this shape is acceptable:
+当项目已有命名时使用它。对于新的 web 界面，此形状可接受：
 
 ```css
 :root {
@@ -39,74 +39,67 @@ Use project naming when it already exists. For a new web surface, this shape is 
 }
 ```
 
-The exact values may change, but components should consume roles rather than hard-coded values.
+确切值可能变化，但组件应消费角色而非硬编码值。
 
-## Selection Rules
+## 选择规则
 
-- Choose a palette for the scenario, not the category stereotype. Finance is not automatically dark blue/gold; dashboards are not automatically dark slate.
-- Workbench and admin tools should favor quiet surfaces, clear borders, and restrained accents.
-- Marketing and immersive surfaces may use stronger color, but text contrast and readability still win.
-- Data-heavy products need separate semantic status colors; do not overload the primary brand color for every state.
-- Do not use more than one dominant hue family unless the product has an explicit brand system or data encoding need.
-- Pick a color commitment level before values: restrained accent, committed brand surface, full multi-role palette, or immersive scene palette. Most operational products should be restrained.
-- Neutral colors should be slightly tuned toward the product hue when a custom palette is introduced, but must stay readable and calm.
+- 为场景选择调色板，而非类别刻板印象。金融不自动是深蓝/金色；仪表板不自动是深色石板。
+- 工作台和管理工具应偏好安静的表面、清晰边框和克制的强调色。
+- 营销和沉浸式界面可以使用更强的颜色，但文本对比度和可读性仍优先。
+- 数据密集型产品需要独立的语义状态颜色；不要为每个状态超载主要品牌色。
+- 除非产品有明确的品牌系统或数据编码需要，否则不要使用超过一个主导色系。
+- 在选择值之前选择颜色承诺级别：克制强调、承诺品牌表面、完整多角色调色板或沉浸式场景调色板。大多数操作产品应是克制的。
+- 引入自定义调色板时，中性色应略微向产品色调调整，但必须保持可读和平静。
 
-## Scenario Palette Guidance
+## 场景调色板指导
 
-| Scenario | Typical direction | Watch out for |
+| 场景 | 典型方向 | 注意事项 |
 | --- | --- | --- |
-| Admin/workbench/data | Low-chroma surfaces, one clear primary, semantic status roles. | Dark-slate or purple-gradient reflex. |
-| Finance/workstation | Trustworthy contrast, strong status/risk separation, tabular numeric clarity. | Blue/gold cliche and low-contrast warning states. |
-| Consumer/mobile | Warmth and clarity with accessible action color. | Decorative gradients behind forms. |
-| Docs/developer | High text contrast, code/callout roles, subtle navigation state. | Marketing palette overwhelming reference reading. |
-| Marketing/corporate | More expressive brand color and media overlay roles. | Gradient text, unreadable hero overlays. |
-| 3D/immersive | Scene-aware foreground/control overlays. | UI controls disappearing into the scene. |
+| 管理/工作台/数据 | 低色度表面、一个清晰主色、语义状态角色。 | 深色石板或紫色渐变反射。 |
+| 金融/工作站 | 可信对比度、强状态/风险分离、表格数字清晰度。 | 蓝/金陈词滥调和低对比度警告状态。 |
+| 消费者/移动 | 温暖和清晰带可访问的操作色。 | 表单后的装饰性渐变。 |
+| 文档/开发者 | 高文本对比度、代码/标注角色、微妙的导航状态。 | 营销调色板压倒参考阅读。 |
+| 营销/企业 | 更富表现力的品牌色和媒体覆盖角色。 | 渐变文本、不可读的主视觉覆盖。 |
+| 3D/沉浸式 | 场景感知的前景/控件覆盖。 | UI 控件消失在场景中。 |
 
-## Palette Decision Record
+## 调色板决策记录
 
-Before choosing values, record the selected direction in the task implementation
-notes or existing style evidence:
+在选择值之前，在任务实现说明或现有样式证据中记录选定方向：
 
-| Decision | Required result |
+| 决策 | 必需结果 |
 | --- | --- |
-| Existing theme | Reuse its roles and add only missing semantic aliases. |
-| Existing theme with a gap | Extend the existing file and preserve its naming, contrast, and dark-mode policy. |
-| No usable theme | Start from the selected scenario direction and create one project-level token asset. |
-| Brand direction supplied | Preserve the brand's primary/secondary meaning and validate status colors independently. |
-| No brand direction | Use a restrained semantic palette; do not invent a visual identity from a generic category stereotype. |
+| 现有主题 | 重用其角色并仅添加缺失的语义别名。 |
+| 现有主题有缺口 | 扩展现有文件并保留其命名、对比度和暗色模式策略。 |
+| 无可用主题 | 从选定场景方向开始并创建一个项目级令牌资产。 |
+| 提供品牌方向 | 保留品牌的主要/次要含义并独立验证状态颜色。 |
+| 无品牌方向 | 使用克制的语义调色板；不要从通用类别刻板印象发明视觉标识。 |
 
-Do not treat a palette name as a complete design system. A selected palette must
-also define surface hierarchy, text contrast, status roles, focus treatment, and
-the dark-mode decision when dark mode is in scope.
+不要将调色板名称视为完整设计系统。选定的调色板还必须定义表面层次、文本对比度、状态角色、焦点处理和暗色模式决策（当暗色模式在范围内时）。
 
-## Contrast And Status
+## 对比度和状态
 
-- Normal text must meet AA contrast on its surface.
-- Do not communicate status by color alone. Pair color with label, icon, shape, or placement.
-- Error and business-blocking states must be visually distinct from warning and neutral empty states.
-- Disabled state should preserve readable labels; reduce emphasis without making controls illegible.
-- Hover and active colors must remain inside the semantic role family.
-- Validate text, icon, border, focus, disabled, and status combinations on every
-  surface that consumes the role. A valid primary button does not prove that a
-  muted status badge or disabled field is readable.
-- Charts and data encodings need a non-color distinction such as a label, pattern,
-  position, or table summary when the color carries business meaning.
+- 正常文本必须在其表面上达到 AA 对比度。
+- 不要仅通过颜色传达状态。将颜色与标签、图标、形状或放置配对。
+- 错误和业务阻塞状态必须与警告和中性空状态在视觉上区分。
+- 禁用状态应保留可读标签；减少强调而不使控件不可读。
+- 悬停和活动颜色必须保持在语义角色族内。
+- 在消费角色的每个表面上验证文本、图标、边框、焦点、禁用和状态组合。有效的主要按钮不能证明柔和的状态徽章或禁用字段可读。
+- 当颜色承载业务含义时，图表和数据编码需要非颜色区分，如标签、图案、位置或表格摘要。
 
-## Implementation
+## 实现
 
-- Prefer CSS variables, design-token objects, Tailwind theme extension, or the project's existing token format.
-- Keep token names stable even if palette values change.
-- Avoid one-off component colors unless they represent a new semantic role that will be reused.
-- Check dark mode only if the product supports it; do not invent a dark mode when it is out of scope.
-- If using OKLCH, keep fallback behavior in mind for the project's browser support. If the stack already uses hex/HSL tokens, preserve format unless changing it is justified.
+- 优先使用 CSS 变量、设计令牌对象、Tailwind 主题扩展或项目现有的令牌格式。
+- 即使调色板值变化也保持令牌名称稳定。
+- 避免一次性组件颜色，除非它们代表将被重用的新语义角色。
+- 仅在产品支持时检查暗色模式；不要在范围外时发明暗色模式。
+- 如果使用 OKLCH，记住项目浏览器支持的回退行为。如果技术栈已使用 hex/HSL 令牌，除非有理由更改否则保留格式。
 
-## Self-Check
+## 自检
 
-- No raw hex/HSL/OKLCH sprawl inside many components.
-- No generic purple gradient unless required by brand.
-- No category-reflex palette.
-- Every visible state uses a semantic role.
-- Text, borders, icons, charts, and focus rings remain legible on the selected surfaces.
-- Evidence names the token asset and at least one consumer file that uses these roles.
-- Evidence names the palette decision, existing-style reuse decision, and dark-mode
-  decision when those choices affect the changed surface.
+- 许多组件内无原始 hex/HSL/OKLCH 蔓延。
+- 无通用紫色渐变（除非品牌需要）。
+- 无类别反射性调色板。
+- 每个可见状态使用语义角色。
+- 文本、边框、图标、图表和焦点环在选定表面上保持清晰。
+- 证据指名令牌资产和至少一个使用这些角色的消费者文件。
+- 当调色板决策、现有样式重用决策和暗色模式决策影响变更界面时，证据指名这些决策。

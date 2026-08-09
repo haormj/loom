@@ -1,80 +1,79 @@
-# UIX Anti-Patterns
+# UIX 反模式
 
-Load this file when generating, refining, or reviewing user-visible UI. These are production defects, not taste preferences, when they appear in a product surface.
+在生成、优化或审查用户可见 UI 时加载此文件。当这些出现在产品界面中时，它们是生产缺陷，而非品味偏好。
 
-## Product Boundary Failures
+## 产品边界失败
 
-- Runtime commands, local ports, dependency commands, stack explanations, verification instructions, delivery progress, internal workflow names, tool names, generated artifact ids, validator terms, and internal status values must not appear in normal product UI.
-- Operational products must not open with a marketing hero, feature-summary wall, footer-heavy page, or "how this was built" explanation.
-- Brand intro blocks, footer-like explainer sections, and "system capability" cards are product-boundary failures when the user asked for a workbench, admin console, data surface, or internal product.
-- Developer/runtime products may show technical terms only when the user task is actually about those terms.
-- Empty states may explain the business state and next action; they must not explain the implementation process.
+- 运行时命令、本地端口、依赖命令、技术栈说明、验证指令、交付进度、内部工作流名称、工具名称、生成的产物 ID、验证器术语和内部状态值不得出现在正常产品 UI 中。
+- 操作类产品不得以营销主视觉、功能摘要墙、页脚沉重的页面或"如何构建"说明开场。
+- 当用户要求工作台、管理控制台、数据界面或内部产品时，品牌介绍块、类页脚说明部分和"系统能力"卡片是产品边界失败。
+- 开发者/运行时产品仅当用户任务实际涉及这些术语时才可展示技术术语。
+- 空状态可以说明业务状态和下一步操作；它们不得说明实现过程。
 
 ## Brief Mapping
 
-The selected surface brief's visual and content constraints are blocking product
-constraints:
+选定界面简报的视觉和内容约束是阻塞性的产品约束：
 
-- Treat anti-demo rules as implementation limits on layout, hierarchy, decorative treatment, and component choice.
-- Treat forbidden content as user-visible copy limits across pages, empty states, alerts, modals, tooltips, footers, and debug panels.
-- If a developer/runtime product legitimately needs technical terms, the product intent must say so; otherwise technical process language is a defect.
-- Do not replace business UI with explanation text that says what the system could do. Build the actual surface, state, or action.
+- 将反演示规则视为对布局、层次结构、装饰处理和组件选择的实现限制。
+- 将禁止内容视为跨页面、空状态、警告、模态框、工具提示、页脚和调试面板的用户可见文案限制。
+- 如果开发者/运行时产品合理地需要技术术语，产品意图必须说明；否则技术流程语言是缺陷。
+- 不要用说明系统可以做什么的解释文本替换业务 UI。构建实际的界面、状态或操作。
 
 ## Demo-Looking UI
 
-- Avoid one-file app shells that mix routing, data fetching, form state, modal state, table state, and all styling once the screen has real workflow complexity.
-- Avoid decorative card grids that describe capabilities instead of providing the actual working surface.
-- Avoid repeated "icon + title + paragraph" tiles when users need data, forms, filters, actions, or status.
-- Avoid oversized hero typography inside dashboards, staff consoles, forms, tables, and side panels.
-- Avoid giant logo/brand blocks in the app shell. Navigation identity should be compact unless the scenario is marketing/corporate.
-- Avoid ornamental gradients, blobs, glass panels, background noise, stock-like illustrations, and giant brand blocks when the user must scan or operate data.
-- Avoid arbitrary color sprawl, unrelated radius values, and inconsistent spacing. Use semantic tokens or the existing design system.
+- 当屏幕具有真实的工作流复杂度时，避免将路由、数据获取、表单状态、模态状态、表格状态和所有样式混合在一个文件中的应用外壳。
+- 避免描述能力而非提供实际工作界面的装饰性卡片网格。
+- 当用户需要数据、表单、筛选器、操作或状态时，避免重复的"图标 + 标题 + 段落"磁贴。
+- 避免在仪表板、员工控制台、表单、表格和侧面板内使用超大主视觉排版。
+- 避免应用外壳中的巨型 logo/品牌块。导航标识应紧凑，除非场景是营销/企业类。
+- 当用户必须扫描或操作数据时，避免装饰性渐变、色块、玻璃面板、背景噪点、库存风格插图和巨型品牌块。
+- 避免任意颜色蔓延、无关的圆角值和不一致的间距。使用语义令牌或现有设计系统。
 
-## Layout Failures
+## 布局失败
 
-- Do not put cards inside cards for normal page sections. Use full-width bands, panels, tables, drawers, or repeated item cards as appropriate.
-- Do not use a generic centered container for every page. Workbench, data, docs, mobile, marketing, and immersive surfaces need different layout baselines.
-- Do not let text overlap, clip, wrap into broken controls, or resize surrounding layout when states change.
-- Do not hide primary task controls below decorative content.
-- Do not collapse desktop data tables into unusable mobile tables without a card/list/detail fallback.
+- 不要将卡片嵌套在卡片内作为正常页面分区。根据需要使用全宽带、面板、表格、抽屉或重复的项目卡片。
+- 不要对每个页面都使用通用的居中容器。工作台、数据、文档、移动、营销和沉浸式界面需要不同的布局基线。
+- 不要让文本在状态变化时重叠、裁剪、换行到损坏的控件中或调整周围布局。
+- 不要将主要任务控件隐藏在装饰性内容下方。
+- 不要在没有卡片/列表/详情回退的情况下将桌面数据表格折叠成不可用的移动表格。
 
-## Interaction Failures
+## 交互失败
 
-- Do not hide critical actions or data behind hover-only controls.
-- Do not use modals as the default answer for every secondary action. Prefer inline edit, side panel, drawer, split view, undo toast, or dedicated step flow when they preserve task context.
-- Do not submit forms without visible validation, disabled/submitting state, success feedback, and recoverable error feedback.
-- Do not show tables without scoped loading, empty, error, pagination/overflow, sorting/filtering behavior when those states are in scope.
-- Do not use toasts as the only place where business-blocking feedback appears. The related field, row, panel, or form must also show the block.
-- Do not animate layout properties such as width, height, top, or left for frequent UI transitions. Prefer transform and opacity, and respect reduced motion.
+- 不要将关键操作或数据隐藏在仅悬停控件之后。
+- 不要将模态框作为每个次要操作的默认答案。当内联编辑、侧面板、抽屉、分屏视图、撤销 toast 或专用步骤流能保留任务上下文时，优先使用它们。
+- 不要在没有可见验证、禁用/提交状态、成功反馈和可恢复错误反馈的情况下提交表单。
+- 不要展示没有作用域内加载、空、错误、分页/溢出、排序/筛选行为的表格（当这些状态在范围内时）。
+- 不要将 toast 用作业务阻塞反馈出现的唯一位置。相关字段、行、面板或表单也必须显示阻塞。
+- 不要为频繁的 UI 过渡动画布局属性如 width、height、top 或 left。优先使用 transform 和 opacity，并尊重减弱动效。
 
-## Visual Slop Checks
+## 视觉粗糙检查
 
-- No default purple-blue gradient theme unless the domain and existing brand genuinely require it.
-- No single-hue palette where every surface is a tinted version of one color.
-- No dark slate dashboard by reflex for every operational product.
-- No beige/cream/tan page by reflex for every "premium" product.
-- No gradient text as routine emphasis.
-- No left-border color stripe as the main hierarchy device for every card or alert.
-- No glassmorphism as the default visual language.
-- No endless equal-size card grids for unrelated content.
-- No default Inter/Roboto/Arial-only typography when the repo does not already use it; choose a suitable stack or follow the existing system.
+- 除非领域和现有品牌确实需要，否则不要默认使用紫蓝渐变主题。
+- 不要使用单色调色板，每个表面都是一种颜色的色调变体。
+- 不要对每个操作产品反射性地使用深色石板仪表板。
+- 不要对每个"高端"产品反射性地使用米色/奶油色/棕褐色页面。
+- 不要将渐变文本作为常规强调手段。
+- 不要将左边框色条作为每个卡片或警告的主要层次结构手段。
+- 不要将玻璃拟态作为默认视觉语言。
+- 不要为无关内容使用无尽的等大卡片网格。
+- 当仓库尚未使用时，不要默认仅使用 Inter/Roboto/Arial 排版；选择合适的字体栈或遵循现有系统。
 
-## Accessibility Red Lines
+## 可访问性红线
 
-- Text contrast must meet AA targets for normal and large text.
-- Focus must be visible and not color-only.
-- Keyboard access must reach all primary controls.
-- Touch targets must be large enough on mobile and tablet.
-- Color must not be the only carrier of status or risk.
-- Headings, buttons, links, labels, and form errors must use correct semantics.
-- Motion must respect `prefers-reduced-motion`.
+- 文本对比度必须达到 AA 目标的正常和大号文本要求。
+- 焦点必须可见且不仅基于颜色。
+- 键盘访问必须能到达所有主要控件。
+- 触摸目标在移动端和平板上必须足够大。
+- 颜色不得是状态或风险的唯一载体。
+- 标题、按钮、链接、标签和表单错误必须使用正确的语义。
+- 动效必须尊重 `prefers-reduced-motion`。
 
 ## Review Rule
 
-If product-boundary leakage or demo-only filler appears in a production surface, the UI quality result cannot be treated as satisfied. Fix the UI or record the remaining issue as a known gap with a concrete reason.
+如果产品边界泄漏或仅演示用的填充内容出现在生产界面中，UI 质量结果不能视为满足。修复 UI 或将剩余问题记录为已知缺口并附具体原因。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `anti.product_boundary.no_internal_process` | Changed UI source and rendered copy keep internal workflow, runtime, build, and progress language out of product surfaces. | Product UI contains delivery notes, stack explanations, runtime commands, generated artifact ids, future-stage copy, or feature-description filler instead of business UI. |
+| `anti.product_boundary.no_internal_process` | 变更的 UI 源和渲染文案将内部工作流、运行时、构建和进度语言排除在产品界面之外。 | 产品 UI 包含交付说明、技术栈说明、运行时命令、生成的产物 ID、未来阶段文案或功能描述填充，而非业务 UI。 |

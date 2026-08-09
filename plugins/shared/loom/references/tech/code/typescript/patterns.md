@@ -1,41 +1,41 @@
-# TypeScript Implementation Pattern Quality
+# TypeScript 实现模式质量
 
 ## When To Use
 
-- Load when the task owns an API client, repository or gateway, factory, builder, reducer, state machine, mapper, dependency boundary, or reusable TypeScript abstraction.
-- Do not introduce a pattern object or class when a direct function and a named type express the behavior clearly.
-- Existing repository boundaries and dependency conventions take precedence over generic TypeScript examples.
+- 当任务拥有 API 客户端、repository 或网关、工厂、构建器、reducer、状态机、映射器、依赖边界或可复用 TypeScript 抽象时加载。
+- 当直接函数和命名类型能清晰表达行为时，不要引入模式对象或类。
+- 现有仓库边界和依赖约定优先于通用 TypeScript 示例。
 
 ## Decision Rules
 
-- Use a factory or builder for validated multi-step construction, fixture assembly, or complex dependency setup; keep simple object creation simple.
-- Centralize HTTP client behavior when adding calls: base URL, headers, response parsing, error normalization, cancellation, and typed mapping must not be duplicated in screens.
-- Align repository or gateway interfaces with real business operations. Do not expose generic CRUD when the workflow has named commands, validation, or state transitions.
-- Use a reducer or explicit state machine for multi-step UI or workflow state when combinations of booleans can become invalid.
-- Map DTOs to domain and view models at one boundary. Dates, money, enum labels, IDs, and optional fields should not be reformatted independently in components.
-- Use `Result` or `Either` only when the repository already uses it or the task owns error-handling architecture; otherwise follow the local throw/return convention.
-- Inject clocks, UUID generators, network clients, and storage only when nondeterminism affects behavior. Do not inject every pure helper.
+- 为验证过的多步构造、夹具组装或复杂依赖设置使用工厂或构建器；保持简单对象创建简单。
+- 添加调用时集中 HTTP 客户端行为：base URL、头、响应解析、错误规范化、取消和类型化映射不得在页面中重复。
+- 将 repository 或网关接口与真实业务操作对齐。当工作流有命名命令、验证或状态转换时不要暴露通用 CRUD。
+- 当布尔值组合可能变为无效时，对多步 UI 或工作流状态使用 reducer 或显式状态机。
+- 在一个边界将 DTO 映射到领域和视图模型。日期、货币、枚举标签、ID 和可选字段不应在组件中独立重新格式化。
+- 仅在仓库已使用 `Result` 或 `Either` 或任务拥有错误处理架构时才使用它们；否则遵循本地 throw/return 约定。
+- 仅当非确定性影响行为时注入时钟、UUID 生成器、网络客户端和存储。不要注入每个纯辅助函数。
 
 ## Implementation Focus
 
-- Keep abstractions testable without hiding the actual ownership boundary behind a global mutable singleton.
-- Move shared contracts to a neutral module when a pattern would otherwise create upward or circular imports.
-- Keep type-level API safety paired with runtime response validation; a generic client signature does not prove server data.
-- Make invalid transitions and construction failures explicit rather than returning partially initialized objects.
+- 保持抽象可测试，而无需将实际所有权边界隐藏在全局可变单例之后。
+- 当模式会创建向上或循环导入时，将共享契约移到中性模块。
+- 保持类型级 API 安全与运行时响应验证配对；通用客户端签名不证明服务器数据。
+- 使无效转换和构造失败显式，而非返回部分初始化的对象。
 
 ## Failure Modes
 
-- Do not add a builder, repository, or service class when it only forwards one function and increases indirection.
-- Do not hide network errors behind a generic success type or let each caller invent a different error mapping.
-- Do not introduce a singleton store or client that makes tests share mutable state across cases.
+- 当构建器、repository 或服务类仅转发一个函数并增加间接性时不要添加它们。
+- 不要用通用成功类型隐藏网络错误或让每个调用者编造不同的错误映射。
+- 不要引入使测试在用例之间共享可变状态的单例存储或客户端。
 
 ## Verification Focus
 
-- Test the behavior provided by the pattern: state transitions, API error mapping, repository contracts, factory validation, or mapper round-trips.
-- For API clients, cover success, non-2xx responses, malformed payloads where applicable, and cancellation or timeout when implemented.
-- For reducers and state machines, cover every allowed transition and at least one disallowed transition.
-- Run typecheck to prove call sites do not need broad assertions.
+- 测试模式提供的行为：状态转换、API 错误映射、repository 契约、工厂验证或映射器往返。
+- 对于 API 客户端，覆盖成功、非 2xx 响应、适用时的格式错误载荷，以及实现时的取消或超时。
+- 对于 reducer 和状态机，覆盖每个允许的转换和至少一个不允许的转换。
+- 运行类型检查以证明调用点不需要宽泛断言。
 
 ## Evidence Focus
 
-- Record the selected pattern, the ownership boundary that required it, and the behavior used to prove it was necessary.
+- 记录选择的模式、需要它的所有权边界，以及用于证明其必要性的行为。

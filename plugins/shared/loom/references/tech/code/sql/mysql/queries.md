@@ -1,69 +1,69 @@
-# MySQL Query Semantics
+# MySQL 查询语义
 
-Use this file with `tech/code/sql/queries.md` when a MySQL task owns query behavior, repository queries, CRUD reads/writes, pagination, JSON access, or query-plan changes.
+当 MySQL 任务拥有查询行为、repository 查询、CRUD 读写、分页、JSON 访问或查询计划变更时，将此文件与 `tech/code/sql/queries.md` 一起使用。
 
 ## When To Use
 
-- Confirm the MySQL version, driver/ORM query mode, collation, and existing index definitions before using provider-specific syntax.
-- Keep the query result shape, authorization filters, and deterministic ordering from the common SQL contract.
-- Do not add a provider-only query feature when the accepted contract can be implemented portably without a measured need.
+- 在使用提供者特定语法之前，确认 MySQL 版本、驱动程序/ORM 查询模式、排序规则和现有索引定义。
+- 保持公共 SQL 契约的查询结果形态、授权过滤和确定性排序。
+- 当已接受的契约可以在没有测量需求的情况下以可移植方式实现时，不要添加提供者专有的查询特性。
 
 ## Implementation Focus
 
-- Keep comparisons type-correct. Avoid implicit conversion between numeric, text, temporal, and JSON values because it can change index use and results.
-- Keep date/time predicates sargable. Use range boundaries rather than applying a function to an indexed column when the business interval is known.
-- Treat collation and case sensitivity as part of search behavior. A text query that changes collation can change both results and index use.
-- Use JSON operators and generated-column access only when the repository's MySQL version supports them and the field is part of the accepted query contract.
-- Use explicit conflict targets and update columns for MySQL upsert behavior. Preserve idempotency and affected-row semantics for retries.
+- 保持比较类型正确。避免数字、文本、时间值和 JSON 值之间的隐式转换，因为它可能改变索引使用和结果。
+- 保持日期/时间谓词可索引。当业务区间已知时使用范围边界而非对索引列应用函数。
+- 将排序规则和大小写敏感性视为搜索行为的一部分。改变排序规则的文本查询可能同时改变结果和索引使用。
+- 仅当仓库的 MySQL 版本支持且该字段是已接受查询契约的一部分时，才使用 JSON 操作符和生成列访问。
+- 对 MySQL upsert 行为使用显式冲突目标和更新列。为重试保留幂等性和受影响行语义。
 
 ## Index And Pagination Alignment
 
-- Design composite indexes from the actual equality, range, join, and ordering predicates. Do not add every form field to an index.
-- Use deterministic ordering with a unique tie-breaker for offset or keyset pagination.
-- Use full-text or spatial indexes only when the task owns that search/geospatial behavior and includes representative verification.
-- Inspect the MySQL execution plan for a performance task. A new index is not evidence of improvement by itself.
+- 从实际的等值、范围、连接和排序谓词设计复合索引。不要将每个表单字段都加入索引。
+- 对偏移或键集分页使用带有唯一决胜键的确定性排序。
+- 仅当任务拥有该搜索/地理空间行为并包含代表性验证时才使用全文或空间索引。
+- 为性能任务检查 MySQL 执行计划。仅一个新索引不构成改善证据。
 
 ## Plan Review
 
-- Check access type, examined rows, chosen index, residual filtering, sort work, and join cardinality for the changed query.
-- Compare the plan with the expected filter and ordering path. A query can return correct rows while scanning an unsafe amount of data.
-- Do not force an index hint until the repository has a provider-specific reason and evidence that the optimizer choice is harmful.
-- Treat collation, casts, functions on indexed columns, and implicit conversions as possible causes of an index not being used.
-- Record representative data assumptions when the plan depends on cardinality or value distribution.
+- 为变更的查询检查访问类型、检查行数、选中索引、残余过滤、排序工作和连接基数。
+- 将计划与预期过滤和排序路径比较。查询可能返回正确行同时扫描不安全的数据量。
+- 在仓库有提供者特定原因和证据表明优化器选择有害之前，不要强制使用索引提示。
+- 将排序规则、转换、索引列上的函数和隐式转换视为索引未被使用的可能原因。
+- 当计划依赖基数或值分布时，记录代表性数据假设。
 
 ## Read And Write Boundary
 
-- A repository query must return the fields required by the service or API contract without exposing storage-only fields.
-- A mutation query must make its affected-row and no-op behavior clear to the caller.
-- Keep authorization, tenant, and soft-delete predicates in the same query boundary that owns the read or write.
-- For retries, preserve the conflict target and make duplicate execution observable and safe.
+- repository 查询必须返回服务或 API 契约所需的字段，不暴露仅存储字段。
+- 变更查询必须向调用方明确其受影响行和无操作行为。
+- 将授权、租户和软删除谓词保留在拥有读取或写入的同一查询边界中。
+- 为重试保留冲突目标并使重复执行可观察且安全。
 
 ## Review Questions
 
-- What exact user or service behavior requires this query?
-- Which MySQL feature is being used, and what version evidence supports it?
-- Which index or ordering rule does the query depend on?
-- Which empty, duplicate, null, and boundary cases prove the result shape?
+- 什么确切的用户或服务行为需要此查询？
+- 正在使用哪个 MySQL 特性，什么版本证据支持它？
+- 查询依赖哪个索引或排序规则？
+- 哪些空、重复、null 和边界情况证明了结果形态？
 
 ## Transactions And Mutations
 
-- Keep multi-row mutations inside the application transaction boundary defined by Architecture.
-- Return or read back the state required by downstream API/UI code after a mutation.
-- If a deadlock or transient lock failure can be retried, make the operation idempotent and keep retry policy in the owning application layer.
+- 将多行变更保留在 Architecture 定义的应用事务边界内。
+- 在变更后返回或回读下游 API/UI 代码所需的状态。
+- 如果死锁或瞬态锁失败可以重试，使操作幂等并将重试策略保留在拥有的应用层中。
 
 ## Verification Focus
 
-- Test empty results, duplicate-prone joins, nulls, boundary dates/numbers, stable pagination, and business filters relevant to the query.
-- For a plan or index change, record the provider version, query shape, relevant index, and plan observation.
-- For writes, prove affected-row behavior and a read-back result against MySQL when the provider behavior is part of the change.
+- 测试空结果、易重复连接、null 值、边界日期/数字、稳定分页和与查询相关的业务过滤。
+- 对于计划或索引变更，记录提供者版本、查询形态、相关索引和计划观察。
+- 对于写入，当提供者行为是变更的一部分时，针对 MySQL 证明受影响行行为和回读结果。
 
 ## Evidence Focus
 
-- In the evidence summary, name the query decision made: result shape, predicate/index alignment, pagination, provider operator, affected-row behavior, or read-back proof.
+- 在证据总结中，说明所做的查询决策：结果形态、谓词/索引对齐、分页、提供者操作符、受影响行行为或回读证明。
 
 ## Risks To Avoid
 
-- Using a generic JOIN-over-subquery rule without checking result cardinality and the MySQL plan.
-- Calling a query successful because a mocked repository returned the expected object.
-- Using a leading-wildcard search without an accepted full-text or alternate search design.
-- Claiming MySQL compatibility from a different provider's query test.
+- 在不检查结果基数和 MySQL 计划的情况下使用通用的子查询连接规则。
+- 因 mock repository 返回了预期对象就称查询成功。
+- 在没有已接受的全文或替代搜索设计的情况下使用前导通配符搜索。
+- 从不同提供者的查询测试声称 MySQL 兼容性。

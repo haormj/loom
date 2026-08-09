@@ -1,24 +1,24 @@
-# Angular Shared State With NgRx
+# Angular 与 NgRx 的共享状态
 
-Apply NgRx only when TechnicalBaseline selects it and the task owns shared client state, reducers/store, selectors, effects, entity collections, or a cross-surface lifecycle. Local component state does not justify a store.
+仅当 TechnicalBaseline 选择 NgRx 且任务拥有共享客户端状态、reducer/store、选择器、effect、实体集合或跨界面生命周期时应用 NgRx。本地组件状态不能证明 store 的必要性。
 
-## State Ownership
+## 状态所有权
 
-Model state around product workflow and source-of-truth boundaries, not one field per API response. Keep only state required across components/routes, for coordinated effects, or for stable workflow history.
+围绕产品工作流和真相来源边界建模状态，而非每个 API 响应一个字段。仅保留跨组件/路由所需、用于协调 effect 或用于稳定工作流历史的状态。
 
-A feature state may include normalized entities, request status/error, selected identity, filters/page, dirty draft, optimistic operation, and freshness metadata when those are actually used. Do not duplicate derived lists/counts/eligibility that selectors can compute.
+功能状态在确实使用时可包含规范化实体、请求状态/错误、选定标识、筛选/分页、脏草稿、乐观操作和新鲜度元数据。不要重复选择器可以计算的派生列表/计数/资格。
 
-Keep server data ownership explicit. NgRx state is a client representation/cache, not authority over concurrent backend changes.
+保持服务端数据所有权显式。NgRx 状态是客户端表示/缓存，不是对并发后端变更的权威。
 
-## Feature Registration And Keys
+## 功能注册与键
 
-Use `provideState`/`provideEffects` or the repository's module setup at the correct application/route lifetime. Keep feature keys stable and unique; changing a key can break selectors, router integration, persisted state, devtools, and tests.
+在正确的应用/路由生命周期使用 `provideState`/`provideEffects` 或仓库的模块设置。保持功能键稳定且唯一；更改键可能破坏选择器、路由集成、持久化状态、devtools 和测试。
 
-Register effects once. Lazy route registration needs clear teardown/re-entry behavior and must not duplicate side effects.
+一次性注册 effect。惰性路由注册需要清晰的清理/重入行为，不得重复副作用。
 
-## Actions And Reducers
+## Action 与 Reducer
 
-Use action groups with business/event sources and typed payloads:
+使用具有业务/事件源和类型化载荷的 action 组：
 
 ```typescript
 export const OrdersActions = createActionGroup({
@@ -32,62 +32,62 @@ export const OrdersActions = createActionGroup({
 });
 ```
 
-Include stable target/context in commands so effects do not read a possibly changed `selectedId` after the user navigates or filters.
+在命令中包含稳定的目标/上下文，使 effect 不会在用户导航或筛选后读取可能已变更的 `selectedId`。
 
-Reducers are pure and immutable. Clear stale errors/loading/optimistic state on the correct initiating/success/failure events. Never mutate entity arrays, nested drafts, or error objects.
+Reducer 是纯函数且不可变。在正确的发起/成功/失败事件上清除过期错误/加载/乐观状态。永远不要修改实体数组、嵌套草稿或错误对象。
 
-Use `createEntityAdapter` for normalized collections with stable identity and list/detail updates. Configure `selectId` and sorting only when they match domain identity and desired canonical order; pagination order may need separate ID lists.
+对具有稳定标识和列表/详情更新的规范化集合使用 `createEntityAdapter`。仅当 `selectId` 和排序匹配领域标识和所需规范顺序时配置它们；分页顺序可能需要单独的 ID 列表。
 
-## Selectors And Facades
+## 选择器与 Facade
 
-Keep selectors typed, pure, composable, and free of service calls, mutation, time/randomness, or component-only formatting. Build reusable business-ready view models where multiple surfaces need them.
+保持选择器类型化、纯、可组合，无 service 调用、修改、时间/随机或仅组件格式化。在多个界面需要时构建可复用的业务就绪视图模型。
 
-Avoid factory selectors created repeatedly during rendering without memoization/lifetime control. Prefer selected-ID plus entities selectors or a facade method that reuses selector instances.
+避免在渲染期间无记忆化/生命周期控制的情况下重复创建的工厂选择器。优先使用 selected-ID 加 entities 选择器或复用选择器实例的 facade 方法。
 
-A facade is useful when it hides store mechanics, centralizes commands/view models, or protects component APIs from action/key churn. Do not create pass-through facades that only rename every dispatch/select one-for-one.
+当 facade 隐藏 store 机制、集中命令/视图模型或保护组件 API 免受 action/键变更影响时很有用。不要创建仅一一重命名每个 dispatch/select 的传递 facade。
 
-Convert selectors to signals at container boundaries when selected by the repository; presentational components still receive typed values/events.
+在仓库选择时在容器边界将选择器转为 signal；展示型组件仍接收类型化值/事件。
 
-## Effects And Concurrency
+## Effect 与并发
 
-Effects coordinate async/external work and dispatch outcomes. Choose flattening by operation semantics:
+Effect 协调异步/外部工作并分派结果。按操作语义选择扁平化：
 
-- `switchMap` for replaceable list/filter loads
-- `exhaustMap` for duplicate-submit prevention
-- `concatMap` for ordered writes
+- `switchMap` 用于可替换的列表/筛选加载
+- `exhaustMap` 用于重复提交预防
+- `concatMap` 用于有序写入
 - bounded `mergeMap` for independent operations
 
-Catch errors inside the inner operation so the effect stream remains alive. Map validation/conflict/permission/unavailable failures to typed events instead of generic strings.
+在内部操作内捕获错误以保持 effect 流存活。将验证/冲突/权限/不可用失败映射为类型化事件而非通用字符串。
 
-Use `concatLatestFrom` only when the latest store value is truly required after the action arrives. Do not hide missing action payload context through broad state reads.
+仅当 action 到达后真正需要最新 store 值时使用 `concatLatestFrom`。不要通过宽泛状态读取隐藏缺失的 action 载荷上下文。
 
-Router, toast, analytics, and other non-dispatch side effects need `dispatch: false` and should not replace product-visible state/recovery.
+路由、toast、分析和其他非分派副作用需要 `dispatch: false`，不应替代产品可见状态/恢复。
 
-## Optimistic And Persisted State
+## 乐观与持久化状态
 
-Optimistic changes require temporary identity/version, rollback/reconciliation, duplicate response handling, and visible pending/failure behavior. Avoid optimistic updates for destructive/high-conflict operations without an accepted design.
+乐观变更需要临时标识/版本、回滚/协调、重复响应处理和可见的 pending/失败行为。在无已接受设计的情况下避免对破坏性/高冲突操作的乐观更新。
 
-Persist only explicitly safe state with schema/version/migration and logout/tenant clearing. Never persist tokens, secrets, sensitive records, transient loading/errors, or stale authorization decisions by default.
+仅持久化显式安全的状态，配以 schema/版本/迁移和登出/租户清除。默认永远不要持久化令牌、密钥、敏感记录、临时加载/错误或过期授权决策。
 
 ## Verification
 
-- Test reducer transitions, immutable updates, entity adapter identity/order, and stale-state clearing.
-- Test selectors for empty/loading/error, filtering/sorting, selected identity, permissions, and view-model derivation.
-- Test effects for success/failure, operator concurrency, duplicate-submit, cancellation, retry bounds, and no-dispatch effects.
-- Verify feature registration/key and lazy route lifecycle in an integration boundary when changed.
-- Verify optimistic rollback/reconciliation and persisted-state migration/clearing when owned.
-- Confirm components dispatch the displayed record identity and render selector/facade states.
+- 测试 reducer 转换、不可变更新、entity adapter 标识/顺序和过期状态清除。
+- 测试选择器的空/加载/错误、筛选/排序、选定标识、权限和视图模型派生。
+- 测试 effect 的成功/失败、操作符并发、重复提交、取消、重试边界和非分派 effect。
+- 在变更时在集成边界验证功能注册/键和惰性路由生命周期。
+- 在拥有时验证乐观回滚/协调和持久化状态迁移/清除。
+- 确认组件分派显示的记录标识并渲染选择器/facade 状态。
 
-## Delivery Evidence
+## 交付证据
 
-Identify the feature key/state, action, reducer/selector/effect decision, and transition/emission assertion proving it. Redux DevTools visibility or a successful API response cannot prove immutability, action targeting, effect concurrency, rollback, or persisted-state safety.
+标识功能键/状态、action、reducer/选择器/effect 决策和证明它的转换/发射断言。Redux DevTools 可见性或成功 API 响应不能证明不可变性、操作目标、effect 并发、回滚或持久化状态安全。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- NgRx loaded/introduced without selected stack and shared-state ownership.
-- API responses copied wholesale into duplicated feature state.
-- Effects reading mutable selected state instead of action target context.
-- Reducers mutating nested/entity data.
-- One pass-through facade method per selector/action.
-- Effect streams terminating after the first error.
-- Sensitive or authorization state persisted without lifecycle/migration policy.
+- 在无已选择技术栈和共享状态所有权的情况下加载/引入 NgRx。
+- API 响应整体复制到重复的功能状态。
+- Effect 读取可变选定状态而非 action 目标上下文。
+- Reducer 修改嵌套/实体数据。
+- 每个选择器/action 一个传递 facade 方法。
+- Effect 流在第一次错误后终止。
+- 无生命周期/迁移策略持久化敏感或授权状态。

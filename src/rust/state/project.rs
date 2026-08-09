@@ -75,9 +75,7 @@ pub fn project_root_for_project_id(project_id: &str) -> StateResult<PathBuf> {
         .projects
         .iter()
         .find(|entry| entry.project_id == project_id)
-        .ok_or_else(|| {
-            StateError::InvalidArgument(format!("projectId is not registered: {project_id}"))
-        })?;
+        .ok_or_else(|| StateError::InvalidArgument(format!("projectId 未注册：{project_id}")))?;
     Ok(PathBuf::from(&entry.project_root))
 }
 
@@ -97,7 +95,7 @@ fn validate_project_id(project_id: &str) -> StateResult<()> {
             .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
     {
         return Err(StateError::StateCorrupted(format!(
-            "invalid projectId: {project_id}"
+            "无效的 projectId：{project_id}"
         )));
     }
     Ok(())
@@ -162,7 +160,7 @@ fn user_registry_file() -> StateResult<PathBuf> {
         return Ok(PathBuf::from(loom_home).join("projects").join("index.json"));
     }
     let home = std::env::var("HOME").map_err(|_| {
-        StateError::InvalidArgument("HOME is required for Loom project registry".to_string())
+        StateError::InvalidArgument("Loom 项目注册表需要 HOME 环境变量".to_string())
     })?;
     Ok(PathBuf::from(home)
         .join(".loom")

@@ -30,7 +30,7 @@ pub fn deploy_logs(input: DeployToolInput) -> LoomMcpActionResult {
     };
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: project_root_display,
-        summary: "Deployment logs loaded.".to_string(),
+        summary: "部署日志已加载。".to_string(),
         details: Some(json!({
             "tail": lines,
             "errorWindow": lines.iter().rev().take(40).cloned().collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>(),

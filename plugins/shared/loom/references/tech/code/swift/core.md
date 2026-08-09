@@ -1,40 +1,40 @@
-# Swift Core Quality
+# Swift 核心质量
 
-This file applies core Swift language quality to task-owned changes.
+本文件将核心 Swift 语言质量应用于任务拥有的变更。
 
 ## When To Use
 
-- The task changes Swift models, services, view models, controllers, package code, API clients, error handling, platform availability, or typed domain logic.
-- Use this for value semantics, optionals, access control, API design guidelines, `throws`/`Result`, Codable, property wrappers, and platform checks.
-- If the task only changes generated project metadata or non-Swift assets, do not expand into Swift refactoring.
+- 任务变更了 Swift 模型、服务、view model、控制器、包代码、API 客户端、错误处理、平台可用性或类型化领域逻辑。
+- 用于值语义、可选、访问控制、API 设计指南、`throws`/`Result`、Codable、属性包装器和平台检查。
+- 如果任务仅变更生成的项目元数据或非 Swift 资产，不要扩大到 Swift 重构。
 
 ## Implementation Focus
 
-- Prefer structs and enums for values, state, and domain concepts. Use classes when identity, reference semantics, Objective-C interop, or framework lifecycle requires them.
-- Make invalid states hard to represent with enums, non-optional properties, small value objects, and failable/throwing initializers where appropriate.
-- Avoid force unwraps and implicitly unwrapped optionals except at framework-required boundaries with a local justification. Convert optional absence into explicit user/system behavior.
-- Use `throws` for recoverable operation failures and `Result` when storing/passing a success-or-failure value is itself the API. Do not mix both without a reason.
-- Follow Swift API naming: labels should make call sites read naturally, types should be nouns, mutating methods should make mutation obvious, and access control should be narrow.
-- Keep Codable/API models separate from persistence or UI state when wire shape, domain rules, and view state differ.
-- Use property wrappers for real cross-cutting behavior such as state, persistence, environment, or validation. Do not hide ordinary assignment behind a wrapper.
-- Add availability checks or platform-specific compilation where APIs differ across iOS, macOS, watchOS, tvOS, server Swift, or package targets.
-- Keep Objective-C patterns, singletons, notification sprawl, and global mutable state out of new Swift code unless the existing platform boundary requires them.
+- 对值、状态和领域概念优先使用 struct 和 enum。当标识、引用语义、Objective-C 互操作或框架生命周期需要时使用 class。
+- 在合适的地方用 enum、非可选属性、小型值对象和可失败/抛出初始化器使无效状态难以表示。
+- 避免强制解包和隐式解包可选，除非在框架要求的边界且有局部理由。将可选缺失转换为显式用户/系统行为。
+- 对可恢复操作失败使用 `throws`，当存储/传递成功或失败值本身是 API 时使用 `Result`。没有理由不要混用两者。
+- 遵循 Swift API 命名：标签应使调用点自然阅读，类型应为名词，变更方法应使变更明显，访问控制应窄。
+- 当线上形态、领域规则和视图状态不同时将 Codable/API 模型与持久化或 UI 状态分开。
+- 对真实的横切行为（如状态、持久化、环境或验证）使用属性包装器。不要用包装器隐藏普通赋值。
+- 在 API 跨 iOS、macOS、watchOS、tvOS、服务器 Swift 或包目标不同时添加可用性检查或平台特定编译。
+- 将 Objective-C 模式、单例、通知蔓延和全局可变状态排除在新 Swift 代码之外，除非现有平台边界需要它们。
 
 ## Boundary Decisions
 
-- Choose value or reference semantics from identity, shared mutation, lifecycle, and framework requirements. A `class` is not a default substitute for a model that can be a `struct` or enum.
-- Keep optional absence explicit at API, persistence, UI, and platform boundaries. Do not turn a missing value into an empty string or force unwrap merely to satisfy a compiler branch.
-- Separate Codable transport models, domain types, persistence records, and view state when their invariants or wire shapes differ. Do not expose storage or server fields through UI models by accident.
-- Use `throws` for an operation's immediate failure contract and `Result` when success/failure must be stored, combined, or passed as data. Keep error mapping at the boundary that owns user/system output.
-- Keep access control narrow and API names readable at call sites. Add `///` documentation where a public package or framework contract needs lifecycle, threading, availability, or failure expectations.
-- Treat availability and platform compilation conditions as part of the supported target matrix. Verify the selected target rather than assuming an API available on the local host works on iOS, macOS, watchOS, tvOS, or server Swift.
+- 从标识、共享变更、生命周期和框架要求选择值或引用语义。`class` 不是可以成为 `struct` 或 enum 的模型的默认替代。
+- 在 API、持久化、UI 和平台边界保持可选缺失显式。不要将缺失值变为空字符串或仅为满足编译器分支而强制解包。
+- 当不变式或线上形态不同时将 Codable 传输模型、领域类型、持久化记录和视图状态分开。不要意外通过 UI 模型暴露存储或服务器字段。
+- 对操作的即时失败契约使用 `throws`，当成功/失败必须作为数据存储、组合或传递时使用 `Result`。在拥有用户/系统输出的边界保持错误映射。
+- 保持访问控制窄且 API 名在调用点可读。在公共包或框架契约需要生命周期、线程、可用性或失败期望时添加 `///` 文档。
+- 将可用性和平台编译条件视为受支持目标矩阵的一部分。验证选中的目标而非假设本地主机可用的 API 在 iOS、macOS、watchOS、tvOS 或服务器 Swift 上有效。
 
 ## Verification Focus
 
-- Run `swift build`, Xcode target build, or the repository's equivalent compile command.
-- Run tests that cover success, optional absence, error paths, serialization/mapping, and platform availability touched by the task.
-- Treat compiler warnings, deprecation warnings, and concurrency/sendability warnings as signals to fix or explicitly record.
+- 运行 `swift build`、Xcode 目标构建或仓库的等效编译命令。
+- 运行覆盖任务涉及的成功、可选缺失、错误路径、序列化/映射和平台可用性的测试。
+- 将编译器警告、弃用警告和并发/可发送性警告视为需要修复或显式记录的信号。
 
 ## Evidence Focus
 
-- In the evidence summary, name the Swift decision: value/reference semantics, optional handling, error API, access control, Codable separation, property wrapper, platform availability, or compile proof.
+- 在证据总结中，说明 Swift 决策：值/引用语义、可选处理、错误 API、访问控制、Codable 分离、属性包装器、平台可用性或编译证明。

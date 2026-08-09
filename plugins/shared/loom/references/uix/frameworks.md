@@ -1,21 +1,21 @@
-# UIX Focus: Frameworks
+# UIX 焦点：框架
 
-Use this when framework structure, shared components, routing, data fetching, state ownership, styling, or frontend build conventions affect a user-visible surface.
+当框架结构、共享组件、路由、数据获取、状态归属、样式或前端构建约定影响用户可见界面时使用此文件。
 
-## Rule
+## 规则
 
-Frameworks implement the product surface; they do not redefine it. Keep scenario fit, density, visible states, and product-boundary rules aligned with the selected UI target.
+框架实现产品界面；它们不重新定义它。保持场景适配、密度、可见状态和产品边界规则与选定的 UI 目标对齐。
 
-## Component Architecture
+## 组件架构
 
-- Use existing routing, data fetching, component, styling, and test conventions.
-- Separate app shell, feature screens, shared primitives, API/data modules, and utilities.
-- Avoid one giant component once the workflow includes table/list, form, modal/drawer, and async states.
-- Keep design tokens in the framework's normal location: CSS variables, Tailwind config, theme provider, app CSS, or native theme.
-- If the repo has a component library, wrap or configure it before hand-writing competing primitives.
-- Keep server/client boundaries explicit in SSR frameworks; UI state and browser APIs belong on the client side.
+- 使用现有路由、数据获取、组件、样式和测试约定。
+- 分离应用外壳、功能屏幕、共享原语、API/数据模块和工具。
+- 当工作流包含表格/列表、表单、模态/抽屉和异步状态时，避免单一巨型组件。
+- 将设计令牌保留在框架的正常位置：CSS 变量、Tailwind 配置、主题提供者、应用 CSS 或原生主题。
+- 如果仓库有组件库，在手工编写竞争原语之前包装或配置它。
+- 在 SSR 框架中保持服务端/客户端边界明确；UI 状态和浏览器 API 属于客户端。
 
-## Minimum Split For Real Screens
+## 真实屏幕的最小拆分
 
 ```text
 layout shell
@@ -27,61 +27,54 @@ formatters/validators
 state-specific components
 ```
 
-If a task creates table/list + detail + form/action in one surface, it should not remain as one large component unless the existing project explicitly uses that pattern for small screens.
+如果一个任务在一个界面中创建表格/列表 + 详情 + 表单/操作，它不应保持为一个大组件，除非现有项目明确对小屏幕使用该模式。
 
-## Existing Style Adoption
+## 现有样式采用
 
-Before applying a token template:
+在应用令牌模板之前：
 
 ```text
-1. Locate existing theme/tokens/global styles.
-2. Decide reuse existing, extend existing, or create a new token asset from the current UI styling plan.
-3. Register the token asset once.
-4. Move repeated raw values into semantic roles.
-5. Keep component classes/props consistent with the selected stack.
+1. 定位现有主题/令牌/全局样式。
+2. 从当前 UI 样式计划决定重用现有、扩展现有或创建新令牌资产。
+3. 注册令牌资产一次。
+4. 将重复的原始值移入语义角色。
+5. 保持组件类/props 与选定技术栈一致。
 ```
 
-Do not create both `tokens.css` and a separate Tailwind theme for the same project unless the repo already uses both and they are linked intentionally.
+除非仓库已有意使用两者且它们相互关联，否则不要为同一项目同时创建 `tokens.css` 和单独的 Tailwind 主题。
 
-## Boundary With Technical Guidance
+## 与技术指导的边界
 
-Keep responsibilities separate when multiple guidance sets apply:
+当多套指导适用时保持职责分离：
 
-| Concern | UIX framework guidance | Technical guidance |
+| 关注点 | UIX 框架指导 | 技术指导 |
 | --- | --- | --- |
-| Component split | shell, feature, primitive, state region | language/module conventions |
-| Route ownership | visible navigation and return context | router configuration and server route behavior |
-| Data state | loading, empty, error, readback placement | client, API, cache, and serialization implementation |
-| Token use | semantic roles and consumer consistency | CSS, Tailwind, theme, build, and package configuration |
-| Browser/native behavior | user-visible interaction and responsive outcome | platform API, lifecycle, and dependency details |
-| Tests | visible behavior and state assertions | runner, fixtures, mocks, and type/build setup |
+| 组件拆分 | 外壳、功能、原语、状态区域 | 语言/模块约定 |
+| 路由归属 | 可见导航和返回上下文 | 路由器配置和服务端路由行为 |
+| 数据状态 | 加载、空、错误、回读放置 | 客户端、API、缓存和序列化实现 |
+| 令牌使用 | 语义角色和消费者一致性 | CSS、Tailwind、主题、构建和包配置 |
+| 浏览器/原生行为 | 用户可见交互和响应式结果 | 平台 API、生命周期和依赖细节 |
+| 测试 | 可见行为和状态断言 | 运行器、夹具、mock 和类型/构建设置 |
 
-Read only the technical references that the task owns. A framework name does not
-justify loading every framework feature, testing guide, build guide, or state
-library guide.
+仅读取任务拥有的技术参考。框架名称不证明加载每个框架功能、测试指南、构建指南或状态库指南是合理的。
 
-## Existing Project Adaptation
+## 现有项目适配
 
-- Inspect the actual entry point, router, style source, component library, data
-  client, and test runner before choosing a framework example.
-- Adapt examples to the accepted project version and conventions. Do not introduce
-  a new router, state library, CSS system, SSR boundary, or component package just
-  because an example uses one.
-- Preserve server/client, route, state, and token ownership across a feature split;
-  a prettier component boundary that breaks those contracts is not an improvement.
+- 在选择框架示例之前检查实际的入口点、路由器、样式源、组件库、数据客户端和测试运行器。
+- 将示例适配到已接受的项目版本和约定。不要因为示例使用就引入新的路由器、状态库、CSS 系统、SSR 边界或组件包。
+- 在功能拆分中保留服务端/客户端、路由、状态和令牌归属；破坏这些契约的更漂亮的组件边界不是改进。
 
-## Verification
+## 验证
 
-- Run focused build/type/lint tests available in the repo.
-- Render the changed screen when possible.
-- Keep framework setup notes out of product UI.
-- Check that framework-specific client/server boundaries, hydration, routing, and state ownership do not break the current UI requirements.
-- Name the files that consume the declared token asset, not only the file that defines tokens.
-- Evidence identifies the adapted project convention and any framework boundary
-  that was intentionally not changed.
+- 运行仓库中可用的聚焦构建/类型/lint 测试。
+- 尽可能渲染变更的屏幕。
+- 将框架设置说明排除在产品 UI 之外。
+- 检查框架特定的客户端/服务端边界、水合、路由和状态归属不破坏当前 UI 需求。
+- 指名消费声明令牌资产的文件，而非仅定义令牌的文件。
+- 证据识别适配的项目约定和有意未更改的框架边界。
 
 ## Quality Gate Index
 
-| Gate | Pass signal | Fail signal |
+| Gate | 通过信号 | 失败信号 |
 | --- | --- | --- |
-| `framework.component_structure` | Multi-region screens are split into shell/page, feature components, shared primitives, data/API helpers, and state-specific components following repo conventions. | Real workflow remains one giant component, duplicated primitives/styles spread across pages, or framework setup notes leak into product UI. |
+| `framework.component_structure` | 多区域屏幕按仓库约定拆分为外壳/页面、功能组件、共享原语、数据/API 助手和状态特定组件。 | 真实工作流仍为单一巨型组件、重复的原语/样式散布在页面中，或框架设置说明泄漏到产品 UI 中。 |

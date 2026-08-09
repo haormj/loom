@@ -1,81 +1,81 @@
-# Vue Component Contracts
+# Vue 组件契约
 
-Apply component guidance when the task owns Vue props, emits, models, slots, dependency injection, dynamic/kept-alive components, Teleport, transitions, or reusable component boundaries.
+当任务拥有 Vue props、emits、model、slot、依赖注入、动态/keep-alive 组件、Teleport、过渡或可复用组件边界时应用组件指导。
 
-## Ownership Boundary
+## 所有权边界
 
-Feature components may know product state and commands; reusable UI primitives receive values and emit intent without importing domain API/store/router logic.
+功能组件可以知道产品状态和命令；可复用 UI 原语接收值并发出意图，不导入领域 API/store/router 逻辑。
 
-Split components around independent state, behavior, accessibility, rendering cost, and reuse. Avoid a single component controlled by many unrelated booleans or a component per markup fragment.
+围绕独立状态、行为、可访问性、渲染成本和复用拆分组件。避免由许多不相关布尔值控制的单个组件或每个标记片段一个组件。
 
-Model component APIs from runtime use. Backend DTOs rarely make safe editable form/view models when values may be partial, formatted, invalid, or pending.
+从运行时用途建模组件 API。当值可能部分、格式化、无效或待处理时，后端 DTO 很少能成为安全的可编辑表单/视图模型。
 
-## Props And Defaults
+## Props 与默认值
 
-Use the repository's TypeScript or runtime prop convention. Keep required/optional/null behavior exact and use factory defaults for mutable arrays/objects where runtime declarations require it.
+使用仓库的 TypeScript 或运行时 prop 约定。保持必需/可选/空行为精确，在运行时声明需要时为可变数组/对象使用工厂默认值。
 
-Do not mutate props. Derive values with computed state, emit an update, or keep an explicit local draft with rules for parent refresh/reset.
+不要修改 props。用 computed 状态派生值、发出更新或保留显式本地草稿并附父刷新/重置规则。
 
-Avoid copying props into local refs without synchronization semantics. A draft must define when it initializes, rebases, discards, and survives backend failure.
+避免在没有同步语义的情况下将 props 复制到本地 ref。草稿必须定义何时初始化、rebase、丢弃以及在后端失败后是否保留。
 
-## Emits And Commands
+## Emits 与命令
 
-Declare emitted events and payloads. Event names should describe intent/result rather than DOM mechanics, and payloads must carry stable target identity plus all command inputs.
+声明发出的事件和载荷。事件名应描述意图/结果而非 DOM 机制，载荷必须携带稳定的目标标识加所有命令输入。
 
-Do not emit a generic object bag or make the parent read mutable selected state to infer the target. Do not use component emits as a global event bus.
+不要发出通用对象袋或让父读取可变选定状态来推断目标。不要将组件 emits 用作全局事件总线。
 
-Validate runtime payloads when JavaScript/external consumers can violate static types and the component boundary is public.
+当 JavaScript/外部消费者可能违反静态类型且组件边界为公共时验证运行时载荷。
 
-## Model Contracts
+## Model 契约
 
-Use `v-model`/`defineModel` only when the installed Vue version and repository convention support a controlled value/update contract. Name multiple models and define modifiers/normalization deliberately.
+仅当已安装的 Vue 版本和仓库约定支持受控值/更新契约时使用 `v-model`/`defineModel`。命名多个 model 并有意识地定义修饰符/规范化。
 
-Keep invalid editable text representable. Converting every input immediately to a domain number/date can erase intermediate values and make validation impossible.
+保持无效的可编辑文本可表示。将每个输入立即转换为领域数字/日期可能擦除中间值并使验证不可能。
 
-Avoid two sources of truth between parent model, internal ref, form library, and store. Emit final normalized values at the agreed boundary.
+避免在父 model、内部 ref、表单库和 store 之间有两个真相来源。在约定边界发出最终规范化值。
 
-## Slots
+## Slot
 
-Use slots for layout/content extension and scoped slots when the child owns data/actions the parent renders. Keep slot props small, stable, typed where tooling supports it, and semantically documented through usage.
+为布局/内容扩展使用 slot，当子组件拥有父渲染的数据/操作时使用 scoped slot。保持 slot prop 精小、稳定、在工具支持时类型化，并通过用法进行语义记录。
 
-Provide useful default slot content only when omission is valid. Do not make accessibility labels, required actions, or business state disappear silently because a slot was absent.
+仅在省略有效时提供有用的默认 slot 内容。不要因为 slot 缺失而使可访问性标签、必需操作或业务状态静默消失。
 
-Stable domain keys still apply inside generic list/table slots; index keys are unsafe for mutable collections.
+稳定的领域键在通用列表/表格 slot 中仍然适用；索引键对可变集合不安全。
 
-## Provide And Inject
+## Provide 与 Inject
 
-Use provide/inject for stable cross-tree dependencies such as form, theme, compound component, or plugin context, not as an invisible substitute for ordinary feature data flow.
+为稳定的跨树依赖（如表单、主题、复合组件或 plugin 上下文）使用 provide/inject，不作为普通功能数据流的不可见替代。
 
-Use a typed `InjectionKey`, provide refs/readonly state when reactivity is required, and fail clearly when required context is missing. Providing `readonly(user.value)` captures a plain current value; provide the readonly ref/reactive owner instead.
+使用类型化的 `InjectionKey`，在需要响应式时提供 ref/只读状态，在必需上下文缺失时明确失败。提供 `readonly(user.value)` 捕获普通当前值；改为提供只读 ref/reactive 所有者。
 
-Keep mutations in provider-owned commands rather than allowing descendants to mutate shared state freely.
+将修改保留在 provider 拥有的命令中，而非允许后代自由修改共享状态。
 
-## Teleport, Dialogs, And Dynamic Content
+## Teleport、对话框与动态内容
 
-Teleport changes DOM placement, not Vue ownership. Dialogs/menus/toasts need correct labels, focus entry/trap/return, escape/outside behavior, scroll locking, stacking, and target availability.
+Teleport 改变 DOM 位置，而非 Vue 所有权。对话框/菜单/toast 需要正确的标签、焦点进入/陷阱/返回、escape/外部行为、滚动锁定、堆叠和目标可用性。
 
-Use `KeepAlive` only when preserved component state is product behavior. Define include/exclude/key/cache bounds and lifecycle handling with activated/deactivated hooks.
+仅当保留的组件状态是产品行为时使用 `KeepAlive`。定义 include/exclude/key/cache 边界和 activated/deactivated hook 的生命周期处理。
 
-Async/dynamic components require stable loading, failure, retry, and ready states. Transitions must respect reduced motion and must not gate correctness on animation completion.
+异步/动态组件需要稳定的加载、失败、重试和就绪状态。过渡必须尊重减少动画，且不得将正确性依赖于动画完成。
 
 ## Verification
 
-- Test prop defaults/nullability, emitted payload and stable target identity, model updates, modifiers, and invalid intermediate values.
-- Exercise named/scoped/default slots and missing required context.
-- Verify Teleport dialog focus, close behavior, action target, stacking, and restored focus.
-- Test KeepAlive activation/deactivation and dynamic/async loading-error-retry behavior when owned.
-- Run SFC type/build checks for prop/emit/slot/injection/model consumers.
+- 测试 prop 默认值/可空性、发出载荷和稳定目标标识、model 更新、修饰符和无效中间值。
+- 练习命名/scoped/默认 slot 和缺失必需上下文。
+- 验证 Teleport 对话框焦点、关闭行为、操作目标、堆叠和恢复焦点。
+- 在拥有时测试 KeepAlive activation/deactivation 和动态/异步加载-错误-重试行为。
+- 为 prop/emit/slot/injection/model 消费者运行 SFC 类型/构建检查。
 
-## Delivery Evidence
+## 交付证据
 
-Name the public component contract and the consumer-visible assertion proving it. A mounted component or snapshot does not establish model ownership, emitted target integrity, injected reactivity, Teleport accessibility, or kept-alive lifecycle behavior.
+命名公共组件契约和证明它的消费者可见断言。挂载的组件或快照不能建立 model 所有权、发出目标完整性、注入响应式、Teleport 可访问性或 keep-alive 生命周期行为。
 
-## Unsafe Defaults
+## 不安全默认行为
 
-- Props copied into local state with no rebase/reset policy.
-- Broad object emits requiring parents to infer intent.
-- `v-model` layered over another independent source of truth.
-- Provide/inject used as an untyped hidden global store.
-- Plain snapshot values provided when reactive updates are expected.
-- Teleported overlays without focus and close semantics.
-- KeepAlive or async components enabled without lifecycle/error behavior.
+- 将 props 复制到本地状态而无 rebase/重置策略。
+- 需要父推断意图的宽泛对象 emit。
+- 在另一个独立真相来源上叠加 `v-model`。
+- 将 provide/inject 用作无类型隐藏全局 store。
+- 在期望响应式更新时提供普通快照值。
+- 无焦点和关闭语义的 Teleport 覆盖层。
+- 在无生命周期/错误行为的情况下启用 KeepAlive 或异步组件。

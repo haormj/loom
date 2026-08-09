@@ -21,7 +21,7 @@ pub fn deploy_status(input: DeployToolInput) -> LoomMcpActionResult {
         Err(error) => {
             return LoomMcpActionResult::Done(LoomMcpDoneResult {
                 project_root: input.project_root,
-                summary: "Deployment status could not read active operation.".to_string(),
+                summary: "部署状态无法读取活动操作。".to_string(),
                 details: Some(json!({ "error": error.to_string() })),
                 warnings: vec![error.to_string()],
             })
@@ -49,7 +49,7 @@ pub fn deploy_status(input: DeployToolInput) -> LoomMcpActionResult {
     }
     LoomMcpActionResult::Done(LoomMcpDoneResult {
         project_root: input.project_root,
-        summary: "Deployment status loaded.".to_string(),
+        summary: "部署状态已加载。".to_string(),
         details: Some(json!({
             "prepared": path_exists(&paths.spec_file),
             "state": state,

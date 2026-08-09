@@ -1,10 +1,10 @@
-# ASP.NET Core Minimal APIs
+# ASP.NET Core Minimal API
 
-Implement accepted HTTP interfaces through Minimal APIs only when the selected stack and repository use that endpoint style. Preserve methods, paths, schemas, statuses, errors, auth policy, and exposure rules rather than redesigning the API around framework examples.
+仅当所选技术栈和仓库使用该端点风格时，才通过 Minimal API 实现已接受的 HTTP 接口。保留方法、路径、schema、状态、错误、认证策略和暴露规则，而非围绕框架示例重新设计 API。
 
-## Endpoint Organization
+## 端点组织
 
-Group cohesive endpoints through `MapGroup` or a focused `Map...Endpoints` extension. The effective path combines the application's base path, group prefix, and endpoint pattern; avoid duplicate or missing `/api` segments.
+通过 `MapGroup` 或聚焦的 `Map...Endpoints` 扩展对内聚端点进行分组。有效路径结合应用基础路径、group 前缀和端点模式；避免重复或缺失 `/api` 段。
 
 ```csharp
 public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder routes)
@@ -24,19 +24,19 @@ public static IEndpointRouteBuilder MapOrderEndpoints(this IEndpointRouteBuilder
 }
 ```
 
-Do not place all endpoints in `Program.cs` once route ownership becomes difficult to inspect. Do not mix controllers and Minimal APIs within one capability unless the repository has a deliberate boundary.
+当路由归属变得难以检查时，不要将所有端点放在 `Program.cs` 中。除非仓库有明确的边界，否则不要在一个能力中混用 controller 和 Minimal API。
 
-## Binding And DTOs
+## 绑定与 DTO
 
-Use explicit route constraints and typed path/query/header/body parameters. `[AsParameters]` can group query values, but the resulting type must keep defaults, nullability, validation, and OpenAPI shape aligned with the contract.
+使用显式路由约束和类型化的 path/query/header/body 参数。`[AsParameters]` 可以分组 query 值，但结果类型必须保持默认值、可空性、验证和 OpenAPI 形态与契约一致。
 
-Use request and response records/classes rather than EF/domain entities. Keep server-owned actor, tenant, state, audit, and generated fields out of client-writable models.
+使用请求和响应 record/class，而非 EF/domain 实体。将服务端拥有的 actor、tenant、状态、审计和生成字段排除在客户端可写模型之外。
 
-Use the established validation strategy: endpoint filters, FluentValidation integration, data annotations, or application validation. Transport validation does not replace uniqueness, ownership, state-transition, or concurrent database constraints.
+使用已确立的验证策略：端点过滤器、FluentValidation 集成、data annotation 或应用验证。传输验证不替代唯一性、归属、状态转换或并发数据库约束。
 
-## Typed Results And Status Semantics
+## 类型化结果与状态语义
 
-Prefer typed results when they improve compile-time response metadata:
+当类型化结果能改善编译时响应元数据时优先使用：
 
 ```csharp
 static async Task<Results<Ok<OrderResponse>, NotFound, ProblemHttpResult>> GetOrder(
@@ -49,52 +49,52 @@ static async Task<Results<Ok<OrderResponse>, NotFound, ProblemHttpResult>> GetOr
 }
 ```
 
-Return `Created` with the accepted location when a retrievable resource is created. Keep `204` bodyless. Preserve declared headers such as ETag, Location, Retry-After, pagination links, or idempotency outcomes.
+当创建可检索资源时返回带已接受 location 的 `Created`。保持 `204` 无 body。保留已声明的 header，如 ETag、Location、Retry-After、分页链接或幂等结果。
 
-Translate expected application failures once through `IExceptionHandler`, Problem Details, or the established endpoint boundary. Avoid catch-all filters per endpoint and never expose stack traces, SQL messages, token errors, or internal type names.
+通过 `IExceptionHandler`、Problem Details 或已确立的端点边界一次性转换预期的应用失败。避免每个端点都有 catch-all 过滤器，切勿暴露堆栈跟踪、SQL 消息、token 错误或内部类型名。
 
-## Dependency Injection And Cancellation
+## 依赖注入与取消
 
-Bind application services/handlers and trusted current-user abstractions through DI. Endpoint delegates should perform transport mapping and invoke one application operation, not query `DbContext`, coordinate external calls, or own transactions.
+通过 DI 绑定应用 service/handler 和受信任的当前用户抽象。端点 delegate 应执行传输映射并调用一个应用操作，而非查询 `DbContext`、协调外部调用或拥有事务。
 
-Accept `CancellationToken` and propagate it through EF Core, HTTP clients, streams, and application handlers. Do not convert cancellation into a generic `500` or swallow it while continuing side effects.
+接受 `CancellationToken` 并通过 EF Core、HTTP client、stream 和应用 handler 传播它。不要将取消转换为通用 `500` 或在继续副作用时吞掉它。
 
-## Route Metadata And OpenAPI
+## 路由元数据与 OpenAPI
 
-Use names, tags, summaries, `Produces`, auth requirements, and OpenAPI metadata when the repository publishes a contract. Metadata must reflect runtime behavior; `.Produces(404)` does not make the endpoint return not found.
+当仓库发布契约时，使用 name、tag、summary、`Produces`、认证需求和 OpenAPI 元数据。元数据必须反映运行时行为；`.Produces(404)` 不会让端点返回 not found。
 
-Do not add Swagger UI, API versioning, or development server URLs from convention. Those are bootstrap/API-contract decisions and should remain environment-aware.
+不要从约定添加 Swagger UI、API versioning 或开发服务器 URL。这些是 bootstrap/API 契约决策，应保持环境感知。
 
-## Filters, Middleware, And Policies
+## 过滤器、中间件与策略
 
-Endpoint filters are appropriate for endpoint-local validation or reusable transport behavior. Authentication/authorization should use ASP.NET policies and endpoint/group metadata. Global exception handling, CORS, rate limiting, output caching, and request logging belong in the application pipeline.
+端点过滤器适用于端点局部验证或可复用的传输行为。认证/授权应使用 ASP.NET policy 和端点/group 元数据。全局异常处理、CORS、限流、输出缓存和请求日志属于应用管道。
 
-Keep middleware order deliberate and avoid reimplementing middleware behavior inside filters. Route-group authorization can be narrowed or made public only through explicit accepted policy.
+保持中间件顺序的慎重性，避免在过滤器中重新实现中间件行为。Route-group 授权仅可通过显式已接受策略来收窄或公开。
 
-## Collections And Conditional Requests
+## 集合与条件请求
 
-Bound page size and allowlist filtering/sorting fields. Use deterministic ordering and stable response metadata. Empty collections normally return the successful collection shape.
+对分页大小和过滤/排序字段使用有界和允许列表。使用确定性排序和稳定的响应元数据。空集合通常返回成功的集合形态。
 
-Implement ETag/If-Match/cache semantics only when declared. Output caching is not safe by default for authenticated, tenant-specific, mutable, or user-varying responses.
+仅在声明时实现 ETag/If-Match/缓存语义。对于认证的、租户特定的、可变的或用户变化的响应，输出缓存默认不安全。
 
-## Verification
+## 验证
 
-- Use `WebApplicationFactory<Program>` or the repository's real test host to exercise route registration and global pipeline behavior.
-- Assert exact success/error status, body, headers, binding, validation, and response-field exclusion.
-- Test not-found, conflict, authentication, authorization, cancellation, pagination, and conditional behavior owned by the interface.
-- Verify route names/OpenAPI only when the published contract changes.
-- Build the owning project so delegate signatures and typed result unions compile.
+- 使用 `WebApplicationFactory<Program>` 或仓库的真实测试 host 来验证路由注册和全局管道行为。
+- 断言精确的成功/错误状态、body、header、绑定、验证和响应字段排除。
+- 测试接口拥有的 not-found、冲突、认证、授权、取消、分页和条件行为。
+- 仅当发布的契约变更时验证路由 name/OpenAPI。
+- 构建所属项目以确保 delegate 签名和类型化结果 union 编译通过。
 
-## Delivery Evidence
+## 交付证据
 
-Name the effective route and test-host request proving binding, typed result, headers, and relevant policies. Calling the static endpoint method directly cannot prove route groups, middleware, global handlers, authentication, validation filters, or OpenAPI metadata.
+命名有效路由和证明绑定、类型化结果、header 和相关策略的测试 host 请求。直接调用静态端点方法不能证明 route group、中间件、全局 handler、认证、验证过滤器或 OpenAPI 元数据。
 
-## Unsafe Defaults
+## 不安全默认
 
-- Minimal API guidance loaded for a controller-based stack.
-- EF Core queries and business transitions inside endpoint delegates.
-- Domain/EF entities returned directly.
-- Status metadata treated as runtime behavior.
-- Swagger, versioning, or `/api` prefixes added without an accepted contract.
-- `CancellationToken` ignored across I/O calls.
-- Output caching enabled for personalized or mutation responses.
+- 为基于 controller 的技术栈加载 Minimal API 指引。
+- 端点 delegate 中包含 EF Core 查询和业务转换。
+- 直接返回 Domain/EF 实体。
+- 将状态元数据当作运行时行为。
+- 在没有已接受契约的情况下添加 Swagger、versioning 或 `/api` 前缀。
+- 跨 I/O 调用忽略 `CancellationToken`。
+- 对个性化或变更响应启用输出缓存。

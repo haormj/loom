@@ -1,132 +1,132 @@
-# Architecture Patterns For Loom Delivery
+# Loom 交付的架构模式
 
-Use this reference when the current Architecture section must choose or justify a structural approach such as monolith, modular monolith, service split, event-driven flow, CQRS-style read/write separation, or background job processing.
+当当前架构章节必须选择或论证结构方法（如单体、模块化单体、服务拆分、事件驱动流、CQRS 式读写分离或后台作业处理）时，使用本引用。
 
-## Decision Factors
+## 决策因素
 
-Use system and business constraints only:
+仅使用系统和业务约束：
 
-| Factor | What To Inspect |
+| 因素 | 检查内容 |
 |---|---|
-| Business boundary clarity | Are capabilities independent or tightly coupled? |
-| Data consistency | Does the phase need one transaction boundary, eventual consistency, or audit replay? |
-| State complexity | Are there lifecycle states, compensations, reversals, or blocking conditions? |
-| Integration pressure | Does the phase call external services, async workers, queues, or imports/exports? |
-| Runtime boundary | Does the phase require separate build/start surfaces or a single deployable app? |
-| Failure recovery | What breaks when a dependency fails, and what state must be preserved? |
-| Current phase closure | What is the smallest structure that can be implemented, verified, and reviewed now? |
+| 业务边界清晰度 | 能力是独立的还是紧耦合的？ |
+| 数据一致性 | 当前阶段需要一个事务边界、最终一致性还是审计回放？ |
+| 状态复杂性 | 是否存在生命周期状态、补偿、回转或阻断条件？ |
+| 集成压力 | 当前阶段是否调用外部服务、异步 worker、队列或导入/导出？ |
+| 运行时边界 | 当前阶段需要独立的构建/启动面还是单一可部署应用？ |
+| 失败恢复 | 依赖失败时什么会中断，必须保持什么状态？ |
+| 当前阶段闭环 | 现在可以实现、验证和评审的最小结构是什么？ |
 
-## Pattern Guide
+## 模式指南
 
-### Single Application
+### 单一应用
 
-Use when the current phase is one cohesive product surface or backend with shared transaction semantics.
+当当前阶段是一个具有共享事务语义的内聚产品面或后端时使用。
 
-Good fit:
-- Small or medium domain slice.
-- Strong consistency across current-phase entities.
-- One runtime surface is enough.
-- Separate services would add deployment and data consistency risk without current value.
+良好适配：
+- 小型或中型领域切片。
+- 当前阶段实体间的强一致性。
+- 一个运行时面足够。
+- 独立服务会增加部署和数据一致性风险而无当前价值。
 
-Architecture obligations:
-- Make module boundaries explicit even inside one app.
-- Keep domain rules close to the owning module.
-- Avoid global utility dumping grounds.
-- Record future split points as consequences, not current tasks.
+架构义务：
+- 即使在一个应用内也要使模块边界明确。
+- 将领域规则靠近拥有的模块。
+- 避免全局工具堆放区。
+- 将未来拆分点记录为后果，而非当前任务。
 
-### Modular Monolith
+### 模块化单体
 
-Use when the product is one deployable application but has multiple domain modules with distinct responsibilities.
+当产品是一个可部署应用但有多个具有不同职责的领域模块时使用。
 
-Good fit:
-- Multiple capabilities share a runtime but need clean boundaries.
-- Current phase touches domain logic, persistence, and UI/API together.
-- Future phases need extension without reworking the first phase.
+良好适配：
+- 多个能力共享运行时但需要清晰边界。
+- 当前阶段同时涉及领域逻辑、持久化和 UI/API。
+- 未来阶段需要扩展而无需重构第一阶段。
 
-Architecture obligations:
-- Define module ids, responsibilities, owned entities, exposed interfaces, and forbidden cross-module shortcuts.
-- Keep cross-module calls explicit.
-- Avoid shared mutable models that bypass module invariants.
+架构义务：
+- 定义模块 id、职责、拥有实体、暴露接口和禁止的跨模块快捷方式。
+- 保持跨模块调用明确。
+- 避免绕过模块不变量的共享可变模型。
 
-### Service Split
+### 服务拆分
 
-Use only when the current phase has a real independent runtime boundary.
+仅当当前阶段有真实的独立运行时边界时使用。
 
-Good fit:
-- Separate lifecycle or deployment is required now.
-- Independent data ownership is necessary now.
-- Failure isolation changes current-phase behavior.
-- External integration or protocol boundary is part of the requirement.
+良好适配：
+- 现在就需要独立的生命周期或部署。
+- 现在就需要独立的数据所有权。
+- 失败隔离改变当前阶段行为。
+- 外部集成或协议边界是需求的一部分。
 
-Architecture obligations:
-- Define service ownership, API contract, data ownership, retry/failure behavior, and operational cost.
-- Record consistency trade-offs.
-- Do not split just because later phases may become complex.
+架构义务：
+- 定义服务所有权、API 契约、数据所有权、重试/失败行为和运维成本。
+- 记录一致性权衡。
+- 不要仅因为后续阶段可能变复杂就拆分。
 
-### Event-Driven Flow
+### 事件驱动流
 
-Use when the current phase needs asynchronous processing, durable side effects, integration decoupling, or audit-oriented workflow.
+当当前阶段需要异步处理、持久副作用、集成解耦或面向审计的工作流时使用。
 
-Architecture obligations:
-- Define event producers, consumers, payload ownership, idempotency, ordering assumptions, and replay behavior.
-- Record what is eventually consistent and what remains synchronous.
-- Plan failure visibility and retry limits.
+架构义务：
+- 定义事件生产者、消费者、载荷所有权、幂等性、排序假设和回放行为。
+- 记录什么是最终一致的，什么保持同步。
+- 规划失败可见性和重试限制。
 
-### CQRS-Style Separation
+### CQRS 式分离
 
-Use when command behavior and query/read models have materially different needs in the current phase.
+当命令行为和查询/读取模型在当前阶段有实质性不同需求时使用。
 
-Architecture obligations:
-- Define command source of truth, read model derivation, staleness expectation, and rebuild strategy.
-- Do not introduce CQRS for ordinary CRUD screens with identical read/write needs.
+架构义务：
+- 定义命令事实来源、读取模型派生、陈旧期望和重建策略。
+- 不要为具有相同读写需求的普通 CRUD 界面引入 CQRS。
 
-### Background Worker Or Scheduled Job
+### 后台 Worker 或定时作业
 
-Use when the current phase has work that should not run inside the request/response path, such as imports, notifications, reconciliation, report generation, cleanup, or periodic synchronization.
+当当前阶段有不应在请求/响应路径中运行的工作（如导入、通知、对账、报告生成、清理或定期同步）时使用。
 
-Architecture obligations:
-- Define trigger, schedule or queue source, idempotency, retry limit, failure visibility, and ownership of any durable state.
-- Define how users or operators observe job progress, partial failure, and completion.
-- Keep the worker in the same deployable application unless the current phase requires a separate runtime surface.
+架构义务：
+- 定义触发器、调度或队列来源、幂等性、重试限制、失败可见性和任何持久状态的所有权。
+- 定义用户或运维人员如何观察作业进度、部分失败和完成。
+- 除非当前阶段需要独立运行时面，否则将 worker 保持在同一可部署应用中。
 
 ### Serverless Function
 
-Use only when the selected technical baseline or existing repository already uses function-style runtime, or when current requirements explicitly need event-triggered ephemeral execution.
+仅当所选技术基线或已有仓库已使用函数式运行时，或当前需求明确需要事件触发的临时执行时使用。
 
-Architecture obligations:
-- Define trigger source, timeout, cold-start tolerance, state boundary, retries, idempotency, and observability.
-- Keep durable state, secrets, and external calls explicit.
-- Do not introduce serverless solely to avoid designing a normal module or worker.
+架构义务：
+- 定义触发来源、超时、冷启动容忍度、状态边界、重试、幂等性和可观测性。
+- 保持持久状态、密钥和外部调用明确。
+- 不要仅为避免设计普通模块或 worker 而引入 serverless。
 
-### Hybrid Or Custom Structure
+### 混合或自定义结构
 
-Use when current-phase boundaries genuinely combine patterns or do not fit a named pattern.
+当当前阶段边界真正组合多种模式或不适合命名模式时使用。
 
-Architecture obligations:
-- Name every composed pattern or give the custom structure a stable descriptive name.
-- Define module, data, interaction, and runtime rules with the same precision required for known patterns.
-- Explain which current-phase force prevents a simpler known pattern from fitting.
-- Treat `custom` as an open classification, not as an exemption from ownership, failure, or verification rules.
+架构义务：
+- 命名每个组合模式，或为自定义结构给出稳定的描述性名称。
+- 以与已知模式相同的精度定义模块、数据、交互和运行时规则。
+- 解释哪个当前阶段力量阻止了更简单的已知模式适配。
+- 将 `custom` 视为开放分类，而非所有权、失败或验证规则的豁免。
 
-## Pattern Decision Evidence
+## 模式决策证据
 
-A defensible pattern decision states:
+可辩护的模式决策说明：
 
-- current consistency and transaction needs
-- module and data ownership boundaries
-- synchronous, asynchronous, and external interaction pressure
-- runtime surfaces that must start, scale, or fail independently
-- recovery behavior when a boundary is unavailable
-- concrete structural rules that implementation can preserve
+- 当前一致性和事务需求
+- 模块和数据所有权边界
+- 同步、异步和外部交互压力
+- 必须独立启动、扩展或失败的运行时面
+- 边界不可用时的恢复行为
+- 实现可保持的具体结构规则
 
-Pattern names alone are not architecture. A “modular monolith” with shared mutable ownership or a “service split” with one shared database and no failure boundary has not established the claimed structure.
+仅模式名称不是架构。具有共享可变所有权的"模块化单体"或具有一个共享数据库且无失败边界的"服务拆分"尚未建立所声称的结构。
 
-## Anti-Patterns
+## 反模式
 
-- Choosing microservices for prestige.
-- Choosing event-driven design without a concrete async requirement.
-- Using CQRS to avoid designing good queries.
-- Creating a background worker when synchronous behavior is simpler and acceptable.
-- Introducing serverless without an existing/runtime requirement.
-- Splitting modules while sharing all database tables and domain objects without ownership.
-- Writing "future scalable" as a reason without current verification impact.
+- 为声望选择微服务。
+- 没有具体异步需求就选择事件驱动设计。
+- 用 CQRS 避免设计好的查询。
+- 同步行为更简单且可接受时创建后台 worker。
+- 没有已有/运行时需求就引入 serverless。
+- 拆分模块却共享所有数据库表和领域对象而无所有权。
+- 以"未来可扩展"为理由而无当前验证影响。

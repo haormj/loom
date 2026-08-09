@@ -1,40 +1,40 @@
-# Rust Async Quality
+# Rust 异步质量
 
 ## When To Use
 
-- The task changes async functions, Tokio/async-std runtime usage, spawned tasks, channels, streams, async traits, shared async state, timeouts, cancellation, or graceful shutdown.
-- Use this when correctness depends on runtime ownership, blocking boundaries, concurrency, or async error propagation.
-- If the Rust code is synchronous and not in an async runtime path, do not introduce async.
+- 任务变更了异步函数、Tokio/async-std 运行时使用、spawned 任务、通道、流、异步 trait、共享异步状态、超时、取消或优雅关闭。
+- 当正确性依赖于运行时所有权、阻塞边界、并发或异步错误传播时使用此参考。
+- 如果 Rust 代码是同步的且不在异步运行时路径中，不要引入异步。
 
 ## Implementation Focus
 
-- Follow the existing async runtime. Do not mix Tokio, async-std, smol, or manual runtimes unless the repository already supports that boundary.
-- Every spawned task needs lifecycle ownership, error handling, and shutdown behavior. Keep `JoinHandle` results observed when task failure matters.
-- Do not block async executors with synchronous I/O, CPU-heavy work, or `std::thread::sleep`. Use async APIs or `spawn_blocking` for unavoidable blocking work.
-- Use `tokio::join!` for independent infallible work, `try_join!` for all-or-first-error work, and channels/tasks when work must outlive one function scope.
-- Use `select!` and cancellation channels/tokens for replaceable or long-running operations. Make cancellation branches clean up resources.
-- Choose channel types by semantics: `mpsc` for queue work, `oneshot` for single replies, `watch` for latest state, `broadcast` for fan-out events. Bound channels unless unbounded behavior is justified.
-- Avoid holding locks across `.await`, especially `std::sync` locks. Use async-aware locks sparingly and keep lock scope short.
-- Prefer message passing over shared `Arc<Mutex<T>>` for task coordination when it simplifies ownership.
-- Use timeouts for external I/O and long waits where callers need bounded behavior.
-- Use `async-trait` only when trait-based async dispatch is needed and the allocation/object-safety tradeoff is acceptable.
+- 遵循现有的异步运行时。不要混合 Tokio、async-std、smol 或手动运行时，除非仓库已支持该边界。
+- 每个 spawned 任务需要生命周期所有权、错误处理和关闭行为。当任务失败重要时保持 `JoinHandle` 结果被观察。
+- 不要用同步 I/O、CPU 密集工作或 `std::thread::sleep` 阻塞异步执行器。对不可避免的阻塞工作使用异步 API 或 `spawn_blocking`。
+- 对独立的无错误工作使用 `tokio::join!`，对全部完成或首个错误即取消的工作使用 `try_join!`，当工作必须超出单个函数作用域时使用通道/任务。
+- 对可替换或长时间运行的操作使用 `select!` 和取消通道/令牌。使取消分支清理资源。
+- 按语义选择通道类型：`mpsc` 用于队列工作，`oneshot` 用于单次回复，`watch` 用于最新状态，`broadcast` 用于扇出事件。除非有界行为有正当理由，否则绑定通道。
+- 避免在 `.await` 之间持有锁，特别是 `std::sync` 锁。谨慎使用异步感知锁并保持锁范围短。
+- 当消息传递简化所有权时，优先使用消息传递而非共享 `Arc<Mutex<T>>` 进行任务协调。
+- 当调用者需要有限行为时，对外部 I/O 和长时间等待使用超时。
+- 仅在需要基于 trait 的异步分派且分配/对象安全权衡可接受时使用 `async-trait`。
 
 ## Decision Rules
 
-- Select the runtime from repository facts and keep one runtime owner. A Tokio dependency in the baseline does not make every Rust task asynchronous.
-- Use `join!` when all independent results are required, `try_join!` when the first error should cancel the group, and `select!` when one event wins and the other branches need cancellation cleanup.
-- Give every spawned task an owner, a `JoinHandle`/error observation path, and a shutdown signal. Fire-and-forget work is acceptable only when the owner records failures and cancels it during teardown.
-- Bound channels and fan-out. State queue capacity, backpressure, closed sender/receiver behavior, and whether ordering or partial success is part of the contract.
-- Keep locks out of `.await` regions unless the lock and runtime explicitly support that boundary. Prefer message passing when it makes task ownership clearer.
-- Use timeout and cancellation tokens around external I/O and long waits, and verify that all resources close when the cancellation branch wins.
+- 从仓库事实中选择运行时并保持一个运行时所有者。基线中的 Tokio 依赖不会使每个 Rust 任务都变成异步的。
+- 当需要所有独立结果时使用 `join!`，当首个错误应取消整组时使用 `try_join!`，当一个事件胜出且其他分支需要取消清理时使用 `select!`。
+- 为每个 spawned 任务赋予所有者、`JoinHandle`/错误观察路径和关闭信号。仅在所有者记录失败并在拆卸时取消它时，发后即忘的工作才可接受。
+- 绑定通道和扇出。说明队列容量、背压、关闭的发送者/接收者行为，以及排序或部分成功是否是契约的一部分。
+- 将锁排除在 `.await` 区域之外，除非锁和运行时显式支持该边界。当消息传递使任务所有权更清晰时优先使用它。
+- 在外部 I/O 和长时间等待周围使用超时和取消令牌，并验证当取消分支胜出时所有资源都已关闭。
 
 ## Verification Focus
 
-- Run async tests using the repository runtime macro or test harness.
-- Test success, timeout, cancellation, task failure, channel closure, and graceful shutdown paths touched by the task.
-- Confirm no blocking call sits in an async hot path and no task is spawned without an owner.
-- For streams/channels, test backpressure, closed sender/receiver, and dropped consumer behavior when relevant.
+- 使用仓库运行时宏或测试框架运行异步测试。
+- 测试任务涉及的成功、超时、取消、任务失败、通道关闭和优雅关闭路径。
+- 确认异步热路径中没有阻塞调用，且没有无所有者的任务被 spawn。
+- 对于流/通道，在相关时测试背压、关闭的发送者/接收者和丢弃消费者行为。
 
 ## Evidence Focus
 
-- In the evidence summary, name the async decision: runtime selection, task lifecycle, blocking boundary, join/try_join, cancellation, channel type, lock scope, timeout, async trait, or shutdown proof.
+- 在证据总结中，说明异步决策：运行时选择、任务生命周期、阻塞边界、join/try_join、取消、通道类型、锁范围、超时、异步 trait 或关闭证明。

@@ -1,42 +1,42 @@
-# PHP Modern PHP Quality
+# PHP 现代 PHP 质量
 
-This file turns modern PHP language guidance into task-level implementation rules.
+本文件将现代 PHP 语言指导转化为任务级实现规则。
 
 ## When To Use
 
-- The task changes PHP domain code, DTOs, services, controllers, CLI commands, validation, dependency wiring, enums, value objects, or Composer-managed application code.
-- Use this for PHP 8.x language choices such as strict types, readonly objects, attributes, enums, match expressions, first-class callables, exceptions, and typed APIs.
-- If the task only edits SQL, templates, assets, or generated config with no PHP behavior, do not expand into PHP refactoring.
+- 任务变更了 PHP 领域代码、DTO、服务、控制器、CLI 命令、验证、依赖接线、enum、值对象或 Composer 管理的应用代码。
+- 用于 PHP 8.x 语言选择如严格类型、readonly 对象、属性、enum、match 表达式、一等可调用、异常和类型化 API。
+- 如果任务仅编辑 SQL、模板、资产或生成的配置而无 PHP 行为，不要扩大到 PHP 重构。
 
 ## Implementation Focus
 
-- Add `declare(strict_types=1);` to new PHP source files when the repository uses strict typing. Do not create new untyped public APIs.
-- Model closed business states with backed enums when the runtime supports them and persistence/API mapping is clear. Keep behavior such as labels or transition checks near the enum when it reduces string branching.
-- Use readonly classes/properties for immutable DTOs and value objects. Do not make lifecycle-managed entities readonly if the framework or ORM mutates them.
-- Prefer typed DTOs/value objects at boundaries where raw arrays would leak validation assumptions. Keep array shapes documented with PHPDoc only when a framework requires arrays.
-- Use `match` for exhaustive branching over known states; keep a default branch only when unknown input is a real external possibility and is handled deliberately.
-- Use attributes for metadata only when the framework or repository already uses attribute-driven routing, validation, serialization, or DI. Do not duplicate the same rule in attributes and config.
-- Keep controllers and command handlers thin. Put business decisions in services, domain objects, policies, or handlers that can be tested without HTTP/CLI wiring.
-- Use constructor dependency injection or the repository's established container pattern. Avoid hidden globals and static service access outside framework glue.
-- Throw domain-specific exceptions or return explicit result objects for business failures. Do not return `false`, mixed arrays, or magic strings from new service APIs.
-- Preserve Composer autoloading, namespace conventions, PSR-12 formatting, and local static-analysis annotations instead of inventing a parallel layout.
+- 当仓库使用严格类型时为新 PHP 源码文件添加 `declare(strict_types=1);`。不要创建新的无类型公共 API。
+- 当运行时支持且持久化/API 映射清晰时用 backed enum 建模封闭业务状态。当能减少字符串分支时将标签或转换检查等行为保持在 enum 附近。
+- 对不可变 DTO 和值对象使用 readonly class/property。如果框架或 ORM 变更它们则不要将生命周期管理的实体设为 readonly。
+- 在原始数组会泄露验证假设的边界优先使用类型化 DTO/值对象。仅当框架要求数组时用 PHPDoc 记录数组形态。
+- 对已知状态的穷尽分支使用 `match`；仅当未知输入是真实的外部可能性且被刻意处理时才保留默认分支。
+- 仅当框架或仓库已使用属性驱动的路由、验证、序列化或 DI 时才为元数据使用属性。不要在属性和配置中重复同一规则。
+- 保持控制器和命令处理器精简。将业务决策放在可以无需 HTTP/CLI 接线测试的服务、领域对象、策略或处理器中。
+- 使用构造函数依赖注入或仓库已建立的容器模式。避免框架胶水之外的隐藏全局和静态服务访问。
+- 为业务失败抛出领域特定异常或返回显式结果对象。不要从新服务 API 返回 `false`、混合数组或魔术字符串。
+- 保留 Composer 自动加载、命名空间约定、PSR-12 格式化和本地静态分析注解，而非发明平行布局。
 
 ## Boundary Decisions
 
-- Treat `declare(strict_types=1)` as a file-level boundary, not a substitute for validating external input. Normalize request, queue, and decoded JSON data before passing it to typed domain APIs.
-- Use a backed enum when the state has a stable storage/API representation. Keep unknown external values on an explicit error or unmapped path instead of silently coercing them to a valid case.
-- Use readonly DTOs/value objects for data that should not change after construction. Keep ORM entities, proxy-managed objects, and framework lifecycle objects mutable when their integration requires it.
-- Use attributes only when the active framework consumes them. Choose one source of truth between attributes, configuration, serializer groups, and validation metadata.
-- Keep `mixed`, array shapes, and PHPDoc generics at integration boundaries where PHP cannot express the contract. Do not let them leak through service APIs without a documented reason.
-- Name the Composer namespace and autoload path from repository facts. Do not copy an `App\\` namespace or demo package layout into an existing project with a different convention.
+- 将 `declare(strict_types=1)` 视为文件级边界，而非验证外部输入的替代。在将请求、队列和解码的 JSON 数据传递到类型化领域 API 之前规范化它们。
+- 当状态有稳定的存储/API 表示时使用 backed enum。将未知外部值保留在显式错误或未映射路径上，而非静默强制转换为有效 case。
+- 对构造后不应变更的数据使用 readonly DTO/值对象。当 ORM 实体、代理管理对象和框架生命周期对象的集成需要时保持它们可变。
+- 仅当活动框架消费属性时才使用它们。在属性、配置、序列化器组和验证元数据之间选择一个真相来源。
+- 在 PHP 无法表达契约的集成边界保留 `mixed`、数组形态和 PHPDoc 泛型。没有记录的理由不要让它们通过服务 API 泄露。
+- 从仓库事实命名 Composer 命名空间和自动加载路径。不要将 `App\\` 命名空间或演示包布局复制到具有不同约定的现有项目中。
 
 ## Verification Focus
 
-- Run the repository's PHP test command: PHPUnit, Pest, or framework feature tests.
-- Run PHPStan or Psalm when configured, especially after adding generics, array shapes, DTOs, enums, or service interfaces.
-- Test invalid input, impossible state, enum mapping, exception/result behavior, and one successful business path touched by the task.
-- If a framework route or command is changed, verify the real entry point, not only the service in isolation.
+- 运行仓库的 PHP 测试命令：PHPUnit、Pest 或框架功能测试。
+- 在配置时运行 PHPStan 或 Psalm，特别是在添加泛型、数组形态、DTO、enum 或服务接口之后。
+- 测试任务涉及的无效输入、不可能状态、enum 映射、异常/结果行为和一个成功业务路径。
+- 如果框架路由或命令变更，验证真实入口点，而非仅隔离的服务。
 
 ## Evidence Focus
 
-- In the evidence summary, name the PHP decision: strict typing, DTO/value object, enum, readonly immutability, attribute metadata, DI boundary, domain exception, or static-analysis proof.
+- 在证据总结中，说明 PHP 决策：严格类型、DTO/值对象、enum、readonly 不可变性、属性元数据、DI 边界、领域异常或静态分析证明。

@@ -60,7 +60,7 @@ fn run() -> Result<serde_json::Value, SetupError> {
                 options
                     .agent
                     .as_deref()
-                    .ok_or_else(|| SetupError::InvalidArgument("--agent is required".into()))?,
+                    .ok_or_else(|| SetupError::InvalidArgument("需要 --agent 参数".into()))?,
             )?;
             let env = SetupEnvironment::from_env(options.package_root)?;
             serde_json::to_value(install(&env, &agents)?).map_err(|source| SetupError::Json {
@@ -86,7 +86,7 @@ fn run() -> Result<serde_json::Value, SetupError> {
                 setup::AgentKind::all().to_vec()
             } else {
                 parse_agent_selection(options.agent.as_deref().ok_or_else(|| {
-                    SetupError::InvalidArgument("--agent or --all is required".into())
+                    SetupError::InvalidArgument("需要 --agent 或 --all 参数".into())
                 })?)?
             };
             let env = SetupEnvironment::from_env(options.package_root)?;
@@ -106,7 +106,7 @@ fn run() -> Result<serde_json::Value, SetupError> {
         "browser-runtime" => {
             if args.get(1).map(String::as_str) != Some("prepare") {
                 return Err(SetupError::InvalidArgument(
-                    "browser-runtime requires the prepare subcommand".into(),
+                    "browser-runtime 需要 prepare 子命令".into(),
                 ));
             }
             let options = CliOptions::parse(&args[2..])?;
@@ -129,7 +129,7 @@ fn run() -> Result<serde_json::Value, SetupError> {
         "package-layout" => {
             let options = CliOptions::parse(&args[1..])?;
             let output_dir = options.output_dir.ok_or_else(|| {
-                SetupError::InvalidArgument("--output-dir is required for package-layout".into())
+                SetupError::InvalidArgument("package-layout 需要 --output-dir 参数".into())
             })?;
             let platforms = match options.platform.as_deref() {
                 Some("all") | None => TargetPlatform::all().to_vec(),
@@ -153,14 +153,14 @@ fn run() -> Result<serde_json::Value, SetupError> {
         "package-archive" => {
             let options = CliOptions::parse(&args[1..])?;
             let output_dir = options.output_dir.ok_or_else(|| {
-                SetupError::InvalidArgument("--output-dir is required for package-archive".into())
+                SetupError::InvalidArgument("package-archive 需要 --output-dir 参数".into())
             })?;
             let package_root = options.package_root.ok_or_else(|| {
-                SetupError::InvalidArgument("--package-root is required for package-archive".into())
+                SetupError::InvalidArgument("package-archive 需要 --package-root 参数".into())
             })?;
             let platform =
                 TargetPlatform::parse(options.platform.as_deref().ok_or_else(|| {
-                    SetupError::InvalidArgument("--platform is required for package-archive".into())
+                    SetupError::InvalidArgument("package-archive 需要 --platform 参数".into())
                 })?)?;
             let archive = archive_package_layout(&package_root, &output_dir, platform)?;
             Ok(serde_json::json!({
@@ -170,7 +170,7 @@ fn run() -> Result<serde_json::Value, SetupError> {
             }))
         }
         other => Err(SetupError::InvalidArgument(format!(
-            "unknown command '{other}'\n{}",
+            "未知命令 '{other}'\n{}",
             usage()
         ))),
     }
@@ -228,9 +228,7 @@ impl CliOptions {
                         .push(required_value(args, index, "--browser")?.to_string());
                 }
                 unknown => {
-                    return Err(SetupError::InvalidArgument(format!(
-                        "unknown option '{unknown}'"
-                    )))
+                    return Err(SetupError::InvalidArgument(format!("未知选项 '{unknown}'")))
                 }
             }
             index += 1;
@@ -246,13 +244,13 @@ fn required_value<'a>(
 ) -> Result<&'a str, SetupError> {
     args.get(index)
         .map(String::as_str)
-        .ok_or_else(|| SetupError::InvalidArgument(format!("{option} requires a value")))
+        .ok_or_else(|| SetupError::InvalidArgument(format!("{option} 需要一个值")))
 }
 
 fn usage() -> &'static str {
-    "loom-setup install --agent codex|claude-code|opencode|all\n\
-     loom-setup doctor [--agent codex|claude-code|opencode|all]\n\
-     loom-setup uninstall --agent codex|claude-code|opencode|all\n\
+    "loom-setup install --agent opencode|all\n\
+     loom-setup doctor [--agent opencode|all]\n\
+     loom-setup uninstall --agent opencode|all\n\
      loom-setup uninstall --all\n\
      loom-setup purge\n\
      loom-setup browser-runtime prepare [--playwright-version <registry-version-or-range>] [--browser chromium|firefox|webkit]\n\

@@ -1,14 +1,14 @@
-# UIX Stack: Native Mobile
+# UIX 技术栈：原生移动端
 
-Use for React Native, Flutter, SwiftUI/UIKit, Jetpack Compose, Kotlin/Android, and native-like mobile apps.
+用于 React Native、Flutter、SwiftUI/UIKit、Jetpack Compose、Kotlin/Android 和类原生移动应用。
 
-## Structure
+## 结构
 
-- Follow platform navigation and state conventions.
-- Separate screens, reusable components, domain hooks/services, and navigation configuration.
-- Respect safe areas, keyboard avoidance, and platform back behavior.
+- 遵循平台导航和状态约定。
+- 分离屏幕、可重用组件、领域 hooks/服务和导航配置。
+- 尊重安全区域、键盘避让和平台返回行为。
 
-## Screen Composition
+## 屏幕组合
 
 ```text
 NavigationContainer
@@ -20,46 +20,44 @@ NavigationContainer
       Sticky Action or Sheet
 ```
 
-## Implementation Rules
+## 实现规则
 
-- Touch targets must be comfortable and spaced.
-- Use platform text, color, spacing, and elevation conventions unless a design system exists.
-- Forms need input types, validation, loading/submitting, and error recovery.
-- Lists need empty/loading/error states and stable item identity.
-- Sensitive financial or destructive actions need explicit confirmation/review.
-- Translate web token intent into the platform theme system. Do not create CSS token files for a native-only target.
-- Keep safe-area, keyboard avoidance, and permission states part of the screen implementation, not only review notes.
+- 触摸目标必须舒适且分开。
+- 除非存在设计系统，否则使用平台文本、颜色、间距和阴影约定。
+- 表单需要输入类型、验证、加载/提交和错误恢复。
+- 列表需要空/加载/错误状态和稳定的项目标识。
+- 敏感金融或破坏性操作需要明确的确认/审查。
+- 将 web 令牌意图转换为平台主题系统。不要为仅原生目标创建 CSS 令牌文件。
+- 将安全区域、键盘避让和权限状态作为屏幕实现的一部分，而非仅审查说明。
 
-## Cross-Platform Notes
+## 跨平台说明
 
-- React Native: keep presentational components separate from screen orchestration when workflows grow.
-- Flutter: keep widgets focused and use theme tokens consistently.
-- Native iOS/Android: use platform controls unless custom controls are justified.
-- UniApp or mini-app targets should also load the UniApp stack reference when selected.
+- React Native：当工作流增长时将展示组件与屏幕编排分离。
+- Flutter：保持 widget 聚焦并一致使用主题令牌。
+- 原生 iOS/Android：除非有理由使用自定义控件，否则使用平台控件。
+- UniApp 或小程序目标在选定时应同时加载 UniApp 技术栈参考。
 
-## Verification
+## 验证
 
-- Use simulator/device or framework preview when available.
-- Check safe areas, keyboard behavior, scroll, and touch targets.
-- Record platform/device or preview constraints in evidence when full verification is unavailable.
+- 可用时使用模拟器/设备或框架预览。
+- 检查安全区域、键盘行为、滚动和触摸目标。
+- 当完整验证不可用时在证据中记录平台/设备或预览约束。
 
-## Platform Implementation Boundary
+## 平台实现边界
 
-UIX owns the visible screen composition and platform behavior. Keep framework
-configuration, package selection, networking, persistence, and native build
-settings in the project's engineering references and existing code conventions.
+UIX 拥有可见的屏幕组合和平台行为。将框架配置、包选择、网络、持久化和原生构建设置保留在项目的工程参考和现有代码约定中。
 
 ```text
 platform navigation -> screen shell -> task region -> native input/list
 -> local validation -> async action -> platform feedback -> next route
 ```
 
-- A screen owns its header/back affordance, safe-area container, scroll region, and primary action placement.
-- A feature component owns the visible representation of loading, empty, error, disabled, permission, and success states; do not leave these as invisible service outcomes.
-- Keep platform adapters behind a narrow interface so iOS/Android differences do not duplicate the business surface.
-- Use native controls for semantics, focus, keyboard, accessibility, and destructive confirmation before introducing a custom control.
+- 屏幕拥有其页眉/返回功能、安全区域容器、滚动区域和主要操作放置。
+- 功能组件拥有加载、空、错误、禁用、权限和成功状态的可见表示；不要将这些留为不可见的服务结果。
+- 将平台适配器放在窄接口之后，以便 iOS/Android 差异不复制业务界面。
+- 在引入自定义控件之前，将原生控件用于语义、焦点、键盘、可访问性和破坏性确认。
 
-## Screen State And Restoration
+## 屏幕状态和恢复
 
 ```ts
 type ScreenState<T> =
@@ -69,7 +67,4 @@ type ScreenState<T> =
   | { kind: 'error'; message: string; canRetry: boolean };
 ```
 
-Keep draft input, selected identity, and navigation return context recoverable
-after backgrounding, rotation, permission prompts, or a failed request. A
-successful mutation must update the visible object and route to the next useful
-screen rather than only showing a transient notification.
+在后台化、旋转、权限提示或失败请求后保持草稿输入、选定标识和导航返回上下文可恢复。成功的变更必须更新可见对象并路由到下一个有用屏幕，而非仅显示瞬态通知。
