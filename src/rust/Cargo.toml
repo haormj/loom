@@ -16,6 +16,7 @@ members = [
   "verification",
   "algorithm-client",
   "reference-catalog",
+  "dashboard",
 ]
 
 [workspace.package]
