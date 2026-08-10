@@ -19,6 +19,14 @@ pub struct AppState {
         Arc<tokio::sync::Mutex<Option<broadcast::Receiver<crate::watcher::DashboardEvent>>>>,
 }
 
+pub fn validate_path_segment(segment: &str) -> bool {
+    !segment.is_empty()
+        && !segment.contains("..")
+        && !segment.contains('/')
+        && !segment.contains('\\')
+        && !segment.contains('\0')
+}
+
 pub fn api_router(
     project_root: String,
     event_rx: Option<broadcast::Receiver<crate::watcher::DashboardEvent>>,

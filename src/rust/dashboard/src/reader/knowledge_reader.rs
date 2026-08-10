@@ -60,6 +60,7 @@ pub fn list_knowledge_sources() -> Vec<KnowledgeSourceSummary> {
         .collect()
 }
 
+#[allow(dead_code)]
 pub fn read_chunk_body(source_id: &str, build_id: &str, chunk_id: &str) -> Option<String> {
     let chunk_path = chunks_dir(source_id, build_id)
         .ok()?

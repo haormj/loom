@@ -79,3 +79,26 @@ async fn index_html_served() {
     let html = String::from_utf8(bytes.to_vec()).unwrap();
     assert!(html.contains("root") || html.contains("Loom Dashboard") || html.contains("html"));
 }
+
+#[tokio::test]
+async fn path_traversal_blocked() {
+    let router = build_router(full_fixture_root().display().to_string());
+
+    let value = get_json(router, "/api/deliveries/..%2F..%2F..%2Fetc%2Fpasswd").await;
+    assert!(value.is_null(), "path traversal should return null");
+}
+
+#[tokio::test]
+async fn path_traversal_blocked_in_tasks() {
+    let router = build_router(full_fixture_root().display().to_string());
+
+    let value = get_json(
+        router,
+        "/api/deliveries/..%2Fdel_full/phases/..%2Fph_01/tasks",
+    )
+    .await;
+    assert!(
+        value.is_null(),
+        "path traversal in tasks should return null"
+    );
+}

@@ -28,6 +28,7 @@ export function useSSE() {
         tasks: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
         reviews: () => queryClient.invalidateQueries({ queryKey: ['reviews'] }),
         deploy: () => queryClient.invalidateQueries({ queryKey: ['deployStatus'] }),
+        deploy_logs: () => queryClient.invalidateQueries({ queryKey: ['deployStatus'] }),
         knowledge: () => queryClient.invalidateQueries({ queryKey: ['knowledgeSources'] }),
       };
 
