@@ -1,5 +1,7 @@
 use std::fmt;
 
+pub mod reader;
+
 #[derive(Debug)]
 pub struct DashboardError(pub String);
 

@@ -24,3 +24,7 @@ notify = "6"
 rust-embed = "8"
 tower-http = { version = "0.6", features = ["cors"] }
 log.workspace = true
+
+[[test]]
+name = "reader_test"
+path = "../../../tests/rust/dashboard/reader_test.rs"

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "deliveryId": "del_test",
+  "activePhaseId": "ph_01",
+  "status": "executing",
+  "phases": [
+    {
+      "phaseId": "ph_01",
+      "latestRefs": {
+        "taskPlanRun": "run_001"
+      }
+    }
+  ],
+  "updatedAt": "2026-08-10T12:00:00.000Z"
+}
