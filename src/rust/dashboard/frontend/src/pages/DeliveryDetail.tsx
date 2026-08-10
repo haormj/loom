@@ -12,15 +12,15 @@ export default function DeliveryDetail() {
     enabled: !!deliveryId,
   });
 
-  if (!delivery) return <p className="text-gray-400">交付不存在</p>;
-
-  const activePhase = delivery.phases.find((p) => p.phaseId === delivery.activePhaseId);
+  const activePhase = delivery?.phases.find((p) => p.phaseId === delivery.activePhaseId);
 
   const { data: taskRun } = useQuery({
     queryKey: ['tasks', deliveryId, activePhase?.phaseId],
     queryFn: () => api.tasks(deliveryId!, activePhase!.phaseId),
-    enabled: !!activePhase,
+    enabled: !!delivery && !!activePhase,
   });
+
+  if (!delivery) return <p className="text-gray-400">交付不存在</p>;
 
   return (
     <div className="space-y-6">
