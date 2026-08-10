@@ -1,6 +1,9 @@
 use std::fmt;
 
+pub mod embedded;
 pub mod reader;
+pub mod routes;
+pub mod server;
 
 #[derive(Debug)]
 pub struct DashboardError(pub String);
@@ -13,9 +16,14 @@ impl fmt::Display for DashboardError {
 
 impl std::error::Error for DashboardError {}
 
-pub fn serve(project_root: &str, port: u16, open_browser: bool) -> Result<(), DashboardError> {
-    Err(DashboardError(format!(
-        "dashboard::serve not yet implemented (project={}, port={}, open={})",
-        project_root, port, open_browser
-    )))
+pub async fn serve(
+    project_root: &str,
+    port: u16,
+    open_browser: bool,
+) -> Result<(), DashboardError> {
+    server::serve(project_root.to_string(), port, open_browser).await
+}
+
+pub fn build_router(project_root: String) -> axum::Router {
+    server::build_router(project_root)
 }

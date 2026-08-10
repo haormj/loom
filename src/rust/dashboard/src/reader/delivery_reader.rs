@@ -2,17 +2,20 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use delivery_core::{DeliveryIndex, DeliveryLifecycleStatus};
+use serde::Serialize;
 
 use state::paths::delivery_dir;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PhaseSummary {
     pub phase_id: String,
     pub latest_refs: BTreeMap<String, String>,
     pub status: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DeliverySummary {
     pub delivery_id: String,
     pub active_phase_id: String,

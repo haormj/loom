@@ -26,6 +26,14 @@ rust-embed = "8"
 tower-http = { version = "0.6", features = ["cors"] }
 log.workspace = true
 
+[dev-dependencies]
+tower = "0.5"
+http-body-util = "0.1"
+
 [[test]]
 name = "reader_test"
 path = "../../../tests/rust/dashboard/reader_test.rs"
+
+[[test]]
+name = "routes_test"
+path = "../../../tests/rust/dashboard/routes_test.rs"
