@@ -39,7 +39,7 @@ fn mime_type(name: &str) -> &'static str {
     }
 }
 
-const INDEX_HTML: &str = r#"<!DOCTYPE html>
+pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>Loom Dashboard</title></head>
 <body>
