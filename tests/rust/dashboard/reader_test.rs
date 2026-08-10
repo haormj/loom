@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use dashboard::reader::{list_deliveries, read_delivery_index, read_project};
+use dashboard::reader::{
+    list_deliveries, list_knowledge_sources, read_audit_records, read_delivery_index,
+    read_deploy_state, read_project,
+};
 
 fn fixture_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -40,4 +43,24 @@ fn read_delivery_index_returns_phases() {
     assert_eq!(delivery.phases.len(), 1);
     assert_eq!(delivery.phases[0].phase_id, "ph_01");
     assert!(delivery.phases[0].latest_refs.contains_key("taskPlanRun"));
+}
+
+#[test]
+fn read_deploy_state_returns_empty_when_no_deployment() {
+    let snapshot = read_deploy_state(&fixture_root());
+    assert!(!snapshot.prepared);
+    assert!(snapshot.state.is_none());
+    assert!(snapshot.log_tail.is_empty());
+}
+
+#[test]
+fn list_knowledge_sources_does_not_panic_without_loom_home() {
+    let sources = list_knowledge_sources();
+    let _ = sources.len();
+}
+
+#[test]
+fn read_audit_records_returns_empty_when_no_metrics() {
+    let records = read_audit_records(&fixture_root(), 50);
+    assert!(records.is_empty());
 }

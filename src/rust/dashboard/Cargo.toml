@@ -15,6 +15,7 @@ contracts = { path = "../contracts" }
 state = { path = "../state" }
 deploy = { path = "../deploy" }
 knowledge = { path = "../knowledge" }
+execution = { path = "../execution" }
 axum = "0.7"
 tokio.workspace = true
 serde.workspace = true
