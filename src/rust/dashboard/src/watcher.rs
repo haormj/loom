@@ -36,7 +36,11 @@ pub fn start_watcher(project_root: PathBuf) -> broadcast::Receiver<DashboardEven
         ) {
             Ok(w) => w,
             Err(e) => {
-                log::warn!("dashboard watcher: failed to create watcher: {}", e);
+                log::warn!(
+                    "dashboard watcher: notify unavailable ({}), falling back to polling",
+                    e
+                );
+                poll_loop(project_root_clone, tx);
                 return;
             }
         };
@@ -123,4 +127,98 @@ fn classify_event(kind: &EventKind, paths: &[PathBuf]) -> &'static str {
         }
     }
     "ignore"
+}
+
+fn collect_poll_targets(loom_dir: &PathBuf) -> Vec<PathBuf> {
+    let mut targets = Vec::new();
+
+    let status = loom_dir.join("status.json");
+    if status.exists() {
+        targets.push(status);
+    }
+
+    if let Ok(entries) = std::fs::read_dir(loom_dir.join("deliveries")) {
+        for entry in entries.flatten() {
+            let index = entry.path().join("index.json");
+            if index.exists() {
+                targets.push(index);
+            }
+        }
+    }
+
+    let state_dir = loom_dir.join("deployment").join("state");
+    if let Ok(entries) = std::fs::read_dir(&state_dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.extension().and_then(|e| e.to_str()) == Some("json") {
+                targets.push(p);
+            }
+        }
+    }
+
+    targets
+}
+
+fn poll_loop(project_root: PathBuf, tx: broadcast::Sender<DashboardEvent>) {
+    let loom_dir = project_root.join(".loom");
+    let poll_interval = Duration::from_secs(5);
+
+    let mut last_mtimes: std::collections::HashMap<PathBuf, std::time::SystemTime> =
+        std::collections::HashMap::new();
+
+    let targets = collect_poll_targets(&loom_dir);
+    for path in &targets {
+        if let Ok(mtime) = std::fs::metadata(path).and_then(|m| m.modified()) {
+            last_mtimes.insert(path.clone(), mtime);
+        }
+    }
+
+    loop {
+        std::thread::sleep(poll_interval);
+
+        if tx.receiver_count() == 0 {
+            log::debug!("dashboard watcher (poll): no receivers, stopping");
+            return;
+        }
+
+        let targets = collect_poll_targets(&loom_dir);
+        let mut changed: Vec<String> = Vec::new();
+        let mut event_type = "ignore";
+
+        for path in &targets {
+            let current = match std::fs::metadata(path).and_then(|m| m.modified()) {
+                Ok(t) => t,
+                Err(_) => continue,
+            };
+            let prev = last_mtimes.insert(path.clone(), current);
+            if prev != Some(current) {
+                let rel = path
+                    .strip_prefix(&project_root)
+                    .map(|s| s.display().to_string())
+                    .unwrap_or_else(|_| path.display().to_string());
+                let ps = rel.as_str();
+                if event_type == "ignore" {
+                    if ps.contains("status.json") {
+                        event_type = "status";
+                    } else if ps.contains("deliveries") && ps.contains("index.json") {
+                        event_type = "delivery";
+                    } else if ps.contains("deployment") && ps.contains("state") {
+                        event_type = "deploy";
+                    }
+                }
+                changed.push(rel);
+            }
+        }
+
+        if event_type != "ignore" && !changed.is_empty() {
+            let event = DashboardEvent {
+                event_type: event_type.to_string(),
+                data: serde_json::json!({ "paths": changed }),
+            };
+            if tx.send(event).is_err() {
+                log::debug!("dashboard watcher (poll): no receivers, stopping");
+                return;
+            }
+        }
+    }
 }

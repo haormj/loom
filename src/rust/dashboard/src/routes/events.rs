@@ -1,6 +1,5 @@
 use axum::{
     extract::State,
-    response::Response,
     response::{
         sse::{Event, KeepAlive, Sse},
         IntoResponse,
@@ -9,23 +8,24 @@ use axum::{
 use futures_util::stream::{self, Stream};
 use std::convert::Infallible;
 use std::time::Duration;
-use tokio_stream::StreamExt;
 
 use crate::routes::AppState;
 use crate::watcher::DashboardEvent;
 
-pub async fn sse_handler(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn sse_handler(State(state): State<AppState>) -> axum::response::Response {
     let rx = if let Some(rx) = state.event_rx.lock().await.as_mut() {
-        rx.subscribe()
+        rx.resubscribe()
     } else {
         return Sse::new(stream::empty())
             .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
-            as Sse<_>;
+            .into_response();
     };
 
     let stream = stream_channel(rx);
 
-    Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
+    Sse::new(stream)
+        .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
+        .into_response()
 }
 
 fn stream_channel(

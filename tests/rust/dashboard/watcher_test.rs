@@ -1,10 +1,9 @@
-use std::path::PathBuf;
 use std::time::Duration;
 
 use dashboard::watcher::start_watcher;
 
-#[test]
-fn watcher_emits_status_event_on_file_change() {
+#[tokio::test]
+async fn watcher_emits_status_event_on_file_change() {
     let tmp = tempfile::tempdir().unwrap();
     let loom_dir = tmp.path().join(".loom");
     std::fs::create_dir_all(&loom_dir).unwrap();
@@ -26,9 +25,9 @@ fn watcher_emits_status_event_on_file_change() {
     .unwrap();
 
     // Wait for event (with timeout)
-    let result = rx.recv_timeout(Duration::from_secs(5));
+    let result = tokio::time::timeout(Duration::from_secs(5), rx.recv()).await;
     assert!(result.is_ok(), "should receive an event within 5 seconds");
-    let event = result.unwrap();
+    let event = result.unwrap().unwrap();
     assert!(
         event.event_type == "status" || event.event_type == "deploy_logs",
         "event type should be classified, got: {}",
