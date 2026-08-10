@@ -17,7 +17,7 @@ deploy = { path = "../deploy" }
 knowledge = { path = "../knowledge" }
 execution = { path = "../execution" }
 axum = "0.7"
-tokio.workspace = true
+tokio = { workspace = true, features = ["sync"] }
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true
@@ -25,10 +25,14 @@ notify = "6"
 rust-embed = "8"
 tower-http = { version = "0.6", features = ["cors"] }
 log.workspace = true
+async-stream = "0.3"
+futures-util = "0.3"
+tokio-stream = "0.1"
 
 [dev-dependencies]
 tower = "0.5"
 http-body-util = "0.1"
+tempfile = "3"
 
 [[test]]
 name = "reader_test"
@@ -37,3 +41,7 @@ path = "../../../tests/rust/dashboard/reader_test.rs"
 [[test]]
 name = "routes_test"
 path = "../../../tests/rust/dashboard/routes_test.rs"
+
+[[test]]
+name = "watcher_test"
+path = "../../../tests/rust/dashboard/watcher_test.rs"

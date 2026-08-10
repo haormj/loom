@@ -2,13 +2,17 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 
 use axum::{routing::get, Router};
+use tokio::sync::broadcast;
 
 use crate::embedded;
 use crate::routes::api_router;
 use crate::DashboardError;
 
-pub fn build_router(project_root: String) -> Router {
-    let api = api_router(project_root);
+pub fn build_router(
+    project_root: String,
+    event_rx: Option<broadcast::Receiver<crate::watcher::DashboardEvent>>,
+) -> Router {
+    let api = api_router(project_root, event_rx);
     Router::new()
         .route(
             "/",
@@ -27,7 +31,10 @@ pub async fn serve(
     port: u16,
     open_browser: bool,
 ) -> Result<(), DashboardError> {
-    let app = build_router(project_root.clone());
+    let project_root_path = std::path::PathBuf::from(&project_root);
+    let event_rx = crate::watcher::start_watcher(project_root_path);
+
+    let app = build_router(project_root.clone(), Some(event_rx));
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     let listener = tokio::net::TcpListener::bind(addr)
         .await

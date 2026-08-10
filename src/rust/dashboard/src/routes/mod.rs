@@ -10,15 +10,22 @@ pub mod tasks;
 use std::sync::Arc;
 
 use axum::{routing::get, Router};
+use tokio::sync::broadcast;
 
 #[derive(Clone)]
 pub struct AppState {
     pub project_root: Arc<String>,
+    pub event_rx:
+        Arc<tokio::sync::Mutex<Option<broadcast::Receiver<crate::watcher::DashboardEvent>>>>,
 }
 
-pub fn api_router(project_root: String) -> Router {
+pub fn api_router(
+    project_root: String,
+    event_rx: Option<broadcast::Receiver<crate::watcher::DashboardEvent>>,
+) -> Router {
     let state = AppState {
         project_root: Arc::new(project_root),
+        event_rx: Arc::new(tokio::sync::Mutex::new(event_rx)),
     };
     Router::new()
         .route("/api/project/status", get(project::status))

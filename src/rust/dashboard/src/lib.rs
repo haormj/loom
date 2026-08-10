@@ -4,6 +4,7 @@ pub mod embedded;
 pub mod reader;
 pub mod routes;
 pub mod server;
+pub mod watcher;
 
 #[derive(Debug)]
 pub struct DashboardError(pub String);
@@ -25,5 +26,5 @@ pub async fn serve(
 }
 
 pub fn build_router(project_root: String) -> axum::Router {
-    server::build_router(project_root)
+    server::build_router(project_root, None)
 }
