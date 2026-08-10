@@ -169,6 +169,28 @@ fn run() -> Result<serde_json::Value, SetupError> {
                 "archive": archive.display().to_string()
             }))
         }
+        "dashboard" => {
+            let options = CliOptions::parse(&args[1..])?;
+            let port: u16 = options.port.unwrap_or(9876);
+            let open_browser = !options.no_open;
+            let project_root = options
+                .project_root
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| {
+                    std::env::current_dir()
+                        .map(|p| p.display().to_string())
+                        .unwrap_or_else(|_| ".".to_string())
+                });
+            let rt = tokio::runtime::Runtime::new().map_err(|source| {
+                SetupError::InvalidArgument(format!("failed to create tokio runtime: {}", source))
+            })?;
+            rt.block_on(dashboard::serve(&project_root, port, open_browser))
+                .map_err(|e| SetupError::InvalidArgument(e.to_string()))?;
+            Ok(serde_json::json!({
+                "status": "ok",
+                "message": "dashboard stopped"
+            }))
+        }
         other => Err(SetupError::InvalidArgument(format!(
             "未知命令 '{other}'\n{}",
             usage()
@@ -183,6 +205,9 @@ struct CliOptions {
     output_dir: Option<PathBuf>,
     platform: Option<String>,
     all: bool,
+    port: Option<u16>,
+    no_open: bool,
+    project_root: Option<PathBuf>,
     playwright_versions: Vec<String>,
     playwright_browsers: Vec<String>,
 }
@@ -213,6 +238,19 @@ impl CliOptions {
                 "--platform" => {
                     index += 1;
                     options.platform = Some(required_value(args, index, "--platform")?.to_string());
+                }
+                "--port" => {
+                    index += 1;
+                    let value = required_value(args, index, "--port")?;
+                    options.port = Some(value.parse().map_err(|_| {
+                        SetupError::InvalidArgument("--port 需要一个有效的端口号".into())
+                    })?);
+                }
+                "--no-open" => options.no_open = true,
+                "--project" => {
+                    index += 1;
+                    options.project_root =
+                        Some(PathBuf::from(required_value(args, index, "--project")?));
                 }
                 "--all" => options.all = true,
                 "--playwright-version" => {
@@ -255,5 +293,6 @@ fn usage() -> &'static str {
      loom-setup purge\n\
      loom-setup browser-runtime prepare [--playwright-version <registry-version-or-range>] [--browser chromium|firefox|webkit]\n\
      loom-setup package-layout --output-dir <dir> [--platform all|darwin-arm64|darwin-x64|linux-x64|linux-arm64|windows-x64]\n\
-     loom-setup package-archive --package-root <dir> --output-dir <dir> --platform <platform>"
+     loom-setup package-archive --package-root <dir> --output-dir <dir> --platform <platform>\n\
+     loom-setup dashboard [--port 9876] [--no-open] [--project <path>]"
 }
