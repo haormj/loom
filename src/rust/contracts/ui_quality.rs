@@ -1911,7 +1911,7 @@ fn dedupe_rule_specs(rules: Vec<Value>) -> Vec<Value> {
 }
 
 pub fn known_ui_reference_groups() -> Value {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let groups = catalog.known_reference_groups("uix");
     json!(groups)
 }
@@ -2448,7 +2448,7 @@ pub fn ui_reference_load_plan(reference_groups: &Value) -> Value {
     let Some(groups) = reference_groups.as_object() else {
         return Value::Array(vec![]);
     };
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let mut items = Vec::new();
     for (group, value) in groups {
         let Some(group_items) = value.as_array() else {

@@ -1,0 +1,58 @@
+# Acme 企业 reference catalog overlay
+#
+# 本文件是一个完整的 enterprise overlay 案例,演示对 vendor `code` 路由的
+# 两种 TOML 操作(新增组、整组替换)。另外两种(prune、replace item)
+# 是函数操作,不在 TOML 中表达——详见 docs/reference-catalog-extension.md。
+#
+# 用法:设置环境变量 LOOM_CATALOG_OVERLAY 指向本文件路径,Loom 运行时
+# 通过 resolved_catalog() 自动发现并合并。
+#
+# 配套文档:docs/reference-catalog-extension.md
+# 配套参考文件:references/ 目录下的 .md 文件
+
+schemaVersion = 1
+
+[[routes]]
+id = "code"
+referenceRoot = "loom"
+
+  # ── 操作 (a):新增组 ──────────────────────────────────────────
+  # Acme 内部 Go web 服务使用自研框架 Goa。新增 goa 组,走模板路径
+  # tech/backend/goa/{item}.md(企业需自行创建这些参考文件)。
+  [[routes.groups]]
+  id = "goa"
+  refIdTemplate = "bk.goa.{item}"
+  pathTemplate = "tech/backend/goa/{item}.md"
+  reasonTemplate = "已选择 {label} {item} 的框架质量参考,用于本任务。"
+  label = "Goa"
+  items = ["core", "routing", "middleware", "testing"]
+
+  # ── 操作 (b):替换组 ──────────────────────────────────────────
+  # Java 后端不使用 Spring Security / Reactive,改用 Quarkus。
+  # 同 id 的 overlay 组整体替换 vendor 的 java 组(items、模板、label 等全部覆盖)。
+  [[routes.groups]]
+  id = "java"
+  refIdTemplate = "tech.code.java.{item}"
+  pathTemplate = "tech/code/java/{item}.md"
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考,用于本任务。"
+  items = ["core", "spring", "persistence", "testing", "quarkus"]
+
+  # ── 操作 (c):替换组 + 显式条目混合 ──────────────────────────
+  # Acme Python 规范与 vendor 默认不同:
+  #   - 去掉 packaging(企业统一用 uv,不需要单独参考)
+  #   - 新增 ruff(企业强制用 Ruff 替代 black/isort/flake8)
+  #   - core 改写为指向企业内部规范(强制 strict 类型检查 + Ruff)
+  #     通过 itemEntries 表达非标准路径,与 items 模板路径共存于同一组。
+  [[routes.groups]]
+  id = "python"
+  refIdTemplate = "tech.code.python.{item}"
+  pathTemplate = "tech/code/python/{item}.md"
+  reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考,用于本任务。"
+  items = ["typing", "async", "testing", "ruff"]
+
+    [[routes.groups.itemEntries]]
+    item = "core"
+    refId = "tech.code.python.core"
+    path = "enterprise/python/core.md"
+    reason = "Acme 企业 Python 核心规范,强制 Ruff 与 strict 类型检查。"
+    condition = "always"

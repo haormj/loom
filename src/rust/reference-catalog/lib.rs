@@ -27,6 +27,7 @@ pub use schema::{
     PrependItem, ProviderOverlay, ReferenceCatalog, Route, SectionGroupMapping,
 };
 pub use vendor::{
-    load_catalog, load_vendor_catalog, parse_catalog, validate_file_existence, validate_structure,
-    vendor_catalog, vendor_catalog_path,
+    build_resolved_catalog, load_catalog, load_vendor_catalog, parse_catalog, resolved_catalog,
+    validate_file_existence, validate_structure, vendor_catalog, vendor_catalog_path,
+    CATALOG_OVERLAY_ENV,
 };

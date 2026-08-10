@@ -797,7 +797,7 @@ pub(crate) fn build_architecture_quality_seed(
     section: ArchitectureSectionGroup,
     candidate_plan: Option<&Value>,
 ) -> Value {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let arch_groups = architecture_reference_groups(section);
     let mut seed = json!({
         "required": true,
@@ -828,7 +828,7 @@ pub(crate) fn build_architecture_quality_seed(
 }
 
 fn architecture_reference_groups(section: ArchitectureSectionGroup) -> Vec<String> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let section_id = match section {
         ArchitectureSectionGroup::Foundation => "Foundation",
         ArchitectureSectionGroup::DomainContract => "DomainContract",

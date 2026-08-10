@@ -99,7 +99,7 @@ fn reference_load_plan(
 }
 
 fn reference_load_plan_item(reference_id: &str) -> ReferenceLoadPlanItem {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     if let Some(entry) = catalog.resolve_entry("deploy", "deploy", reference_id) {
         return ReferenceLoadPlanItem {
             ref_id: entry.ref_id,

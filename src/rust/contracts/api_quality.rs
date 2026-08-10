@@ -108,7 +108,7 @@ pub fn build_api_quality_seed_from_foundation(
 }
 
 pub fn api_reference_load_plan(api_groups: &[String]) -> Vec<Value> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     api_groups
         .iter()
         .map(|group| {
@@ -143,7 +143,7 @@ pub fn api_quality_seed_read_fields() -> [&'static str; 8] {
 }
 
 pub fn api_quality_enum_refs() -> Value {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let api_items = catalog.items_for_group("api", "api");
     json!({
         "knownReferenceGroups": {
