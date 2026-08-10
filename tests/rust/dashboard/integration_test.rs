@@ -81,6 +81,54 @@ async fn index_html_served() {
 }
 
 #[tokio::test]
+async fn embedded_js_asset_served_with_javascript_content_type() {
+    use axum::body::Body;
+    use http_body_util::BodyExt;
+    use tower::ServiceExt;
+
+    let asset_paths = dashboard::embedded::embedded_asset_paths();
+    let Some(js_key) = asset_paths
+        .iter()
+        .find(|p| p.starts_with("assets/") && p.ends_with(".js"))
+        .cloned()
+    else {
+        return;
+    };
+
+    let router = build_router(full_fixture_root().display().to_string());
+    let request_uri = format!("/{}", js_key);
+    let response = router
+        .oneshot(
+            axum::http::Request::builder()
+                .uri(&request_uri)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), axum::http::StatusCode::OK);
+    let content_type = response
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default()
+        .to_string();
+    assert!(
+        content_type.contains("javascript"),
+        "expected javascript content-type for /{}, got {}",
+        js_key,
+        content_type
+    );
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let body = String::from_utf8_lossy(&bytes);
+    assert!(
+        !body.contains("<!DOCTYPE"),
+        "asset body for /{} must be JS, not index.html SPA fallback",
+        js_key
+    );
+}
+
+#[tokio::test]
 async fn path_traversal_blocked() {
     let router = build_router(full_fixture_root().display().to_string());
 

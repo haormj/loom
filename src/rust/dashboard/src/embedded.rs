@@ -67,3 +67,13 @@ fn mime_type(name: &str) -> &'static str {
         "application/octet-stream"
     }
 }
+
+#[cfg(not(feature = "dev-no-embed"))]
+pub fn embedded_asset_paths() -> Vec<String> {
+    DashboardAssets::iter().map(|p| p.to_string()).collect()
+}
+
+#[cfg(feature = "dev-no-embed")]
+pub fn embedded_asset_paths() -> Vec<String> {
+    Vec::new()
+}
