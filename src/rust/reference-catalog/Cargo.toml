@@ -25,3 +25,11 @@ path = "../../../tests/rust/reference-catalog/parity.rs"
 [[test]]
 name = "catalog_merge"
 path = "../../../tests/rust/reference-catalog/merge.rs"
+
+[[test]]
+name = "enterprise_overlay"
+path = "../../../tests/rust/reference-catalog/enterprise_overlay.rs"
+
+[[test]]
+name = "resolved"
+path = "../../../tests/rust/reference-catalog/resolved.rs"

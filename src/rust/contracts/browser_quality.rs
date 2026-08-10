@@ -179,7 +179,7 @@ pub fn playwright_reference_load_plan(
     state_refs: &[String],
     quality_rule_refs: &[String],
 ) -> Vec<ReferenceLoadPlanItem> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let resolve = |item: &str| -> ReferenceLoadPlanItem {
         let entry = catalog
             .resolve_entry("browser", "playwright_explicit", item)

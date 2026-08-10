@@ -998,7 +998,7 @@ const PORTABLE_DATA_ACCESS_MATCHERS: &[&str] = &[
 ];
 
 fn backend_ecosystem_guidance() -> Value {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     json!({
         "sourceOfTruth": "此目录是 backend/dataAccess 推荐关系和已知运行时家族兼容性检查的唯一来源。",
         "renderingRule": "将 backend 和 dataAccess 作为一个分组选择来呈现。不得呈现独立的扁平 dataAccess 选项列表。",
@@ -1853,7 +1853,7 @@ fn backend_data_access_compatibility_issue(stack: &Value) -> Option<delivery_cor
     {
         return None;
     }
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let compatible_options = catalog
         .backend_ecosystems()
         .iter()
@@ -1888,7 +1888,7 @@ fn active_track_selection<'a>(stack: &'a Value, track: &str) -> Option<&'a str> 
 }
 
 fn backend_runtime_families(selection: &str) -> BTreeSet<String> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     catalog
         .backend_ecosystems()
         .iter()
@@ -1898,7 +1898,7 @@ fn backend_runtime_families(selection: &str) -> BTreeSet<String> {
 }
 
 fn data_access_runtime_families(selection: &str) -> BTreeSet<String> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     catalog
         .backend_ecosystems()
         .iter()

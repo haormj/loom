@@ -68,7 +68,7 @@ pub fn build_code_quality_seed(baseline: &TechnicalBaselineContract) -> Value {
 }
 
 pub fn code_quality_enum_refs() -> Value {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let code_groups = catalog.known_reference_groups("code");
     json!({
         "knownReferenceGroups": {
@@ -245,7 +245,7 @@ fn redis_reference_items_for_task(
 pub fn code_reference_load_plan(
     reference_groups: &BTreeMap<String, Vec<String>>,
 ) -> Vec<ReferenceLoadPlanItem> {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     let mut load_plan = Vec::new();
     if !reference_groups.is_empty() {
         for prepend in catalog.prepend_items_for_route("code") {
@@ -726,7 +726,7 @@ fn task_focus_tags(task: &TaskDefinition) -> Vec<String> {
         "{} {} {:?}",
         task.title, task.objective, task.implementation_actions
     ));
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     for tag in catalog.focus_tags_from_text(&text, task_is_backend_task(task)) {
         push_unique(&mut tags, &tag);
     }
@@ -749,7 +749,7 @@ fn extend_focus_tags_from_context(tags: &mut Vec<String>, context: &CodeReferenc
 }
 
 fn signal_applies_to_task(signal: &CodeStackSignal, focus_tags: &[String]) -> bool {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     catalog.signal_applies_to_task(signal.language.as_deref(), &signal.roles, focus_tags)
 }
 
@@ -1664,7 +1664,7 @@ fn frontend_reference_items_for_signal(
 }
 
 fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanItem {
-    let catalog = reference_catalog::vendor_catalog();
+    let catalog = reference_catalog::resolved_catalog();
     if let Some(entry) = catalog.resolve_entry("code", group_key, group) {
         return ReferenceLoadPlanItem {
             ref_id: entry.ref_id,
