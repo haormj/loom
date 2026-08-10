@@ -3,10 +3,11 @@ use std::path::PathBuf;
 use axum::{extract::State, Json};
 use serde::Serialize;
 
-use crate::reader::{read_deploy_state, DeploySnapshot};
+use crate::reader::read_deploy_state;
 use crate::routes::AppState;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DeployResponse {
     pub prepared: bool,
     pub state: Option<serde_json::Value>,

@@ -59,6 +59,20 @@ jobs:
         if: matrix.rust_target != ''
         run: rustup target add ${{ matrix.rust_target }}
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build dashboard frontend
+        shell: bash
+        run: |
+          if [ -d src/rust/dashboard/frontend ]; then
+            cd src/rust/dashboard/frontend
+            npm ci --prefer-offline
+            npm run build
+          fi
+
       - name: Build release binaries
         if: matrix.rust_target == ''
         run: cargo build --release -p mcp-server -p setup --manifest-path src/rust/Cargo.toml

@@ -48,3 +48,7 @@ path = "../../../tests/rust/dashboard/routes_test.rs"
 [[test]]
 name = "watcher_test"
 path = "../../../tests/rust/dashboard/watcher_test.rs"
+
+[[test]]
+name = "integration_test"
+path = "../../../tests/rust/dashboard/integration_test.rs"

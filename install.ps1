@@ -110,6 +110,22 @@ try {
     }
     Get-Command cargo | Out-Null
 
+    $frontendDir = Join-Path $RepoRoot "src\rust\dashboard\frontend"
+    if (Test-Path $frontendDir) {
+      $npm = Get-Command npm -ErrorAction SilentlyContinue
+      if (-not $npm) {
+        throw "-LocalBuild requires npm on PATH when dashboard frontend is present"
+      }
+      Write-Host "Building dashboard frontend..."
+      Push-Location $frontendDir
+      try {
+        Invoke-CheckedCommand npm ci --prefer-offline
+        Invoke-CheckedCommand npm run build
+      } finally {
+        Pop-Location
+      }
+    }
+
     Invoke-CheckedCommand cargo build --release -p mcp-server -p setup --manifest-path $manifest
     $setup = Join-Path $RepoRoot "src\rust\target\release\loom-setup.exe"
     $packageOutput = Join-Path $temp "packages"

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "runId": "run_001",
+  "taskPlanId": "tp_001",
+  "status": "running",
+  "scheduler": { "mode": "sequential" },
+  "groupStates": [],
+  "taskStates": [
+    { "taskId": "task_1", "status": "completed", "attempts": [], "dependsOn": [] },
+    { "taskId": "task_2", "status": "running", "attempts": [], "dependsOn": ["task_1"] },
+    { "taskId": "task_3", "status": "pending", "attempts": [], "dependsOn": ["task_1"] }
+  ],
+  "summary": { "total": 3, "completed": 1, "completedWithNotes": 0, "blocked": 0, "failed": 0, "pending": 1, "running": 1 },
+  "nextAction": null,
+  "createdAt": "2026-08-10T12:00:00.000Z",
+  "updatedAt": "2026-08-10T12:01:00.000Z"
+}

@@ -188,6 +188,15 @@ if [ "$LOCAL_BUILD" = "1" ]; then
     fail "--local-build requires cargo on PATH"
   fi
 
+  # Build dashboard frontend if present
+  if [ -d "$REPO_ROOT/src/rust/dashboard/frontend" ]; then
+    if ! command -v npm >/dev/null 2>&1; then
+      fail "--local-build requires npm on PATH when dashboard frontend is present"
+    fi
+    echo "Building dashboard frontend..."
+    (cd "$REPO_ROOT/src/rust/dashboard/frontend" && npm ci --prefer-offline && npm run build)
+  fi
+
   cargo build --release -p mcp-server -p setup --manifest-path "$REPO_ROOT/src/rust/Cargo.toml"
   PACKAGE_OUTPUT="$TMP_DIR/packages"
   mkdir -p "$PACKAGE_OUTPUT"

@@ -1,0 +1,7 @@
+{
+  "prepared": true,
+  "phase": "running",
+  "services": [
+    { "serviceId": "api", "status": "healthy", "port": 3000 }
+  ]
+}
