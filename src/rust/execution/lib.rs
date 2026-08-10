@@ -1,6 +1,6 @@
 mod api_contract;
 mod browser;
-mod paths;
+pub mod paths;
 mod repair;
 mod review;
 mod task_execution;

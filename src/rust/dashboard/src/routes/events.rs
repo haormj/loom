@@ -16,7 +16,7 @@ pub async fn sse_handler(State(state): State<AppState>) -> axum::response::Respo
     let rx = if let Some(rx) = state.event_rx.lock().await.as_mut() {
         rx.resubscribe()
     } else {
-        return Sse::new(stream::empty())
+        return Sse::new(stream::empty::<Result<Event, Infallible>>())
             .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
             .into_response();
     };

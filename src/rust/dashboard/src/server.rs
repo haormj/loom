@@ -14,12 +14,18 @@ pub fn build_router(
 ) -> Router {
     let api = api_router(project_root, event_rx);
     Router::new()
-        .route(
-            "/",
-            get(|| async { axum::response::Html(embedded::INDEX_HTML) }),
-        )
+        .route("/", get(root_handler))
         .nest_service("/assets", axum::routing::any(asset_handler))
         .merge(api)
+        .fallback(fallback_handler)
+}
+
+async fn root_handler() -> axum::response::Response {
+    embedded::serve_asset(&"/".parse().unwrap())
+}
+
+async fn fallback_handler(uri: axum::http::Uri) -> axum::response::Response {
+    embedded::serve_asset(&uri)
 }
 
 async fn asset_handler(uri: axum::http::Uri) -> axum::response::Response {

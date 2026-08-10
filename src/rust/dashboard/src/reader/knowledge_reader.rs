@@ -24,10 +24,11 @@ pub fn list_knowledge_sources() -> Vec<KnowledgeSourceSummary> {
         Ok(v) => v,
         Err(_) => return vec![],
     };
+    let empty_sources: Vec<serde_json::Value> = vec![];
     let sources = registry
         .get("sources")
         .and_then(|s| s.as_array())
-        .unwrap_or(&vec![]);
+        .unwrap_or(&empty_sources);
     sources
         .iter()
         .map(|src| {

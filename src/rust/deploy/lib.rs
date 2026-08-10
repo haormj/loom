@@ -8,7 +8,7 @@ mod facts;
 mod generate;
 mod inspect;
 mod logs;
-mod paths;
+pub mod paths;
 mod port_plan;
 mod prepare;
 mod references;
