@@ -1487,6 +1487,60 @@ fn new_project_technical_baseline_autofills_confirmed_at() {
 }
 
 #[test]
+fn plan_blocks_after_brainstorm_accept_during_technical_baseline() {
+    let fixture = Fixture::new("plan-after-brainstorm-accept");
+    let request_ref = start_brainstorm_candidate_write_request(&fixture);
+    write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
+    let brainstorm_result = call_submit(
+        "loom.brainstormAcceptFile",
+        &request_ref,
+        fixture.root_str(),
+    );
+    // After brainstorm accept, the flow advances to the technical baseline stage
+    // (brainstormContract is now set on the active phase). The exact next state
+    // may be auto_runnable or user_gate depending on project kind, but the key
+    // point is that brainstormContract exists, so we are past the brainstorm stage.
+    assert!(
+        brainstorm_result["state"] == "auto_runnable" || brainstorm_result["state"] == "user_gate",
+        "unexpected brainstorm accept state: {}",
+        brainstorm_result["state"]
+    );
+    let original_delivery = request_delivery_id(fixture.root_str(), &request_ref);
+
+    // If the agent mistakenly calls loom.plan instead of following the auto_runnable
+    // technical baseline instruction, loom.plan must block and direct to loom.continue.
+    let server = LoomMcpServer::default();
+    let plan_result = server
+        .invoke_tool(
+            "loom.plan",
+            Some(
+                json!({
+                    "projectRoot": fixture.root_str(),
+                    "requestText": "新需求"
+                })
+                .as_object()
+                .expect("args")
+                .clone(),
+            ),
+        )
+        .expect("plan call")
+        .structured_content
+        .expect("content");
+    assert_eq!(plan_result["state"], "blocked", "{plan_result:#}");
+    assert_eq!(
+        plan_result["recommendedTool"], "loom.continue",
+        "loom.plan must direct the agent to loom.continue, not start a new brainstorm"
+    );
+    assert_eq!(
+        plan_result["details"]["activeDeliveryId"]
+            .as_str()
+            .unwrap_or_default(),
+        original_delivery,
+        "loom.plan must not create a new delivery after brainstorm accept"
+    );
+}
+
+#[test]
 fn redis_session_baseline_derives_server_session_without_jwt_user_gate() {
     let fixture = Fixture::new("technical-baseline-redis-server-session");
     let request_ref = start_brainstorm_candidate_write_request(&fixture);
