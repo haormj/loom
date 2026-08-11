@@ -1487,6 +1487,66 @@ fn new_project_technical_baseline_autofills_confirmed_at() {
 }
 
 #[test]
+fn plan_after_technical_baseline_delegates_to_continue() {
+    let fixture = Fixture::new("plan-after-tb");
+    let request_ref = start_brainstorm_candidate_write_request(&fixture);
+    write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
+    let brainstorm_result = call_submit(
+        "loom.brainstormAcceptFile",
+        &request_ref,
+        fixture.root_str(),
+    );
+    let baseline_request_ref = technical_baseline_request_ref(&brainstorm_result);
+    write_candidate_target(
+        &fixture,
+        &baseline_request_ref,
+        &new_project_technical_baseline_candidate_json(),
+    );
+    let baseline_result = call_submit(
+        "loom.technicalBaselineAcceptFile",
+        &baseline_request_ref,
+        fixture.root_str(),
+    );
+    assert_eq!(baseline_result["state"], "auto_runnable");
+    assert_eq!(
+        baseline_result["next"]["artifactKind"],
+        "architecture_section_candidate"
+    );
+    let original_delivery = request_delivery_id(fixture.root_str(), &baseline_request_ref);
+
+    let server = LoomMcpServer::default();
+    let plan_result = server
+        .invoke_tool(
+            "loom.plan",
+            Some(
+                json!({
+                    "projectRoot": fixture.root_str(),
+                    "requestText": "新需求"
+                })
+                .as_object()
+                .expect("args")
+                .clone(),
+            ),
+        )
+        .expect("plan call")
+        .structured_content
+        .expect("content");
+    assert_eq!(plan_result["state"], "auto_runnable");
+    assert_eq!(
+        plan_result["next"]["artifactKind"],
+        "architecture_section_candidate"
+    );
+    let plan_delivery = plan_result["next"]["requestRef"]
+        .as_str()
+        .expect("plan requestRef");
+    let plan_delivery_id = request_delivery_id(fixture.root_str(), plan_delivery);
+    assert_eq!(
+        plan_delivery_id, original_delivery,
+        "loom.plan must not create a new delivery after technical baseline; it should continue the active one"
+    );
+}
+
+#[test]
 fn redis_session_baseline_derives_server_session_without_jwt_user_gate() {
     let fixture = Fixture::new("technical-baseline-redis-server-session");
     let request_ref = start_brainstorm_candidate_write_request(&fixture);
