@@ -33,6 +33,7 @@ pub struct BrainstormResponseRule {
 
 pub fn required_blocks() -> Vec<ClarificationBlockName> {
     vec![
+        ClarificationBlockName::BusinessBackground,
         ClarificationBlockName::PhaseScope,
         ClarificationBlockName::ConceptGrounding,
         ClarificationBlockName::FrontendExperience,
@@ -63,6 +64,7 @@ pub fn gate_for_block(
 
 pub fn block_id(block: &ClarificationBlockName) -> &'static str {
     match block {
+        ClarificationBlockName::BusinessBackground => "business_background",
         ClarificationBlockName::PhaseScope => "phase_scope",
         ClarificationBlockName::ConceptGrounding => "concept_grounding",
         ClarificationBlockName::FrontendExperience => "frontend_experience",
@@ -76,6 +78,7 @@ pub fn to_value(gate: &BrainstormGate) -> Value {
 
 pub fn required_knowledge_step_ids(block: &ClarificationBlockName) -> &'static [&'static str] {
     match block {
+        ClarificationBlockName::BusinessBackground => &["business_background_context"],
         ClarificationBlockName::PhaseScope => &[
             "phase_scope_dependency_order",
             "phase_scope_capability_closure",
@@ -88,6 +91,9 @@ pub fn required_knowledge_step_ids(block: &ClarificationBlockName) -> &'static [
 
 pub fn block_message(block: &ClarificationBlockName) -> String {
     match block {
+        ClarificationBlockName::BusinessBackground => {
+            "阅读当前块的知识计划，查询 request-scoped knowledge，然后用用户语言呈现业务目标、参与者、领域上下文与约束，等待用户可见确认后进入阶段范围确认。不要向用户展示内部 block ids。".to_string()
+        }
         ClarificationBlockName::PhaseScope => {
             "阅读当前块的知识计划，查询 request-scoped knowledge，然后用用户语言呈现 2-3 个当前阶段边界选项，而非完整的多阶段项目路线图。等待用户可见确认后，继续进入业务理解与规则确认。不要向用户展示内部 block ids。".to_string()
         }

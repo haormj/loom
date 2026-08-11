@@ -110,7 +110,25 @@ fn brainstorm_confirmation_requires_request_inspection_and_declared_reads() {
 fn brainstorm_phase_scope_rejects_single_wide_capability_closure_query() {
     let fixture = Fixture::new("brainstorm-phase-scope-single-wide-knowledge");
     let server = LoomMcpServer::default();
-    let request_ref = start_brainstorm_request(&fixture);
+    let mut request_ref = start_brainstorm_request(&fixture);
+    request_ref = confirm_brainstorm_block(
+        &server,
+        &fixture,
+        &request_ref,
+        "business_background",
+        "确认股票交易系统业务背景。",
+        json!({
+            "businessGoal": "完成证券账户生命周期办理能力闭环。",
+            "stakeholders": ["工作人员"],
+            "domainContext": "证券交易系统。",
+            "constraints": ["开户需要资格校验"],
+            "successCriteria": ["可办理开户并看到回读"],
+            "assumptions": []
+        }),
+    )["requestRef"]
+        .as_str()
+        .expect("phase scope requestRef")
+        .to_string();
     read_required_request_groups(&fixture, &request_ref);
 
     for (step_id, query_id) in [
@@ -276,6 +294,7 @@ fn brainstorm_submit_ignores_agent_authored_confirmation_metadata() {
     assert_eq!(
         contract["userConfirmation"]["confirmationBasis"]["presentedItems"],
         json!([
+            "business_background",
             "phase_scope",
             "concept_grounding",
             "frontend_experience",
@@ -6947,7 +6966,10 @@ fn review_accept_approved_materializes_next_phase_from_preview() {
         repository_result["gate"]["gateId"],
         "phase_brainstorm_required"
     );
-    assert_eq!(repository_result["gate"]["currentBlock"], "phase_scope");
+    assert_eq!(
+        repository_result["gate"]["currentBlock"],
+        "business_background"
+    );
     assert_eq!(
         repository_result["gate"]["kind"],
         "phase_brainstorm_continuation"
@@ -6967,7 +6989,7 @@ fn review_accept_approved_materializes_next_phase_from_preview() {
     assert_eq!(continued["state"], "user_gate", "{continued:#}");
     assert_eq!(continued["requestRef"], phase_2_request_ref);
     assert_eq!(continued["gate"]["gateId"], "phase_brainstorm_required");
-    assert_eq!(continued["gate"]["currentBlock"], "phase_scope");
+    assert_eq!(continued["gate"]["currentBlock"], "business_background");
     assert_eq!(continued["gate"]["nextPhaseSeed"]["phaseId"], "phase-2");
     let refreshed_index_path = fixture
         .root
@@ -9488,6 +9510,24 @@ fn start_brainstorm_candidate_write_request_with_frontend(
         &server,
         fixture,
         &request_ref,
+        "business_background",
+        "确认股票交易系统业务背景：证券账户为交易身份基础，工作人员后台办理。",
+        json!({
+            "businessGoal": "完成证券账户生命周期办理能力闭环。",
+            "stakeholders": ["工作人员", "投资者"],
+            "domainContext": "证券交易系统，证券账户是资金账户和交易链路的上游基础对象。",
+            "constraints": ["开户需要资格校验", "销户前必须清空持仓"],
+            "successCriteria": ["工作人员可办理开户、挂失补办、销户并看到状态回读"],
+            "assumptions": []
+        }),
+    )["requestRef"]
+        .as_str()
+        .expect("phase scope requestRef")
+        .to_string();
+    request_ref = confirm_brainstorm_block(
+        &server,
+        fixture,
+        &request_ref,
         "phase_scope",
         "确认第一阶段为证券账户模块闭环。",
         json!({
@@ -9674,6 +9714,24 @@ fn confirm_phase2_brainstorm_to_candidate_write(
         &server,
         fixture,
         phase_2_request_ref,
+        "business_background",
+        "确认第二阶段业务背景：资金账户承接证券账户闭环。",
+        json!({
+            "businessGoal": "完成资金账户基础能力，承接证券账户闭环。",
+            "stakeholders": ["工作人员", "投资者"],
+            "domainContext": "证券交易系统第二阶段，资金账户承接证券账户。",
+            "constraints": ["资金账户销户前需要清空余额和解除关联"],
+            "successCriteria": ["工作人员可办理资金账户开户、存取款和关联"],
+            "assumptions": []
+        }),
+    )["requestRef"]
+        .as_str()
+        .expect("phase2 phase scope requestRef")
+        .to_string();
+    request_ref = confirm_brainstorm_block(
+        &server,
+        fixture,
+        &request_ref,
         "phase_scope",
         "确认第二阶段为资金账户基础能力。",
         json!({

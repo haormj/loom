@@ -28,7 +28,7 @@ pub fn build_brainstorm_request_root(
         brainstorm_run_id,
         user_facing_language,
         context_refs,
-        ClarificationBlockName::PhaseScope,
+        ClarificationBlockName::BusinessBackground,
     )
 }
 
@@ -93,7 +93,7 @@ pub fn build_brainstorm_clarification_request_root(
         "whenToRead": "在呈现当前块之前阅读。",
         "selectors": read_selectors_value_from_paths(rule_group_fields)
     }));
-    if current_block != ClarificationBlockName::PhaseScope {
+    if current_block != ClarificationBlockName::BusinessBackground {
         groups.push(json!({
             "groupId": "confirmed_clarification_state",
             "required": true,
@@ -315,6 +315,15 @@ fn schema_projection() -> Value {
             "conceptGrounding",
             "conceptConfirmation"
         ],
+        "businessBackgroundFields": [
+            "businessBackground.businessGoal",
+            "businessBackground.stakeholders",
+            "businessBackground.domainContext",
+            "businessBackground.constraints",
+            "businessBackground.successCriteria",
+            "businessBackground.assumptions",
+            "businessBackground.confirmationSummary"
+        ],
         "frontendExperienceFields": [
             "frontendExperience.required",
             "frontendExperience.kind",
@@ -447,6 +456,18 @@ fn candidate_result_template(phase_id: &str) -> Value {
                 "summary": ""
             }]
         },
+        "businessBackground": {
+            "businessGoal": "",
+            "stakeholders": [{
+                "id": "stakeholder_1",
+                "name": "",
+                "role": ""
+            }],
+            "domainContext": "",
+            "constraints": [],
+            "successCriteria": [],
+            "assumptions": []
+        },
         "conceptGrounding": {
             "phaseConceptGrounding": {
                 "mode": "concepts_present",
@@ -555,7 +576,7 @@ fn enum_refs() -> Value {
         "conceptPriority": ["must_understand", "should_understand", "nice_to_understand"],
         "conceptRiskFactor": ["business_invariant", "state_transition", "resource_consistency", "permission_boundary", "external_contract", "scope_confusion_risk", "user_visible_flow", "runtime_or_delivery_semantics", "frontend_experience_semantics"],
         "glossaryUpdateOperation": ["add", "replace", "remove"],
-        "clarificationBlockName": ["phase_scope", "concept_grounding", "frontend_experience", "final_summary"],
+        "clarificationBlockName": ["business_background", "phase_scope", "concept_grounding", "frontend_experience", "final_summary"],
         "clarificationMode": ["progressive_blocks"],
         "frontendExperienceLevel": ["none", "technical_demo", "usable_internal_product", "polished_product"],
         "frontendTargetSelectionMode": ["query_and_select", "direct_id_lookup", "preselected_context", "not_applicable"],
@@ -603,6 +624,22 @@ fn knowledge_query_plan() -> Value {
             }
         },
         "blocks": {
+            "business_background": {
+                "executionOrder": [
+                    {
+                        "stepId": "business_background_context",
+                        "queryKind": "business_background",
+                        "querySubjectRule": "主题是本次交付的业务领域、参与者、既有系统衔接与约束上下文，不是阶段边界或对象字段细节。",
+                        "queryConstructionRules": [
+                            "naturalLanguageQuery 应询问业务目标、参与者或干系人角色、所属领域或行业、既有系统衔接、业务或合规约束和成功标准。",
+                            "semanticFocus 优先使用 kind:text 形式的类型化条目，如 object:核心业务对象、operation:核心业务操作、rule:业务或合规约束、flow:核心业务流程；仅在领域标签明确时添加 domain focus。",
+                            "不要在 business_background 中查询阶段边界切割、对象字段集、页面操作路径或具体校验规则细节；这些属于后续块。",
+                            "当 knowledge source 没有明确的领域标签时，在 naturalLanguageQuery 中使用业务背景意图，并使用需求中的 object、operation 或 rule 锚点作为 semanticFocus。",
+                            "不要为了满足 semanticFocus 而编造领域或行业标签。"
+                        ]
+                    }
+                ]
+            },
             "phase_scope": {
                 "executionOrder": [
                     {
@@ -701,6 +738,17 @@ fn knowledge_query_plan_for_block(block: &ClarificationBlockName) -> Value {
 
 fn block_rules(block: &ClarificationBlockName) -> (&'static str, Value, Vec<&'static str>) {
     match block {
+        ClarificationBlockName::BusinessBackground => (
+            "businessBackground",
+            business_background_rules(),
+            vec![
+                "rules.businessBackground.blockMission",
+                "rules.businessBackground.presentation",
+                "rules.businessBackground.contextCoverage",
+                "rules.businessBackground.selfCheck",
+                "rules.businessBackground.confirmedDataShape",
+            ],
+        ),
         ClarificationBlockName::PhaseScope => (
             "phaseScope",
             phase_scope_rules(),
@@ -756,6 +804,7 @@ fn block_rules(block: &ClarificationBlockName) -> (&'static str, Value, Vec<&'st
 
 fn block_id(block: &ClarificationBlockName) -> &'static str {
     match block {
+        ClarificationBlockName::BusinessBackground => "business_background",
         ClarificationBlockName::PhaseScope => "phase_scope",
         ClarificationBlockName::ConceptGrounding => "concept_grounding",
         ClarificationBlockName::FrontendExperience => "frontend_experience",
@@ -765,6 +814,7 @@ fn block_id(block: &ClarificationBlockName) -> &'static str {
 
 fn user_visible_block_title(block: &ClarificationBlockName) -> &'static str {
     match block {
+        ClarificationBlockName::BusinessBackground => "业务背景确认",
         ClarificationBlockName::PhaseScope => "阶段范围确认",
         ClarificationBlockName::ConceptGrounding => "业务理解与规则确认",
         ClarificationBlockName::FrontendExperience => "页面办理路径确认",
@@ -774,6 +824,9 @@ fn user_visible_block_title(block: &ClarificationBlockName) -> &'static str {
 
 fn block_rule(block: &ClarificationBlockName) -> &'static str {
     match block {
+        ClarificationBlockName::BusinessBackground => {
+            "先查询此块的 request-scoped knowledge，然后确认业务目标、参与者、领域上下文与约束，并等待用户明确确认，再进入阶段范围确认。"
+        }
         ClarificationBlockName::PhaseScope => {
             "仅确认当前阶段边界：先查询此块的 request-scoped knowledge，然后呈现 2-3 个当前阶段选项，而非完整的多阶段项目路线图，并等待用户明确确认。"
         }
@@ -803,6 +856,9 @@ fn current_turn_answer_rule(block: &ClarificationBlockName) -> Value {
 
 fn current_turn_answer_block_rule(block: &ClarificationBlockName) -> &'static str {
     match block {
+        ClarificationBlockName::BusinessBackground => {
+            "仅当当前消息明确确认或修正了业务目标、参与者、领域上下文或约束时才消费该消息，而非仅仅要求 Loom 开始确认。"
+        }
         ClarificationBlockName::PhaseScope => {
             "仅当当前消息明确选择了当前阶段边界时才消费该消息，而非仅仅要求 Loom 提出阶段选项。"
         }
@@ -820,6 +876,14 @@ fn current_turn_answer_block_rule(block: &ClarificationBlockName) -> &'static st
 
 fn block_confirmed_data_shape(block: &ClarificationBlockName) -> Value {
     match block {
+        ClarificationBlockName::BusinessBackground => json!({
+            "businessGoal": "本次交付要达成的业务目标",
+            "stakeholders": ["参与者或干系人及其角色"],
+            "domainContext": "所属领域、行业或既有系统衔接上下文",
+            "constraints": ["业务、合规或运营约束"],
+            "successCriteria": ["业务成功标准"],
+            "assumptions": ["需确认的业务假设（适用时）"]
+        }),
         ClarificationBlockName::PhaseScope => json!({
             "scope": {
                 "included": ["用户确认的当前阶段能力项"],
@@ -854,6 +918,40 @@ fn block_confirmed_data_shape(block: &ClarificationBlockName) -> Value {
             "readyToWriteCandidate": true
         }),
     }
+}
+
+fn business_background_rules() -> Value {
+    json!({
+        "blockMission": [
+            "此块确认本次交付的业务背景，先于阶段范围确认。",
+            "业务背景包括业务目标、参与者或干系人、所属领域或行业、既有系统衔接、业务或合规约束和成功标准。",
+            "在呈现确认前，调用 loom.knowledgeBrainstormContext 执行 business_background_context 查询。如果结果为空，继续使用源需求。",
+            "不要在此块中确认阶段边界、对象字段集、页面操作路径或具体校验规则细节；这些属于后续块。"
+        ],
+        "presentation": [
+            "使用用户可见标题，如业务背景确认。不要向用户展示内部名称，如 business_background、businessBackground、stakeholders、domainContext、constraints 或 successCriteria。",
+            "使用稳定的用户可见段落顺序：业务目标、参与者或干系人、领域与既有系统上下文、业务或合规约束、成功标准、需确认的业务假设（如有）、以及一条确认指令。",
+            "将业务目标保持为简短的通俗段落，然后使用列表或紧凑 mini-block 展示细节。不要将目标、参与者、领域上下文、约束和成功标准合并为一个长段落。",
+            "如果某个段不适用，以用户语言说明具体原因，而非用通用标签填充检查清单。",
+            "以一条简洁的确认指令结尾。除非有具体的未决问题阻碍进度，否则不要要求用户逐节单独确认。"
+        ],
+        "contextCoverage": [
+            "业务目标必须明确本次交付要达成的业务结果，而非仅描述技术任务。",
+            "参与者或干系人应命名角色及其与交付的关系，如最终用户、运营人员、审批方或外部系统。",
+            "领域与既有系统上下文应说明所属领域、行业、与既有系统的衔接或依赖，适用时使用源措辞。",
+            "业务或合规约束应列出影响交付范围或实现方式的真实约束，如合规要求、运营时段、数据保留或外部契约；不要编造约束。",
+            "成功标准应说明如何判断业务目标达成，尽量可观察或可验证。",
+            "如果源信息不足以填充某段，将其标记为未决或提出聚焦的澄清问题，而非编造内容。"
+        ],
+        "selfCheck": [
+            "在呈现 business_background 供用户确认前，在块内运行 business_background 自检。",
+            "验证业务目标、参与者、领域上下文已覆盖或明确标记为未决。",
+            "验证约束和成功标准来自源需求、已确认用户答案或仓库事实，而非编造。",
+            "验证没有将阶段边界、对象字段集、页面操作路径或具体校验规则细节作为此块的确认内容。",
+            "如果关键业务背景不明确或缺失，在标记 business_background 为已确认前提出聚焦的业务背景问题。"
+        ],
+        "confirmedDataShape": block_confirmed_data_shape(&ClarificationBlockName::BusinessBackground)
+    })
 }
 
 fn phase_scope_rules() -> Value {
@@ -1021,18 +1119,19 @@ fn final_summary_rules() -> Value {
     json!({
         "reviewGate": [
             "final_summary 是提交前覆盖检查清单的 gate，不是需求细节的来源。",
-            "在呈现 final_summary 供用户确认前，验证 phase_scope、concept_grounding 和 frontend_experience 已被确认或以具体原因明确跳过。",
+            "在呈现 final_summary 供用户确认前，验证 business_background、phase_scope、concept_grounding 和 frontend_experience 已被确认或以具体原因明确跳过。",
             "不要使用 final_summary 引入先前块中未确认的新需求。",
             "不要通过扩展 final_summary 来修复缺失的结构化细节。返回相关的 Brainstorm 块或修复对应的结构化 candidate 字段后再提交。"
         ],
         "presentation": [
-            "使用用户可见标题，如提交前核对或提交前确认。不要向用户展示内部名称，如 final_summary、phase_scope、concept_grounding、frontend_experience、BrainstormCandidate、dataViews、actions 或 operationPaths。",
-            "将已确认的先前块投影为一个用户可见的覆盖检查清单，仅一个确认动作，而非三个单独确认。",
-            "使用稳定的用户可见段落顺序，等同于：当前要提交的阶段、当前阶段覆盖、已确认的业务规则、已确认的页面操作路径、本阶段不做的内容、下一阶段预览、确认指令。",
+            "使用用户可见标题，如提交前核对或提交前确认。不要向用户展示内部名称，如 final_summary、business_background、phase_scope、concept_grounding、frontend_experience、BrainstormCandidate、dataViews、actions 或 operationPaths。",
+            "将已确认的先前块投影为一个用户可见的覆盖检查清单，仅一个确认动作，而非多个单独确认。",
+            "使用稳定的用户可见段落顺序，等同于：当前要提交的阶段、业务背景摘要、当前阶段覆盖、已确认的业务规则、已确认的页面操作路径、本阶段不做的内容、下一阶段预览、确认指令。",
             "以一条确认指令结尾。不要要求用户逐个重新确认先前块。"
         ],
         "checklistCoverage": [
             "对于除单一当前阶段目标和下一阶段预览之外的每个适用检查清单段，当先前已确认两个或更多项时，至少包含两个具体的检查清单项。",
+            "业务背景段必须列出适用时已确认的具体业务目标、参与者或干系人、领域或既有系统上下文、约束和成功标准；当无适用内容时以用户语言说明原因。",
             "当前阶段覆盖段必须列出已确认阶段范围中的具体包含能力或操作；当多个能力已确认时，不要将范围折叠为单个抽象句子。",
             "业务规则段必须列出适用时已确认的具体业务对象、关系、操作名称、字段集摘要、状态变更、阻断规则、成功结果或高风险误解防护。",
             "页面操作路径段必须在 UI 适用时列出具体的 surface/entry、target discovery 或 query-selection path、分页/查询条件（已确认时）、操作入口、结果反馈和刷新/回读行为。",
@@ -1041,6 +1140,7 @@ fn final_summary_rules() -> Value {
         ],
         "requiredUserVisibleTopics": [
             "当前阶段提交目标",
+            "来自已确认业务背景的业务目标、参与者、领域上下文与约束摘要",
             "来自已确认阶段范围的覆盖检查清单，包含具体的包含工作和延后或不做的边界",
             "来自已确认业务理解的业务规则检查清单，包含适用时具体的对象、关系、操作、字段集摘要、状态变更、阻断规则、成功结果和高风险误解防护",
             "来自已确认前端路径的页面操作检查清单，包含适用时 surface 或 entry、target discovery 或 query selection、分页和查询条件（已确认时）、操作入口、反馈和刷新或回读",
@@ -1073,6 +1173,7 @@ fn candidate_write_rules() -> Value {
         "不要将 knowledge 元数据放入 candidate 的 sourceRefs 和 summary 字段中。",
         "将所有已确认的块细节保留在 scope、acceptance、domainModel.businessFlows、conceptGrounding 和 frontendExperience 中，而非依赖 final_summary 文本。",
         "对于 phase_scope，将已确认选项的 included scope、excluded scope、deferred scope、reasons、tradeoffs 和 nextPhasePreview 方向保留在 scope、roadmap、phasePlan、assumptions 或 acceptance 中（视情况而定）。",
+        "对于 business_background，将已确认的业务目标、参与者或干系人、领域与既有系统上下文、业务或合规约束、成功标准和需确认的业务假设保留在 businessBackground 中，而非仅存储在 confirmationSummary 中。",
         "对于 concept_grounding，将已确认的业务场景、高风险概念、业务对象或主体、关键字段集、支持的操作、操作输入、前置条件、校验或阻断原因、状态转换、成功结果、可见或返回的反馈、未决说明和不可误解边界保留在 scope、acceptance、domainModel.businessFlows 和 conceptGrounding 中。",
         "对于 frontend_experience，将已确认的 UI 需求或跳过原因、surfaces、data views、target discovery 或 selection path、分页、已确认的查询条件、操作入口点、输入字段、成功反馈、错误反馈、业务阻断反馈、空/加载状态、刷新/回读策略和不可接受的 UI 形式保留在 frontendExperience 中。",
         "对于 final_summary，保留用户修正和最终范围决策，但不要将检查清单式的 final_summary 视为丢弃先前块中已确认细节的许可。",

@@ -80,7 +80,7 @@ pub fn initial_state(
         delivery_id: delivery_id.to_string(),
         phase_id: phase_id.to_string(),
         brainstorm_run_id: brainstorm_run_id.to_string(),
-        current_block: ClarificationBlockName::PhaseScope,
+        current_block: ClarificationBlockName::BusinessBackground,
         blocks: vec![],
         final_summary_confirmed: false,
         updated_at: state::store::now_string(),
@@ -798,6 +798,7 @@ fn upsert_confirmed_block(state: &mut ClarificationState, block: ConfirmedClarif
 
 fn next_block(block: &ClarificationBlockName) -> Option<ClarificationBlockName> {
     match block {
+        ClarificationBlockName::BusinessBackground => Some(ClarificationBlockName::PhaseScope),
         ClarificationBlockName::PhaseScope => Some(ClarificationBlockName::ConceptGrounding),
         ClarificationBlockName::ConceptGrounding => {
             Some(ClarificationBlockName::FrontendExperience)
@@ -809,10 +810,11 @@ fn next_block(block: &ClarificationBlockName) -> Option<ClarificationBlockName> 
 
 fn block_order(block: &ClarificationBlockName) -> u8 {
     match block {
-        ClarificationBlockName::PhaseScope => 1,
-        ClarificationBlockName::ConceptGrounding => 2,
-        ClarificationBlockName::FrontendExperience => 3,
-        ClarificationBlockName::FinalSummary => 4,
+        ClarificationBlockName::BusinessBackground => 1,
+        ClarificationBlockName::PhaseScope => 2,
+        ClarificationBlockName::ConceptGrounding => 3,
+        ClarificationBlockName::FrontendExperience => 4,
+        ClarificationBlockName::FinalSummary => 5,
     }
 }
 

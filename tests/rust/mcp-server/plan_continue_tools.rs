@@ -44,9 +44,9 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         .expect("prompt")
         .contains("phase_scope"));
     let prompt = value["prompt"].as_str().expect("prompt");
-    assert!(prompt.contains("当前阶段边界选项"));
+    assert!(prompt.contains("业务背景确认"));
     assert!(!prompt.contains("phase-1 boundary"));
-    assert_eq!(value["gate"]["currentBlock"], "phase_scope");
+    assert_eq!(value["gate"]["currentBlock"], "business_background");
     assert!(value["gate"].get("requestReadGroups").is_none());
     assert!(value["gate"].get("requiredBeforeResponse").is_none());
     let request_ref = value["requestRef"].as_str().expect("requestRef");
@@ -115,7 +115,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         current_turn_rule["blockSpecificRule"]
             .as_str()
             .expect("block specific rule")
-            .contains("当前阶段边界"),
+            .contains("业务目标、参与者、领域上下文或约束"),
         "{current_turn_rule:#}"
     );
     let requirement_context = inspected
@@ -147,20 +147,15 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
     .expect("read current block rules");
     let rules_text =
         serde_json::to_string(&current_block_rules.fields).expect("serialize current block rules");
-    assert!(rules_text.contains("当前阶段"));
+    assert!(rules_text.contains("业务背景"));
     assert!(!rules_text.contains("active phase-1"));
     assert!(rules_text.contains("调用 loom.knowledgeBrainstormContext"));
-    assert!(rules_text.contains("完整的项目路线图"));
-    assert!(rules_text.contains("多阶段路线图"));
-    assert!(rules_text.contains("不要输出编号的完整项目阶段"));
-    assert!(rules_text.contains("将基于源的当前阶段候选工作分解为 scope items"));
-    assert!(rules_text.contains("goal-essential item"));
-    assert!(rules_text.contains("flow-support item"));
-    assert!(rules_text.contains("current-object lifecycle item"));
-    assert!(
-        rules_text.contains("从所有 goal-essential items 加上所有 flow-support items 生成推荐选项")
-    );
-    assert!(rules_text.contains("不要向用户暴露这些内部类别名称"));
+    assert!(rules_text.contains("业务目标"));
+    assert!(rules_text.contains("参与者或干系人"));
+    assert!(rules_text.contains("领域与既有系统上下文"));
+    assert!(rules_text.contains("业务或合规约束"));
+    assert!(rules_text.contains("成功标准"));
+    assert!(rules_text.contains("不要向用户展示内部名称，如 business_background"));
     assert!(!current_block_rules
         .fields
         .keys()
@@ -174,13 +169,13 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
             "blockConfirmationContract.tool".to_string(),
             "knowledgeQueryPlan.toolContract".to_string(),
             "knowledgeQueryPlan.sharedRules".to_string(),
-            "knowledgeQueryPlan.blocks.phase_scope.executionOrder".to_string(),
+            "knowledgeQueryPlan.blocks.business_background.executionOrder".to_string(),
         ],
     })
     .expect("knowledge query plan fields");
     assert_eq!(
         knowledge_fields.fields["clarificationConversationProtocol.userVisibleBlockTitle"].value,
-        "阶段范围确认"
+        "业务背景确认"
     );
     assert_eq!(
         knowledge_fields.fields["blockConfirmationContract.tool"].value,
@@ -191,7 +186,7 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
             .value
             .as_str()
             .unwrap_or_default()
-            .contains("而非完整的多阶段项目路线图")
+            .contains("业务目标、参与者、领域上下文与约束")
     );
     assert_eq!(
         knowledge_fields.fields["knowledgeQueryPlan.toolContract"].value["contextTool"],
@@ -221,21 +216,15 @@ fn plan_returns_user_gate_and_creates_brainstorm_delivery() {
         .value
         .to_string()
         .contains("object:证券账户"));
-    assert!(
-        knowledge_fields.fields["knowledgeQueryPlan.blocks.phase_scope.executionOrder"]
-            .value
-            .to_string()
-            .contains("不要将整体依赖序列作为编号项目阶段输出或确认")
-    );
+    assert!(knowledge_fields.fields
+        ["knowledgeQueryPlan.blocks.business_background.executionOrder"]
+        .value
+        .to_string()
+        .contains("业务领域、参与者、既有系统衔接与约束上下文"));
     assert_eq!(
-        knowledge_fields.fields["knowledgeQueryPlan.blocks.phase_scope.executionOrder"].value[1]
-            ["repeatMode"],
-        "per_candidate_phase_cut"
-    );
-    assert_eq!(
-        knowledge_fields.fields["knowledgeQueryPlan.blocks.phase_scope.executionOrder"].value[1]
-            ["minimumQueryCount"],
-        2
+        knowledge_fields.fields["knowledgeQueryPlan.blocks.business_background.executionOrder"]
+            .value[0]["queryKind"],
+        "business_background"
     );
     assert!(
         knowledge_fields.fields["knowledgeQueryPlan.toolContract"].value["conditionalInputFields"]
@@ -298,6 +287,30 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
         "clarification request must not expose candidate_write_contract"
     );
 
+    let business_background_confirmed = confirm_block(
+        &server,
+        &fixture,
+        &request_ref,
+        "business_background",
+        "确认股票交易系统业务背景：证券账户为交易身份基础，工作人员后台办理。",
+        json!({
+            "businessGoal": "完成证券账户生命周期办理能力闭环。",
+            "stakeholders": ["工作人员", "投资者"],
+            "domainContext": "证券交易系统，证券账户是资金账户和交易链路的上游基础对象。",
+            "constraints": ["开户需要资格校验", "销户前必须清空持仓"],
+            "successCriteria": ["工作人员可办理开户、挂失补办、销户并看到状态回读"],
+            "assumptions": []
+        }),
+    );
+    assert_eq!(
+        business_background_confirmed["gate"]["alreadyConfirmedBlocks"],
+        json!(["business_background"])
+    );
+    request_ref = business_background_confirmed["requestRef"]
+        .as_str()
+        .expect("phase scope request ref")
+        .to_string();
+
     let phase_scope_confirmed = confirm_block(
         &server,
         &fixture,
@@ -319,7 +332,7 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
     );
     assert_eq!(
         phase_scope_confirmed["gate"]["alreadyConfirmedBlocks"],
-        json!(["phase_scope"])
+        json!(["business_background", "phase_scope"])
     );
     request_ref = phase_scope_confirmed["requestRef"]
         .as_str()
@@ -336,7 +349,12 @@ fn brainstorm_full_confirmation_flow_accepts_and_advances_to_technical_baseline(
     )
     .expect("parse clarification state");
     assert_eq!(
-        clarification_state["blocks"][0]["confirmedData"]["nextPhasePreview"],
+        clarification_state["blocks"][0]["block"],
+        "business_background"
+    );
+    assert_eq!(clarification_state["blocks"][1]["block"], "phase_scope");
+    assert_eq!(
+        clarification_state["blocks"][1]["confirmedData"]["nextPhasePreview"],
         "下一步确认证券账户规则和页面路径。"
     );
     assert_eq!(
@@ -889,13 +907,44 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
     );
     let request_ref = planned["requestRef"].as_str().expect("requestRef");
     read_required_request_groups(&server, &fixture, request_ref);
-    let result = structured(
+    run_knowledge_context(&server, &fixture, request_ref, "business_background");
+    let business_background_confirmed = structured(
         server
             .invoke_tool(
                 "loom.brainstormConfirmBlock",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
                     "requestRef": request_ref,
+                    "block": "business_background",
+                    "summary": "确认股票交易系统业务背景：证券账户为交易身份基础。",
+                    "confirmedData": {
+                        "businessGoal": "完成证券账户生命周期办理能力闭环。",
+                        "stakeholders": ["工作人员"],
+                        "domainContext": "证券交易系统。",
+                        "constraints": ["开户需要资格校验"],
+                        "successCriteria": ["可办理开户并看到回读"],
+                        "assumptions": []
+                    }
+                }))),
+            )
+            .expect("confirm business background block"),
+    );
+    assert_eq!(
+        business_background_confirmed["state"], "user_gate",
+        "{business_background_confirmed:#}"
+    );
+    let phase_scope_request_ref = business_background_confirmed["requestRef"]
+        .as_str()
+        .expect("phase scope request ref")
+        .to_string();
+    read_required_request_groups(&server, &fixture, &phase_scope_request_ref);
+    let result = structured(
+        server
+            .invoke_tool(
+                "loom.brainstormConfirmBlock",
+                Some(args(json!({
+                    "projectRoot": fixture.root_str(),
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "summary": "确认第一阶段为证券账户模块闭环。",
                     "confirmedData": {
@@ -931,7 +980,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
                 "loom.knowledgeBrainstormContext",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
-                    "requestRef": request_ref,
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "stepId": "phase_scope_dependency_order",
                     "querySubject": "证券账户模块与后续资金账户、交易客户端的依赖边界",
@@ -948,7 +997,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
                 "loom.knowledgeBrainstormContext",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
-                    "requestRef": request_ref,
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "stepId": "phase_scope_capability_closure",
                     "queryId": "capability_closure_A",
@@ -966,7 +1015,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
                 "loom.brainstormConfirmBlock",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
-                    "requestRef": request_ref,
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "summary": "确认第一阶段为证券账户模块闭环。",
                     "confirmedData": {
@@ -1000,7 +1049,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
                 "loom.knowledgeBrainstormContext",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
-                    "requestRef": request_ref,
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "stepId": "phase_scope_capability_closure",
                     "queryId": "capability_closure_B",
@@ -1018,7 +1067,7 @@ fn brainstorm_confirm_block_requires_request_scoped_knowledge_context() {
                 "loom.brainstormConfirmBlock",
                 Some(args(json!({
                     "projectRoot": fixture.root_str(),
-                    "requestRef": request_ref,
+                    "requestRef": phase_scope_request_ref,
                     "block": "phase_scope",
                     "summary": "确认第一阶段为证券账户模块闭环。",
                     "confirmedData": {
@@ -1071,7 +1120,7 @@ fn continue_replays_current_brainstorm_gate_after_plan() {
         .as_str()
         .expect("continued prompt")
         .contains("phase_scope"));
-    assert_eq!(continued["gate"]["currentBlock"], "phase_scope");
+    assert_eq!(continued["gate"]["currentBlock"], "business_background");
 }
 
 #[test]
@@ -1168,6 +1217,14 @@ fn populate_confirmed_brainstorm_candidate(candidate: &mut Value) {
     candidate["requestSummary"]["title"] = json!("证券账户模块闭环");
     candidate["requestSummary"]["oneLine"] = json!("第一阶段完成证券账户生命周期办理路径。");
     candidate["requestSummary"]["businessGoal"] = json!("先完成交易身份和持仓归属账户的闭环。");
+    candidate["businessBackground"] = json!({
+        "businessGoal": "完成证券账户生命周期办理能力闭环。",
+        "stakeholders": [{ "id": "stakeholder_1", "name": "工作人员", "role": "办理证券账户业务" }],
+        "domainContext": "证券交易系统，证券账户是资金账户和交易链路的上游基础对象。",
+        "constraints": ["开户需要资格校验", "销户前必须清空持仓"],
+        "successCriteria": ["工作人员可办理开户、挂失补办、销户并看到状态回读"],
+        "assumptions": []
+    });
     candidate["scope"]["included"][0]["label"] = json!("证券账户模块闭环");
     candidate["scope"]["included"][0]["items"] = json!(["开户", "挂失补办", "销户", "状态管理"]);
     candidate["scope"]["included"][0]["reason"] =

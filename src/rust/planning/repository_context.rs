@@ -1161,7 +1161,7 @@ fn phase_brainstorm_user_gate(
     phase_id: &str,
     request_ref: &str,
 ) -> LoomMcpActionResult {
-    let mut gate = brainstorm::phase_scope_gate();
+    let mut gate = brainstorm::initial_brainstorm_gate();
     if let Some(object) = gate.as_object_mut() {
         object.insert("gateId".to_string(), json!("phase_brainstorm_required"));
         object.insert("kind".to_string(), json!("phase_brainstorm_continuation"));
@@ -1170,14 +1170,14 @@ fn phase_brainstorm_user_gate(
     LoomMcpActionResult::UserGate(
         LoomMcpUserGateResult::new(
             project_root.to_string(),
-            brainstorm::phase_scope_prompt(phase_id),
+            brainstorm::initial_brainstorm_prompt(phase_id),
             vec!["reply_in_chat".to_string()],
             Some(request_ref.to_string()),
             Some(delivery_id.to_string()),
             Some(phase_id.to_string()),
             Some(gate),
         )
-        .with_brainstorm_knowledge("phase_scope"),
+        .with_brainstorm_knowledge("business_background"),
     )
 }
 

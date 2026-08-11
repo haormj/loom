@@ -180,6 +180,32 @@ pub struct RequestSummary {
     pub complexity: Complexity,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Stakeholder {
+    pub id: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct BusinessBackground {
+    pub business_goal: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub stakeholders: Vec<Stakeholder>,
+    pub domain_context: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub constraints: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub success_criteria: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub assumptions: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirmation_summary: Option<String>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ScopeSource {
@@ -486,6 +512,7 @@ pub struct ConceptConfirmation {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ClarificationBlockName {
+    BusinessBackground,
     PhaseScope,
     ConceptGrounding,
     FrontendExperience,
@@ -725,6 +752,8 @@ pub struct BrainstormCandidateAgentWritable {
     pub acceptance: Vec<AcceptanceCandidate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub domain_model: Option<DomainModel>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub business_background: Option<BusinessBackground>,
     #[schemars(skip)]
     pub user_confirmation: UserConfirmation,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -813,6 +842,8 @@ pub struct BrainstormContract {
     pub acceptance: Vec<AcceptanceCandidate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub domain_model: Option<DomainModel>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub business_background: Option<BusinessBackground>,
     pub user_confirmation: UserConfirmation,
     pub delivery_context: DeliveryContext,
     pub roadmap: Roadmap,

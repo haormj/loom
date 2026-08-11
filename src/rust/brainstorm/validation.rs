@@ -29,7 +29,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
     let Some(progress_value) = object.get("clarificationProgress").cloned() else {
         return GateCheck {
             gate: Some(missing_block_gate(
-                ClarificationBlockName::PhaseScope,
+                ClarificationBlockName::BusinessBackground,
                 vec!["clarificationProgress 缺失。在提交前继续 Brainstorm 对话。".to_string()],
             )),
             repair_issues: vec![],
@@ -106,6 +106,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
     let confirmed_set = confirmed.iter().cloned().collect::<BTreeSet<_>>();
 
     for block in [
+        ClarificationBlockName::BusinessBackground,
         ClarificationBlockName::PhaseScope,
         ClarificationBlockName::ConceptGrounding,
     ] {
@@ -131,6 +132,7 @@ pub fn gate_check(raw: &Value) -> GateCheck {
     }
 
     for block in [
+        ClarificationBlockName::BusinessBackground,
         ClarificationBlockName::PhaseScope,
         ClarificationBlockName::ConceptGrounding,
         ClarificationBlockName::FrontendExperience,

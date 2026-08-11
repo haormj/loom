@@ -115,7 +115,7 @@ fn start_brainstorm_inner(
     )?;
 
     let gate = gate_for_block(
-        contracts::ClarificationBlockName::PhaseScope,
+        contracts::ClarificationBlockName::BusinessBackground,
         vec![],
         vec![],
     );
@@ -146,9 +146,9 @@ fn start_brainstorm_inner(
     let route_action = RouteAction {
         kind: RouteActionKind::BrainstormClarification,
         source: "brainstorm_start".to_string(),
-        reason: "await_phase_scope_confirmation".to_string(),
+        reason: "await_business_background_confirmation".to_string(),
         prompt: Some(
-            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，并用用户语言仅呈现当前阶段边界选项。"
+            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，并用用户语言呈现业务背景确认（业务目标、参与者、领域上下文与约束）。"
                 .to_string(),
         ),
         accepted_responses: vec!["reply_in_chat".to_string()],
@@ -185,14 +185,14 @@ fn start_brainstorm_inner(
     Ok(LoomMcpActionResult::UserGate(
         LoomMcpUserGateResult::new(
             input.project_root.clone(),
-            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，用用户语言仅呈现当前阶段边界选项，然后在用户确认一个边界后调用 loom.brainstormConfirmBlock。",
+            "阅读当前 Brainstorm 块请求，查询此块的 request-scoped knowledge，用用户语言呈现业务背景确认（业务目标、参与者、领域上下文与约束），然后在用户确认后调用 loom.brainstormConfirmBlock。",
             vec!["reply_in_chat".to_string()],
             Some(stored.request_ref),
             Some(delivery_id),
             Some(phase_id),
             Some(to_value(&gate)),
         )
-        .with_brainstorm_knowledge("phase_scope"),
+        .with_brainstorm_knowledge("business_background"),
     ))
 }
 
@@ -224,6 +224,7 @@ fn initial_contract(
         },
         acceptance: vec![],
         domain_model: None,
+        business_background: None,
         user_confirmation: UserConfirmation {
             confirmed: false,
             confirmed_at: None,

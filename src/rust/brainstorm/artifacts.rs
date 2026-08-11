@@ -100,6 +100,7 @@ pub fn write_accepted_artifacts(
         scope: candidate.scope.clone(),
         acceptance: candidate.acceptance.clone(),
         domain_model: candidate.domain_model.clone(),
+        business_background: candidate.business_background.clone(),
         user_confirmation: candidate.user_confirmation.clone(),
         delivery_context: DeliveryContext {
             original_request: OriginalRequestContext {

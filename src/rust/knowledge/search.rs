@@ -31,6 +31,8 @@ const CONCEPT_GROUNDING_RETRIEVAL_INTENT: &str =
     "business object operation field state rule invariant precondition validation blocking outcome feedback 业务对象 操作 字段 状态 规则 不变量 前置条件 校验 阻断 成功结果 反馈";
 const FRONTEND_EXPERIENCE_RETRIEVAL_INTENT: &str =
     "page operation path workspace entry target discovery query filter pagination selection list detail action entry form input success feedback failure feedback business blocking loading empty state refresh readback 页面办理路径 页面操作路径 工作台 入口 目标定位 查询 筛选 分页 选择 列表 详情 操作入口 表单 输入 成功反馈 失败提示 业务阻断 加载中 空状态 刷新 回读";
+const BUSINESS_BACKGROUND_RETRIEVAL_INTENT: &str =
+    "business background goal stakeholder participant domain context industry existing system constraint compliance success criteria 业务背景 业务目标 参与者 干系人 领域上下文 行业 既有系统 约束 合规 成功标准";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct BrainstormKnowledgeStepRequirement {
@@ -69,10 +71,10 @@ pub fn brainstorm_context(
 ) -> KnowledgeResult<KnowledgeBrainstormContextResult> {
     if !matches!(
         input.block.as_str(),
-        "phase_scope" | "concept_grounding" | "frontend_experience"
+        "business_background" | "phase_scope" | "concept_grounding" | "frontend_experience"
     ) {
         return Err(KnowledgeError::invalid(
-            "知识 brainstorm context block 必须为 phase_scope、concept_grounding 或 frontend_experience",
+            "知识 brainstorm context block 必须为 business_background、phase_scope、concept_grounding 或 frontend_experience",
         ));
     }
     if input.request_ref.trim().is_empty()
@@ -165,6 +167,7 @@ fn with_block_retrieval_intent(query: &str, block: &str) -> String {
 
 fn block_retrieval_intent(block: &str) -> Option<&'static str> {
     match block {
+        "business_background" => Some(BUSINESS_BACKGROUND_RETRIEVAL_INTENT),
         "phase_scope" => Some(PHASE_SCOPE_RETRIEVAL_INTENT),
         "concept_grounding" => Some(CONCEPT_GROUNDING_RETRIEVAL_INTENT),
         "frontend_experience" => Some(FRONTEND_EXPERIENCE_RETRIEVAL_INTENT),

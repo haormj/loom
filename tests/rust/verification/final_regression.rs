@@ -150,7 +150,7 @@ fn final_verification_reports_cover_protocol_metrics_and_delivery_isolation() {
     );
     assert_eq!(
         protocol["requestCount"].as_u64().expect("request count"),
-        11
+        13
     );
     let deliveries = protocol["deliveries"].as_array().expect("deliveries");
     assert_eq!(deliveries.len(), 2);
@@ -237,6 +237,24 @@ fn confirm_all_brainstorm_blocks(
     request_ref: &str,
 ) -> String {
     let mut request_ref = request_ref.to_string();
+    request_ref = result_request_ref(
+        &confirm_block(
+            server,
+            fixture,
+            &request_ref,
+            "business_background",
+            "确认股票交易系统业务背景：证券账户为交易身份基础。",
+            json!({
+                "businessGoal": "完成证券账户生命周期办理能力闭环。",
+                "stakeholders": ["工作人员"],
+                "domainContext": "证券交易系统。",
+                "constraints": ["开户需要资格校验"],
+                "successCriteria": ["可办理开户并看到回读"],
+                "assumptions": []
+            }),
+        ),
+        "phase scope requestRef",
+    );
     request_ref = result_request_ref(
         &confirm_block(
             server,

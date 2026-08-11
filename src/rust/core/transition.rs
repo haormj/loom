@@ -370,7 +370,7 @@ fn user_gate_result(
             .as_ref()
             .and_then(|details| details.get("currentBlock"))
             .and_then(serde_json::Value::as_str)
-            .unwrap_or("phase_scope");
+            .unwrap_or("business_background");
         return LoomMcpActionResult::UserGate(gate.with_brainstorm_knowledge(block));
     }
     LoomMcpActionResult::UserGate(gate)

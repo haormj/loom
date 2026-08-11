@@ -83,15 +83,15 @@ pub fn module_name() -> &'static str {
 /// Phase handoff creates the clarification request and immediately exposes this gate. Keeping
 /// the gate shape identical to the initial Brainstorm gate lets adapters ask the current
 /// user-facing question without guessing from a generic phase-handoff message.
-pub fn phase_scope_gate() -> Value {
-    let current_block = ClarificationBlockName::PhaseScope;
+pub fn initial_brainstorm_gate() -> Value {
+    let current_block = ClarificationBlockName::BusinessBackground;
     let gate = gate_for_block(current_block, vec![], vec![]);
     to_value(&gate)
 }
 
-pub fn phase_scope_prompt(phase_id: &str) -> String {
+pub fn initial_brainstorm_prompt(phase_id: &str) -> String {
     format!(
-        "Brainstorm 对 {phase_id} 的澄清已激活。不要等待 @loom continue 或将其报告为可选的下一步。立即检查返回的 requestRef，阅读其必需的 requestReadPlan groups，运行必需的 request-scoped knowledge context 步骤，并用用户语言呈现当前阶段范围选项。在调用 loom.brainstormConfirmBlock 之前等待用户可见确认。"
+        "Brainstorm 对 {phase_id} 的澄清已激活。不要等待 @loom continue 或将其报告为可选的下一步。立即检查返回的 requestRef，阅读其必需的 requestReadPlan groups，运行必需的 request-scoped knowledge context 步骤，并用用户语言呈现业务背景确认（业务目标、参与者、领域上下文与约束）。对后续阶段，可承接先前阶段已确认的业务背景并请用户快速确认或修正。在调用 loom.brainstormConfirmBlock 之前等待用户可见确认。"
     )
 }
 
@@ -426,7 +426,7 @@ pub fn materialize_phase_brainstorm_from_preview(
         .iter_mut()
         .find(|phase| phase.phase_id == handoff.phase_id)
     {
-        let mut gate = phase_scope_gate();
+        let mut gate = initial_brainstorm_gate();
         if let Some(object) = gate.as_object_mut() {
             object.insert("gateId".to_string(), json!("phase_brainstorm_required"));
             object.insert("kind".to_string(), json!("phase_brainstorm_continuation"));
@@ -467,7 +467,7 @@ pub fn materialize_phase_brainstorm_from_preview(
             kind: RouteActionKind::BrainstormClarification,
             source: "repository_context_accept".to_string(),
             reason: "repository_context_ready_for_phase_brainstorm".to_string(),
-            prompt: Some(phase_scope_prompt(&handoff.phase_id)),
+            prompt: Some(initial_brainstorm_prompt(&handoff.phase_id)),
             accepted_responses: vec!["reply_in_chat".to_string()],
             request_ref: Some(stored.request_ref.clone()),
             details: Some(gate),
