@@ -470,43 +470,6 @@ fn plan_tool(input: PlanToolInput) -> LoomMcpActionResult {
     if let Err(error) = init_project_state(&validated.project_root) {
         return state_failure(validated.project_root, error.to_string());
     }
-    let store = FileTransitionStore;
-    if let Ok(status) = store.load_status(&validated.project_root) {
-        if let Some(active_delivery_id) = &status.active_delivery_id {
-            if let Ok(delivery) =
-                store.load_delivery_index(&validated.project_root, active_delivery_id)
-            {
-                if let Some(phase) = delivery
-                    .phases
-                    .iter()
-                    .find(|phase| phase.phase_id == delivery.active_phase_id)
-                {
-                    if phase.latest_refs.contains_key("technicalBaseline") {
-                        let engine = TransitionEngine {
-                            store,
-                            dispatcher: WorkflowDomainDispatcher,
-                        };
-                        return match engine.continue_current(OperationContext {
-                            project_root: validated.project_root.clone(),
-                        }) {
-                            Ok(result) => result,
-                            Err(error) => LoomMcpActionResult::Failed(LoomMcpFailureResult {
-                                project_root: validated.project_root,
-                                error: LoomMcpFailure {
-                                    code: error.code().to_string(),
-                                    message: error.message().to_string(),
-                                    target_batch: None,
-                                    domain: Some("transition".to_string()),
-                                    route_action: None,
-                                    recovery_tool: Some("loom.continue".to_string()),
-                                },
-                            }),
-                        };
-                    }
-                }
-            }
-        }
-    }
     WorkflowDomainDispatcher.start_brainstorm(&validated)
 }
 
