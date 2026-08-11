@@ -476,26 +476,18 @@ fn plan_tool(input: PlanToolInput) -> LoomMcpActionResult {
             if let Ok(delivery) =
                 store.load_delivery_index(&validated.project_root, active_delivery_id)
             {
-                if let Some(phase) = delivery
-                    .phases
-                    .iter()
-                    .find(|phase| phase.phase_id == delivery.active_phase_id)
-                {
-                    if phase.latest_refs.contains_key("brainstormDecisionSnapshot") {
-                        return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
-                            project_root: validated.project_root.clone(),
-                            blockers: vec![
-                                "当前已有活跃的 Loom 交付，Brainstorm 已确认。请使用 loom.continue 继续当前交付，而非 loom.plan 启动新交付。".to_string(),
-                            ],
-                            recommended_tool: Some("loom.continue".to_string()),
-                            details: Some(json!({
-                                "activeDeliveryId": active_delivery_id,
-                                "activePhaseId": delivery.active_phase_id,
-                                "deliveryStatus": delivery.status
-                            })),
-                        });
-                    }
-                }
+                return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
+                    project_root: validated.project_root.clone(),
+                    blockers: vec![
+                        "当前已有活跃的 Loom 交付尚未完成。请使用 loom.continue 继续当前交付，而非 loom.plan 启动新交付。".to_string(),
+                    ],
+                    recommended_tool: Some("loom.continue".to_string()),
+                    details: Some(json!({
+                        "activeDeliveryId": active_delivery_id,
+                        "activePhaseId": delivery.active_phase_id,
+                        "deliveryStatus": delivery.status
+                    })),
+                });
             }
         }
     }

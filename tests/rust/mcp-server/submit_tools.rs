@@ -1487,8 +1487,8 @@ fn new_project_technical_baseline_autofills_confirmed_at() {
 }
 
 #[test]
-fn plan_blocks_after_brainstorm_accept_during_technical_baseline() {
-    let fixture = Fixture::new("plan-after-brainstorm-accept");
+fn plan_blocks_when_delivery_active() {
+    let fixture = Fixture::new("plan-blocks-active-delivery");
     let request_ref = start_brainstorm_candidate_write_request(&fixture);
     write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
     let brainstorm_result = call_submit(
@@ -1496,10 +1496,6 @@ fn plan_blocks_after_brainstorm_accept_during_technical_baseline() {
         &request_ref,
         fixture.root_str(),
     );
-    // After brainstorm accept, the flow advances to the technical baseline stage
-    // (brainstormContract is now set on the active phase). The exact next state
-    // may be auto_runnable or user_gate depending on project kind, but the key
-    // point is that brainstormContract exists, so we are past the brainstorm stage.
     assert!(
         brainstorm_result["state"] == "auto_runnable" || brainstorm_result["state"] == "user_gate",
         "unexpected brainstorm accept state: {}",
@@ -1507,8 +1503,7 @@ fn plan_blocks_after_brainstorm_accept_during_technical_baseline() {
     );
     let original_delivery = request_delivery_id(fixture.root_str(), &request_ref);
 
-    // If the agent mistakenly calls loom.plan instead of following the auto_runnable
-    // technical baseline instruction, loom.plan must block and direct to loom.continue.
+    // loom.plan must block whenever there's an active delivery, regardless of stage.
     let server = LoomMcpServer::default();
     let plan_result = server
         .invoke_tool(
@@ -1529,14 +1524,14 @@ fn plan_blocks_after_brainstorm_accept_during_technical_baseline() {
     assert_eq!(plan_result["state"], "blocked", "{plan_result:#}");
     assert_eq!(
         plan_result["recommendedTool"], "loom.continue",
-        "loom.plan must direct the agent to loom.continue, not start a new brainstorm"
+        "loom.plan must direct the agent to loom.continue, not start a new delivery"
     );
     assert_eq!(
         plan_result["details"]["activeDeliveryId"]
             .as_str()
             .unwrap_or_default(),
         original_delivery,
-        "loom.plan must not create a new delivery after brainstorm accept"
+        "loom.plan must not create a new delivery while one is active"
     );
 }
 
