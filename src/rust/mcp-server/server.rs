@@ -3,10 +3,10 @@ use std::future::{ready, Future};
 use brainstorm::{accept_brainstorm_file, BrainstormConfirmBlockInput};
 use delivery_core::{
     is_submit_tool, normalize_project_root, status_details, submit_tool_spec, validate_plan_input,
-    DomainDispatcher, FileSubmitInput, InspectRequestInput, LoomMcpActionResult, LoomMcpDoneResult,
-    LoomMcpFailure, LoomMcpFailureResult, LoomMcpRepairableErrorResult, LoomMcpRuntimeContext,
-    OperationContext, PlanToolInput, ProjectToolInput, ReadFieldGroupInput, SubmitAcceptedEvent,
-    TransitionEngine, TransitionStore,
+    DomainDispatcher, FileSubmitInput, InspectRequestInput, LoomMcpActionResult,
+    LoomMcpBlockedResult, LoomMcpDoneResult, LoomMcpFailure, LoomMcpFailureResult,
+    LoomMcpRepairableErrorResult, LoomMcpRuntimeContext, OperationContext, PlanToolInput,
+    ProjectToolInput, ReadFieldGroupInput, SubmitAcceptedEvent, TransitionEngine, TransitionStore,
 };
 use deploy::{DeployBootstrapInput, DeployToolInput};
 use knowledge::mcp_models::{
@@ -482,26 +482,18 @@ fn plan_tool(input: PlanToolInput) -> LoomMcpActionResult {
                     .find(|phase| phase.phase_id == delivery.active_phase_id)
                 {
                     if phase.latest_refs.contains_key("technicalBaseline") {
-                        let engine = TransitionEngine {
-                            store,
-                            dispatcher: WorkflowDomainDispatcher,
-                        };
-                        return match engine.continue_current(OperationContext {
+                        return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
                             project_root: validated.project_root.clone(),
-                        }) {
-                            Ok(result) => result,
-                            Err(error) => LoomMcpActionResult::Failed(LoomMcpFailureResult {
-                                project_root: validated.project_root,
-                                error: LoomMcpFailure {
-                                    code: error.code().to_string(),
-                                    message: error.message().to_string(),
-                                    target_batch: None,
-                                    domain: Some("transition".to_string()),
-                                    route_action: None,
-                                    recovery_tool: Some("loom.continue".to_string()),
-                                },
-                            }),
-                        };
+                            blockers: vec![
+                                "当前已有活跃的 Loom 交付，且技术基线已确认。请使用 loom.continue 继续当前交付，而非 loom.plan 启动新交付。".to_string(),
+                            ],
+                            recommended_tool: Some("loom.continue".to_string()),
+                            details: Some(json!({
+                                "activeDeliveryId": active_delivery_id,
+                                "activePhaseId": delivery.active_phase_id,
+                                "deliveryStatus": delivery.status
+                            })),
+                        });
                     }
                 }
             }

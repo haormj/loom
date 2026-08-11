@@ -1487,7 +1487,7 @@ fn new_project_technical_baseline_autofills_confirmed_at() {
 }
 
 #[test]
-fn plan_after_technical_baseline_delegates_to_continue() {
+fn plan_after_technical_baseline_blocks_instead_of_restarting_brainstorm() {
     let fixture = Fixture::new("plan-after-tb");
     let request_ref = start_brainstorm_candidate_write_request(&fixture);
     write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
@@ -1531,18 +1531,17 @@ fn plan_after_technical_baseline_delegates_to_continue() {
         .expect("plan call")
         .structured_content
         .expect("content");
-    assert_eq!(plan_result["state"], "auto_runnable");
+    assert_eq!(plan_result["state"], "blocked");
     assert_eq!(
-        plan_result["next"]["artifactKind"],
-        "architecture_section_candidate"
+        plan_result["recommendedTool"], "loom.continue",
+        "loom.plan must direct the agent to loom.continue, not auto-run or start a new brainstorm"
     );
-    let plan_delivery = plan_result["next"]["requestRef"]
-        .as_str()
-        .expect("plan requestRef");
-    let plan_delivery_id = request_delivery_id(fixture.root_str(), plan_delivery);
     assert_eq!(
-        plan_delivery_id, original_delivery,
-        "loom.plan must not create a new delivery after technical baseline; it should continue the active one"
+        plan_result["details"]["activeDeliveryId"]
+            .as_str()
+            .unwrap_or_default(),
+        original_delivery,
+        "loom.plan must not create a new delivery after technical baseline"
     );
 }
 
