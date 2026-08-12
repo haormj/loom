@@ -1,8 +1,9 @@
 # Acme 企业 reference catalog overlay
 #
-# 本文件是一个完整的 enterprise overlay 案例,演示对 vendor `code` 路由的
-# 两种 TOML 操作(新增组、整组替换)。另外两种(prune、replace item)
-# 是函数操作,不在 TOML 中表达——详见 docs/reference-catalog-extension.md。
+# 本文件是一个完整的 enterprise overlay 案例,演示对 vendor catalog 的两类扩展:
+#
+#   1. Code 路由组操作(新增组、整组替换 + itemEntries)
+#   2. [repoSignals] 扩展(内部框架检测、信号派生、框架引用选择、企业编码规范注入)
 #
 # 用法:设置环境变量 LOOM_CATALOG_OVERLAY 指向本文件路径,Loom 运行时
 # 通过 resolved_catalog() 自动发现并合并。
@@ -11,6 +12,10 @@
 # 配套参考文件:references/ 目录下的 .md 文件
 
 schemaVersion = 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 第一部分:Code 路由组操作
+# ═══════════════════════════════════════════════════════════════════════════
 
 [[routes]]
 id = "code"
@@ -41,6 +46,7 @@ referenceRoot = "loom"
   # Acme Python 规范与 vendor 默认不同:
   #   - 去掉 packaging(企业统一用 uv,不需要单独参考)
   #   - 新增 ruff(企业强制用 Ruff 替代 black/isort/flake8)
+  #   - 新增 use_case(企业测试用例规范)
   #   - core 改写为指向企业内部规范(强制 strict 类型检查 + Ruff)
   #     通过 itemEntries 表达非标准路径,与 items 模板路径共存于同一组。
   [[routes.groups]]
@@ -48,7 +54,7 @@ referenceRoot = "loom"
   refIdTemplate = "tech.code.python.{item}"
   pathTemplate = "tech/code/python/{item}.md"
   reasonTemplate = "已选择 {group_id}.{item} 的实现质量参考,用于本任务。"
-  items = ["typing", "async", "testing", "ruff"]
+  items = ["typing", "async", "testing", "ruff", "use_case"]
 
     [[routes.groups.itemEntries]]
     item = "core"
@@ -56,3 +62,263 @@ referenceRoot = "loom"
     path = "enterprise/python/core.md"
     reason = "Acme 企业 Python 核心规范,强制 Ruff 与 strict 类型检查。"
     condition = "always"
+
+  # ── 操作 (d):新增组 — AcmeQt 前端框架 ──────────────────────
+  # Acme 内部基于 Qt 的 Python 桌面 UI 框架。新增 acme_qt 组,走模板路径
+  # tech/frontend/acme_qt/{item}.md。
+  [[routes.groups]]
+  id = "acme_qt"
+  refIdTemplate = "fe.acme_qt.{item}"
+  pathTemplate = "tech/frontend/acme_qt/{item}.md"
+  reasonTemplate = "已选择 {label} {item} 的前端框架质量参考,用于本任务。"
+  label = "AcmeQt"
+  items = ["core", "widgets", "signals_slots", "logging", "exceptions", "testing"]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 第二部分:[repoSignals] 扩展
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# [repoSignals] 控制三层行为:
+#   ① 检测(manifests/folderHints/extensions/frameworks)— 扫描仓库识别语言和框架
+#   ③ 信号派生(selection)— 从 selection 文本推导语言/frameworks/roles
+#   ④ 框架引用选择(frameworkReferences)— 按条件加载框架参考 item
+#
+# 重要约束:merge_repo_signals 按 language ID 整体替换语言规则。
+# overlay 必须包含完整 Python 语言规则(复制 vendor 全部 Python 检测/选择/框架引用,
+# 再叠加企业扩展)。不能只写增量。
+# ═══════════════════════════════════════════════════════════════════════════
+
+[repoSignals]
+skipDirs = [".git", "node_modules", "__pycache__", ".venv", "dist", "build", ".tox"]
+maxScanDepth = 3
+
+  [repoSignals.sourceRoots]
+  paths = ["src", "app", "lib", "tests", "internal"]
+
+  # ── Python(完整规则,含 vendor 基线 + Acme 扩展)────────────
+  [[repoSignals.languages]]
+  id = "python"
+  label = "Python"
+
+    # 检测:manifests(与 vendor 一致)
+    [[repoSignals.languages.manifests]]
+    path = "pyproject.toml"
+    packageManager = "pip"
+
+    [[repoSignals.languages.manifests]]
+    path = "requirements.txt"
+    packageManager = "pip"
+
+    [[repoSignals.languages.manifests]]
+    path = "setup.py"
+    packageManager = "pip"
+
+    [[repoSignals.languages.manifests]]
+    path = "setup.cfg"
+    packageManager = "pip"
+
+    [[repoSignals.languages.manifests]]
+    path = "Pipfile"
+    packageManager = "pipenv"
+
+    [[repoSignals.languages.manifests]]
+    path = "poetry.lock"
+    packageManager = "poetry"
+
+    # 检测:folderHints(与 vendor 一致)
+    [repoSignals.languages.folderHints]
+    dirs = ["python", "scripts"]
+    requireExtensions = [".py"]
+
+    # 检测:extensions(与 vendor 一致)
+    [repoSignals.languages.extensions]
+    scan = [".py"]
+    threshold = 1
+
+    # 检测:frameworks needle 规则(vendor 6 个 + Acme 新增 1 个)
+    [[repoSignals.languages.frameworks]]
+    needle = "fastapi"
+    label = "FastAPI"
+
+    [[repoSignals.languages.frameworks]]
+    needle = "django"
+    label = "Django"
+
+    [[repoSignals.languages.frameworks]]
+    needle = "flask"
+    label = "Flask"
+
+    [[repoSignals.languages.frameworks]]
+    needle = "pyramid"
+    label = "Pyramid"
+
+    [[repoSignals.languages.frameworks]]
+    needle = "sanic"
+    label = "Sanic"
+
+    [[repoSignals.languages.frameworks]]
+    needle = "tornado"
+    label = "Tornado"
+
+    # Acme 扩展:内部 AcmeQt 框架检测
+    # 当依赖清单中出现 "acme-qt" 时,检测为 AcmeQt 框架
+    [[repoSignals.languages.frameworks]]
+    needle = "acme-qt"
+    label = "AcmeQt"
+
+    # 信号派生:selection 规则
+    # keywords 增加 "acmeqt";roles 增加 "frontend_conditional"(AcmeQt 是前端框架)
+    [repoSignals.languages.selection]
+    keywords = ["python", "fastapi", "django", "drf", "flask", "sqlalchemy", "pydantic", "acmeqt"]
+    excludeKeywords = []
+    roles = ["backend_unless_persistence", "frontend_conditional"]
+
+    # 信号派生:可匹配的框架(vendor 6 个 + Acme 新增 1 个)
+    [[repoSignals.languages.selection.frameworks]]
+    id = "fastapi"
+    aliases = ["fastapi"]
+
+    [[repoSignals.languages.selection.frameworks]]
+    id = "django"
+    aliases = ["django"]
+
+    [[repoSignals.languages.selection.frameworks]]
+    id = "django_rest_framework"
+    aliases = ["django rest framework", "drf"]
+
+    [[repoSignals.languages.selection.frameworks]]
+    id = "pydantic"
+    aliases = ["pydantic"]
+
+    [[repoSignals.languages.selection.frameworks]]
+    id = "sqlalchemy"
+    aliases = ["sqlalchemy", "sql alchemy"]
+
+    [[repoSignals.languages.selection.frameworks]]
+    id = "flask"
+    aliases = ["flask"]
+
+    # Acme 扩展:AcmeQt 框架的 selection 匹配
+    [[repoSignals.languages.selection.frameworks]]
+    id = "acme_qt"
+    aliases = ["acme-qt", "acmeqt", "acme ui"]
+
+    # 框架引用:Django(与 vendor 一致)
+    [[repoSignals.languages.frameworkReferences]]
+    frameworkId = "django"
+    groupId = "django"
+    surface = "backend"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "testing"
+      when = "task_owns:test_implementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "views"
+      when = { all_of = ["task_owns:api_contract", "stack_fw:django_rest_framework"] }
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "serializers"
+      when = { all_of = ["task_owns:api_contract", "stack_fw:django_rest_framework"] }
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "models"
+      when = "task_owns:persistence"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "security"
+      when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "logging"
+      when = "task_owns:logging_infrastructure"
+
+    # 框架引用:FastAPI(与 vendor 一致)
+    [[repoSignals.languages.frameworkReferences]]
+    frameworkId = "fastapi"
+    groupId = "fastapi"
+    surface = "backend"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "testing"
+      when = "task_owns:test_implementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "routing"
+      when = "task_owns:api_contract"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "schemas"
+      when = "task_owns:api_contract"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "data"
+      when = { all_of = ["task_owns:persistence", "stack_fw:sqlalchemy"] }
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "security"
+      when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "migration"
+      when = "task_action:MigrateFrameworkImplementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "logging"
+      when = "task_owns:logging_infrastructure"
+
+    # ── Acme 扩展:AcmeQt 框架引用 ───────────────────────────
+    # surface = "frontend" → 走 frontend_reference_items_for_signal 路径
+    # 需要 focus:frontend tag 才会加载
+    [[repoSignals.languages.frameworkReferences]]
+    frameworkId = "acme_qt"
+    groupId = "acme_qt"
+    surface = "frontend"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "core"
+      when = "task_owns:frontend_implementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "widgets"
+      when = "task_owns:frontend_surface"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "signals_slots"
+      when = "task_owns:frontend_implementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "logging"
+      when = "task_owns:logging_infrastructure"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "exceptions"
+      when = "task_owns:frontend_implementation"
+
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "testing"
+      when = "task_owns:test_implementation"
+
+    # ── Acme 扩展:企业编码规范注入(lang:python 模式)──────────
+    # 用 FrameworkReference.when = "lang:python" 让编码规范 item 对所有
+    # Python 任务生效,无需检测到特定框架,也无需改 Rust 代码。
+    #
+    # groupId = "python" → item 合并到 reference_groups["python"],
+    #                       走 code 路由 python 组的路径解析
+    # surface = "backend" → 走 backend_reference_items_for_signal 路径,
+    #                       不需要 focus:frontend tag
+    # when = "lang:python" → 框架级条件:signal.language == "python" 时匹配
+    [[repoSignals.languages.frameworkReferences]]
+    frameworkId = "acme_python_standards"
+    groupId = "python"
+    surface = "backend"
+    when = "lang:python"
+
+      # ruff:无条件加载(企业强制 Ruff,所有 Python 任务都需要)
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "ruff"
+
+      # use_case:仅测试任务时加载
+      [[repoSignals.languages.frameworkReferences.items]]
+      itemId = "use_case"
+      when = "task_owns:test_implementation"
