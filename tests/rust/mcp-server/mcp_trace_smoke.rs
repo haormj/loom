@@ -8,10 +8,7 @@ use serde_json::{json, Value};
 
 #[test]
 fn trace_file_captures_full_session() {
-    let tmp = std::env::temp_dir().join(format!(
-        "loom-mcp-trace-smoke-{}",
-        std::process::id()
-    ));
+    let tmp = std::env::temp_dir().join(format!("loom-mcp-trace-smoke-{}", std::process::id()));
     let _ = fs::remove_file(&tmp);
 
     let mut client = McpProcess::start_with_trace(&tmp);
@@ -43,7 +40,10 @@ fn trace_file_captures_full_session() {
     drop(client);
 
     let content = fs::read_to_string(&tmp).expect("trace file exists");
-    assert!(content.contains("loom-mcp-server started"), "banner missing");
+    assert!(
+        content.contains("loom-mcp-server started"),
+        "banner missing"
+    );
     assert!(content.contains(">> "), "in marker missing");
     assert!(content.contains("<< "), "out marker missing");
     assert!(
@@ -60,10 +60,7 @@ fn trace_file_captures_full_session() {
 
 #[test]
 fn trace_disabled_creates_no_file() {
-    let tmp = std::env::temp_dir().join(format!(
-        "loom-mcp-trace-disabled-{}",
-        std::process::id()
-    ));
+    let tmp = std::env::temp_dir().join(format!("loom-mcp-trace-disabled-{}", std::process::id()));
     let _ = fs::remove_file(&tmp);
 
     let mut client = McpProcess::start_without_trace();
@@ -79,10 +76,7 @@ fn trace_disabled_creates_no_file() {
     }));
     drop(client);
 
-    assert!(
-        !tmp.exists(),
-        "trace file should not exist when disabled"
-    );
+    assert!(!tmp.exists(), "trace file should not exist when disabled");
 }
 
 struct McpProcess {
