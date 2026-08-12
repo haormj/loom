@@ -1493,13 +1493,6 @@ fn contains_any(haystack: &str, needles: &[&str]) -> bool {
     needles.iter().any(|needle| haystack.contains(needle))
 }
 
-#[allow(dead_code)]
-fn push_if_contains(haystack: &str, output: &mut Vec<String>, value: &str, needles: &[&str]) {
-    if contains_any(haystack, needles) {
-        push_unique(output, value);
-    }
-}
-
 fn push_backend_unless_persistence_track(roles: &mut Vec<String>) {
     if !roles
         .iter()
