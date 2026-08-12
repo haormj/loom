@@ -1,6 +1,6 @@
 use crate::error::{CatalogError, CatalogResult};
-use crate::schema::{Group, ItemEntry, ReferenceCatalog, Route};
-use std::collections::BTreeMap;
+use crate::schema::{Group, ItemEntry, LanguageRule, ReferenceCatalog, RepoSignalsConfig, Route};
+use std::collections::{BTreeMap, BTreeSet};
 
 /// 合并两个目录,`overlay` 优先于 `base`。
 ///
@@ -31,6 +31,7 @@ pub fn merge_catalogs(
 
     let mut merged = base.clone();
     merged.routes = routes.into_values().collect();
+    merged.repo_signals = merge_repo_signals(&base.repo_signals, &overlay.repo_signals);
     Ok(merged)
 }
 
@@ -72,6 +73,30 @@ fn merge_route_groups(base_route: &mut Route, overlay_route: &Route) -> CatalogR
     }
 
     Ok(())
+}
+
+fn merge_repo_signals(base: &RepoSignalsConfig, overlay: &RepoSignalsConfig) -> RepoSignalsConfig {
+    let mut merged = base.clone();
+    if !overlay.skip_dirs.is_empty() {
+        merged.skip_dirs = overlay.skip_dirs.clone();
+    }
+    if overlay.max_scan_depth != 0 {
+        merged.max_scan_depth = overlay.max_scan_depth;
+    }
+    if !overlay.source_roots.paths.is_empty() {
+        let mut paths: BTreeSet<String> = merged.source_roots.paths.iter().cloned().collect();
+        paths.extend(overlay.source_roots.paths.iter().cloned());
+        merged.source_roots.paths = paths.into_iter().collect();
+    }
+    let mut lang_map: BTreeMap<String, LanguageRule> = BTreeMap::new();
+    for lang in &merged.languages {
+        lang_map.insert(lang.id.clone(), lang.clone());
+    }
+    for lang in &overlay.languages {
+        lang_map.insert(lang.id.clone(), lang.clone());
+    }
+    merged.languages = lang_map.into_values().collect();
+    merged
 }
 
 /// 执行 prune 操作:从路由中移除指定的组。
@@ -162,6 +187,7 @@ mod tests {
             focus_rules: vec![],
             applicability: vec![],
             backend_ecosystems: vec![],
+            repo_signals: Default::default(),
         }
     }
 
@@ -190,6 +216,7 @@ mod tests {
             focus_rules: vec![],
             applicability: vec![],
             backend_ecosystems: vec![],
+            repo_signals: Default::default(),
         };
 
         let merged = merge_catalogs(&base, &overlay).unwrap();
@@ -253,6 +280,7 @@ mod tests {
             focus_rules: vec![],
             applicability: vec![],
             backend_ecosystems: vec![],
+            repo_signals: Default::default(),
         };
 
         prune_groups(&mut catalog, "code", &["swift".to_string()]);

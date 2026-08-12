@@ -33,3 +33,7 @@ path = "../../../tests/rust/reference-catalog/enterprise_overlay.rs"
 [[test]]
 name = "resolved"
 path = "../../../tests/rust/reference-catalog/resolved.rs"
+
+[[test]]
+name = "repo_signals"
+path = "../../../tests/rust/reference-catalog/repo_signals.rs"

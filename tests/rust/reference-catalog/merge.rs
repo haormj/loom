@@ -13,6 +13,7 @@ fn empty_catalog() -> ReferenceCatalog {
         focus_rules: vec![],
         applicability: vec![],
         backend_ecosystems: vec![],
+        repo_signals: Default::default(),
     }
 }
 
