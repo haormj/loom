@@ -987,7 +987,7 @@ label = "TypeScript"
   [repoSignals.languages.selection]
   keywords = ["typescript", "type script", " ts ", "tsx"]
   excludeKeywords = []
-  roles = ["frontend_conditional"]
+  roles = ["frontend_conditional", "backend_if_node_framework"]
 
   [[repoSignals.languages.selection.frameworks]]
   id = "reactnative"
@@ -1286,7 +1286,7 @@ label = "JavaScript"
   [repoSignals.languages.selection]
   keywords = ["javascript", " js ", "node", "express", "nestjs", "fastify"]
   excludeKeywords = []
-  roles = ["frontend_conditional"]
+  roles = ["frontend_conditional", "backend_if_node_framework"]
 
   [[repoSignals.languages.selection.frameworks]]
   id = "node"
@@ -1385,7 +1385,7 @@ label = "C#"
   [repoSignals.languages.selection]
   keywords = ["csharp", "c#", ".net", "dotnet", "asp.net", "ef core", "entity framework"]
   excludeKeywords = []
-  roles = ["backend_unless_persistence"]
+  roles = ["backend_unless_persistence", "frontend_if_blazor"]
 
   [[repoSignals.languages.selection.frameworks]]
   id = "aspnet_core"

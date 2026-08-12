@@ -423,6 +423,14 @@ fn signal_from_selection(track: &str, source_path: &str, raw_selection: &str) ->
                 }) {
                     push_backend_unless_persistence_track(&mut roles);
                 }
+            } else if role == "backend_if_node_framework" {
+                if contains_any(&haystack, &["node", "express", "nestjs", "fastify"]) {
+                    push_unique(&mut roles, "backend");
+                }
+            } else if role == "frontend_if_blazor" {
+                if frameworks.iter().any(|fw| fw == "blazor") {
+                    push_unique(&mut roles, "frontend");
+                }
             } else {
                 push_unique(&mut roles, role);
             }
