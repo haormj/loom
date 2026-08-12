@@ -328,6 +328,8 @@ pub struct FrameworkSelectionRule {
     pub id: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aliases: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclude_keywords: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

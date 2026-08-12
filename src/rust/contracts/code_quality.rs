@@ -349,227 +349,113 @@ fn signal_from_selection(track: &str, source_path: &str, raw_selection: &str) ->
     let mut dialects = Vec::new();
     let mut language = None;
 
-    if contains_any(&haystack, &["typescript", "type script", " ts ", "tsx"]) {
-        language = Some("typescript".to_string());
-        push_frontend_frameworks_from_haystack(&haystack, &mut frameworks);
-        push_if_contains(&haystack, &mut frameworks, "node", &["node"]);
-        push_if_contains(&haystack, &mut frameworks, "nestjs", &["nestjs", "nest js"]);
-        if selection_mentions_frontend_framework(&haystack) {
-            push_unique(&mut roles, "frontend");
+    let catalog = reference_catalog::resolved_catalog();
+    for lang_rule in &catalog.repo_signals.languages {
+        let Some(selection) = &lang_rule.selection else {
+            continue;
+        };
+
+        if !selection
+            .keywords
+            .iter()
+            .any(|kw| haystack.contains(kw.as_str()))
+        {
+            continue;
         }
-        if contains_any(
-            &haystack,
-            &["node", "express", "nestjs", "nest js", "fastify"],
-        ) {
-            push_unique(&mut roles, "backend");
+        if !selection.exclude_keywords.is_empty()
+            && selection
+                .exclude_keywords
+                .iter()
+                .any(|kw| haystack.contains(kw.as_str()))
+        {
+            continue;
         }
-    } else if contains_any(
-        &haystack,
-        &["javascript", " js ", "node", "express", "nestjs", "fastify"],
-    ) {
-        language = Some("javascript".to_string());
-        push_if_contains(&haystack, &mut frameworks, "node", &["node"]);
-        push_if_contains(&haystack, &mut frameworks, "express", &["express"]);
-        push_if_contains(&haystack, &mut frameworks, "nestjs", &["nestjs", "nest js"]);
-        push_frontend_frameworks_from_haystack(&haystack, &mut frameworks);
-        if selection_mentions_frontend_framework(&haystack) {
-            push_unique(&mut roles, "frontend");
+
+        language = Some(lang_rule.id.clone());
+
+        for fw in &selection.frameworks {
+            if fw
+                .aliases
+                .iter()
+                .any(|alias| haystack.contains(alias.as_str()))
+                && !fw
+                    .exclude_keywords
+                    .iter()
+                    .any(|ex| haystack.contains(ex.as_str()))
+            {
+                push_unique(&mut frameworks, &fw.id);
+            }
         }
-        if contains_any(
-            &haystack,
-            &["node", "express", "nestjs", "nest js", "fastify"],
-        ) {
-            push_unique(&mut roles, "backend");
+
+        for d in &selection.dialects {
+            if d.aliases
+                .iter()
+                .any(|alias| haystack.contains(alias.as_str()))
+                && !d
+                    .exclude_keywords
+                    .iter()
+                    .any(|ex| haystack.contains(ex.as_str()))
+            {
+                push_unique(&mut dialects, &d.id);
+            }
         }
-    } else if contains_any(
-        &haystack,
-        &[
-            "java",
-            "spring",
-            "jpa",
-            "hibernate",
-            "mybatis plus",
-            "mybatisplus",
-            "com.baomidou.mybatisplus",
-        ],
-    ) && !contains_any(
-        &haystack,
-        &["kotlin", "ktor", "android", "kmp", "mybatis flex"],
-    ) {
-        language = Some("java".to_string());
-        push_spring_frameworks_from_haystack(&haystack, &mut frameworks);
-        push_backend_unless_persistence_track(&mut roles);
-    } else if contains_any(
-        &haystack,
-        &[
-            "csharp",
-            "c#",
-            ".net",
-            "dotnet",
-            "asp.net",
-            "ef core",
-            "entity framework",
-        ],
-    ) {
-        language = Some("csharp".to_string());
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "aspnet_core",
-            &[
-                "asp.net",
-                "aspnet",
-                "aspnet core",
-                "asp.net core",
-                "minimal api",
-            ],
-        );
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "minimal_api",
-            &["minimal api", "minimal-api"],
-        );
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "entity_framework",
-            &["entity framework", "ef core"],
-        );
-        push_if_contains(&haystack, &mut frameworks, "blazor", &["blazor"]);
-        push_backend_unless_persistence_track(&mut roles);
-        if frameworks.iter().any(|item| item == "blazor") {
-            push_unique(&mut roles, "frontend");
+
+        for role in &selection.roles {
+            if role == "backend_unless_persistence" {
+                push_backend_unless_persistence_track(&mut roles);
+            } else if role == "frontend_conditional" {
+                if selection_mentions_frontend_framework(&haystack) {
+                    push_unique(&mut roles, "frontend");
+                }
+            } else if role == "backend_unless_persistence_if_spring" {
+                if frameworks.iter().any(|fw| {
+                    matches!(
+                        fw.as_str(),
+                        "spring_boot"
+                            | "spring_framework"
+                            | "spring_cloud"
+                            | "spring_data_jpa"
+                            | "jpa_orm"
+                            | "spring_webflux"
+                            | "project_reactor"
+                            | "r2dbc"
+                    )
+                }) {
+                    push_backend_unless_persistence_track(&mut roles);
+                }
+            } else {
+                push_unique(&mut roles, role);
+            }
         }
-    } else if contains_any(
-        &haystack,
-        &["golang", " go ", "gin", "gofiber", "fiber", "grpc"],
-    ) {
-        language = Some("go".to_string());
-        push_if_contains(&haystack, &mut frameworks, "gin", &["gin"]);
-        push_if_contains(&haystack, &mut frameworks, "fiber", &["fiber"]);
-        push_if_contains(&haystack, &mut frameworks, "grpc", &["grpc"]);
-        push_unique(&mut roles, "backend");
-    } else if contains_any(
-        &haystack,
-        &[
-            "python",
-            "fastapi",
-            "django",
-            "drf",
-            "flask",
-            "sqlalchemy",
-            "pydantic",
-        ],
-    ) {
-        language = Some("python".to_string());
-        push_if_contains(&haystack, &mut frameworks, "fastapi", &["fastapi"]);
-        push_if_contains(&haystack, &mut frameworks, "django", &["django"]);
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "django_rest_framework",
-            &["django rest framework", "drf"],
-        );
-        push_if_contains(&haystack, &mut frameworks, "pydantic", &["pydantic"]);
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "sqlalchemy",
-            &["sqlalchemy", "sql alchemy"],
-        );
-        push_if_contains(&haystack, &mut frameworks, "flask", &["flask"]);
-        push_backend_unless_persistence_track(&mut roles);
-    } else if contains_any(&haystack, &["rust", "cargo", "tokio", "axum", "actix"]) {
-        language = Some("rust".to_string());
-        push_if_contains(&haystack, &mut frameworks, "tokio", &["tokio"]);
-        push_if_contains(&haystack, &mut frameworks, "axum", &["axum"]);
-        push_if_contains(&haystack, &mut frameworks, "actix", &["actix"]);
-        push_backend_unless_persistence_track(&mut roles);
-    } else if selection_mentions_flutter_framework(&haystack) {
-        push_frontend_frameworks_from_haystack(&haystack, &mut frameworks);
+        break;
+    }
+
+    if language.is_none()
+        && frameworks.is_empty()
+        && (selection_mentions_frontend_framework(&haystack)
+            || selection_mentions_flutter_framework(&haystack))
+    {
+        for lang_rule in &catalog.repo_signals.languages {
+            if lang_rule.id == "typescript" {
+                if let Some(ts_selection) = &lang_rule.selection {
+                    for fw in &ts_selection.frameworks {
+                        if fw
+                            .aliases
+                            .iter()
+                            .any(|alias| haystack.contains(alias.as_str()))
+                            && !fw
+                                .exclude_keywords
+                                .iter()
+                                .any(|ex| haystack.contains(ex.as_str()))
+                        {
+                            push_unique(&mut frameworks, &fw.id);
+                        }
+                    }
+                }
+                break;
+            }
+        }
         push_unique(&mut roles, "frontend");
-    } else if contains_any(&haystack, &["kotlin", "ktor", "android", "compose", "kmp"]) {
-        language = Some("kotlin".to_string());
-        if contains_any(&haystack, &["ktor client", "ktor-client"]) {
-            push_unique(&mut frameworks, "ktor_client");
-        } else {
-            push_if_contains(&haystack, &mut frameworks, "ktor", &["ktor"]);
-        }
-        push_if_contains(&haystack, &mut frameworks, "compose", &["compose"]);
-        push_if_contains(&haystack, &mut frameworks, "kmp", &["kmp", "multiplatform"]);
-        push_spring_frameworks_from_haystack(&haystack, &mut frameworks);
-        if frameworks.iter().any(|framework| {
-            matches!(
-                framework.as_str(),
-                "spring_boot"
-                    | "spring_framework"
-                    | "spring_cloud"
-                    | "spring_data_jpa"
-                    | "jpa_orm"
-                    | "spring_webflux"
-                    | "project_reactor"
-                    | "r2dbc"
-            )
-        }) {
-            push_backend_unless_persistence_track(&mut roles);
-        }
-    } else if contains_any(&haystack, &["php", "laravel", "symfony"]) {
-        language = Some("php".to_string());
-        push_if_contains(&haystack, &mut frameworks, "laravel", &["laravel"]);
-        push_if_contains(&haystack, &mut frameworks, "symfony", &["symfony"]);
-        push_if_contains(&haystack, &mut frameworks, "swoole", &["swoole"]);
-        push_if_contains(
-            &haystack,
-            &mut frameworks,
-            "reactphp",
-            &["reactphp", "react php"],
-        );
-        push_if_contains(&haystack, &mut frameworks, "amphp", &["amphp", "amp php"]);
-        push_if_contains(&haystack, &mut frameworks, "fibers", &["fiber", "fibers"]);
-        push_unique(&mut roles, "backend");
-    } else if contains_any(&haystack, &["swift", "swiftui", "vapor"]) {
-        language = Some("swift".to_string());
-        push_if_contains(&haystack, &mut frameworks, "swiftui", &["swiftui"]);
-        push_if_contains(&haystack, &mut frameworks, "vapor", &["vapor"]);
-    } else if contains_any(&haystack, &["c++", "cpp", "cmake", "clang", "gcc"]) {
-        language = Some("cpp".to_string());
-        push_if_contains(&haystack, &mut frameworks, "cmake", &["cmake"]);
-    } else if selection_mentions_frontend_framework(&haystack) {
-        push_frontend_frameworks_from_haystack(&haystack, &mut frameworks);
-        push_unique(&mut roles, "frontend");
-    } else if contains_any(
-        &haystack,
-        &[
-            "postgres",
-            "postgresql",
-            "mysql",
-            "sqlite",
-            "mariadb",
-            "sql server",
-            "mssql",
-            "oracle",
-            "cockroach",
-        ],
-    ) {
-        language = Some("sql".to_string());
-        push_if_contains(
-            &haystack,
-            &mut dialects,
-            "postgresql",
-            &["postgres", "postgresql"],
-        );
-        push_if_contains(&haystack, &mut dialects, "mysql", &["mysql"]);
-        push_if_contains(&haystack, &mut dialects, "mariadb", &["mariadb"]);
-        push_if_contains(&haystack, &mut dialects, "sqlite", &["sqlite"]);
-        push_if_contains(
-            &haystack,
-            &mut dialects,
-            "sql_server",
-            &["sql server", "mssql"],
-        );
-        push_if_contains(&haystack, &mut dialects, "oracle", &["oracle"]);
-        push_unique(&mut roles, "database");
     }
 
     if contains_any(
@@ -2018,6 +1904,7 @@ fn contains_any(haystack: &str, needles: &[&str]) -> bool {
     needles.iter().any(|needle| haystack.contains(needle))
 }
 
+#[allow(dead_code)]
 fn push_if_contains(haystack: &str, output: &mut Vec<String>, value: &str, needles: &[&str]) {
     if contains_any(haystack, needles) {
         push_unique(output, value);
@@ -2059,124 +1946,8 @@ fn selection_mentions_frontend_framework(haystack: &str) -> bool {
     )
 }
 
-fn push_frontend_frameworks_from_haystack(haystack: &str, frameworks: &mut Vec<String>) {
-    let react_native = contains_any(
-        haystack,
-        &["react native", "reactnative", "expo", "expo router"],
-    );
-    if react_native {
-        push_unique(frameworks, "reactnative");
-        push_if_contains(haystack, frameworks, "expo", &["expo", "expo router"]);
-    }
-    if selection_mentions_flutter_framework(haystack) {
-        push_unique(frameworks, "flutter");
-        push_if_contains(haystack, frameworks, "riverpod", &["riverpod"]);
-        push_if_contains(haystack, frameworks, "bloc", &[" bloc ", "cubit"]);
-        push_if_contains(haystack, frameworks, "gorouter", &["go router", "gorouter"]);
-    }
-    push_if_contains(
-        haystack,
-        frameworks,
-        "nextjs",
-        &["next", "nextjs", "next js", "app router"],
-    );
-    push_if_contains(haystack, frameworks, "app_router", &["app router"]);
-    if !react_native {
-        push_if_contains(
-            haystack,
-            frameworks,
-            "react",
-            &["react", "next", "nextjs", "next js"],
-        );
-    }
-    push_if_contains(haystack, frameworks, "react19", &["react 19", "react19"]);
-    push_if_contains(
-        haystack,
-        frameworks,
-        "react_server_components",
-        &[
-            "react server component",
-            "server components",
-            " rsc ",
-            "app router",
-        ],
-    );
-    push_if_contains(haystack, frameworks, "vue", &["vue", "nuxt"]);
-    push_if_contains(haystack, frameworks, "nuxt", &["nuxt"]);
-    push_if_contains(haystack, frameworks, "quasar", &["quasar"]);
-    push_if_contains(haystack, frameworks, "capacitor", &["capacitor"]);
-    push_if_contains(
-        haystack,
-        frameworks,
-        "pwa",
-        &["progressive web app", " pwa ", "pwa+", "+pwa"],
-    );
-    push_if_contains(haystack, frameworks, "angular", &["angular", "ngrx"]);
-    push_if_contains(haystack, frameworks, "ngrx", &["ngrx"]);
-    push_if_contains(haystack, frameworks, "svelte", &["svelte"]);
-}
-
 fn selection_mentions_flutter_framework(haystack: &str) -> bool {
     contains_any(haystack, &["flutter", "riverpod", "go router", "gorouter"])
-}
-
-fn push_spring_frameworks_from_haystack(haystack: &str, frameworks: &mut Vec<String>) {
-    push_if_contains(haystack, frameworks, "spring_framework", &["spring"]);
-    push_if_contains(
-        haystack,
-        frameworks,
-        "spring_boot",
-        &["spring boot", "springboot"],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "spring_cloud",
-        &[
-            "spring cloud",
-            "cloud gateway",
-            "spring cloud gateway",
-            "config server",
-            "spring cloud config",
-            "eureka",
-        ],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "spring_data_jpa",
-        &["spring data jpa", "spring-data-jpa"],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "mybatis_plus",
-        &[
-            "mybatis plus",
-            "mybatis-plus",
-            "mybatisplus",
-            "com.baomidou.mybatisplus",
-        ],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "jpa_orm",
-        &["jpa", "hibernate", "eclipselink"],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "spring_webflux",
-        &["spring webflux", "webflux"],
-    );
-    push_if_contains(
-        haystack,
-        frameworks,
-        "project_reactor",
-        &["project reactor", "reactor"],
-    );
-    push_if_contains(haystack, frameworks, "r2dbc", &["r2dbc"]);
 }
 
 fn push_unique(output: &mut Vec<String>, value: &str) {
