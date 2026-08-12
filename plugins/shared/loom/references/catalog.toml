@@ -984,6 +984,96 @@ label = "TypeScript"
   needle = "@nestjs/core"
   label = "NestJS"
 
+  [repoSignals.languages.selection]
+  keywords = ["typescript", "type script", " ts ", "tsx"]
+  excludeKeywords = []
+  roles = ["frontend_conditional"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "reactnative"
+  aliases = ["react native", "reactnative", "expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "expo"
+  aliases = ["expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "flutter"
+  aliases = ["flutter", "riverpod", "go router", "gorouter"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "riverpod"
+  aliases = ["riverpod"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "bloc"
+  aliases = [" bloc ", "cubit"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "gorouter"
+  aliases = ["go router", "gorouter"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nextjs"
+  aliases = ["next", "nextjs", "next js", "app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "app_router"
+  aliases = ["app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react"
+  aliases = ["react", "next", "nextjs", "next js"]
+  excludeKeywords = ["react native", "reactnative", "expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react19"
+  aliases = ["react 19", "react19"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react_server_components"
+  aliases = ["react server component", "server components", " rsc ", "app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "vue"
+  aliases = ["vue", "nuxt"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nuxt"
+  aliases = ["nuxt"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "quasar"
+  aliases = ["quasar"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "capacitor"
+  aliases = ["capacitor"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "pwa"
+  aliases = ["progressive web app", " pwa ", "pwa+", "+pwa"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "angular"
+  aliases = ["angular", "ngrx"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "ngrx"
+  aliases = ["ngrx"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "svelte"
+  aliases = ["svelte"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "node"
+  aliases = ["node"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nestjs"
+  aliases = ["nestjs", "nest js"]
+
 # ── Java ──
 [[repoSignals.languages]]
 id = "java"
@@ -1004,6 +1094,47 @@ label = "Java"
   [[repoSignals.languages.frameworks]]
   needle = "spring-boot"
   label = "Spring Boot"
+
+  [repoSignals.languages.selection]
+  keywords = ["java", "spring", "jpa", "hibernate", "mybatis plus", "mybatisplus", "com.baomidou.mybatisplus"]
+  excludeKeywords = ["kotlin", "ktor", "android", "kmp", "mybatis flex", "javascript"]
+  roles = ["backend_unless_persistence"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_framework"
+  aliases = ["spring"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_boot"
+  aliases = ["spring boot", "springboot"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_cloud"
+  aliases = ["spring cloud", "cloud gateway", "spring cloud gateway", "config server", "spring cloud config", "eureka"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_data_jpa"
+  aliases = ["spring data jpa", "spring-data-jpa"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "mybatis_plus"
+  aliases = ["mybatis plus", "mybatis-plus", "mybatisplus", "com.baomidou.mybatisplus"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "jpa_orm"
+  aliases = ["jpa", "hibernate", "eclipselink"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_webflux"
+  aliases = ["spring webflux", "webflux"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "project_reactor"
+  aliases = ["project reactor", "reactor"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "r2dbc"
+  aliases = ["r2dbc"]
 
 # ── Python ──
 [[repoSignals.languages]]
@@ -1066,6 +1197,35 @@ label = "Python"
   needle = "tornado"
   label = "Tornado"
 
+  [repoSignals.languages.selection]
+  keywords = ["python", "fastapi", "django", "drf", "flask", "sqlalchemy", "pydantic"]
+  excludeKeywords = []
+  roles = ["backend_unless_persistence"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "fastapi"
+  aliases = ["fastapi"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "django"
+  aliases = ["django"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "django_rest_framework"
+  aliases = ["django rest framework", "drf"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "pydantic"
+  aliases = ["pydantic"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "sqlalchemy"
+  aliases = ["sqlalchemy", "sql alchemy"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "flask"
+  aliases = ["flask"]
+
 # ── Rust ──
 [[repoSignals.languages]]
 id = "rust"
@@ -1075,6 +1235,23 @@ label = "Rust"
   path = "Cargo.toml"
   packageManager = "Cargo"
 
+  [repoSignals.languages.selection]
+  keywords = ["rust", "cargo", "tokio", "axum", "actix"]
+  excludeKeywords = []
+  roles = ["backend_unless_persistence"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "tokio"
+  aliases = ["tokio"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "axum"
+  aliases = ["axum"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "actix"
+  aliases = ["actix"]
+
 # ── Go ──
 [[repoSignals.languages]]
 id = "go"
@@ -1083,3 +1260,304 @@ label = "Go"
   [[repoSignals.languages.manifests]]
   path = "go.mod"
   packageManager = "go"
+
+  [repoSignals.languages.selection]
+  keywords = ["golang", " go ", "gin", "gofiber", "fiber", "grpc"]
+  excludeKeywords = []
+  roles = ["backend"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "gin"
+  aliases = ["gin"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "fiber"
+  aliases = ["fiber"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "grpc"
+  aliases = ["grpc"]
+
+# ── JavaScript ──
+[[repoSignals.languages]]
+id = "javascript"
+label = "JavaScript"
+
+  [repoSignals.languages.selection]
+  keywords = ["javascript", " js ", "node", "express", "nestjs", "fastify"]
+  excludeKeywords = []
+  roles = ["frontend_conditional"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "node"
+  aliases = ["node"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "express"
+  aliases = ["express"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nestjs"
+  aliases = ["nestjs", "nest js"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "reactnative"
+  aliases = ["react native", "reactnative", "expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "expo"
+  aliases = ["expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "flutter"
+  aliases = ["flutter", "riverpod", "go router", "gorouter"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "riverpod"
+  aliases = ["riverpod"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "bloc"
+  aliases = [" bloc ", "cubit"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "gorouter"
+  aliases = ["go router", "gorouter"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nextjs"
+  aliases = ["next", "nextjs", "next js", "app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "app_router"
+  aliases = ["app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react"
+  aliases = ["react", "next", "nextjs", "next js"]
+  excludeKeywords = ["react native", "reactnative", "expo", "expo router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react19"
+  aliases = ["react 19", "react19"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "react_server_components"
+  aliases = ["react server component", "server components", " rsc ", "app router"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "vue"
+  aliases = ["vue", "nuxt"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "nuxt"
+  aliases = ["nuxt"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "quasar"
+  aliases = ["quasar"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "capacitor"
+  aliases = ["capacitor"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "pwa"
+  aliases = ["progressive web app", " pwa ", "pwa+", "+pwa"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "angular"
+  aliases = ["angular", "ngrx"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "ngrx"
+  aliases = ["ngrx"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "svelte"
+  aliases = ["svelte"]
+
+# ── C# ──
+[[repoSignals.languages]]
+id = "csharp"
+label = "C#"
+
+  [repoSignals.languages.selection]
+  keywords = ["csharp", "c#", ".net", "dotnet", "asp.net", "ef core", "entity framework"]
+  excludeKeywords = []
+  roles = ["backend_unless_persistence"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "aspnet_core"
+  aliases = ["asp.net", "aspnet", "aspnet core", "asp.net core", "minimal api"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "minimal_api"
+  aliases = ["minimal api", "minimal-api"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "entity_framework"
+  aliases = ["entity framework", "ef core"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "blazor"
+  aliases = ["blazor"]
+
+# ── Kotlin ──
+[[repoSignals.languages]]
+id = "kotlin"
+label = "Kotlin"
+
+  [repoSignals.languages.selection]
+  keywords = ["kotlin", "ktor", "android", "compose", "kmp"]
+  excludeKeywords = []
+  roles = ["backend_unless_persistence_if_spring"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "ktor"
+  aliases = ["ktor"]
+  excludeKeywords = ["ktor client", "ktor-client"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "ktor_client"
+  aliases = ["ktor client", "ktor-client"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "compose"
+  aliases = ["compose"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "kmp"
+  aliases = ["kmp", "multiplatform"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_framework"
+  aliases = ["spring"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_boot"
+  aliases = ["spring boot", "springboot"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_cloud"
+  aliases = ["spring cloud", "cloud gateway", "spring cloud gateway", "config server", "spring cloud config", "eureka"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_data_jpa"
+  aliases = ["spring data jpa", "spring-data-jpa"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "jpa_orm"
+  aliases = ["jpa", "hibernate", "eclipselink"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "spring_webflux"
+  aliases = ["spring webflux", "webflux"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "project_reactor"
+  aliases = ["project reactor", "reactor"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "r2dbc"
+  aliases = ["r2dbc"]
+
+# ── PHP ──
+[[repoSignals.languages]]
+id = "php"
+label = "PHP"
+
+  [repoSignals.languages.selection]
+  keywords = ["php", "laravel", "symfony"]
+  excludeKeywords = []
+  roles = ["backend"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "laravel"
+  aliases = ["laravel"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "symfony"
+  aliases = ["symfony"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "swoole"
+  aliases = ["swoole"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "reactphp"
+  aliases = ["reactphp", "react php"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "amphp"
+  aliases = ["amphp", "amp php"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "fibers"
+  aliases = ["fiber", "fibers"]
+
+# ── Swift ──
+[[repoSignals.languages]]
+id = "swift"
+label = "Swift"
+
+  [repoSignals.languages.selection]
+  keywords = ["swift", "swiftui", "vapor"]
+  excludeKeywords = []
+  roles = []
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "swiftui"
+  aliases = ["swiftui"]
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "vapor"
+  aliases = ["vapor"]
+
+# ── C++ ──
+[[repoSignals.languages]]
+id = "cpp"
+label = "C++"
+
+  [repoSignals.languages.selection]
+  keywords = ["c++", "cpp", "cmake", "clang", "gcc"]
+  excludeKeywords = []
+  roles = []
+
+  [[repoSignals.languages.selection.frameworks]]
+  id = "cmake"
+  aliases = ["cmake"]
+
+# ── SQL ──
+[[repoSignals.languages]]
+id = "sql"
+label = "SQL"
+
+  [repoSignals.languages.selection]
+  keywords = ["postgres", "postgresql", "mysql", "sqlite", "mariadb", "sql server", "mssql", "oracle", "cockroach"]
+  excludeKeywords = []
+  roles = ["database"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "postgresql"
+  aliases = ["postgres", "postgresql"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "mysql"
+  aliases = ["mysql"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "mariadb"
+  aliases = ["mariadb"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "sqlite"
+  aliases = ["sqlite"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "sql_server"
+  aliases = ["sql server", "mssql"]
+
+  [[repoSignals.languages.selection.dialects]]
+  id = "oracle"
+  aliases = ["oracle"]
