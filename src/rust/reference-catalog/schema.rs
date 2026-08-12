@@ -338,6 +338,8 @@ pub struct FrameworkReference {
     pub framework_id: String,
     pub group_id: String,
     pub surface: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub when: Option<Condition>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub items: Vec<ReferenceItemRule>,
 }

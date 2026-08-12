@@ -5,6 +5,23 @@ use crate::{
     CodeReferenceTaskContext, CodeStackSignal, ImplementationAction, TaskDefinition, TaskKind,
 };
 
+impl From<reference_catalog::Condition> for Condition {
+    fn from(cond: reference_catalog::Condition) -> Self {
+        match cond {
+            reference_catalog::Condition::Predicate(p) => Condition::Predicate(p),
+            reference_catalog::Condition::All { all_of } => Condition::All {
+                all_of: all_of.into_iter().map(Condition::from).collect(),
+            },
+            reference_catalog::Condition::Any { any_of } => Condition::Any {
+                any_of: any_of.into_iter().map(Condition::from).collect(),
+            },
+            reference_catalog::Condition::Not { not } => Condition::Not {
+                not: Box::new((*not).into()),
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Condition {
@@ -75,6 +92,9 @@ fn evaluate_task_owns(value: &str, ctx: &ConditionContext) -> bool {
         "typescript_type_modeling" => task_owns_typescript_type_modeling(task),
         "typescript_configuration" => task_owns_typescript_configuration(task),
         "typescript_pattern" => task_owns_typescript_pattern(task),
+        "api_client_binding" => task_uses_api_client_binding(task),
+        "is_backend_task" => task_is_backend_task(task),
+        "is_frontend_task" => task_is_frontend_task(task),
         _ => {
             log::warn!("unknown task_owns value: {value}");
             false
