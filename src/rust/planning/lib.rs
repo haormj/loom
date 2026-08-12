@@ -1,7 +1,7 @@
 mod paths;
 mod pgc;
 mod repository_context;
-mod technical_baseline;
+pub mod technical_baseline;
 
 use delivery_core::{
     ArtifactKind, DomainDispatcher, LoomMcpActionResult, RouteAction, RouteActionKind,

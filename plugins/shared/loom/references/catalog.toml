@@ -867,3 +867,175 @@ keywords = ["architecture", "clean architecture", "cqrs", "mediatr", "layer", "l
 [[focusRules]]
 focusTags = ["generics"]
 keywords = ["generic", "generics", "type parameter", "template", "templates", "concept", "concepts", "constraints", "泛型", "模板", "类型参数"]
+
+# ════════════════════════════════════════════════════════════════════════
+# Repo Signals — 仓库技术栈检测规则
+# 替代 planning/technical_baseline.rs 中的 collect_*_signals 函数
+# ════════════════════════════════════════════════════════════════════════
+
+[repoSignals]
+skipDirs = [".git", ".loom", "node_modules", "target", "dist", "build", "coverage", ".venv", "venv"]
+maxScanDepth = 6
+
+[repoSignals.sourceRoots]
+paths = ["src", "app", "web", "service", "backend", "frontend", "tests"]
+
+# ── Node ──
+[[repoSignals.languages]]
+id = "node"
+label = "JavaScript"
+
+  [[repoSignals.languages.manifests]]
+  path = "package.json"
+  packageManager = "npm"
+
+  [[repoSignals.languages.manifests]]
+  path = "tsconfig.json"
+
+  [[repoSignals.languages.manifests]]
+  path = "package-lock.json"
+  packageManager = "npm"
+
+  [[repoSignals.languages.manifests]]
+  path = "pnpm-lock.yaml"
+  packageManager = "pnpm"
+
+  [[repoSignals.languages.manifests]]
+  path = "yarn.lock"
+  packageManager = "yarn"
+
+  [repoSignals.languages.extensions]
+  scan = [".ts", ".tsx"]
+  threshold = 1
+
+  [[repoSignals.languages.frameworks]]
+  needle = "next"
+  label = "Next.js"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "react"
+  label = "React"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "vue"
+  label = "Vue"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "svelte"
+  label = "Svelte"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "vite"
+  label = "Vite"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "express"
+  label = "Express"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "fastify"
+  label = "Fastify"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "@nestjs/core"
+  label = "NestJS"
+
+# ── Java ──
+[[repoSignals.languages]]
+id = "java"
+label = "Java"
+
+  [[repoSignals.languages.manifests]]
+  path = "pom.xml"
+  packageManager = "Maven"
+
+  [[repoSignals.languages.manifests]]
+  path = "build.gradle"
+  packageManager = "Gradle"
+
+  [[repoSignals.languages.manifests]]
+  path = "build.gradle.kts"
+  packageManager = "Gradle"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "spring-boot"
+  label = "Spring Boot"
+
+# ── Python ──
+[[repoSignals.languages]]
+id = "python"
+label = "Python"
+
+  [[repoSignals.languages.manifests]]
+  path = "pyproject.toml"
+  packageManager = "pip"
+
+  [[repoSignals.languages.manifests]]
+  path = "requirements.txt"
+  packageManager = "pip"
+
+  [[repoSignals.languages.manifests]]
+  path = "setup.py"
+  packageManager = "pip"
+
+  [[repoSignals.languages.manifests]]
+  path = "setup.cfg"
+  packageManager = "pip"
+
+  [[repoSignals.languages.manifests]]
+  path = "Pipfile"
+  packageManager = "pipenv"
+
+  [[repoSignals.languages.manifests]]
+  path = "poetry.lock"
+  packageManager = "poetry"
+
+  [repoSignals.languages.folderHints]
+  dirs = ["python", "scripts"]
+  requireExtensions = [".py"]
+
+  [repoSignals.languages.extensions]
+  scan = [".py"]
+  threshold = 1
+
+  [[repoSignals.languages.frameworks]]
+  needle = "fastapi"
+  label = "FastAPI"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "django"
+  label = "Django"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "flask"
+  label = "Flask"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "pyramid"
+  label = "Pyramid"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "sanic"
+  label = "Sanic"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "tornado"
+  label = "Tornado"
+
+# ── Rust ──
+[[repoSignals.languages]]
+id = "rust"
+label = "Rust"
+
+  [[repoSignals.languages.manifests]]
+  path = "Cargo.toml"
+  packageManager = "Cargo"
+
+# ── Go ──
+[[repoSignals.languages]]
+id = "go"
+label = "Go"
+
+  [[repoSignals.languages.manifests]]
+  path = "go.mod"
+  packageManager = "go"
