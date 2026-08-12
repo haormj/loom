@@ -24,6 +24,10 @@ pub struct ReferenceCatalog {
     /// 后端生态系统定义。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub backend_ecosystems: Vec<BackendEcosystemEntry>,
+
+    /// 仓库技术栈检测规则配置。
+    #[serde(default, skip_serializing_if = "is_repo_signals_empty")]
+    pub repo_signals: RepoSignalsConfig,
 }
 
 /// 一条参考路由(code、api、arch、uix、browser、deploy)。
@@ -215,6 +219,140 @@ pub struct BackendEcosystemEntry {
     pub backend_matchers: Vec<String>,
     pub data_access_options: Vec<String>,
     pub data_access_matchers: Vec<String>,
+}
+
+// ── 仓库信号检测规则类型 ──
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum Condition {
+    Predicate(String),
+    All { all_of: Vec<Condition> },
+    Any { any_of: Vec<Condition> },
+    Not { not: Box<Condition> },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct RepoSignalsConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub skip_dirs: Vec<String>,
+
+    #[serde(default)]
+    pub max_scan_depth: u32,
+
+    #[serde(default)]
+    pub source_roots: SourceRootsConfig,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub languages: Vec<LanguageRule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceRootsConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub paths: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LanguageRule {
+    pub id: String,
+    pub label: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub manifests: Vec<ManifestRule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub folder_hints: Option<FolderHintsRule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<ExtensionsRule>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frameworks: Vec<FrameworkRule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selection: Option<SelectionRule>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub framework_references: Vec<FrameworkReference>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ManifestRule {
+    pub path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub package_manager: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FolderHintsRule {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dirs: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub require_extensions: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtensionsRule {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub scan: Vec<String>,
+    #[serde(default)]
+    pub threshold: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrameworkRule {
+    pub needle: String,
+    pub label: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SelectionRule {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub keywords: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclude_keywords: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub roles: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frameworks: Vec<FrameworkSelectionRule>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dialects: Vec<FrameworkSelectionRule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrameworkSelectionRule {
+    pub id: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub aliases: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrameworkReference {
+    pub framework_id: String,
+    pub group_id: String,
+    pub surface: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<ReferenceItemRule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReferenceItemRule {
+    pub item_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub when: Option<Condition>,
+}
+
+fn is_repo_signals_empty(config: &RepoSignalsConfig) -> bool {
+    config.languages.is_empty()
+        && config.skip_dirs.is_empty()
+        && config.source_roots.paths.is_empty()
+        && config.max_scan_depth == 0
 }
 
 // ── 展开辅助 ──
