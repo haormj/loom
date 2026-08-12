@@ -201,3 +201,21 @@ fn reference_selection_fastapi_testing() {
     assert!(selection.reference_groups.contains_key("fastapi"));
     assert!(selection.reference_groups["fastapi"].contains(&"testing".to_string()));
 }
+
+#[test]
+fn signal_from_typescript_node_express_on_web_track() {
+    let stack = json!({
+        "tracks": {
+            "web": {
+                "status": "selected",
+                "selection": "typescript node express"
+            }
+        }
+    });
+    let signals = code_stack_signals_from_baseline(&stack);
+    assert_eq!(signals.len(), 1);
+    let s = &signals[0];
+    assert_eq!(s.language.as_deref(), Some("typescript"));
+    assert!(s.roles.contains(&"frontend".to_string()));
+    assert!(s.roles.contains(&"backend".to_string()));
+}
