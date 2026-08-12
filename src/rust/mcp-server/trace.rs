@@ -202,12 +202,7 @@ fn drain_lines(buf: &mut Vec<u8>, dir: Dir, writer: &mut BufWriter<std::fs::File
     }
 }
 
-fn emit_record(
-    line: &[u8],
-    dir: Dir,
-    writer: &mut BufWriter<std::fs::File>,
-    incomplete: bool,
-) {
+fn emit_record(line: &[u8], dir: Dir, writer: &mut BufWriter<std::fs::File>, incomplete: bool) {
     let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
     let marker = dir.marker();
 
@@ -346,9 +341,13 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for TeeWrite<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static TRACE_ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn config_disabled_when_unset() {
+        let _guard = TRACE_ENV_LOCK.lock().unwrap();
         std::env::remove_var("LOOM_MCP_TRACE");
         let cfg = TraceConfig::from_env();
         assert!(!cfg.enabled);
@@ -357,6 +356,7 @@ mod tests {
 
     #[test]
     fn config_disabled_when_zero() {
+        let _guard = TRACE_ENV_LOCK.lock().unwrap();
         std::env::set_var("LOOM_MCP_TRACE", "0");
         let cfg = TraceConfig::from_env();
         assert!(!cfg.enabled);
@@ -365,6 +365,7 @@ mod tests {
 
     #[test]
     fn config_disabled_when_empty() {
+        let _guard = TRACE_ENV_LOCK.lock().unwrap();
         std::env::set_var("LOOM_MCP_TRACE", "   ");
         let cfg = TraceConfig::from_env();
         assert!(!cfg.enabled);
@@ -373,6 +374,7 @@ mod tests {
 
     #[test]
     fn config_enabled_default_path_when_one() {
+        let _guard = TRACE_ENV_LOCK.lock().unwrap();
         std::env::set_var("LOOM_MCP_TRACE", "1");
         let cfg = TraceConfig::from_env();
         assert!(cfg.enabled);
@@ -384,6 +386,7 @@ mod tests {
 
     #[test]
     fn config_enabled_custom_path() {
+        let _guard = TRACE_ENV_LOCK.lock().unwrap();
         std::env::set_var("LOOM_MCP_TRACE", "/tmp/custom-trace.log");
         let cfg = TraceConfig::from_env();
         assert!(cfg.enabled);
@@ -410,10 +413,7 @@ mod tests {
 
     #[test]
     fn sink_writes_startup_banner_and_record() {
-        let tmp = std::env::temp_dir().join(format!(
-            "loom-trace-test-{}",
-            std::process::id()
-        ));
+        let tmp = std::env::temp_dir().join(format!("loom-trace-test-{}", std::process::id()));
         let _ = std::fs::remove_file(&tmp);
         let cfg = TraceConfig {
             enabled: true,
@@ -424,25 +424,27 @@ mod tests {
             Dir::In,
             b"{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"loom.status\"}}\n",
         );
-        sink.append(
-            Dir::Out,
-            b"{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n",
-        );
+        sink.append(Dir::Out, b"{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n");
         drop(sink);
         let content = std::fs::read_to_string(&tmp).unwrap();
-        assert!(content.contains("loom-mcp-server started"), "banner: {}", content);
+        assert!(
+            content.contains("loom-mcp-server started"),
+            "banner: {}",
+            content
+        );
         assert!(content.contains(">> "), "in marker: {}", content);
         assert!(content.contains("<< "), "out marker: {}", content);
-        assert!(content.contains("tools/call id=1"), "method label: {}", content);
+        assert!(
+            content.contains("tools/call id=1"),
+            "method label: {}",
+            content
+        );
         assert!(content.contains("\"jsonrpc\""), "pretty body: {}", content);
     }
 
     #[test]
     fn sink_reassembles_line_across_chunks() {
-        let tmp = std::env::temp_dir().join(format!(
-            "loom-trace-chunk-{}",
-            std::process::id()
-        ));
+        let tmp = std::env::temp_dir().join(format!("loom-trace-chunk-{}", std::process::id()));
         let _ = std::fs::remove_file(&tmp);
         let cfg = TraceConfig {
             enabled: true,
@@ -453,15 +455,17 @@ mod tests {
         sink.append(Dir::In, b"1}\n{\"b\":2}\n");
         drop(sink);
         let content = std::fs::read_to_string(&tmp).unwrap();
-        assert_eq!(content.matches(">> ").count(), 2, "two records: {}", content);
+        assert_eq!(
+            content.matches(">> ").count(),
+            2,
+            "two records: {}",
+            content
+        );
     }
 
     #[test]
     fn sink_tags_non_json_line() {
-        let tmp = std::env::temp_dir().join(format!(
-            "loom-trace-bad-{}",
-            std::process::id()
-        ));
+        let tmp = std::env::temp_dir().join(format!("loom-trace-bad-{}", std::process::id()));
         let _ = std::fs::remove_file(&tmp);
         let cfg = TraceConfig {
             enabled: true,
@@ -471,15 +475,16 @@ mod tests {
         sink.append(Dir::In, b"not json\n");
         drop(sink);
         let content = std::fs::read_to_string(&tmp).unwrap();
-        assert!(content.contains("unparseable"), "unparseable tag: {}", content);
+        assert!(
+            content.contains("unparseable"),
+            "unparseable tag: {}",
+            content
+        );
     }
 
     #[test]
     fn sink_flushes_incomplete_on_drop() {
-        let tmp = std::env::temp_dir().join(format!(
-            "loom-trace-inc-{}",
-            std::process::id()
-        ));
+        let tmp = std::env::temp_dir().join(format!("loom-trace-inc-{}", std::process::id()));
         let _ = std::fs::remove_file(&tmp);
         let cfg = TraceConfig {
             enabled: true,
@@ -489,7 +494,11 @@ mod tests {
         sink.append(Dir::In, b"{\"a\":1}\npartial");
         drop(sink);
         let content = std::fs::read_to_string(&tmp).unwrap();
-        assert!(content.contains("incomplete"), "incomplete tag: {}", content);
+        assert!(
+            content.contains("incomplete"),
+            "incomplete tag: {}",
+            content
+        );
     }
 
     #[tokio::test]
