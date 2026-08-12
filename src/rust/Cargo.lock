@@ -303,6 +303,7 @@ name = "contracts"
 version = "0.2.7"
 dependencies = [
  "delivery-core",
+ "log",
  "reference-catalog",
  "schemars",
  "serde",

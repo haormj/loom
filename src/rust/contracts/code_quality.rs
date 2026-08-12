@@ -1412,7 +1412,7 @@ pub fn task_owns_logging_infrastructure(
         || context.request_tracing
 }
 
-fn task_has_action(task: &TaskDefinition, expected: ImplementationAction) -> bool {
+pub(crate) fn task_has_action(task: &TaskDefinition, expected: ImplementationAction) -> bool {
     task.implementation_actions
         .iter()
         .any(|action| *action == expected)
@@ -1681,7 +1681,7 @@ fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanIt
     }
 }
 
-fn task_is_frontend_task(task: &TaskDefinition) -> bool {
+pub(crate) fn task_is_frontend_task(task: &TaskDefinition) -> bool {
     task.frontend_experience_requirement.is_some()
         || matches!(
             task.task_kind,
@@ -1706,7 +1706,7 @@ fn task_is_frontend_task(task: &TaskDefinition) -> bool {
         })
 }
 
-fn task_owns_frontend_implementation(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_frontend_implementation(task: &TaskDefinition) -> bool {
     matches!(
         task.task_kind,
         TaskKind::FrontendExperience | TaskKind::UiFlowIncrement
@@ -1728,7 +1728,7 @@ fn task_owns_frontend_implementation(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_frontend_surface(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_frontend_surface(task: &TaskDefinition) -> bool {
     matches!(
         task.task_kind,
         TaskKind::FrontendExperience | TaskKind::UiFlowIncrement
@@ -1742,7 +1742,7 @@ fn task_owns_frontend_surface(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_test_implementation(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_test_implementation(task: &TaskDefinition) -> bool {
     if matches!(task.task_kind, TaskKind::VerificationIncrement) {
         return true;
     }
@@ -1758,7 +1758,7 @@ fn task_owns_test_implementation(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_is_backend_task(task: &TaskDefinition) -> bool {
+pub(crate) fn task_is_backend_task(task: &TaskDefinition) -> bool {
     if task_is_frontend_task(task) {
         return false;
     }
@@ -1801,7 +1801,7 @@ fn task_is_backend_task(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_api_contract(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_api_contract(task: &TaskDefinition) -> bool {
     if task_is_frontend_task(task) {
         return false;
     }
@@ -1829,7 +1829,7 @@ fn task_uses_api_client_binding(task: &TaskDefinition) -> bool {
                 .any(|action| matches!(action, ImplementationAction::WireReferenceInApiOrUi)))
 }
 
-fn task_owns_typescript_type_modeling(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_typescript_type_modeling(task: &TaskDefinition) -> bool {
     task.implementation_actions.iter().any(|action| {
         matches!(
             action,
@@ -1845,7 +1845,7 @@ fn task_owns_typescript_type_modeling(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_typescript_configuration(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_typescript_configuration(task: &TaskDefinition) -> bool {
     matches!(task.task_kind, TaskKind::ConfigurationSupport)
         || task.implementation_actions.iter().any(|action| {
             matches!(
@@ -1858,7 +1858,7 @@ fn task_owns_typescript_configuration(task: &TaskDefinition) -> bool {
         })
 }
 
-fn task_owns_typescript_pattern(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_typescript_pattern(task: &TaskDefinition) -> bool {
     task.implementation_actions.iter().any(|action| {
         matches!(
             action,
@@ -1877,7 +1877,7 @@ fn task_owns_typescript_pattern(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_persistence(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_persistence(task: &TaskDefinition) -> bool {
     matches!(task.task_kind, TaskKind::DataModelIncrement)
         || task.implementation_actions.iter().any(|action| {
             matches!(
@@ -1896,7 +1896,7 @@ fn task_owns_persistence(task: &TaskDefinition) -> bool {
         })
 }
 
-fn task_owns_nest_service_boundary(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_nest_service_boundary(task: &TaskDefinition) -> bool {
     task.implementation_actions.iter().any(|action| {
         matches!(
             action,
@@ -1916,7 +1916,7 @@ fn task_owns_nest_service_boundary(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_sql_schema(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_schema(task: &TaskDefinition) -> bool {
     matches!(task.task_kind, TaskKind::DataModelIncrement)
         || task.implementation_actions.iter().any(|action| {
             matches!(
@@ -1929,7 +1929,7 @@ fn task_owns_sql_schema(task: &TaskDefinition) -> bool {
         })
 }
 
-fn task_owns_sql_query(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_query(task: &TaskDefinition) -> bool {
     task.implementation_actions.iter().any(|action| {
         matches!(
             action,
@@ -1942,7 +1942,7 @@ fn task_owns_sql_query(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_sql_transaction(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_transaction(task: &TaskDefinition) -> bool {
     task.implementation_actions.iter().any(|action| {
         matches!(
             action,
@@ -1954,19 +1954,19 @@ fn task_owns_sql_transaction(task: &TaskDefinition) -> bool {
     })
 }
 
-fn task_owns_sql_performance(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_performance(task: &TaskDefinition) -> bool {
     task.implementation_actions
         .iter()
         .any(|action| matches!(action, ImplementationAction::OptimizePersistenceQuery))
 }
 
-fn task_owns_sql_analytics(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_analytics(task: &TaskDefinition) -> bool {
     task.implementation_actions
         .iter()
         .any(|action| matches!(action, ImplementationAction::ImplementAnalyticalQuery))
 }
 
-fn task_owns_sql_tests(task: &TaskDefinition) -> bool {
+pub(crate) fn task_owns_sql_tests(task: &TaskDefinition) -> bool {
     task.implementation_actions
         .iter()
         .any(|action| matches!(action, ImplementationAction::AddOrUpdatePersistenceTests))
