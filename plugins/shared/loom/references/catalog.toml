@@ -940,6 +940,50 @@ label = "JavaScript"
   needle = "@nestjs/core"
   label = "NestJS"
 
+# ── TypeScript ──
+[[repoSignals.languages]]
+id = "typescript"
+label = "TypeScript"
+
+  [[repoSignals.languages.manifests]]
+  path = "tsconfig.json"
+
+  [repoSignals.languages.extensions]
+  scan = [".ts", ".tsx"]
+  threshold = 1
+
+  [[repoSignals.languages.frameworks]]
+  needle = "next"
+  label = "Next.js"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "react"
+  label = "React"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "vue"
+  label = "Vue"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "svelte"
+  label = "Svelte"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "vite"
+  label = "Vite"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "express"
+  label = "Express"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "fastify"
+  label = "Fastify"
+
+  [[repoSignals.languages.frameworks]]
+  needle = "@nestjs/core"
+  label = "NestJS"
+
 # ── Java ──
 [[repoSignals.languages]]
 id = "java"

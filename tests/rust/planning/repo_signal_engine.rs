@@ -141,6 +141,49 @@ fn detects_node_with_react() {
 }
 
 #[test]
+fn detects_typescript_with_tsconfig() {
+    let dir = temp_project("typescript-tsconfig");
+    fs::write(
+        dir.path().join("package.json"),
+        r#"{"dependencies": {"react": "^18.0.0"}}"#,
+    )
+    .expect("write");
+    fs::write(
+        dir.path().join("tsconfig.json"),
+        r#"{"compilerOptions": {"strict": true}}"#,
+    )
+    .expect("write");
+
+    let catalog = resolved_catalog();
+    let engine = RepoSignalEngine {
+        config: &catalog.repo_signals,
+    };
+    let signals = engine.collect(dir.path());
+
+    let json = signals.to_json();
+    assert!(json["languages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "JavaScript"));
+    assert!(json["languages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "TypeScript"));
+    assert!(json["frameworks"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "React"));
+    assert!(json["manifests"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "tsconfig.json"));
+}
+
+#[test]
 fn detects_java_spring_boot() {
     let dir = temp_project("java-spring");
     fs::write(
