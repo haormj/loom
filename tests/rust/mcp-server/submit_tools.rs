@@ -1016,6 +1016,44 @@ fn technical_baseline_accept_routes_existing_project_to_repository_context() {
 }
 
 #[test]
+fn technical_baseline_repo_signals_detect_setup_py_as_python() {
+    let fixture = Fixture::new("repo-signal-setup-py");
+    std::fs::write(
+        fixture.root.join("setup.py"),
+        "from setuptools import setup\nsetup(name='test', version='0.1')\n",
+    )
+    .expect("write setup.py");
+    let request_ref = start_brainstorm_candidate_write_request(&fixture);
+    write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
+
+    let brainstorm_result = call_submit(
+        "loom.brainstormAcceptFile",
+        &request_ref,
+        fixture.root_str(),
+    );
+    let baseline_request_ref = technical_baseline_request_ref(&brainstorm_result);
+    let repo_evidence = state::read_field_group(ReadFieldGroupInput {
+        project_root: fixture.root_str().to_string(),
+        request_ref: baseline_request_ref.clone(),
+        group_id: "technical_baseline_repo_evidence".to_string(),
+    })
+    .expect("read technical baseline repo evidence");
+    assert_eq!(
+        repo_evidence.fields["repoEvidence.signals.packageManagers"].value,
+        json!(["pip"])
+    );
+    assert!(
+        repo_evidence.fields["repoEvidence.signals.languages"]
+            .value
+            .as_array()
+            .expect("languages")
+            .contains(&json!("Python")),
+        "setup.py project must be detected as Python: {:#}",
+        repo_evidence.fields["repoEvidence.signals.languages"].value
+    );
+}
+
+#[test]
 fn repository_context_accept_normalizes_repairable_schema_metadata() {
     let fixture = Fixture::new("repository-context-normalizes-schema-metadata");
     write_json_atomic(

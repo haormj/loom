@@ -2373,24 +2373,20 @@ fn is_after_first_delivery_phase(delivery: &DeliveryIndex, phase_id: &str) -> bo
 }
 
 fn infer_project_kind_from_repo(project_root: &Path) -> ProjectKind {
-    let markers = [
-        "package.json",
-        "tsconfig.json",
-        "pom.xml",
-        "build.gradle",
-        "pyproject.toml",
-        "go.mod",
-        "Cargo.toml",
-        "requirements.txt",
-        "app",
-        "src",
-        "frontend",
-        "backend",
-    ];
-    if markers
+    let catalog = reference_catalog::resolved_catalog();
+    let has_manifest = catalog
+        .repo_signals
+        .languages
         .iter()
-        .any(|marker| project_root.join(marker).exists())
-    {
+        .flat_map(|lang| lang.manifests.iter())
+        .any(|manifest| project_root.join(&manifest.path).exists());
+    let has_source_root = catalog
+        .repo_signals
+        .source_roots
+        .paths
+        .iter()
+        .any(|path| project_root.join(path).exists());
+    if has_manifest || has_source_root {
         ProjectKind::ExistingProject
     } else {
         ProjectKind::NewProject
