@@ -1,4 +1,8 @@
-use std::{collections::BTreeSet, fs, path::Path};
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use contracts::{
     BrainstormContract, ClientTrustModel, ProjectKind, SecurityKeySource, SecurityMechanism,
@@ -12,6 +16,7 @@ use delivery_core::{
     LoomMcpRepairableErrorResult, LoomMcpUserGateResult, OperationContext, ReadRequestFieldsInput,
     RouteAction, RouteActionKind, SubmitAcceptedEvent, TransitionEngine, TransitionStore,
 };
+use reference_catalog::schema::{ExtensionsRule, FolderHintsRule, LanguageRule, RepoSignalsConfig};
 use schemars::schema_for;
 use serde_json::{json, Value};
 use state::{
@@ -822,24 +827,15 @@ fn technical_baseline_repo_evidence_fields(project_kind: ProjectKind) -> Vec<&'s
 }
 
 fn compact_repo_signals(project_root: &Path) -> Value {
-    let mut signals = RepoSignalSummary::default();
-    collect_node_signals(project_root, &mut signals);
-    collect_java_signals(project_root, &mut signals);
-    collect_python_signals(project_root, &mut signals);
-    collect_rust_signals(project_root, &mut signals);
-    collect_go_signals(project_root, &mut signals);
-    for path in [
-        "src", "app", "web", "service", "backend", "frontend", "tests",
-    ] {
-        if project_root.join(path).exists() {
-            signals.source_roots.insert(path.to_string());
-        }
-    }
-    signals.to_json()
+    let catalog = reference_catalog::resolved_catalog();
+    let engine = RepoSignalEngine {
+        config: &catalog.repo_signals,
+    };
+    engine.collect(project_root).to_json()
 }
 
 #[derive(Default)]
-struct RepoSignalSummary {
+pub struct RepoSignalSummary {
     manifests: BTreeSet<String>,
     package_managers: BTreeSet<String>,
     languages: BTreeSet<String>,
@@ -848,7 +844,7 @@ struct RepoSignalSummary {
 }
 
 impl RepoSignalSummary {
-    fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> Value {
         json!({
             "manifests": sorted_values(&self.manifests),
             "packageManagers": sorted_values(&self.package_managers),
@@ -863,130 +859,171 @@ fn sorted_values(values: &BTreeSet<String>) -> Vec<String> {
     values.iter().cloned().collect()
 }
 
-fn collect_node_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
-    let package_file = project_root.join("package.json");
-    if !package_file.exists() {
-        return;
+pub struct RepoSignalEngine<'a> {
+    pub config: &'a RepoSignalsConfig,
+}
+
+impl<'a> RepoSignalEngine<'a> {
+    pub fn collect(&self, project_root: &Path) -> RepoSignalSummary {
+        let mut signals = RepoSignalSummary::default();
+        for lang in &self.config.languages {
+            self.collect_language(project_root, lang, &mut signals);
+        }
+        self.collect_source_roots(project_root, &mut signals);
+        signals
     }
-    signals.manifests.insert("package.json".to_string());
-    if project_root.join("package-lock.json").exists() {
-        signals.package_managers.insert("npm".to_string());
-    }
-    if project_root.join("pnpm-lock.yaml").exists() {
-        signals.package_managers.insert("pnpm".to_string());
-    }
-    if project_root.join("yarn.lock").exists() {
-        signals.package_managers.insert("yarn".to_string());
-    }
-    if signals.package_managers.is_empty() {
-        signals.package_managers.insert("npm".to_string());
-    }
-    signals.languages.insert("JavaScript".to_string());
-    if project_root.join("tsconfig.json").exists() {
-        signals.languages.insert("TypeScript".to_string());
-        signals.manifests.insert("tsconfig.json".to_string());
-    }
-    let Ok(package) = state::store::read_json_value(&package_file) else {
-        return;
-    };
-    let dependencies = package_dependencies(&package);
-    if dependencies.contains("typescript") {
-        signals.languages.insert("TypeScript".to_string());
-    }
-    for (dependency, framework) in [
-        ("next", "Next.js"),
-        ("react", "React"),
-        ("vue", "Vue"),
-        ("svelte", "Svelte"),
-        ("vite", "Vite"),
-        ("express", "Express"),
-        ("fastify", "Fastify"),
-        ("@nestjs/core", "NestJS"),
-    ] {
-        if dependencies.contains(dependency) {
-            signals.frameworks.insert(framework.to_string());
+
+    fn collect_source_roots(&self, root: &Path, signals: &mut RepoSignalSummary) {
+        for path in &self.config.source_roots.paths {
+            if root.join(path).exists() {
+                signals.source_roots.insert(path.clone());
+            }
         }
     }
-}
 
-fn package_dependencies(package: &Value) -> BTreeSet<String> {
-    let mut dependencies = BTreeSet::new();
-    for key in ["dependencies", "devDependencies", "peerDependencies"] {
-        if let Some(values) = package.get(key).and_then(Value::as_object) {
-            dependencies.extend(values.keys().cloned());
+    fn collect_language(&self, root: &Path, rule: &LanguageRule, signals: &mut RepoSignalSummary) {
+        let mut matched_manifests: Vec<PathBuf> = Vec::new();
+        let mut language_hit = false;
+
+        for m in &rule.manifests {
+            let path = root.join(&m.path);
+            if path.is_file() {
+                signals.manifests.insert(m.path.clone());
+                if let Some(pm) = &m.package_manager {
+                    signals.package_managers.insert(pm.clone());
+                }
+                matched_manifests.push(path);
+                language_hit = true;
+            }
+        }
+
+        if let Some(fh) = &rule.folder_hints {
+            if self.folder_matches(root, fh) {
+                language_hit = true;
+            }
+        }
+
+        if let Some(ext) = &rule.extensions {
+            if self.extension_scan_hits(root, ext) {
+                language_hit = true;
+            }
+        }
+
+        if language_hit {
+            signals.languages.insert(rule.label.clone());
+        }
+
+        if !matched_manifests.is_empty() && !rule.frameworks.is_empty() {
+            self.detect_frameworks(&matched_manifests, rule, signals);
         }
     }
-    dependencies
-}
 
-fn collect_java_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
-    let pom_file = project_root.join("pom.xml");
-    if pom_file.exists() {
-        signals.manifests.insert("pom.xml".to_string());
-        signals.languages.insert("Java".to_string());
-        signals.package_managers.insert("Maven".to_string());
-        if fs::read_to_string(&pom_file)
-            .map(|content| content.contains("spring-boot"))
-            .unwrap_or(false)
-        {
-            signals.frameworks.insert("Spring Boot".to_string());
+    fn folder_matches(&self, root: &Path, fh: &FolderHintsRule) -> bool {
+        for dir in &fh.dirs {
+            let dir_path = root.join(dir);
+            if !dir_path.is_dir() {
+                continue;
+            }
+            if fh.require_extensions.is_empty() {
+                return true;
+            }
+            if let Ok(entries) = fs::read_dir(&dir_path) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    if let Some(name) = entry.file_name().to_str() {
+                        if fh.require_extensions.iter().any(|ext| name.ends_with(ext)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    fn extension_scan_hits(&self, root: &Path, ext: &ExtensionsRule) -> bool {
+        let mut count = 0u32;
+        self.count_extensions(root, ext, 0, &mut count);
+        count >= ext.threshold
+    }
+
+    fn count_extensions(&self, dir: &Path, ext: &ExtensionsRule, depth: u32, count: &mut u32) {
+        let max_depth = if self.config.max_scan_depth == 0 {
+            6
+        } else {
+            self.config.max_scan_depth
+        };
+        if depth > max_depth || *count >= ext.threshold {
+            return;
+        }
+        let Ok(entries) = fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_dir() {
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if self.config.skip_dirs.iter().any(|skip| skip == name) {
+                        continue;
+                    }
+                }
+                self.count_extensions(&path, ext, depth + 1, count);
+                if *count >= ext.threshold {
+                    return;
+                }
+            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if ext.scan.iter().any(|s| name.ends_with(s)) {
+                    *count += 1;
+                    if *count >= ext.threshold {
+                        return;
+                    }
+                }
+            }
         }
     }
-    if project_root.join("build.gradle").exists() || project_root.join("build.gradle.kts").exists()
-    {
-        signals.manifests.insert("build.gradle".to_string());
-        signals.languages.insert("Java".to_string());
-        signals.package_managers.insert("Gradle".to_string());
-    }
-}
 
-fn collect_python_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
-    let has_pyproject = project_root.join("pyproject.toml").exists();
-    let has_requirements = project_root.join("requirements.txt").exists();
-    if !has_pyproject && !has_requirements {
-        return;
-    }
-    signals.languages.insert("Python".to_string());
-    signals.package_managers.insert("pip".to_string());
-    if has_pyproject {
-        signals.manifests.insert("pyproject.toml".to_string());
-    }
-    if has_requirements {
-        signals.manifests.insert("requirements.txt".to_string());
-    }
-    let combined = ["pyproject.toml", "requirements.txt"]
-        .iter()
-        .filter_map(|path| fs::read_to_string(project_root.join(path)).ok())
-        .collect::<Vec<_>>()
-        .join("\n")
-        .to_lowercase();
-    for (needle, framework) in [
-        ("fastapi", "FastAPI"),
-        ("django", "Django"),
-        ("flask", "Flask"),
-    ] {
-        if combined.contains(needle) {
-            signals.frameworks.insert(framework.to_string());
+    fn detect_frameworks(
+        &self,
+        matched_manifests: &[PathBuf],
+        rule: &LanguageRule,
+        signals: &mut RepoSignalSummary,
+    ) {
+        let contents: Vec<String> = matched_manifests
+            .iter()
+            .filter_map(|p| fs::read_to_string(p).ok())
+            .collect();
+        let combined = contents.join("\n").to_lowercase();
+
+        let dependency_keys: BTreeSet<String> = matched_manifests
+            .iter()
+            .filter_map(|p| {
+                let Ok(text) = fs::read_to_string(p) else {
+                    return None;
+                };
+                let Ok(pkg) = serde_json::from_str::<Value>(&text) else {
+                    return None;
+                };
+                let mut keys = BTreeSet::new();
+                for field in ["dependencies", "devDependencies", "peerDependencies"] {
+                    if let Some(obj) = pkg.get(field).and_then(Value::as_object) {
+                        keys.extend(obj.keys().cloned());
+                    }
+                }
+                Some(keys)
+            })
+            .flatten()
+            .collect();
+
+        for fw in &rule.frameworks {
+            let needle_lower = fw.needle.to_lowercase();
+            if !dependency_keys.is_empty() && dependency_keys.contains(&fw.needle) {
+                signals.frameworks.insert(fw.label.clone());
+                continue;
+            }
+            if combined.contains(&needle_lower) {
+                signals.frameworks.insert(fw.label.clone());
+            }
         }
     }
-}
-
-fn collect_rust_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
-    if !project_root.join("Cargo.toml").exists() {
-        return;
-    }
-    signals.manifests.insert("Cargo.toml".to_string());
-    signals.languages.insert("Rust".to_string());
-    signals.package_managers.insert("Cargo".to_string());
-}
-
-fn collect_go_signals(project_root: &Path, signals: &mut RepoSignalSummary) {
-    if !project_root.join("go.mod").exists() {
-        return;
-    }
-    signals.manifests.insert("go.mod".to_string());
-    signals.languages.insert("Go".to_string());
-    signals.package_managers.insert("go".to_string());
 }
 
 const PORTABLE_DATA_ACCESS_OPTIONS: &[&str] = &["Raw SQL / framework-native wrapper", "No ORM"];

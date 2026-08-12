@@ -18,3 +18,10 @@ serde.workspace = true
 serde_json.workspace = true
 state = { path = "../state" }
 reference-catalog = { path = "../reference-catalog" }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[[test]]
+name = "repo_signal_engine"
+path = "../../../tests/rust/planning/repo_signal_engine.rs"
