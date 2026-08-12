@@ -1487,6 +1487,55 @@ fn new_project_technical_baseline_autofills_confirmed_at() {
 }
 
 #[test]
+fn plan_blocks_when_delivery_active() {
+    let fixture = Fixture::new("plan-blocks-active-delivery");
+    let request_ref = start_brainstorm_candidate_write_request(&fixture);
+    write_candidate_target(&fixture, &request_ref, &valid_candidate_json());
+    let brainstorm_result = call_submit(
+        "loom.brainstormAcceptFile",
+        &request_ref,
+        fixture.root_str(),
+    );
+    assert!(
+        brainstorm_result["state"] == "auto_runnable" || brainstorm_result["state"] == "user_gate",
+        "unexpected brainstorm accept state: {}",
+        brainstorm_result["state"]
+    );
+    let original_delivery = request_delivery_id(fixture.root_str(), &request_ref);
+
+    // loom.plan must block whenever there's an active delivery, regardless of stage.
+    let server = LoomMcpServer::default();
+    let plan_result = server
+        .invoke_tool(
+            "loom.plan",
+            Some(
+                json!({
+                    "projectRoot": fixture.root_str(),
+                    "requestText": "新需求"
+                })
+                .as_object()
+                .expect("args")
+                .clone(),
+            ),
+        )
+        .expect("plan call")
+        .structured_content
+        .expect("content");
+    assert_eq!(plan_result["state"], "blocked", "{plan_result:#}");
+    assert_eq!(
+        plan_result["recommendedTool"], "loom.continue",
+        "loom.plan must direct the agent to loom.continue, not start a new delivery"
+    );
+    assert_eq!(
+        plan_result["details"]["activeDeliveryId"]
+            .as_str()
+            .unwrap_or_default(),
+        original_delivery,
+        "loom.plan must not create a new delivery while one is active"
+    );
+}
+
+#[test]
 fn redis_session_baseline_derives_server_session_without_jwt_user_gate() {
     let fixture = Fixture::new("technical-baseline-redis-server-session");
     let request_ref = start_brainstorm_candidate_write_request(&fixture);
