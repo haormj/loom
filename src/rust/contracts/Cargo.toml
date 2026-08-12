@@ -28,3 +28,7 @@ path = "../../../tests/rust/contracts/condition.rs"
 [[test]]
 name = "code_quality_selection"
 path = "../../../tests/rust/contracts/code_quality_selection.rs"
+
+[[test]]
+name = "code_quality_references"
+path = "../../../tests/rust/contracts/code_quality_references.rs"

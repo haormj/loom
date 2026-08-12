@@ -4,8 +4,8 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-    CodePackageNamingPolicy, ImplementationAction, ReferenceLoadPlanItem, TaskDefinition, TaskKind,
-    TechnicalBaselineContract,
+    CodePackageNamingPolicy, Condition, ConditionContext, ImplementationAction,
+    ReferenceLoadPlanItem, TaskDefinition, TaskKind, TechnicalBaselineContract,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -1024,277 +1024,48 @@ fn backend_reference_items_for_signal(
     context: &CodeReferenceTaskContext,
 ) -> BTreeMap<String, BTreeSet<String>> {
     let mut groups = BTreeMap::<String, BTreeSet<String>>::new();
-    if signal.frameworks.iter().any(|item| item == "spring_boot") {
-        let mut items = BTreeSet::new();
-        extend_spring_boot_task_references(&mut items, stack_frameworks, task, context);
-        if !items.is_empty() {
-            groups.insert("springboot".to_string(), items);
-        }
-    }
-    if stack_frameworks.contains("mybatis_plus")
-        && (signal.language.as_deref() == Some("java")
-            || signal.frameworks.iter().any(|item| item == "mybatis_plus"))
-    {
-        let mut items = BTreeSet::new();
-        extend_mybatis_plus_task_references(&mut items, task);
-        if !items.is_empty() {
-            groups.insert("mybatisplus".to_string(), items);
-        }
-    }
-    if signal.frameworks.iter().any(|item| item == "django") {
-        let mut items = BTreeSet::new();
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_owns_api_contract(task) && stack_frameworks.contains("django_rest_framework") {
-            items.insert("views".to_string());
-            items.insert("serializers".to_string());
-        }
-        if task_owns_persistence(task) {
-            items.insert("models".to_string());
-        }
-        if context.security
-            || task_has_action(
+    let catalog = reference_catalog::resolved_catalog();
+    let focus_tags: Vec<String> = Vec::new();
+
+    for lang_rule in &catalog.repo_signals.languages {
+        for fw_ref in &lang_rule.framework_references {
+            if fw_ref.surface != "backend" {
+                continue;
+            }
+            let ctx = ConditionContext {
                 task,
-                ImplementationAction::ImplementAuthenticationOrAuthorization,
-            )
-        {
-            items.insert("security".to_string());
-        }
-        if task_owns_logging_infrastructure(task, context) {
-            items.insert("logging".to_string());
-        }
-        if !items.is_empty() {
-            groups.insert("django".to_string(), items);
-        }
-    }
-    if signal.frameworks.iter().any(|item| item == "fastapi") {
-        let mut items = BTreeSet::new();
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_owns_api_contract(task) {
-            items.insert("routing".to_string());
-            items.insert("schemas".to_string());
-        }
-        if task_owns_persistence(task) && stack_frameworks.contains("sqlalchemy") {
-            items.insert("data".to_string());
-        }
-        if context.security
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementAuthenticationOrAuthorization,
-            )
-        {
-            items.insert("security".to_string());
-        }
-        if task_has_action(task, ImplementationAction::MigrateFrameworkImplementation) {
-            items.insert("migration".to_string());
-        }
-        if task_owns_logging_infrastructure(task, context) {
-            items.insert("logging".to_string());
-        }
-        if !items.is_empty() {
-            groups.insert("fastapi".to_string(), items);
-        }
-    }
-    if signal.frameworks.iter().any(|item| item == "aspnet_core") {
-        let mut items = BTreeSet::new();
-        if task_owns_test_implementation(task) && !task_is_frontend_task(task) {
-            items.insert("testing".to_string());
-        }
-        if task_owns_api_contract(task) && stack_frameworks.contains("minimal_api") {
-            items.insert("minimal".to_string());
-        }
-        if context.application_architecture && task_is_backend_task(task) {
-            items.insert("architecture".to_string());
-        }
-        if task_owns_persistence(task) && stack_frameworks.contains("entity_framework") {
-            items.insert("data".to_string());
-        }
-        if context.security
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementAuthenticationOrAuthorization,
-            )
-        {
-            items.insert("security".to_string());
-        }
-        if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-            || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-            || task_has_action(task, ImplementationAction::ImplementRuntimeDeliveryContract)
-            || task_has_action(task, ImplementationAction::ImplementAsyncProcessing)
-            || task_has_action(task, ImplementationAction::ImplementCachePolicy)
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementExternalServiceIntegration,
-            )
-            || task_has_action(task, ImplementationAction::ImplementResiliencePolicy)
-            || task_has_action(
-                task,
-                ImplementationAction::ConfigureServiceRoutingOrDiscovery,
-            )
-            || task_has_action(task, ImplementationAction::ImplementObservability)
-            || context.integration
-            || context.resilience
-            || context.observability
-            || context.request_tracing
-        {
-            items.insert("runtime".to_string());
-        }
-        if task_owns_logging_infrastructure(task, context) {
-            items.insert("logging".to_string());
-        }
-        if !items.is_empty() {
-            groups.insert("aspnetcore".to_string(), items);
-        }
-    }
-    if signal.frameworks.iter().any(|item| item == "nestjs") {
-        let mut items = BTreeSet::new();
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_owns_api_contract(task) {
-            items.insert("controllers".to_string());
-            items.insert("dtos".to_string());
-            items.insert("services".to_string());
-        }
-        if task_owns_nest_service_boundary(task) {
-            items.insert("services".to_string());
-        }
-        if context.security
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementAuthenticationOrAuthorization,
-            )
-        {
-            items.insert("security".to_string());
-        }
-        if task_has_action(task, ImplementationAction::MigrateFrameworkImplementation) {
-            items.insert("migration".to_string());
-        }
-        if task_owns_logging_infrastructure(task, context) {
-            items.insert("logging".to_string());
-        }
-        if !items.is_empty() {
-            groups.insert("nestjs".to_string(), items);
+                context,
+                stack_frameworks,
+                focus_tags: &focus_tags,
+                signal,
+                current_track: &signal.source_track,
+            };
+            let framework_matches = match &fw_ref.when {
+                Some(when) => Condition::from(when.clone()).evaluate(&ctx),
+                None => signal
+                    .frameworks
+                    .iter()
+                    .any(|fw| fw == &fw_ref.framework_id),
+            };
+            if !framework_matches {
+                continue;
+            }
+            let mut items = BTreeSet::new();
+            for item_rule in &fw_ref.items {
+                if item_rule
+                    .when
+                    .as_ref()
+                    .map_or(true, |c| Condition::from(c.clone()).evaluate(&ctx))
+                {
+                    items.insert(item_rule.item_id.clone());
+                }
+            }
+            if !items.is_empty() {
+                groups.insert(fw_ref.group_id.clone(), items);
+            }
         }
     }
     groups
-}
-
-fn extend_spring_boot_task_references(
-    items: &mut BTreeSet<String>,
-    stack_frameworks: &BTreeSet<String>,
-    task: &TaskDefinition,
-    context: &CodeReferenceTaskContext,
-) {
-    if task_owns_test_implementation(task) {
-        items.insert("testing".to_string());
-    }
-    if task_owns_api_contract(task) {
-        items.insert("web".to_string());
-    }
-    if task_owns_persistence(task) && stack_frameworks.contains("spring_data_jpa") {
-        items.insert("data".to_string());
-    }
-    if context.security
-        || task_has_action(
-            task,
-            ImplementationAction::ImplementAuthenticationOrAuthorization,
-        )
-    {
-        items.insert("security".to_string());
-    }
-    if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-        || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-        || task_has_action(task, ImplementationAction::ImplementRuntimeDeliveryContract)
-    {
-        items.insert("runtime".to_string());
-    }
-    if context.async_processing
-        || task_has_action(task, ImplementationAction::ImplementAsyncProcessing)
-    {
-        items.insert("async".to_string());
-    }
-    if task_has_action(task, ImplementationAction::ImplementCachePolicy) {
-        items.insert("cache".to_string());
-    }
-    if context.integration
-        || task_has_action(
-            task,
-            ImplementationAction::ImplementExternalServiceIntegration,
-        )
-    {
-        items.insert("integration".to_string());
-    }
-    if context.resilience || task_has_action(task, ImplementationAction::ImplementResiliencePolicy)
-    {
-        items.insert("resilience".to_string());
-    }
-    if task_has_action(
-        task,
-        ImplementationAction::ConfigureServiceRoutingOrDiscovery,
-    ) && stack_frameworks.contains("spring_cloud")
-    {
-        items.insert("cloud".to_string());
-    }
-    if task_owns_logging_infrastructure(task, context) {
-        items.insert("observability".to_string());
-        items.insert("logging".to_string());
-    }
-}
-
-fn extend_mybatis_plus_task_references(items: &mut BTreeSet<String>, task: &TaskDefinition) {
-    let owns_persistence = task_owns_persistence(task);
-    let owns_query = task_owns_sql_query(task);
-    let owns_transaction = task_owns_sql_transaction(task);
-
-    if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-        || (owns_persistence && task_has_action(task, ImplementationAction::AddOrUpdateConfig))
-    {
-        items.insert("configuration".to_string());
-        items.insert("plugins".to_string());
-    }
-    if owns_persistence
-        && task.implementation_actions.iter().any(|action| {
-            matches!(
-                action,
-                ImplementationAction::CreateOrUpdateEntity
-                    | ImplementationAction::CreateOrUpdatePersistence
-                    | ImplementationAction::CreateEntityMigration
-                    | ImplementationAction::ImplementEntityLifecycle
-            )
-        })
-    {
-        items.insert("mapping".to_string());
-    }
-    if task.implementation_actions.iter().any(|action| {
-        matches!(
-            action,
-            ImplementationAction::CreateEntityRepository | ImplementationAction::CreateEntityCrud
-        )
-    }) {
-        items.insert("crud".to_string());
-    }
-    if owns_query
-        || owns_transaction
-        || task_has_action(task, ImplementationAction::CreateEntityCrud)
-    {
-        items.insert("wrappers".to_string());
-    }
-    if owns_query || owns_transaction {
-        items.insert("security".to_string());
-    }
-    if task.implementation_actions.iter().any(|action| {
-        matches!(
-            action,
-            ImplementationAction::CreateEntityMigration
-                | ImplementationAction::MigrateFrameworkImplementation
-        )
-    }) {
-        items.insert("extensions".to_string());
-    }
 }
 
 pub fn task_owns_logging_infrastructure(
@@ -1317,242 +1088,52 @@ fn frontend_reference_items_for_signal(
     focus_tags: &[String],
     task: &TaskDefinition,
 ) -> BTreeMap<String, BTreeSet<String>> {
-    let has_focus = |tag: &str| focus_tags.iter().any(|item| item == tag);
     let mut groups = BTreeMap::<String, BTreeSet<String>>::new();
+    let has_focus = |tag: &str| focus_tags.iter().any(|item| item == tag);
     if !has_focus("frontend") {
         return groups;
     }
-    if signal.frameworks.iter().any(|item| item == "nextjs") {
-        let mut items = BTreeSet::new();
-        if task_owns_frontend_implementation(task) {
-            items.insert("core".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "app_router")
-            && task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation)
-        {
-            items.insert("app-router".to_string());
-        }
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_uses_api_client_binding(task)
-            || task_owns_persistence(task)
-            || task_has_action(task, ImplementationAction::ImplementReactiveClientFlow)
-        {
-            items.insert("data".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "app_router")
-            && task_has_action(task, ImplementationAction::ImplementServerMutation)
-        {
-            items.insert("actions".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "app_router")
-            && task_has_action(task, ImplementationAction::ImplementServerRenderedComponent)
-        {
-            items.insert("server-components".to_string());
-        }
-        if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-            || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-            || task_has_action(task, ImplementationAction::ImplementRuntimeDeliveryContract)
-            || task_has_action(task, ImplementationAction::OptimizeFrontendPerformance)
-        {
-            items.insert("runtime".to_string());
-        }
-        groups.insert("nextjs".to_string(), items);
-    }
-    if signal.frameworks.iter().any(|item| item == "react") {
-        let mut items = BTreeSet::new();
-        let nextjs_owns_framework_boundary = signal.frameworks.iter().any(|item| item == "nextjs");
-        if task_owns_frontend_implementation(task) {
-            items.insert("core".to_string());
-        }
-        if task_has_action(task, ImplementationAction::ImplementReactiveClientFlow) {
-            items.insert("hooks".to_string());
-        }
-        if task_uses_api_client_binding(task)
-            || task_has_action(task, ImplementationAction::ImplementSharedClientState)
-        {
-            items.insert("state".to_string());
-        }
-        if task_owns_test_implementation(task) && !nextjs_owns_framework_boundary {
-            items.insert("testing".to_string());
-        }
-        if task_has_action(task, ImplementationAction::OptimizeFrontendPerformance)
-            && !nextjs_owns_framework_boundary
-        {
-            items.insert("performance".to_string());
-        }
-        if signal
-            .frameworks
-            .iter()
-            .any(|item| item == "react_server_components")
-            && task_has_action(task, ImplementationAction::ImplementServerRenderedComponent)
-            && !nextjs_owns_framework_boundary
-        {
-            items.insert("server-components".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "react19")
-            && task_has_action(
+    let catalog = reference_catalog::resolved_catalog();
+    let context = CodeReferenceTaskContext::default();
+    let stack_frameworks: BTreeSet<String> = signal.frameworks.iter().cloned().collect();
+
+    for lang_rule in &catalog.repo_signals.languages {
+        for fw_ref in &lang_rule.framework_references {
+            if fw_ref.surface != "frontend" {
+                continue;
+            }
+            let ctx = ConditionContext {
                 task,
-                ImplementationAction::ImplementFrontendFrameworkVersionFeature,
-            )
-            && !nextjs_owns_framework_boundary
-        {
-            items.insert("react19".to_string());
+                context: &context,
+                stack_frameworks: &stack_frameworks,
+                focus_tags,
+                signal,
+                current_track: &signal.source_track,
+            };
+            let framework_matches = match &fw_ref.when {
+                Some(when) => Condition::from(when.clone()).evaluate(&ctx),
+                None => signal
+                    .frameworks
+                    .iter()
+                    .any(|fw| fw == &fw_ref.framework_id),
+            };
+            if !framework_matches {
+                continue;
+            }
+            let mut items = BTreeSet::new();
+            for item_rule in &fw_ref.items {
+                if item_rule
+                    .when
+                    .as_ref()
+                    .map_or(true, |c| Condition::from(c.clone()).evaluate(&ctx))
+                {
+                    items.insert(item_rule.item_id.clone());
+                }
+            }
+            if !items.is_empty() {
+                groups.insert(fw_ref.group_id.clone(), items);
+            }
         }
-        if task_has_action(task, ImplementationAction::MigrateFrameworkImplementation) {
-            items.insert("migration".to_string());
-        }
-        groups.insert("react".to_string(), items);
-    }
-    if signal.frameworks.iter().any(|item| item == "vue") {
-        let mut items = BTreeSet::new();
-        let owns_vue_component = task_owns_frontend_surface(task)
-            || task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation)
-            || task_has_action(task, ImplementationAction::ImplementReactiveClientFlow)
-            || task_has_action(task, ImplementationAction::ImplementSharedClientState)
-            || task_has_action(task, ImplementationAction::OptimizeFrontendPerformance)
-            || task_has_action(task, ImplementationAction::ImplementServerRenderedComponent)
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementFrontendFrameworkVersionFeature,
-            );
-        if owns_vue_component {
-            items.insert("core".to_string());
-        }
-        if task_owns_frontend_surface(task) {
-            items.insert("components".to_string());
-        }
-        if task_uses_api_client_binding(task)
-            || task_has_action(task, ImplementationAction::ImplementSharedClientState)
-            || task_has_action(task, ImplementationAction::ImplementClientStorage)
-        {
-            items.insert("state".to_string());
-        }
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if signal.language.as_deref() == Some("typescript") && owns_vue_component {
-            items.insert("typescript".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "nuxt")
-            && (task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation)
-                || task_has_action(task, ImplementationAction::ImplementServerRenderedComponent)
-                || task_has_action(task, ImplementationAction::ImplementServerMutation)
-                || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-                || task_has_action(task, ImplementationAction::MigrateFrameworkImplementation))
-        {
-            items.insert("nuxt".to_string());
-        }
-        if task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-            || task_has_action(task, ImplementationAction::MigrateFrameworkImplementation)
-        {
-            items.insert("build".to_string());
-        }
-        if signal
-            .frameworks
-            .iter()
-            .any(|item| matches!(item.as_str(), "quasar" | "capacitor" | "pwa"))
-            && task_has_action(task, ImplementationAction::ImplementMobilePlatformBehavior)
-        {
-            items.insert("mobile".to_string());
-        }
-        groups.insert("vue".to_string(), items);
-    }
-    if signal.frameworks.iter().any(|item| item == "angular") {
-        let mut items = BTreeSet::new();
-        if task_owns_frontend_implementation(task) {
-            items.insert("core".to_string());
-            items.insert("components".to_string());
-        }
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation) {
-            items.insert("routing".to_string());
-        }
-        if task_uses_api_client_binding(task)
-            || task_has_action(task, ImplementationAction::ImplementReactiveClientFlow)
-        {
-            items.insert("rxjs".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "ngrx")
-            && task_has_action(task, ImplementationAction::ImplementSharedClientState)
-        {
-            items.insert("ngrx".to_string());
-        }
-        groups.insert("angular".to_string(), items);
-    }
-    if signal.frameworks.iter().any(|item| item == "reactnative") {
-        let mut items = BTreeSet::new();
-        if task_owns_frontend_implementation(task) {
-            items.insert("core".to_string());
-        }
-        if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-            || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-            || task_has_action(task, ImplementationAction::MigrateFrameworkImplementation)
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementFrontendExperienceContract,
-            )
-        {
-            items.insert("structure".to_string());
-        }
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation) {
-            items.insert("navigation".to_string());
-        }
-        if task_has_action(task, ImplementationAction::OptimizeFrontendPerformance) {
-            items.insert("lists".to_string());
-        }
-        if task_has_action(task, ImplementationAction::ImplementMobilePlatformBehavior) {
-            items.insert("platform".to_string());
-        }
-        if task_has_action(task, ImplementationAction::ImplementClientStorage) {
-            items.insert("storage".to_string());
-        }
-        groups.insert("reactnative".to_string(), items);
-    }
-    if signal.frameworks.iter().any(|item| item == "flutter") {
-        let mut items = BTreeSet::new();
-        if task_owns_frontend_implementation(task) {
-            items.insert("core".to_string());
-        }
-        if task_owns_frontend_surface(task) {
-            items.insert("widgets".to_string());
-        }
-        if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-            || task_has_action(task, ImplementationAction::AddOrUpdateConfig)
-            || task_has_action(task, ImplementationAction::MigrateFrameworkImplementation)
-            || task_has_action(
-                task,
-                ImplementationAction::ImplementFrontendExperienceContract,
-            )
-        {
-            items.insert("structure".to_string());
-        }
-        if task_owns_test_implementation(task) {
-            items.insert("testing".to_string());
-        }
-        if task_has_action(task, ImplementationAction::CreateOrUpdateFrontendNavigation) {
-            items.insert("navigation".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "riverpod")
-            && task_has_action(task, ImplementationAction::ImplementSharedClientState)
-        {
-            items.insert("riverpod".to_string());
-        }
-        if signal.frameworks.iter().any(|item| item == "bloc")
-            && task_has_action(task, ImplementationAction::ImplementSharedClientState)
-        {
-            items.insert("bloc".to_string());
-        }
-        if task_has_action(task, ImplementationAction::OptimizeFrontendPerformance) {
-            items.insert("performance".to_string());
-        }
-        groups.insert("flutter".to_string(), items);
     }
     groups
 }
@@ -1710,7 +1291,7 @@ pub(crate) fn task_owns_api_contract(task: &TaskDefinition) -> bool {
         })
 }
 
-fn task_uses_api_client_binding(task: &TaskDefinition) -> bool {
+pub(crate) fn task_uses_api_client_binding(task: &TaskDefinition) -> bool {
     task_is_frontend_task(task)
         && (!task
             .write_boundary

@@ -1136,6 +1136,93 @@ label = "Java"
   id = "r2dbc"
   aliases = ["r2dbc"]
 
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "spring_boot"
+  groupId = "springboot"
+  surface = "backend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "web"
+    when = "task_owns:api_contract"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "data"
+    when = { all_of = ["task_owns:persistence", "stack_fw:spring_data_jpa"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "runtime"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:AddOrUpdateConfig", "task_action:ImplementRuntimeDeliveryContract"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "async"
+    when = { any_of = ["context:async_processing", "task_action:ImplementAsyncProcessing"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "cache"
+    when = "task_action:ImplementCachePolicy"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "integration"
+    when = { any_of = ["context:integration", "task_action:ImplementExternalServiceIntegration"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "resilience"
+    when = { any_of = ["context:resilience", "task_action:ImplementResiliencePolicy"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "cloud"
+    when = { all_of = ["task_action:ConfigureServiceRoutingOrDiscovery", "stack_fw:spring_cloud"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "observability"
+    when = "task_owns:logging_infrastructure"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "logging"
+    when = "task_owns:logging_infrastructure"
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "mybatis_plus"
+  groupId = "mybatisplus"
+  surface = "backend"
+  when = { all_of = ["stack_fw:mybatis_plus", { any_of = ["lang:java", "fw:mybatis_plus"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "configuration"
+    when = { any_of = ["task_kind:ConfigurationSupport", { all_of = ["task_owns:persistence", "task_action:AddOrUpdateConfig"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "plugins"
+    when = { any_of = ["task_kind:ConfigurationSupport", { all_of = ["task_owns:persistence", "task_action:AddOrUpdateConfig"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "mapping"
+    when = { all_of = ["task_owns:persistence", { any_of = ["task_action:CreateOrUpdateEntity", "task_action:CreateOrUpdatePersistence", "task_action:CreateEntityMigration", "task_action:ImplementEntityLifecycle"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "crud"
+    when = { any_of = ["task_action:CreateEntityRepository", "task_action:CreateEntityCrud"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "wrappers"
+    when = { any_of = ["task_owns:sql_query", "task_owns:sql_transaction", "task_action:CreateEntityCrud"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["task_owns:sql_query", "task_owns:sql_transaction"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "extensions"
+    when = { any_of = ["task_action:CreateEntityMigration", "task_action:MigrateFrameworkImplementation"] }
+
 # ── Python ──
 [[repoSignals.languages]]
 id = "python"
@@ -1225,6 +1312,68 @@ label = "Python"
   [[repoSignals.languages.selection.frameworks]]
   id = "flask"
   aliases = ["flask"]
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "django"
+  groupId = "django"
+  surface = "backend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "views"
+    when = { all_of = ["task_owns:api_contract", "stack_fw:django_rest_framework"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "serializers"
+    when = { all_of = ["task_owns:api_contract", "stack_fw:django_rest_framework"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "models"
+    when = "task_owns:persistence"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "logging"
+    when = "task_owns:logging_infrastructure"
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "fastapi"
+  groupId = "fastapi"
+  surface = "backend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "routing"
+    when = "task_owns:api_contract"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "schemas"
+    when = "task_owns:api_contract"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "data"
+    when = { all_of = ["task_owns:persistence", "stack_fw:sqlalchemy"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "migration"
+    when = "task_action:MigrateFrameworkImplementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "logging"
+    when = "task_owns:logging_infrastructure"
 
 # ── Rust ──
 [[repoSignals.languages]]
@@ -1377,6 +1526,245 @@ label = "JavaScript"
   id = "svelte"
   aliases = ["svelte"]
 
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "nestjs"
+  groupId = "nestjs"
+  surface = "backend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "controllers"
+    when = "task_owns:api_contract"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "dtos"
+    when = "task_owns:api_contract"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "services"
+    when = { any_of = ["task_owns:api_contract", "task_owns:nest_service_boundary"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "migration"
+    when = "task_action:MigrateFrameworkImplementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "logging"
+    when = "task_owns:logging_infrastructure"
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "nextjs"
+  groupId = "nextjs"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "app-router"
+    when = { all_of = ["fw:app_router", "task_action:CreateOrUpdateFrontendNavigation"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "data"
+    when = { any_of = ["task_owns:api_client_binding", "task_owns:persistence", "task_action:ImplementReactiveClientFlow"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "actions"
+    when = { all_of = ["fw:app_router", "task_action:ImplementServerMutation"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "server-components"
+    when = { all_of = ["fw:app_router", "task_action:ImplementServerRenderedComponent"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "runtime"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:AddOrUpdateConfig", "task_action:ImplementRuntimeDeliveryContract", "task_action:OptimizeFrontendPerformance"] }
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "react"
+  groupId = "react"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "hooks"
+    when = "task_action:ImplementReactiveClientFlow"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "state"
+    when = { any_of = ["task_owns:api_client_binding", "task_action:ImplementSharedClientState"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = { all_of = ["task_owns:test_implementation", { not = "fw:nextjs" }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "performance"
+    when = { all_of = ["task_action:OptimizeFrontendPerformance", { not = "fw:nextjs" }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "server-components"
+    when = { all_of = ["fw:react_server_components", "task_action:ImplementServerRenderedComponent", { not = "fw:nextjs" }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "react19"
+    when = { all_of = ["fw:react19", "task_action:ImplementFrontendFrameworkVersionFeature", { not = "fw:nextjs" }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "migration"
+    when = "task_action:MigrateFrameworkImplementation"
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "vue"
+  groupId = "vue"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = { any_of = ["task_owns:frontend_surface", "task_action:CreateOrUpdateFrontendNavigation", "task_action:ImplementReactiveClientFlow", "task_action:ImplementSharedClientState", "task_action:OptimizeFrontendPerformance", "task_action:ImplementServerRenderedComponent", "task_action:ImplementFrontendFrameworkVersionFeature"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "components"
+    when = "task_owns:frontend_surface"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "state"
+    when = { any_of = ["task_owns:api_client_binding", "task_action:ImplementSharedClientState", "task_action:ImplementClientStorage"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "typescript"
+    when = { all_of = ["lang:typescript", { any_of = ["task_owns:frontend_surface", "task_action:CreateOrUpdateFrontendNavigation", "task_action:ImplementReactiveClientFlow", "task_action:ImplementSharedClientState", "task_action:OptimizeFrontendPerformance", "task_action:ImplementServerRenderedComponent", "task_action:ImplementFrontendFrameworkVersionFeature"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "nuxt"
+    when = { all_of = ["fw:nuxt", { any_of = ["task_action:CreateOrUpdateFrontendNavigation", "task_action:ImplementServerRenderedComponent", "task_action:ImplementServerMutation", "task_action:AddOrUpdateConfig", "task_action:MigrateFrameworkImplementation"] }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "build"
+    when = { any_of = ["task_action:AddOrUpdateConfig", "task_action:MigrateFrameworkImplementation"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "mobile"
+    when = { all_of = [{ any_of = ["fw:quasar", "fw:capacitor", "fw:pwa"] }, "task_action:ImplementMobilePlatformBehavior"] }
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "angular"
+  groupId = "angular"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "components"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "routing"
+    when = "task_action:CreateOrUpdateFrontendNavigation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "rxjs"
+    when = { any_of = ["task_owns:api_client_binding", "task_action:ImplementReactiveClientFlow"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "ngrx"
+    when = { all_of = ["fw:ngrx", "task_action:ImplementSharedClientState"] }
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "reactnative"
+  groupId = "reactnative"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "structure"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:AddOrUpdateConfig", "task_action:MigrateFrameworkImplementation", "task_action:ImplementFrontendExperienceContract"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "navigation"
+    when = "task_action:CreateOrUpdateFrontendNavigation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "lists"
+    when = "task_action:OptimizeFrontendPerformance"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "platform"
+    when = "task_action:ImplementMobilePlatformBehavior"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "storage"
+    when = "task_action:ImplementClientStorage"
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "flutter"
+  groupId = "flutter"
+  surface = "frontend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "core"
+    when = "task_owns:frontend_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "widgets"
+    when = "task_owns:frontend_surface"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "structure"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:AddOrUpdateConfig", "task_action:MigrateFrameworkImplementation", "task_action:ImplementFrontendExperienceContract"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = "task_owns:test_implementation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "navigation"
+    when = "task_action:CreateOrUpdateFrontendNavigation"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "riverpod"
+    when = { all_of = ["fw:riverpod", "task_action:ImplementSharedClientState"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "bloc"
+    when = { all_of = ["fw:bloc", "task_action:ImplementSharedClientState"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "performance"
+    when = "task_action:OptimizeFrontendPerformance"
+
 # ── C# ──
 [[repoSignals.languages]]
 id = "csharp"
@@ -1402,6 +1790,39 @@ label = "C#"
   [[repoSignals.languages.selection.frameworks]]
   id = "blazor"
   aliases = ["blazor"]
+
+  [[repoSignals.languages.frameworkReferences]]
+  frameworkId = "aspnet_core"
+  groupId = "aspnetcore"
+  surface = "backend"
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "testing"
+    when = { all_of = ["task_owns:test_implementation", { not = "task_owns:is_frontend_task" }] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "minimal"
+    when = { all_of = ["task_owns:api_contract", "stack_fw:minimal_api"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "architecture"
+    when = { all_of = ["context:application_architecture", "task_owns:is_backend_task"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "data"
+    when = { all_of = ["task_owns:persistence", "stack_fw:entity_framework"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "security"
+    when = { any_of = ["context:security", "task_action:ImplementAuthenticationOrAuthorization"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "runtime"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:AddOrUpdateConfig", "task_action:ImplementRuntimeDeliveryContract", "task_action:ImplementAsyncProcessing", "task_action:ImplementCachePolicy", "task_action:ImplementExternalServiceIntegration", "task_action:ImplementResiliencePolicy", "task_action:ConfigureServiceRoutingOrDiscovery", "task_action:ImplementObservability", "context:integration", "context:resilience", "context:observability", "context:request_tracing"] }
+
+    [[repoSignals.languages.frameworkReferences.items]]
+    itemId = "logging"
+    when = "task_owns:logging_infrastructure"
 
 # ── Kotlin ──
 [[repoSignals.languages]]
