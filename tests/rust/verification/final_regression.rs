@@ -6,7 +6,11 @@ use std::{
 
 use mcp_server::LoomMcpServer;
 use serde_json::{json, Value};
-use state::{store::read_json_value, write_native_request, NativeRequestInput};
+use state::{
+    paths::delivery_index_file,
+    store::{read_json_value, write_json_atomic},
+    write_native_request, NativeRequestInput,
+};
 use verification::{
     canonical_project_projection, generate_final_verification, require_final_verification_passed,
     BenchmarkInput, FinalVerificationInput, NamedCheck, TranscriptInput,
@@ -81,6 +85,10 @@ fn final_verification_reports_cover_protocol_metrics_and_delivery_isolation() {
         group_id: "write_contract".to_string(),
     })
     .expect("read phase two group");
+
+    // Mark the first delivery as completed so loom.plan can start a second delivery.
+    // In real usage, an active delivery blocks loom.plan and directs to loom.continue.
+    complete_delivery(&fixture, first_delivery);
 
     std::thread::sleep(Duration::from_millis(2));
     let second = structured(
@@ -229,6 +237,25 @@ fn args(value: Value) -> rmcp::model::JsonObject {
 
 fn structured(result: rmcp::model::CallToolResult) -> Value {
     serde_json::to_value(result).expect("call result to value")["structuredContent"].clone()
+}
+
+fn complete_delivery(fixture: &Fixture, delivery_id: &str) {
+    let index_path = delivery_index_file(&fixture.root, delivery_id);
+    let mut index: Value = read_json_value(&index_path).expect("read delivery index");
+    index["status"] = json!("completed");
+    write_json_atomic(&index_path, &index).expect("write completed delivery index");
+    let status_path = fixture.root.join(".loom").join("status.json");
+    let mut status: Value = read_json_value(&status_path).expect("read project status");
+    status["activeDeliveryId"] = Value::Null;
+    status["lastCompletedDeliveryId"] = json!(delivery_id);
+    if let Some(deliveries) = status["deliveries"].as_array_mut() {
+        for delivery in deliveries.iter_mut() {
+            if delivery["deliveryId"] == delivery_id {
+                delivery["status"] = json!("completed");
+            }
+        }
+    }
+    write_json_atomic(&status_path, &status).expect("write project status");
 }
 
 fn confirm_all_brainstorm_blocks(

@@ -3,10 +3,10 @@ use std::future::{ready, Future};
 use brainstorm::{accept_brainstorm_file, BrainstormConfirmBlockInput};
 use delivery_core::{
     is_submit_tool, normalize_project_root, status_details, submit_tool_spec, validate_plan_input,
-    DomainDispatcher, FileSubmitInput, InspectRequestInput, LoomMcpActionResult, LoomMcpDoneResult,
-    LoomMcpFailure, LoomMcpFailureResult, LoomMcpRepairableErrorResult, LoomMcpRuntimeContext,
-    OperationContext, PlanToolInput, ProjectToolInput, ReadFieldGroupInput, SubmitAcceptedEvent,
-    TransitionEngine, TransitionStore,
+    DomainDispatcher, FileSubmitInput, InspectRequestInput, LoomMcpActionResult,
+    LoomMcpBlockedResult, LoomMcpDoneResult, LoomMcpFailure, LoomMcpFailureResult,
+    LoomMcpRepairableErrorResult, LoomMcpRuntimeContext, OperationContext, PlanToolInput,
+    ProjectToolInput, ReadFieldGroupInput, SubmitAcceptedEvent, TransitionEngine, TransitionStore,
 };
 use deploy::{DeployBootstrapInput, DeployToolInput};
 use knowledge::mcp_models::{
@@ -469,6 +469,27 @@ fn plan_tool(input: PlanToolInput) -> LoomMcpActionResult {
     };
     if let Err(error) = init_project_state(&validated.project_root) {
         return state_failure(validated.project_root, error.to_string());
+    }
+    let store = FileTransitionStore;
+    if let Ok(status) = store.load_status(&validated.project_root) {
+        if let Some(active_delivery_id) = &status.active_delivery_id {
+            if let Ok(delivery) =
+                store.load_delivery_index(&validated.project_root, active_delivery_id)
+            {
+                return LoomMcpActionResult::Blocked(LoomMcpBlockedResult {
+                    project_root: validated.project_root.clone(),
+                    blockers: vec![
+                        "当前已有活跃的 Loom 交付尚未完成。请使用 loom.continue 继续当前交付，而非 loom.plan 启动新交付。".to_string(),
+                    ],
+                    recommended_tool: Some("loom.continue".to_string()),
+                    details: Some(json!({
+                        "activeDeliveryId": active_delivery_id,
+                        "activePhaseId": delivery.active_phase_id,
+                        "deliveryStatus": delivery.status
+                    })),
+                });
+            }
+        }
     }
     WorkflowDomainDispatcher.start_brainstorm(&validated)
 }
