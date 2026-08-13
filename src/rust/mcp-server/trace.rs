@@ -4,7 +4,7 @@ use std::pin::Pin;
 use std::sync::mpsc;
 use std::task::{Context, Poll};
 
-use chrono::Utc;
+use chrono::Local;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -115,7 +115,7 @@ impl TraceSink {
         };
 
         let mut writer = BufWriter::new(file);
-        let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+        let ts = Local::now().format("%Y-%m-%dT%H:%M:%S%.3f%:z").to_string();
         let pid = std::process::id();
         let _ = writeln!(
             writer,
@@ -203,7 +203,7 @@ fn drain_lines(buf: &mut Vec<u8>, dir: Dir, writer: &mut BufWriter<std::fs::File
 }
 
 fn emit_record(line: &[u8], dir: Dir, writer: &mut BufWriter<std::fs::File>, incomplete: bool) {
-    let ts = Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string();
+    let ts = Local::now().format("%Y-%m-%dT%H:%M:%S%.3f%:z").to_string();
     let marker = dir.marker();
 
     if incomplete {
