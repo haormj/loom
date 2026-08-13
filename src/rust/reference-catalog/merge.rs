@@ -23,8 +23,24 @@ pub fn merge_catalogs(
 
     for route in &overlay.routes {
         if let Some(existing) = routes.get_mut(&route.id) {
+            let base_group_count = existing.groups.len();
+            let base_prepend_count = existing.prepend_items.len();
             merge_route_groups(existing, route)?;
+            log::debug!(
+                "catalog overlay merge: route={} action=merge_groups base_groups={} → merged_groups={} prepend_base={} → merged_prepend={}",
+                route.id,
+                base_group_count,
+                existing.groups.len(),
+                base_prepend_count,
+                existing.prepend_items.len()
+            );
         } else {
+            log::debug!(
+                "catalog overlay merge: route={} action=new_route groups={} prepend={}",
+                route.id,
+                route.groups.len(),
+                route.prepend_items.len()
+            );
             routes.insert(route.id.clone(), route.clone());
         }
     }
@@ -46,13 +62,31 @@ fn merge_route_groups(base_route: &mut Route, overlay_route: &Route) -> CatalogR
         group_map.insert(group.id.clone(), group.clone());
     }
 
+    let mut replaced_groups: Vec<String> = Vec::new();
+    let mut new_groups: Vec<String> = Vec::new();
+
     for group in &overlay_route.groups {
-        if let Some(_existing) = group_map.get(&group.id) {
-            // 完全替换(后续将支持 extend/prune 语义)
-            group_map.insert(group.id.clone(), group.clone());
+        if group_map.contains_key(&group.id) {
+            replaced_groups.push(group.id.clone());
         } else {
-            group_map.insert(group.id.clone(), group.clone());
+            new_groups.push(group.id.clone());
         }
+        group_map.insert(group.id.clone(), group.clone());
+    }
+
+    if !replaced_groups.is_empty() {
+        log::debug!(
+            "catalog overlay merge: route={} groups_replaced={:?}",
+            base_route.id,
+            replaced_groups
+        );
+    }
+    if !new_groups.is_empty() {
+        log::debug!(
+            "catalog overlay merge: route={} groups_added={:?}",
+            base_route.id,
+            new_groups
+        );
     }
 
     // 合并前置项(overlay 追加新项,按 refId 替换已有项)

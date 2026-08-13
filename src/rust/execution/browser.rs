@@ -748,6 +748,14 @@ fn derive_profile(
         &state_refs,
         &quality_rule_refs,
     );
+    log::debug!(
+        "reference embedded: route=browser task_id={} mode={:?} runner_source={:?} load_plan_count={} paths={:?}",
+        task.task_id,
+        mode,
+        runner_source,
+        reference_load_plan.len(),
+        reference_load_plan.iter().map(|item| &item.path).collect::<Vec<_>>()
+    );
     Some(BrowserVerificationProfile {
         profile_id: format!("browser-{}", stable_id_part(&task.task_id)),
         task_id: task.task_id.clone(),

@@ -696,6 +696,18 @@ pub fn build_ui_quality_seed(
     let required_reference_groups =
         required_reference_groups(primary_scenario, &stack_items, &design_token_seed);
     let reference_load_plan = ui_reference_load_plan(&required_reference_groups);
+    log::debug!(
+        "reference embedded: route=uix seed=ui_quality_seed groups={} load_plan_count={}",
+        required_reference_groups
+            .as_object()
+            .map(|obj| obj
+                .values()
+                .filter_map(|v| v.as_array())
+                .map(Vec::len)
+                .sum::<usize>())
+            .unwrap_or(0),
+        reference_load_plan.as_array().map(Vec::len).unwrap_or(0)
+    );
     let quality_rule_preview = ui_quality_rule_preview(
         primary_scenario,
         &required_reference_groups,
@@ -760,6 +772,14 @@ pub fn normalize_ui_surface_decision_contract_for_persist(
         .collect::<Vec<_>>();
     let reference_groups = required_reference_groups(&scenario, &stack_items, &design_token_plan);
     let reference_plan = ui_reference_load_plan(&reference_groups);
+    log::debug!(
+        "reference embedded: route=uix seed=ui_surface_decision_contract groups={} load_plan_count={}",
+        reference_groups
+            .as_object()
+            .map(|obj| obj.values().filter_map(|v| v.as_array()).map(Vec::len).sum::<usize>())
+            .unwrap_or(0),
+        reference_plan.as_array().map(Vec::len).unwrap_or(0)
+    );
     let region_model = candidate_model_or_template(&candidate, "regionModel");
     let action_model = candidate_model_or_template(&candidate, "actionModel");
     let quality_rules = ui_quality_rules_for_contract(
@@ -2456,14 +2476,32 @@ pub fn ui_reference_load_plan(reference_groups: &Value) -> Value {
         };
         for item in group_items.iter().filter_map(Value::as_str) {
             if let Some(entry) = catalog.resolve_entry("uix", group, item) {
+                log::debug!(
+                    "reference selected: route=uix group={} item={} resolved=hit ref_id={} path={}",
+                    group,
+                    item,
+                    entry.ref_id,
+                    entry.path
+                );
                 items.push(json!({
                     "refId": entry.ref_id,
                     "path": entry.path,
                     "reason": entry.reason.unwrap_or_else(|| format!("为当前前端质量契约选择的 UIX {group}.{item} 参考。"))
                 }));
+            } else {
+                log::debug!(
+                    "reference skipped: route=uix group={} item={} resolved=miss (not in catalog)",
+                    group,
+                    item
+                );
             }
         }
     }
+    log::debug!(
+        "reference selected: route=uix total={} skipped_entries_present={}",
+        items.len(),
+        items.is_empty()
+    );
     Value::Array(items)
 }
 

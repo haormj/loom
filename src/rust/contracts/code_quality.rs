@@ -261,6 +261,16 @@ pub fn code_reference_load_plan(
             .iter()
             .map(move |group| reference_load_plan_item(group_key, group))
     }));
+    log::debug!(
+        "reference selected: route=code total={} prepend={} group_items={}",
+        load_plan.len(),
+        if !reference_groups.is_empty() {
+            catalog.prepend_items_for_route("code").len()
+        } else {
+            0
+        },
+        reference_groups.values().map(Vec::len).sum::<usize>()
+    );
     load_plan
 }
 
@@ -1141,6 +1151,13 @@ fn frontend_reference_items_for_signal(
 fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanItem {
     let catalog = reference_catalog::resolved_catalog();
     if let Some(entry) = catalog.resolve_entry("code", group_key, group) {
+        log::debug!(
+            "reference selected: route=code group_key={} group={} resolved=hit ref_id={} path={}",
+            group_key,
+            group,
+            entry.ref_id,
+            entry.path
+        );
         return ReferenceLoadPlanItem {
             ref_id: entry.ref_id,
             path: entry.path,
@@ -1149,6 +1166,15 @@ fn reference_load_plan_item(group_key: &str, group: &str) -> ReferenceLoadPlanIt
                 .unwrap_or_else(|| format!("为此任务选择的 {group_key}.{group} 实现质量参考。")),
         };
     }
+    log::debug!(
+        "reference selected: route=code group_key={} group={} resolved=fallback ref_id=tech.code.{}.{} path=tech/code/{}/{}.md",
+        group_key,
+        group,
+        group_key,
+        group,
+        group_key,
+        group
+    );
     ReferenceLoadPlanItem {
         ref_id: format!("tech.code.{group_key}.{group}"),
         path: format!("tech/code/{group_key}/{group}.md"),

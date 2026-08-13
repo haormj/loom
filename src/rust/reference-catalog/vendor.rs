@@ -70,26 +70,70 @@ pub fn build_resolved_catalog(
     overlay_path: Option<&Path>,
 ) -> ReferenceCatalog {
     let Some(path) = overlay_path else {
+        log::debug!(
+            "catalog overlay: env var {} not set, using vendor baseline only (routes={})",
+            CATALOG_OVERLAY_ENV,
+            vendor.routes.len()
+        );
         return vendor.clone();
     };
     if !path.exists() {
+        log::warn!(
+            "catalog overlay: path {} does not exist, falling back to vendor baseline (routes={})",
+            path.display(),
+            vendor.routes.len()
+        );
         return vendor.clone();
     }
+    log::info!(
+        "catalog overlay: loading enterprise overlay from {} (vendor routes={})",
+        path.display(),
+        vendor.routes.len()
+    );
     let overlay = match load_catalog(path) {
-        Ok(c) => c,
-        Err(e) => panic!(
-            "enterprise catalog overlay at {} failed to load: {}",
-            path.display(),
-            e
-        ),
+        Ok(c) => {
+            log::info!(
+                "catalog overlay: parsed overlay successfully (routes={} groups_total={})",
+                c.routes.len(),
+                c.routes.iter().map(|r| r.groups.len()).sum::<usize>()
+            );
+            c
+        }
+        Err(e) => {
+            log::error!(
+                "catalog overlay: failed to load overlay from {}: {}",
+                path.display(),
+                e
+            );
+            panic!(
+                "enterprise catalog overlay at {} failed to load: {}",
+                path.display(),
+                e
+            );
+        }
     };
-    merge_catalogs(vendor, &overlay).unwrap_or_else(|err| {
+    let vendor_route_count = vendor.routes.len();
+    let vendor_group_count: usize = vendor.routes.iter().map(|r| r.groups.len()).sum();
+    let merged = merge_catalogs(vendor, &overlay).unwrap_or_else(|err| {
+        log::error!(
+            "catalog overlay: failed to merge overlay at {}: {}",
+            path.display(),
+            err
+        );
         panic!(
             "enterprise catalog overlay at {} failed to merge: {}",
             path.display(),
             err
         )
-    })
+    });
+    log::info!(
+        "catalog overlay: merge complete — vendor routes={} groups={} → resolved routes={} groups={}",
+        vendor_route_count,
+        vendor_group_count,
+        merged.routes.len(),
+        merged.routes.iter().map(|r| r.groups.len()).sum::<usize>()
+    );
+    merged
 }
 
 /// 从 TOML 文件加载目录。

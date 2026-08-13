@@ -4439,6 +4439,12 @@ fn frontend_surface_contract_review(
         &expected_reference_plan_files,
         &checked_reference_plan_files,
     );
+    log::debug!(
+        "reference validated: kind=surface_review expected_count={} checked_count={} missing={:?}",
+        expected_reference_plan_files.len(),
+        checked_reference_plan_files.len(),
+        missing_reference_plan_files
+    );
     let evidence_refs = string_array_field(self_check, "evidenceRefs");
     let evidence_refs_satisfied = !evidence_refs.is_empty()
         && evidence_refs

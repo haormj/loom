@@ -39,6 +39,11 @@ pub fn build_api_quality_seed_from_foundation(
         api_groups.push("operations".to_string());
     }
     let reference_load_plan = api_reference_load_plan(&api_groups);
+    log::debug!(
+        "reference embedded: route=api groups={:?} load_plan_count={}",
+        api_groups,
+        reference_load_plan.len()
+    );
     json!({
         "required": true,
         "qualityLevel": "production_api_contract",
@@ -109,16 +114,28 @@ pub fn build_api_quality_seed_from_foundation(
 
 pub fn api_reference_load_plan(api_groups: &[String]) -> Vec<Value> {
     let catalog = reference_catalog::resolved_catalog();
-    api_groups
+    let plan: Vec<Value> = api_groups
         .iter()
         .map(|group| {
             if let Some(entry) = catalog.resolve_entry("api", "api", group) {
+                log::debug!(
+                    "reference selected: route=api group={} resolved=hit ref_id={} path={}",
+                    group,
+                    entry.ref_id,
+                    entry.path
+                );
                 json!({
                     "refId": entry.ref_id,
                     "path": entry.path,
                     "reason": entry.reason.unwrap_or_else(|| format!("为当前阶段接口设计选择的 API {group} 质量参考。"))
                 })
             } else {
+                log::debug!(
+                    "reference selected: route=api group={} resolved=fallback ref_id=tech.api.{} path=tech/api/{}.md",
+                    group,
+                    group,
+                    group
+                );
                 json!({
                     "refId": format!("tech.api.{group}"),
                     "path": format!("tech/api/{group}.md"),
@@ -126,7 +143,9 @@ pub fn api_reference_load_plan(api_groups: &[String]) -> Vec<Value> {
                 })
             }
         })
-        .collect()
+        .collect();
+    log::debug!("reference selected: route=api total={}", plan.len());
+    plan
 }
 
 pub fn api_quality_seed_read_fields() -> [&'static str; 8] {

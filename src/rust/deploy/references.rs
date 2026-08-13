@@ -93,6 +93,12 @@ fn reference_load_plan(
         add_failure_references(&mut ids, kind);
     }
 
+    log::debug!(
+        "reference selected: route=deploy repair={} failure_kind={:?} candidate_ids={:?}",
+        repair,
+        failure_kind,
+        ids
+    );
     ids.into_iter()
         .map(|reference_id| reference_load_plan_item(&reference_id))
         .collect()
@@ -101,6 +107,12 @@ fn reference_load_plan(
 fn reference_load_plan_item(reference_id: &str) -> ReferenceLoadPlanItem {
     let catalog = reference_catalog::resolved_catalog();
     if let Some(entry) = catalog.resolve_entry("deploy", "deploy", reference_id) {
+        log::debug!(
+            "reference selected: route=deploy reference_id={} resolved=hit ref_id={} path={}",
+            reference_id,
+            entry.ref_id,
+            entry.path
+        );
         return ReferenceLoadPlanItem {
             ref_id: entry.ref_id,
             path: entry.path,
@@ -109,6 +121,10 @@ fn reference_load_plan_item(reference_id: &str) -> ReferenceLoadPlanItem {
                 .unwrap_or_else(|| "Deploy reference selected by MCP.".to_string()),
         };
     }
+    log::debug!(
+        "reference selected: route=deploy reference_id={} resolved=fallback path=providers.md",
+        reference_id
+    );
     ReferenceLoadPlanItem {
         ref_id: reference_id.to_string(),
         path: "providers.md".to_string(),
