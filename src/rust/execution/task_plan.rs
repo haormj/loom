@@ -7653,12 +7653,20 @@ fn normalize_code_quality_requirements(
             .entry(task.task_id.clone())
             .or_default()
             .push(requirement_id.clone());
+        let reference_load_plan = code_reference_load_plan(&selection.reference_groups);
+        log::debug!(
+            "reference embedded: route=code task_id={} requirement_id={} load_plan_count={} paths={:?}",
+            task.task_id,
+            requirement_id,
+            reference_load_plan.len(),
+            reference_load_plan.iter().map(|item| &item.path).collect::<Vec<_>>()
+        );
         requirements.push(CodeQualityRequirement {
             requirement_id,
             kind: "language_implementation_quality".to_string(),
             applies_to_task_ids: vec![task.task_id.clone()],
             stack_signals: selection.stack_signals.clone(),
-            reference_load_plan: code_reference_load_plan(&selection.reference_groups),
+            reference_load_plan,
             package_naming_policy: package_naming_policy_for_reference_groups(
                 &selection.reference_groups,
             ),

@@ -447,6 +447,7 @@ version = "0.2.7"
 dependencies = [
  "contracts",
  "delivery-core",
+ "log",
  "reference-catalog",
  "schemars",
  "serde",
@@ -576,6 +577,7 @@ dependencies = [
  "brainstorm",
  "contracts",
  "delivery-core",
+ "log",
  "schemars",
  "serde",
  "serde_json",
@@ -1386,6 +1388,7 @@ name = "reference-catalog"
 version = "0.2.7"
 dependencies = [
  "contracts",
+ "log",
  "serde",
  "serde_json",
  "thiserror",

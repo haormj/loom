@@ -3374,6 +3374,47 @@ fn validate_code_quality_reference_groups(
             )
         })
         .collect::<BTreeMap<_, _>>();
+    let missing_groups: Vec<(&str, &&str)> = expected
+        .iter()
+        .flat_map(|(language, expected_groups)| {
+            checked
+                .get(language)
+                .into_iter()
+                .flat_map(move |checked_groups| {
+                    expected_groups.iter().filter_map(move |group| {
+                        if !checked_groups.contains(group) {
+                            Some((*language, group))
+                        } else {
+                            None
+                        }
+                    })
+                })
+        })
+        .collect();
+    let extra_groups: Vec<(&str, &&str)> = checked
+        .iter()
+        .flat_map(|(language, checked_groups)| {
+            expected
+                .get(language)
+                .into_iter()
+                .flat_map(move |expected_groups| {
+                    checked_groups.iter().filter_map(move |group| {
+                        if !expected_groups.contains(group) {
+                            Some((*language, group))
+                        } else {
+                            None
+                        }
+                    })
+                })
+        })
+        .collect();
+    log::debug!(
+        "reference validated: kind=groups expected_languages={} checked_languages={} missing={:?} extra={:?}",
+        expected.len(),
+        checked.len(),
+        missing_groups,
+        extra_groups
+    );
     for (language, expected_groups) in &expected {
         let Some(checked_groups) = checked.get(language) else {
             issues.push(issue(
@@ -3447,6 +3488,23 @@ fn validate_code_quality_reference_files(
         .iter()
         .map(String::as_str)
         .collect::<BTreeSet<_>>();
+    let missing_paths: Vec<&str> = expected_paths
+        .iter()
+        .filter(|p| !checked_paths.contains(*p))
+        .copied()
+        .collect();
+    let extra_paths: Vec<&str> = checked_paths
+        .iter()
+        .filter(|p| !expected_paths.contains(*p))
+        .copied()
+        .collect();
+    log::debug!(
+        "reference validated: kind=files expected_count={} checked_count={} missing={:?} extra={:?}",
+        expected_paths.len(),
+        checked_paths.len(),
+        missing_paths,
+        extra_paths
+    );
     for expected_path in &expected_paths {
         if !checked_paths.contains(expected_path) {
             issues.push(issue(
@@ -3924,6 +3982,13 @@ fn validate_reference_plan_files_checked(
         return;
     }
     let checked_files = string_set_from_array(self_check, "referencePlanFilesChecked");
+    let missing_files: Vec<&String> = expected_files.difference(&checked_files).collect();
+    log::debug!(
+        "reference validated: kind=frontend_reference_plan expected_count={} checked_count={} missing={:?}",
+        expected_files.len(),
+        checked_files.len(),
+        missing_files
+    );
     if !expected_files.is_subset(&checked_files) {
         issues.push(issue(
             "TASK_RESULT_FRONTEND_QUALITY_INVALID",

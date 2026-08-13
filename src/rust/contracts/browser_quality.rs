@@ -184,6 +184,12 @@ pub fn playwright_reference_load_plan(
         let entry = catalog
             .resolve_entry("browser", "playwright_explicit", item)
             .unwrap_or_else(|| panic!("browser reference '{item}' not found in catalog"));
+        log::debug!(
+            "reference selected: route=browser item={} resolved=hit ref_id={} path={}",
+            item,
+            entry.ref_id,
+            entry.path
+        );
         ReferenceLoadPlanItem {
             ref_id: entry.ref_id,
             path: entry.path,
@@ -223,6 +229,12 @@ pub fn playwright_reference_load_plan(
     {
         plan.push(resolve("accessibility"));
     }
+    log::debug!(
+        "reference selected: route=browser mode={:?} runner_source={:?} total={}",
+        mode,
+        runner_source,
+        plan.len()
+    );
     plan
 }
 
