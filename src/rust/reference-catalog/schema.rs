@@ -272,6 +272,8 @@ pub struct LanguageRule {
     pub selection: Option<SelectionRule>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub framework_references: Vec<FrameworkReference>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub language_references: Vec<LanguageReference>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -350,6 +352,21 @@ pub struct ReferenceItemRule {
     pub item_id: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub when: Option<Condition>,
+}
+
+/// 语言级参考选择规则。
+///
+/// 与 `FrameworkReference` 类似,但用于语言通用 item(如 Python 的 core/typing/testing),
+/// 不绑定到特定框架。`group_id` 通常等于语言 id(如 "python")。
+/// `when` 省略时,只要 `LanguageRule.id` 匹配 `signal.language` 即生效。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LanguageReference {
+    pub group_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub when: Option<Condition>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<ReferenceItemRule>,
 }
 
 fn is_repo_signals_empty(config: &RepoSignalsConfig) -> bool {

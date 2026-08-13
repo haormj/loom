@@ -1375,6 +1375,27 @@ label = "Python"
     itemId = "logging"
     when = "task_owns:logging_infrastructure"
 
+  [[repoSignals.languages.languageReferences]]
+  groupId = "python"
+
+    [[repoSignals.languages.languageReferences.items]]
+    itemId = "core"
+
+    [[repoSignals.languages.languageReferences.items]]
+    itemId = "typing"
+
+    [[repoSignals.languages.languageReferences.items]]
+    itemId = "packaging"
+    when = { any_of = ["task_kind:ConfigurationSupport", "task_action:ImplementLanguageVersionFeature", "task_action:RefactorModuleStructure"] }
+
+    [[repoSignals.languages.languageReferences.items]]
+    itemId = "testing"
+    when = "focus:testing"
+
+    [[repoSignals.languages.languageReferences.items]]
+    itemId = "async"
+    when = "task_action:ImplementAsyncProcessing"
+
 # ── Rust ──
 [[repoSignals.languages]]
 id = "rust"
