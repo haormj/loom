@@ -128,7 +128,7 @@ pub fn code_reference_selection_for_task_with_context(
             continue;
         }
         let items = if signal.language.is_some() {
-            reference_items_for_signal(&signal, &focus_tags, task, &stack_frameworks)
+            reference_items_for_signal(&signal, &focus_tags, task, context, &stack_frameworks)
         } else {
             BTreeSet::new()
         };
@@ -661,6 +661,7 @@ fn reference_items_for_signal(
     signal: &CodeStackSignal,
     focus_tags: &[String],
     task: &TaskDefinition,
+    context: &CodeReferenceTaskContext,
     stack_frameworks: &BTreeSet<String>,
 ) -> BTreeSet<String> {
     let has_focus = |tag: &str| focus_tags.iter().any(|item| item == tag);
@@ -733,18 +734,37 @@ fn reference_items_for_signal(
             }
         }
         Some("python") => {
-            items.extend(["core", "typing"].map(str::to_string));
-            if matches!(task.task_kind, TaskKind::ConfigurationSupport)
-                || task_has_action(task, ImplementationAction::ImplementLanguageVersionFeature)
-                || task_has_action(task, ImplementationAction::RefactorModuleStructure)
-            {
-                items.insert("packaging".to_string());
-            }
-            if has_focus("testing") {
-                items.insert("testing".to_string());
-            }
-            if task_has_action(task, ImplementationAction::ImplementAsyncProcessing) {
-                items.insert("async".to_string());
+            let catalog = reference_catalog::resolved_catalog();
+            let ctx = ConditionContext {
+                task,
+                context,
+                stack_frameworks,
+                focus_tags,
+                signal,
+                current_track: &signal.source_track,
+            };
+            for lang_rule in &catalog.repo_signals.languages {
+                if lang_rule.id != "python" {
+                    continue;
+                }
+                for lang_ref in &lang_rule.language_references {
+                    let lang_matches = lang_ref
+                        .when
+                        .as_ref()
+                        .map_or(true, |when| Condition::from(when.clone()).evaluate(&ctx));
+                    if !lang_matches {
+                        continue;
+                    }
+                    for item_rule in &lang_ref.items {
+                        if item_rule
+                            .when
+                            .as_ref()
+                            .map_or(true, |when| Condition::from(when.clone()).evaluate(&ctx))
+                        {
+                            items.insert(item_rule.item_id.clone());
+                        }
+                    }
+                }
             }
         }
         Some("go") => {

@@ -25,9 +25,9 @@ pub use merge::{merge_catalogs, prune_groups, replace_item_entry};
 pub use schema::{
     ApplicabilityEntry, BackendEcosystemEntry, Condition, ExpandedEntry, ExtensionsRule,
     FocusRuleEntry, FolderHintsRule, FrameworkReference, FrameworkRule, FrameworkSelectionRule,
-    Group, ItemEntry, LanguageRule, ManifestRule, PrependItem, ProviderOverlay, ReferenceCatalog,
-    ReferenceItemRule, RepoSignalsConfig, Route, SectionGroupMapping, SelectionRule,
-    SourceRootsConfig,
+    Group, ItemEntry, LanguageReference, LanguageRule, ManifestRule, PrependItem, ProviderOverlay,
+    ReferenceCatalog, ReferenceItemRule, RepoSignalsConfig, Route, SectionGroupMapping,
+    SelectionRule, SourceRootsConfig,
 };
 pub use vendor::{
     build_resolved_catalog, load_catalog, load_vendor_catalog, parse_catalog, resolved_catalog,
