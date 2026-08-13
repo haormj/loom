@@ -1,6 +1,8 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use chrono::Local;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_logging()?;
@@ -21,13 +23,12 @@ fn init_logging() -> anyhow::Result<()> {
         env_logger::Env::default().default_filter_or("loom=info,knowledge=info"),
     )
     .filter_module("ureq", log::LevelFilter::Warn)
-    .format_timestamp_millis()
     .target(env_logger::Target::Pipe(Box::new(file)))
     .format(|buf, record| {
         writeln!(
             buf,
             "[{} {} {}] {}",
-            buf.timestamp_millis(),
+            Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
             record.level(),
             record.target(),
             record.args()
